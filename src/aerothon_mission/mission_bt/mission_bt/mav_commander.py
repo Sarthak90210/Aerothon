@@ -88,6 +88,9 @@ class Mav:
         self.airborne_floor = None
         self._low_alt_samples = 0
         self.qr_offset = Vector3()
+        # Offsets received, so a stage can tell a frame taken since it began
+        # from the latched one: Vector3 carries no stamp.
+        self.qr_offset_seq = 0
         self.banner = Vector3()
         self.banner_reject_reason = ""
         self.banner_reject_counts = {}
@@ -262,6 +265,8 @@ class Mav:
         self.cli_land = node.create_client(CommandTOL, '/mavros/cmd/land')
         self.cli_command = node.create_client(CommandLong, '/mavros/cmd/command')
         self.speed_cmd = None               # last ground speed requested, m/s
+        # (x, y, heading, advance) of the last gate crossing, from GateAdvance
+        self.gate_crossing = None
 
         node.create_timer(0.1, self._stream)   # 10 Hz setpoint stream
 
@@ -366,7 +371,9 @@ class Mav:
     @property
     def qr_streak(self):
         return self._qr_streak
-    def _on_off(self, m): self.qr_offset = m
+    def _on_off(self, m):
+        self.qr_offset = m
+        self.qr_offset_seq += 1
 
     def qr_visible(self):
         """Any marker in frame, whether or not it is the delivery target.

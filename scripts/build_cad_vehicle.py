@@ -36,6 +36,14 @@ MODEL = "aerothon_iris_c1_webcam"      # the world's vehicle slot; kept stable
 # 4S2P Li-ion at 4S, a 9450 on a 2312 980 KV: ~1.17 kg of thrust per motor.
 MAX_THRUST_N = 11.5
 PROP_A0, PROP_CLA = 0.3, 4.25        # the Iris's blade section, unchanged
+# YAW TORQUE. LiftDrag gives a blade drag of cda*alpha against a lift of
+# cla*alpha, so a rotor's reaction torque per newton of thrust is
+# (cda/cla)*cp. At the Iris's cda of 0.10 that is 0.0019 m; a real 9x4.5
+# prop measures C_Q*D/C_T ~ 0.012-0.016 m. With six times too little yaw
+# torque, every 45 deg step of the banner sweep saturated a motor and the
+# aircraft sank to the ground (dataflash 00000169/170.BIN). cda is set from
+# the real prop's ratio, at the conservative end.
+PROP_TORQUE_PER_THRUST_M = 0.0125
 # The props render to the camera and the GUI, NOT to the lidar: the LD06's
 # scan plane is 5 mm above the prop disc in the CAD, and a degree of pitch
 # would put the blades in the scan. Visual bit 1 is "prop"; the lidar's mask
@@ -155,6 +163,7 @@ def build(airframe_dir, upstream_models, out_root, camera_w=1280, camera_h=720,
             x = float(p.find("cp").text.split()[0])
             p.find("cp").text = f"{math.copysign(cp, x):.5f} 0 0"
             p.find("area").text = f"{area:.6f}"
+            p.find("cda").text = f"{PROP_TORQUE_PER_THRUST_M / cp * PROP_CLA:.4f}"
         if p.get("name") == "ArduPilotPlugin":
             p.find("imuName").text = "imu_link::imu_sensor"
             for ctl in list(p.findall("control")):

@@ -28,8 +28,8 @@ sys.path.insert(0, os.path.join(
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import py_trees                                              # noqa: E402
-from mission_bt.banner_orbit import (green_fix, leg_clear,   # noqa: E402
-                                     orbit_plan)
+from mission_bt.banner_orbit import (better_green, green_fix,  # noqa: E402
+                                     leg_clear, orbit_plan)
 from mission_bt.mission_tree import (AlignToBanner,          # noqa: E402
                                      FindReturnBanner)
 from test_banner_sweep import Clock, SweepMav                # noqa: E402
@@ -126,6 +126,18 @@ class BoardMav(SweepMav):
         return v[0] if v and v[2] else 0.0
 
 
+def scan_with(returns, n=360):
+    """A 360-sample scan, angle 0 at index n/2, with `returns` {index: m}."""
+    class Scan:
+        angle_min, angle_increment = -math.pi, 2 * math.pi / n
+        range_min, range_max = 0.1, 12.0
+    s = Scan()
+    s.ranges = [float("inf")] * n
+    for i, r in returns.items():
+        s.ranges[i] = r
+    return s
+
+
 def run(stage, clock, until, ticks=20000, dt=0.1):
     for _ in range(ticks):
         status = stage.update()
@@ -198,6 +210,36 @@ class GreenFixTests(unittest.TestCase):
         f = green_fix(m, HFOV)
         self.assertAlmostEqual(f["range"], 5.0 / math.tan(math.radians(20.0)), delta=0.05)
 
+    def test_green_running_off_the_frame_is_a_bearing_not_a_range(self):
+        """my_world: the corridor's green floor, from the frame bottom up to
+        the board, read as a 3.2 m fix for a board 11 m off."""
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()
+        m.banner_green["px"] = [600, 200, 80, H - 200]      # to the bottom row
+        f = green_fix(m, HFOV)
+        self.assertTrue(f["cut"])
+        self.assertEqual(f["source"], "height")
+
+    def test_the_lidar_ranges_the_green_when_it_can(self):
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()
+        m.banner_green["px"] = [600, 200, 80, H - 200]
+        m._scan = scan_with({180: 11.0, 185: 11.4})         # dead ahead
+        f = green_fix(m, HFOV)
+        self.assertEqual(f["source"], "lidar")
+        self.assertFalse(f["cut"])
+        self.assertAlmostEqual(f["range"], 11.0, places=6)
+        self.assertAlmostEqual(f["y"], -1.0, delta=0.05)
+
+    def test_a_ranged_fix_beats_a_bigger_bearing(self):
+        cut = {"area": 9000.0, "cut": True}
+        ranged = {"area": 400.0, "cut": False}
+        self.assertTrue(better_green(ranged, cut))
+        self.assertFalse(better_green(cut, ranged))
+        self.assertTrue(better_green(cut, None))
+
     def test_the_outbound_gate_is_not_a_lead_on_the_way_back(self):
         m = self.mav()
         m._yaw = -math.pi / 2
@@ -222,14 +264,62 @@ class LegClearTests(unittest.TestCase):
         s = Scan()
         s.ranges = list(s.ranges)
         s.ranges[180] = 1.2                      # dead ahead
+        s.ranges[0] = 0.23                       # the aircraft's own GPS mast
+        s.ranges[295] = 0.35                     # its rear arm, +151 deg
+        s.ranges[250] = 0.50                     # its gear, banked into a leg
         m = BoardMav((0.0, 0.0, 5.0), board=(50, 50), normal=0.0)
         m._scan = s
         self.assertFalse(leg_clear(m, 5.0, 0.0))
-        self.assertTrue(leg_clear(m, -5.0, 0.0))
+        self.assertTrue(leg_clear(m, -5.0, 0.0), "blocked by its own mast")
+
+
+class FloorMav(BoardMav):
+    """my_world's outbound lane: a green corridor FLOOR runs from under the
+    aircraft's view up to the board. From above the walls the largest green
+    is that floor, cut off by the bottom of the frame and ~500 px tall; the
+    lidar slice passes over everything. At gate height the lidar sees the
+    board on its bearing."""
+
+    WALL_TOP = 3.6
+
+    def _refresh(self):
+        v = super()._refresh()
+        if v is not None and self._alt > self.WALL_TOP:
+            self.banner_green["px"] = [600, 220, 80, H - 220]
+            self.banner_green["area"] = 80.0 * (H - 220)
+        return v
+
+    @property
+    def _scan(self):
+        if self._alt > self.WALL_TOP:
+            return scan_with({})
+        px, py = self._pos[:2]
+        bx, by = self.board
+        rel = wrap(math.atan2(by - py, bx - px) - self._yaw)
+        i = int(round((rel + math.pi) / (2 * math.pi / 360))) % 360
+        return scan_with({i: math.hypot(bx - px, by - py)})
+
+    @_scan.setter
+    def _scan(self, _):
+        pass
 
 
 class EdgeOnOutboundTests(unittest.TestCase):
     """AlignToBanner from a start that sees the board edge-on."""
+
+    def test_a_green_floor_is_ranged_on_the_lidar_before_it_is_orbited(self):
+        clock = Clock()
+        mav = FloorMav((0.0, 10.0, 5.0), board=(0.0, 0.0), normal=math.pi)
+        stage = AlignToBanner(mav, clock=clock, dwell_s=1.0)
+        stage.initialise()
+        run(stage, clock, until=lambda: stage.phase in (stage.CENTRE, stage.SQUARE))
+        logs = " ".join(str(line) for line in mav.logs)
+        self.assertIn("range it on the lidar", logs)
+        self.assertIn("(lidar)", logs)
+        self.assertIn(stage.phase, (stage.CENTRE, stage.SQUARE),
+                      f"never identified; last feedback: {stage.feedback_message}")
+        x, y = mav.pos()[:2]
+        self.assertLess(x, -2.0, f"identified from ({x:.1f}, {y:.1f})")
 
     def test_it_goes_round_and_identifies_the_board(self):
         clock = Clock()
@@ -247,6 +337,33 @@ class EdgeOnOutboundTests(unittest.TestCase):
         self.assertLess(x, -2.0, f"identified from ({x:.1f}, {y:.1f})")
         # ...and got there below the wall tops: never above a corridor.
         self.assertAlmostEqual(mav.pos()[2], stage.alt_floor_m, places=6)
+
+    def test_orbit_legs_fly_slow_enough_to_stop_inside_the_lidar_look(self):
+        """At WPNAV_SPEED a checked leg reached 3.8 m/s, needed 2.9 m to stop
+        and flew into the board; the cap comes off when the stage ends."""
+        clock = Clock()
+        mav = BoardMav((0.0, 10.0, 5.0), board=(0.0, 0.0), normal=math.pi)
+        speeds = []
+        mav.set_speed = lambda v: speeds.append(v) or True
+        stage = AlignToBanner(mav, clock=clock, dwell_s=1.0)
+        stage.initialise()
+        run(stage, clock, until=lambda: stage.phase in (stage.CENTRE, stage.SQUARE))
+        self.assertEqual(speeds[:1], [stage.guard_speed_mps])
+        self.assertLessEqual(stage.guard_speed_mps ** 2 / (2 * 2.5), 0.5)
+        stage.terminate(None)
+        self.assertEqual(speeds[-1], stage.free_speed_mps)
+
+    def test_green_beyond_the_near_gate_is_no_lead(self):
+        """my_world: a delivery-zone pad ranged 25 m became the orbit centre
+        and the orbit crossed red ground."""
+        clock = Clock()
+        mav = BoardMav((0.0, 30.0, 5.0), board=(0.0, 0.0), normal=math.pi)
+        stage = AlignToBanner(mav, clock=clock, dwell_s=1.0)
+        stage.initialise()
+        logs = lambda: " ".join(str(line) for line in mav.logs)   # noqa: E731
+        run(stage, clock, until=lambda: "Orbiting" in logs(), ticks=6000)
+        self.assertIn("relocation", logs(), "the search never moved on")
+        self.assertNotIn("Orbiting", logs())
 
     def test_a_face_on_start_does_not_orbit(self):
         clock = Clock()

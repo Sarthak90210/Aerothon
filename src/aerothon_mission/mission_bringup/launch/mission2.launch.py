@@ -28,6 +28,8 @@ def generate_launch_description():
     launch_slam = LaunchConfiguration('slam')
     airframe = LaunchConfiguration('airframe')
     camera_hfov = ParameterValue(LaunchConfiguration('camera_hfov'), value_type=float)
+    target_marker_m = ParameterValue(LaunchConfiguration('target_marker_m'),
+                                     value_type=float)
 
     pkg_bringup = get_package_share_directory('mission_bringup')
     rviz_config_file = os.path.join(pkg_bringup, 'config', 'aerothon_slam.rviz')
@@ -54,6 +56,12 @@ def generate_launch_description():
         DeclareLaunchArgument('camera_hfov', default_value=EnvironmentVariable(
             'AEROTHON_CAMERA_HFOV', default_value='0.851919'),
             description='Camera horizontal field of view, rad (C270: 0.851919)'),
+        # The delivery pads' QR edge. The sweep spaces its lanes so every pad
+        # is WHOLLY in frame on at least one of them, so it has to be the size
+        # laid out. The simulator exports the world's; on the field, set it.
+        DeclareLaunchArgument('target_marker_m', default_value=EnvironmentVariable(
+            'AEROTHON_TARGET_QR_M', default_value='2.2'),
+            description='Delivery-pad QR edge length, m'),
         DeclareLaunchArgument('rviz', default_value='true', description='Launch RViz 2 with SLAM/TF displays'),
         DeclareLaunchArgument('slam', default_value='true', description='Launch async slam_toolbox 2D SLAM node'),
         DeclareLaunchArgument('stream_rate_keeper', default_value='true',
@@ -178,7 +186,8 @@ def generate_launch_description():
     # 5. Autonomous Behavior Tree Mission Executive
     mission = Node(
         package='mission_bt', executable='mission_tree', output='screen',
-        parameters=[{'use_sim_time': use_sim, 'camera_hfov': camera_hfov}],
+        parameters=[{'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
+                     'target_marker_m': target_marker_m}],
     )
 
     # 6. GCS Aggregator WebSocket Server (port 8765)

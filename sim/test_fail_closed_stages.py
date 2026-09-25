@@ -459,6 +459,39 @@ class CorridorAltitudeTests(unittest.TestCase):
         self.leaf.tick_once()
         self.assertEqual(self.leaf.status, py_trees.common.Status.FAILURE)
 
+    def test_walls_falling_away_at_the_mouth_is_not_the_exit(self):
+        """my_world: the navigator backed out of the return lane's mouth, the
+        walls fell away, and the stage called it the far end."""
+        self.mav._alt = 1.9
+        self.leaf.alt = 1.9
+        self.mav.gate_crossing = (0.0, 0.0, 0.0, 5.5)   # 5.5 m ahead, +x
+        self.mav._pos = (4.0, 5.4, 1.9)                 # back past the board
+        self.mav.exited = True
+        self.leaf.tick_once()
+        self.assertEqual(self.leaf.status, py_trees.common.Status.FAILURE)
+        self.assertIn("mouth", self.mav.abort_reason)
+        self.assertFalse(self.mav.avoidance)
+
+    def test_walls_falling_away_down_the_lane_is_the_exit(self):
+        self.mav._alt = 1.9
+        self.leaf.alt = 1.9
+        self.mav.gate_crossing = (0.0, 0.0, 0.0, 5.5)
+        self.mav._pos = (15.0, 0.3, 1.9)
+        self.mav.exited = True
+        self.leaf.tick_once()
+        self.assertEqual(self.leaf.status, py_trees.common.Status.SUCCESS)
+
+    def test_the_lane_is_flown_at_the_height_the_crossing_measured(self):
+        """Climbing back to 3.0 m under a 2.8 m board edge struck it."""
+        duck = {"alt": 1.8}
+        leaf = Corridor("ReturnCorridor", self.mav, forward=False,
+                        alt=lambda: duck["alt"] or 3.0)
+        self.mav._alt = 1.8
+        self.mav._pos = (1.0, 0.0, 1.8)
+        leaf.tick_once()
+        self.assertEqual(leaf.status, py_trees.common.Status.RUNNING)
+        self.assertEqual(self.mav.avoid_hold_alt, 1.8)
+
     def test_navigator_STUCK_fails_the_stage(self):
         """Three live runs hovered against an obstacle indefinitely."""
         self.mav._alt = 3.0
@@ -589,6 +622,36 @@ class CorridorExitIsRecordedTests(unittest.TestCase):
         self.mav._pos = (1.0, 0.0, 3.0)
         self.mav.record_corridor_exit()
         self.assertEqual(self.mav.corridor_exit_pose, first)
+
+
+class SearchSpeedTests(unittest.TestCase):
+    """The sweep flies as fast as it can still stop short of red ground it
+    has just seen: look-ahead, confirmation frames at the MEASURED rate,
+    braking, margin."""
+
+    def _stops_in_time(self, v, look, hz, frames=4, a=2.0, margin=0.7):
+        return v * frames / hz + v * v / (2 * a) <= look - margin + 1e-9
+
+    def test_the_speed_stops_inside_the_look_ahead(self):
+        from mission_bt.mission_tree import safe_search_speed
+        for look, hz in ((2.55, 2.1), (4.5, 2.1), (2.55, 10.0), (6.0, 5.0)):
+            v = safe_search_speed(look, hz, ceiling_mps=9.0)
+            self.assertTrue(self._stops_in_time(v, look, hz), (look, hz, v))
+            self.assertFalse(self._stops_in_time(v + 0.05, look, hz),
+                             "slower than it needs to be")
+
+    def test_the_simulators_slow_camera_flies_slowly(self):
+        """2.1 frames a simulated second, nose-first at 10 m: under 1 m/s.
+        The fixed 1.96 m/s crabbed sweep could not stop in its look-ahead,
+        and a lane ran to 0.19 m of a red zone (my_world)."""
+        from mission_bt.mission_tree import safe_search_speed
+        self.assertLess(safe_search_speed(2.55, 2.1), 1.0)
+        self.assertFalse(self._stops_in_time(1.96, 4.5, 2.1))
+
+    def test_the_aircrafts_camera_flies_near_the_ceiling(self):
+        from mission_bt.mission_tree import safe_search_speed
+        self.assertGreater(safe_search_speed(2.55, 10.0), 1.9)
+        self.assertEqual(safe_search_speed(10.0, 30.0), 2.5)
 
 
 # --------------------------------------------------------------------------- #
@@ -1432,6 +1495,8 @@ class FrontierSearchTests(unittest.TestCase):
                 x, y, z = self.mav.gotos[-1][:3]
                 self.mav._pos = (x, y, z)
                 self.mav._alt = z
+                if len(self.mav.gotos[-1]) > 3:     # ...and faces where told
+                    self.mav._yaw = self.mav.gotos[-1][3]
                 if abs(y - prev[1]) < 0.3 and abs(x - prev[0]) >= 2.0:
                     along_lane.add(round(y, 1))
         replans = [m for m, _ in self.mav.logs if "mid-sweep" in m]
@@ -2270,9 +2335,11 @@ class BuiltTreeCarriesTheNewBehaviourTests(unittest.TestCase):
         for s in self._of_type("ScanStartQR"):
             self.assertAlmostEqual(s.hover.hover_s, 5.0)
 
-    def test_the_flown_sweep_hovers_on_each_marker_it_reads(self):
+    def test_the_flown_sweep_does_not_hover_on_wrong_markers(self):
+        """The operator's call: a 5 s pause over every marker read cost the
+        15 minute clock a pause per pad for a code read in one frame."""
         for s in self._of_type("LawnmowerSearch"):
-            self.assertAlmostEqual(s.hover.hover_s, 5.0)
+            self.assertFalse(s.hover.enabled)
 
     def test_every_transit_stage_routes_around_red_ground(self):
         """The defect this round exists for: only the sweep clipped anything."""

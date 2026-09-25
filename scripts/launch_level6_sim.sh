@@ -368,6 +368,9 @@ echo "[SIM] camera ${AEROTHON_CAMERA_W:-1280}x${AEROTHON_CAMERA_H:-720}" \
 # The mission launch reads the same two variables, so the camera the model
 # renders and the lens the perception stack assumes cannot disagree.
 export AEROTHON_AIRFRAME="${AEROTHON_AIRFRAME:-cad}"
+# The pad size the world is built with (materialize_world.py's default) is
+# the size the mission's sweep has to plan for.
+export AEROTHON_TARGET_QR_M="${AEROTHON_TARGET_QR_M:-3.0}"
 if [[ "$AEROTHON_AIRFRAME" == "iris" ]]; then
     export AEROTHON_CAMERA_HFOV="${AEROTHON_CAMERA_HFOV:-1.0472}"
 else
@@ -497,6 +500,16 @@ if [[ "${AEROTHON_SUPPLY_DELIVERY_ZONE:-1}" == "1" ]] && command -v ros2 >/dev/n
     echo "[4/5] Supplying the delivery-zone boundary (${AEROTHON_DELIVERY_ZONE:-32,0,40,30})..."
     python3 "$SCRIPT_DIR/publish_delivery_zone.py" &
     PIDS+=($!)
+fi
+
+# SITL's saved parameters (eeprom.bin, in the directory it starts in) beat
+# every --defaults file. A learned MOT_THST_HOVER of 0.324 -- the Iris's hover
+# throttle -- survived into every run on the team airframe, which hovers at
+# 0.48, and the airframe tuning could never take effect. Every simulated run
+# starts from the parameter files; AEROTHON_KEEP_EEPROM=1 keeps the old store.
+if [[ "${AEROTHON_KEEP_EEPROM:-0}" != "1" ]]; then
+    rm -f "$PWD/eeprom.bin" "$WORKSPACE_ROOT/eeprom.bin"
+    echo "[SIM] cleared SITL's saved parameters (eeprom.bin)"
 fi
 
 # 6. Launch Full Simulation Stack (SITL + ROS 2 + SLAM + RViz)

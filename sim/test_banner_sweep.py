@@ -965,6 +965,12 @@ class GateMav(LagMav):
             return no_surface(
                 f"the face lies {math.degrees(alpha):+.0f} deg off the nose, "
                 f"outside the sector the camera named")
+        # scan_geometry.find_surface's own refusal (range_tol_m 3.0): a face
+        # far from where the stage expects the banner is "something else".
+        if expected_range_m is not None and                 abs(self.standoff() - expected_range_m) > 3.0:
+            return no_surface(
+                f"the flat face stands at {self.standoff():.1f} m, not the "
+                f"{expected_range_m:.1f} m the camera puts the banner at")
         return {"ok": True, "angle_rad": alpha, "range_m": self.standoff(),
                 "points": 44, "residual_m": 0.005, "extent_m": 3.6,
                 "reason": ""}
@@ -1100,6 +1106,11 @@ class SquareOnWithTheLidarTests(unittest.TestCase):
                       stage.feedback_message)
         self.assertLessEqual(mav.standoff(), 6.5,
                              "never closed to a range the lidar works at")
+        # my_world, watched: squared up at 9.4 m, closed 4.4 m, found the
+        # board at exactly 5.0 m -- and refused it against the range from
+        # BEFORE the move, throwing the alignment away for a second orbit.
+        refused = [m for m, _ in mav.logs if "puts the banner at" in m]
+        self.assertEqual(refused, [])
 
     def test_the_standoff_correction_lands_INSIDE_the_band(self):
         """Seed 1001: at 6.0-6.1 m against a 6.0 m limit the correction was

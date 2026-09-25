@@ -60,9 +60,19 @@ def generate_launch_description():
     shutil.copyfile(os.path.join(pkg_sim, 'config', 'aerothon_failsafe.parm'),
                     failsafe_params)
 
+    # The team airframe's own tuning (hover throttle, rate gains), on top of
+    # the Iris baseline. Same space-free copy as the other two, for the same
+    # reason.
+    airframe_params = []
+    if os.environ.get('AEROTHON_AIRFRAME', 'cad') == 'cad':
+        quad = os.path.join(tempfile.gettempdir(), 'aerothon_quad.parm')
+        shutil.copyfile(os.path.join(pkg_sim, 'config', 'aerothon_quad.parm'), quad)
+        airframe_params = [quad]
+
     sitl_defaults = ','.join([
         os.path.join(pkg_ardupilot_sitl, 'config', 'default_params', 'copter.parm'),
         os.path.join(pkg_ardupilot_gazebo, 'config', 'gazebo-iris-gimbal.parm'),
+        *airframe_params,
         # Last wins: competition-representative battery and GPS, so the Q27
         # interlock sees what the real aircraft presents.
         sitl_params,

@@ -37,6 +37,7 @@ from mission_bt.delivery_zone import point_inside_with_margin
 from mission_bt.scan_geometry import bearing_to_angle
 
 BOARD_H_M = 1.15          # the banner board's height, the height-based fallback
+SELF_M = 0.55             # lidar returns nearer than this are the airframe
 
 
 def _wrap(a):
@@ -75,12 +76,15 @@ def _dist_to_segment(p, a, b):
 
 
 def green_fix(mav, hfov_rad, max_age_s=1.0, exclude=(), exclude_m=3.0,
-              board_h_m=BOARD_H_M):
+              board_h_m=BOARD_H_M, lidar_half_rad=math.radians(3.0)):
     """Where the largest green region in view is, or None.
 
-    Returns {"x", "y", "range", "area", "heading"} in the mission's local
-    frame. Range, in order of trust:
+    Returns {"x", "y", "range", "area", "heading", "source", "cut"} in the
+    mission's local frame. Range, in order of trust:
 
+      * LIDAR. A return on the region's bearing is a measurement, not a model
+        of what the green is. Only at gate height: above the walls the LD06's
+        slice passes over everything.
       * GROUND CONTACT. With the camera's measured pitch and the aircraft's
         altitude, the region's bottom row is a ray that meets the ground where
         the structure stands. Not used when the region is cut off by the
@@ -88,6 +92,13 @@ def green_fix(mav, hfov_rad, max_age_s=1.0, exclude=(), exclude_m=3.0,
       * HEIGHT. A board seen edge-on loses width, not height, so its pixel
         height still gives range for a board of known height. A taller green
         structure reads NEARER than it is, which only tightens the orbit.
+
+    `cut` is True when the region runs off the bottom of the frame and no
+    lidar range was had. Then the height is not the board's: on my_world the
+    largest green was the outbound corridor's green FLOOR, running from the
+    frame bottom up to the board, ~500 px "tall" -- a 3.2 m fix for a board
+    11 m away, and an orbit round empty ground. A cut fix is a bearing, not
+    a position.
     """
     g = getattr(mav, "banner_green", None)
     if not g:
@@ -102,17 +113,19 @@ def green_fix(mav, hfov_rad, max_age_s=1.0, exclude=(), exclude_m=3.0,
     focal = 0.5 * float(W) / math.tan(0.5 * float(hfov_rad))
     heading = _wrap(mav.yaw() + bearing_to_angle(float(g["bearing"]), hfov_rad))
 
-    rng = None
     cam = getattr(mav, "camera_state", None) or {}
     pitch = cam.get("actual_rad")
     alt = mav.alt()
     bottom = y0 + h
-    if pitch is not None and alt > 0.5 and bottom < H - 2:
+    cut = bottom >= H - 2
+    source = "lidar"
+    rng = scan_min(mav, heading, lidar_half_rad)
+    if rng is None and pitch is not None and alt > 0.5 and not cut:
         down = -float(pitch) + math.atan((bottom - H / 2.0) / focal)
         if down > math.radians(3.0):
-            rng = alt / math.tan(down)
+            rng, source = alt / math.tan(down), "ground"
     if rng is None:
-        rng = focal * float(board_h_m) / float(h)
+        rng, source = focal * float(board_h_m) / float(h), "height"
     rng = max(2.0, min(25.0, rng))
 
     px, py = mav.pos()[:2]
@@ -121,7 +134,18 @@ def green_fix(mav, hfov_rad, max_age_s=1.0, exclude=(), exclude_m=3.0,
         if _dist_to_segment((gx, gy), a, b) < exclude_m:
             return None
     return {"x": gx, "y": gy, "range": rng, "area": float(g.get("area", 0.0)),
-            "heading": heading}
+            "heading": heading, "source": source,
+            "cut": cut and source != "lidar"}
+
+
+def better_green(f, best):
+    """Whether fix `f` should replace `best`: one with a range beats one that
+    is only a bearing (`cut`), then the larger region wins."""
+    if best is None:
+        return True
+    if bool(f.get("cut")) != bool(best.get("cut")):
+        return not f.get("cut")
+    return f["area"] > best["area"]
 
 
 def orbit_plan(centre, here, radius, ok, step_rad=math.radians(45.0), n=7,
@@ -188,20 +212,39 @@ def fence_ok(mav, margin_m=2.0, on_red=None):
     return ok
 
 
-def leg_clear(mav, x, y, look_m=2.0, half_rad=math.radians(25.0)):
+def leg_clear(mav, x, y, look_m=2.0, half_rad=math.radians(25.0), self_m=None):
     """False when the lidar sees something within `look_m` in the direction
-    of (x, y). No scan, no veto: the altitude is the primary protection."""
-    scan = getattr(mav, "_scan", None)
-    if scan is None or not getattr(scan, "ranges", None):
-        return True
+    of (x, y). No scan, no veto: the altitude is the primary protection.
+
+    Returns nearer than `self_m` are the aircraft itself, not an obstacle.
+    Level, the LD06 sees the GPS mast at 0.22 m dead astern and the rear arms
+    at 0.35 m (+-151 deg), measured in Gazebo. Banked into a leg the scan
+    plane tilts through the landing gear and the hanging payload, and the
+    farthest point of the airframe is 0.51 m from the lidar (CAD bounds
+    +-0.29 m). Counting any of it blocked every orbit leg, two seconds in,
+    whichever way the leg went (my_world, 00000171.BIN)."""
     px, py = mav.pos()[:2]
     if math.hypot(x - px, y - py) < 0.3:
         return True
-    rel = _wrap(math.atan2(y - py, x - px) - mav.yaw())
-    lo, hi = float(scan.range_min), float(scan.range_max)
+    near = scan_min(mav, math.atan2(y - py, x - px), half_rad,
+                    SELF_M if self_m is None else self_m)
+    return near is None or near >= look_m
+
+
+def scan_min(mav, heading, half_rad, self_m=None):
+    """The nearest lidar return within `half_rad` of the local-frame
+    `heading`, beyond the airframe's own reach; None with no scan or no
+    return there."""
+    scan = getattr(mav, "_scan", None)
+    if scan is None or not getattr(scan, "ranges", None):
+        return None
+    rel = _wrap(heading - mav.yaw())
+    lo = max(float(scan.range_min), SELF_M if self_m is None else self_m)
+    hi = float(scan.range_max)
     a = float(scan.angle_min)
     inc = float(scan.angle_increment)
+    best = None
     for i, r in enumerate(scan.ranges):
-        if lo < r < hi and r < look_m and abs(_wrap(a + i * inc - rel)) <= half_rad:
-            return False
-    return True
+        if lo < r < hi and abs(_wrap(a + i * inc - rel)) <= half_rad:
+            best = r if best is None else min(best, r)
+    return best

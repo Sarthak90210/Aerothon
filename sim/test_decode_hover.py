@@ -285,6 +285,22 @@ class StageWiringTests(unittest.TestCase):
                          "the sweep flew on past a marker it had just read")
         self.assertGreater(len(mav.gotos), n)
 
+    def test_the_sweep_flies_nose_first(self):
+        """Its camera looks where it goes: every other lane was flown
+        tail-first on a fixed heading."""
+        from mission_bt.mission_tree import LawnmowerSearch
+        mav = HoverMav(at=(0.0, 0.0, 10.0), yaw=0.0)
+        mav.observed_zone = (-5.0, 40.0, -20.0, 20.0)
+        mav.corridor_exit_pose = (0.0, 0.0, 10.0, 0.0)
+        stage = LawnmowerSearch(mav, zone=lambda: mav.observed_zone,
+                                image_width_px=1280, hfov_rad=math.radians(60),
+                                marker_m=2.2, alt=10.0, hover_s=0.0,
+                                clock=self.clock)
+        stage.initialise()
+        for tx, ty in ((40.0, -15.0), (-5.0, -15.0), (0.0, 10.0)):
+            yaw = stage._yaw((tx, ty))
+            self.assertAlmostEqual(yaw, math.atan2(ty, tx), places=6)
+
     def test_the_sweep_resumes_after_the_pause(self):
         from mission_bt.mission_tree import LawnmowerSearch
         mav = HoverMav(at=(0.0, 0.0, 10.0), yaw=0.0)
@@ -299,8 +315,12 @@ class StageWiringTests(unittest.TestCase):
         stage.update()
         self.clock.advance(5.5)
         stage.update()
-        self.assertNotEqual(mav.gotos[-1][:3], mav.pos(),
-                            "still parked after the hover expired")
+        # Resumed: flying the next leg, or turning on the spot to face it
+        # (nose-first, the camera looks where the aircraft goes).
+        moving = mav.gotos[-1][:3] != mav.pos()
+        turning = "turning to face" in stage.feedback_message
+        self.assertTrue(moving or turning, "still parked after the hover expired")
+        self.assertNotIn("holding over", stage.feedback_message)
 
 
 if __name__ == "__main__":

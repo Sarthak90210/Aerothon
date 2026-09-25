@@ -371,7 +371,15 @@ class RedZoneLookaheadTests(unittest.TestCase):
         leaf.initialise()
         for _ in range(5):
             leaf.tick_once()
-        self.assertEqual(mav.speeds, [2.5])
+        # One cap, sent once, under the ceiling: the fastest the look-ahead
+        # and the (assumed, unmeasured) frame rate allow.
+        from mission_bt.mission_tree import safe_search_speed
+        self.assertEqual(len(mav.speeds), 1)
+        self.assertLessEqual(mav.speeds[0], 2.5)
+        look = leaf.alt * math.tan(leaf._ahead_rad)
+        self.assertAlmostEqual(mav.speeds[0],
+                               safe_search_speed(look, leaf.frame_hz0,
+                                                 ceiling_mps=2.5))
 
     def test_a_replan_resumes_at_the_current_lane_not_waypoint_zero(self):
         mav = SearchMav()

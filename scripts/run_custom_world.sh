@@ -44,6 +44,9 @@ sys.exit(1 if errs else 0)
 PY
 
 export AEROTHON_WORLD_SPEC="$SPEC"
+# This world's pad size, for the mission's lane spacing (mission2.launch.py).
+AEROTHON_TARGET_QR_M="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["qr"]["target_m"])' "$SPEC" 2>/dev/null)"
+export AEROTHON_TARGET_QR_M="${AEROTHON_TARGET_QR_M:-3.0}"
 # Nothing from a previous run's environment may leak into this arena.
 unset AEROTHON_RANDOM_ARENA AEROTHON_SEED AEROTHON_DELIVERY_ZONE AEROTHON_GEOFENCE
 # The live log is shared by every run: clear it, or the editor's status (and
@@ -62,6 +65,21 @@ if [[ "$GUI" == "1" ]]; then
         bash scripts/watch_mission_gui.sh > "$OUT/${NAME}.watch.log" 2>&1 &
     fi
     WATCH=$!
+    # The GCS too, once it serves. The launcher's own opener is off for these
+    # runs (live_mission_test.sh) and WSL has no browser of its own; WSL2
+    # forwards its ports to Windows, so the Windows default browser shows it.
+    (
+        for _ in $(seq 180); do
+            curl -sf -o /dev/null http://127.0.0.1:8899/ && break
+            sleep 2
+        done
+        if command -v powershell.exe >/dev/null 2>&1; then
+            (cd /mnt/c && powershell.exe -NoProfile -Command \
+                "Start-Process 'http://localhost:8899/'") >/dev/null 2>&1
+        elif command -v xdg-open >/dev/null 2>&1; then
+            xdg-open http://127.0.0.1:8899/ >/dev/null 2>&1
+        fi
+    ) &
 fi
 wait $RUN
 [[ -n "$WATCH" && "$REC" == "1" ]] && wait "$WATCH"
