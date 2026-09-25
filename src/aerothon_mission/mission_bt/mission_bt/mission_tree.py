@@ -3023,7 +3023,7 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
                  hover_s=5.0, clock=None, image_height_px=None,
                  crab=False, search_speed_mps=None, fix_wait_ticks=10,
                  frame_hz=2.0, turn_tol_rad=math.radians(30.0),
-                 lead_m=3.0):
+                 lead_m=3.0, unread_hold_s=0.0):
         """`zone` may be an (x0, x1, y0, y1) tuple or a CALLABLE returning one.
 
         `crab` flies the lanes yawed 90 degrees to their direction, so the
@@ -3103,8 +3103,12 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         # Every DISTINCT marker the sweep passes over gets a pause, not only
         # the one that matches. Per-decode would park the aircraft over the
         # first pad until the mission clock ran out.
+        # A marker SEEN but not READ (blur, vibration) is held over until it
+        # reads, once per spot: see DecodeHover.
         self.hover = DecodeHover(hover_s=hover_s, clock=clock,
-                                 enabled=float(hover_s) > 0.0)
+                                 enabled=float(hover_s) > 0.0,
+                                 unread_s=unread_hold_s,
+                                 locate=self._locate_marker)
         self.alt = alt
         self.decode_alt = alt
         self.wps = []
@@ -3173,6 +3177,12 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         else:
             wps = self.plan["waypoints"]
         self.wps = [(w[0], w[1]) for w in wps]
+
+    def _locate_marker(self, mav):
+        return offset_to_ground(mav, mav.qr_offset,
+                                hfov_rad=self._plan_args['hfov_rad'],
+                                image_w_px=self._plan_args['image_width_px'],
+                                image_h_px=self._image_h)
 
     def _lane_coord(self, wp):
         """Which lane a waypoint belongs to: y for x-axis lanes, x for y."""
@@ -3553,8 +3563,9 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         self._fix_wait = 0
         self._fix_hold = None
         if self.hover.tick(self.mav):
-            self.feedback_message = (f"holding over '{self.hover.payload}' "
-                                     f"before resuming the sweep")
+            what = (f"'{self.hover.payload}'" if self.hover.payload
+                    else "a marker it cannot read yet")
+            self.feedback_message = f"holding over {what} before resuming the sweep"
             return py_trees.common.Status.RUNNING
         self._ticks_since_replan += 1
         if self._exclusions_changed():
@@ -4881,6 +4892,7 @@ def build_root(mav, node, p):
                              exclusions=lambda: mav.exclusions,
                              clearance_m=p.get('redzone_clearance', 1.5),
                              hover_s=p.get('sweep_hover_s', 0.0),
+                             unread_hold_s=p.get('unread_hold_s', 4.0),
                              image_width_px=p.get('image_width_px', 1280),
                              hfov_rad=p.get('camera_hfov', 1.0472),
                              marker_m=p.get('target_marker_m', 2.2),
@@ -5261,6 +5273,10 @@ def declare_mission_params(node):
     # mission for a code read in one frame, and the operator has since asked
     # for it gone. The start marker keeps `qr_hover_s`.
     d('sweep_hover_s', 0.0)
+    # How long the sweep holds over a marker it can see but not read before
+    # giving up on it (DecodeHover). Stopping removes motion blur, the
+    # corruption that defeats the decoders while the marker is still located.
+    d('unread_hold_s', 4.0)
     d('gate_advance_m', 10.0)
 
     g = lambda n: node.get_parameter(n).value
@@ -5294,6 +5310,7 @@ def declare_mission_params(node):
         'return_lane_offset_m': float(g('return_lane_offset_m')),
         'qr_hover_s': float(g('qr_hover_s')),
         'sweep_hover_s': float(g('sweep_hover_s')),
+        'unread_hold_s': float(g('unread_hold_s')),
         'gate_advance_m': float(g('gate_advance_m')),
     }
 

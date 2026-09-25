@@ -53,6 +53,7 @@ from rclpy.node import Node
 import cv2
 import numpy as np
 
+from perception_banner.photometry import normalise
 from perception_banner.word_reader import reads_banner
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Vector3
@@ -612,7 +613,7 @@ class BannerNode(Node):
     # ------------------------------------------------------------------ #
     def on_image(self, msg: Image):
         try:
-            frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            frame = normalise(self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8'))
         except Exception as e:  # noqa: BLE001
             self.get_logger().warn(f"cv_bridge: {e}")
             return

@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import py_trees                                              # noqa: E402
-from mission_bt.decode_hover import DecodeHover              # noqa: E402
+from mission_bt.decode_hover import UNREAD, DecodeHover      # noqa: E402
 from test_fail_closed_stages import FakeMav                  # noqa: E402
 
 
@@ -176,6 +176,92 @@ class DecodeHoverTests(unittest.TestCase):
         self.mav.qr_decoded = "PAD_A"
         self.h.tick(self.mav)
         self.assertTrue([m for m, _ in self.mav.logs if "PAD_A" in m])
+
+
+class Off:
+    def __init__(self, x=0.0, y=0.0, z=0.0):
+        self.x, self.y, self.z = x, y, z
+
+
+class UnreadMav(HoverMav):
+    qr_offset = None       # a plain attribute here, set per test
+
+
+class UnreadMarkerTests(unittest.TestCase):
+    """A marker seen but not read gets one hold over it, and the hold ends
+    the moment it reads.
+
+    qr_node reports such a marker with offset z = UNREAD. Motion blur is the
+    corruption that defeats both decoders while the finder patterns still
+    locate the marker (sim/test_perception_corruption.py); stopping removes
+    it.
+    """
+
+    SPOT = (12.0, 3.0)
+
+    def setUp(self):
+        self.clock = Clock()
+        self.mav = UnreadMav()
+        self.located = []
+        self.h = DecodeHover(hover_s=5.0, clock=self.clock, unread_s=4.0,
+                             locate=self._locate)
+
+    def _locate(self, mav):
+        self.located.append(mav.qr_offset.z)
+        return self.SPOT
+
+    def _unread(self):
+        self.mav.qr_offset = Off(0.3, -0.2, UNREAD)
+
+    def test_an_unread_marker_holds_OVER_IT_at_the_current_altitude(self):
+        self._unread()
+        self.assertTrue(self.h.tick(self.mav))
+        self.assertEqual(self.mav.gotos[-1][:3], (12.0, 3.0, 8.0))
+
+    def test_it_holds_every_tick_up_to_the_limit_then_resumes(self):
+        self._unread()
+        for _ in range(39):
+            self.assertTrue(self.h.tick(self.mav))
+            self.assertEqual(self.mav.gotos[-1][:2], self.SPOT)
+            self.clock.advance(0.1)
+        self.clock.advance(0.2)
+        self.assertFalse(self.h.tick(self.mav))
+
+    def test_the_hold_ends_the_moment_the_marker_reads(self):
+        """And the read marker then gets its own payload hover."""
+        self._unread()
+        self.h.tick(self.mav)
+        self.clock.advance(1.0)
+        self.mav.qr_decoded = "PAD_B"
+        self.assertTrue(self.h.tick(self.mav))
+        self.assertEqual(self.h.payload, "PAD_B")
+
+    def test_the_same_spot_is_held_over_once(self):
+        """An illegible marker must cost one hold, not the mission clock."""
+        self._unread()
+        self.h.tick(self.mav)
+        self.clock.advance(5.0)
+        self.assertFalse(self.h.tick(self.mav))
+        self.clock.advance(1.0)
+        self.assertFalse(self.h.tick(self.mav))
+
+    def test_a_decoded_or_absent_marker_is_not_an_unread_one(self):
+        for z in (0.0, 0.5, 1.0):
+            self.mav.qr_offset = Off(0.0, 0.0, z)
+            self.assertFalse(self.h.tick(self.mav))
+        self.assertEqual(self.located, [])
+
+    def test_off_unless_asked_for(self):
+        plain = DecodeHover(hover_s=5.0, clock=self.clock)
+        self._unread()
+        self.assertFalse(plain.tick(self.mav))
+
+    def test_switching_the_payload_hover_off_keeps_the_unread_hold(self):
+        """hover_s = 0 buys time; it must not stop markers being read."""
+        h = DecodeHover(hover_s=0.0, clock=self.clock, enabled=False,
+                        unread_s=4.0, locate=self._locate)
+        self._unread()
+        self.assertTrue(h.tick(self.mav))
 
 
 class StageWiringTests(unittest.TestCase):

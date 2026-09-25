@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QR detection, target matching and plausibility gating (OpenCV QRCodeDetector).
+"""QR detection, target matching and plausibility gating (zbar + OpenCV, qr_decode.py).
 
 Two jobs in Mission 2:
   1. START QR  — decode the delivery target string during the start scan.
@@ -35,7 +35,8 @@ Topics
   pub  /percep/qr/matched         std_msgs/Bool     target currently visible
   pub  /percep/qr/target_offset   geometry_msgs/Vector3
          x,y in [-1,1] from image centre (right+, down+)
-         z = 1.0 matched target | 0.5 some marker | 0.0 nothing visible
+         z = 1.0 matched target | 0.5 some marker | 0.25 a marker located
+             but not decoded (blur, vibration) | 0.0 nothing visible
   pub  /percep/qr/detail          std_msgs/String   JSON diagnostics
   pub  /percep/qr/annotated       sensor_msgs/Image
 """
@@ -50,6 +51,10 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import PoseStamped, Vector3
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import String, Bool
+
+from perception_qr.qr_decode import QrDecoder, zbar_available
+
+UNREAD = 0.25      # mission_bt.decode_hover.UNREAD
 
 
 class QrNode(Node):
@@ -74,7 +79,7 @@ class QrNode(Node):
         self.process_every = max(1, int(self.get_parameter('process_every').value))
 
         self.bridge = CvBridge()
-        self.detector = cv2.QRCodeDetector()
+        self.decoder = QrDecoder()
         self._frame_i = 0
         self._alt = None
         self._fx = None
@@ -97,6 +102,11 @@ class QrNode(Node):
 
         self.get_logger().info(
             f"perception_qr up; image_topic={image_topic} target='{self.target}'")
+        if not zbar_available():
+            self.get_logger().warn(
+                "zbar not found (apt install libzbar0; pip install pyzbar): "
+                "decoding with OpenCV alone, which loses markers to motion "
+                "blur and vibration that zbar reads")
 
     def _on_info(self, m: CameraInfo):
         # CameraInfo.k is a numpy array, so `if m.k` raises
@@ -168,10 +178,7 @@ class QrNode(Node):
         rejected = []
         best = None            # (is_match, payload, cx, cy, px)
 
-        try:
-            ok, infos, points, _ = self.detector.detectAndDecodeMulti(frame)
-        except cv2.error:
-            ok, infos, points = False, [], None
+        decoded = self.decoder.decode(frame)
 
         require = bool(self.get_parameter('require_plausible').value)
         # The annotated copy is for a GCS debug view; nobody subscribed, no
@@ -182,40 +189,47 @@ class QrNode(Node):
         # draw every detector's findings on the live camera frame without
         # re-running detection and possibly disagreeing with it.
         boxes = []
-        if ok and points is not None:
-            for info, quad in zip(infos, points):
-                if not info:
-                    continue
-                marker_px = self._marker_px(quad)
-                good, why = self.plausible(marker_px)
-                is_match = self._matches(info)
-                quad_i = quad.astype(int)
+        for info, quad in decoded:
+            marker_px = self._marker_px(quad)
+            good, why = self.plausible(marker_px)
+            is_match = self._matches(info)
+            quad_i = quad.astype(int)
 
-                if not good and require:
-                    rejected.append({"payload": info[:32], "px": round(marker_px, 1),
-                                     "why": why})
-                    if annotate:
-                        cv2.polylines(frame, [quad_i], True, (0, 0, 255), 2)
-                        cv2.putText(frame, "IMPLAUSIBLE", tuple(quad_i[0]),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    boxes.append({"quad": quad_i.tolist(),
-                                  "label": "IMPLAUSIBLE", "ok": False})
-                    continue
-
+            if not good and require:
+                rejected.append({"payload": info[:32], "px": round(marker_px, 1),
+                                 "why": why})
                 if annotate:
-                    colour = (0, 255, 0) if is_match else (0, 180, 255)
-                    cv2.polylines(frame, [quad_i], True, colour, 2)
-                    cv2.putText(frame, info[:24], tuple(quad_i[0]),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, colour, 2)
-                boxes.append({"quad": quad_i.tolist(), "label": info[:24],
-                              "ok": bool(is_match)})
+                    cv2.polylines(frame, [quad_i], True, (0, 0, 255), 2)
+                    cv2.putText(frame, "IMPLAUSIBLE", tuple(quad_i[0]),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                boxes.append({"quad": quad_i.tolist(),
+                              "label": "IMPLAUSIBLE", "ok": False})
+                continue
 
-                cx, cy = quad.mean(axis=0)
-                cand = (is_match, info, float(cx), float(cy), marker_px)
-                # Prefer the matching target; otherwise the largest marker.
-                if best is None or (is_match and not best[0]) or \
-                        (is_match == best[0] and marker_px > best[4]):
-                    best = cand
+            if annotate:
+                colour = (0, 255, 0) if is_match else (0, 180, 255)
+                cv2.polylines(frame, [quad_i], True, colour, 2)
+                cv2.putText(frame, info[:24], tuple(quad_i[0]),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, colour, 2)
+            boxes.append({"quad": quad_i.tolist(), "label": info[:24],
+                          "ok": bool(is_match)})
+
+            cx, cy = quad.mean(axis=0)
+            cand = (is_match, info, float(cx), float(cy), marker_px)
+            # Prefer the matching target; otherwise the largest marker.
+            if best is None or (is_match and not best[0]) or \
+                    (is_match == best[0] and marker_px > best[4]):
+                best = cand
+
+        unread = None
+        if not decoded:
+            quad = self.decoder.locate(frame)
+            if quad is not None and self.plausible(self._marker_px(quad))[0]:
+                unread = quad
+                boxes.append({"quad": quad.astype(int).tolist(),
+                              "label": "UNREAD", "ok": False})
+                if annotate:
+                    cv2.polylines(frame, [quad.astype(int)], True, (0, 255, 255), 2)
 
         if best is not None:
             matched, accepted, cx, cy, marker_px = best
@@ -224,6 +238,11 @@ class QrNode(Node):
             # z tells the consumer WHAT the offset refers to, so a centring
             # controller can act on a marker before the target is known.
             offset.z = 1.0 if matched else 0.5
+        elif unread is not None:
+            cx, cy = unread.mean(axis=0)
+            offset.x = float((cx - w / 2) / (w / 2))
+            offset.y = float((cy - h / 2) / (h / 2))
+            offset.z = UNREAD
 
         # WHERE before WHAT: the mission ends its sweep on `matched`, and a
         # match handled before its own offset left it with no ground fix for
@@ -244,6 +263,7 @@ class QrNode(Node):
             "alt": None if self._alt is None else round(self._alt, 2),
             "expect_px": [round(rng[0], 1), round(rng[1], 1)] if rng else None,
             "rejected": rejected,
+            "unread": unread is not None,
             "boxes": boxes,
         })))
 
