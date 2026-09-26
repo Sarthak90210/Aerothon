@@ -22,8 +22,8 @@ WHAT A SPEC CAN MOVE, AND WHAT IT CANNOT
     five delivery pads, the green decoys, which pad the start QR names, and
     the QR edge lengths.
 
-    Fixed shape: the banners (the board and its posts) and the take-off
-    area's internal layout.
+    Fixed shape: the banners (the board and its posts; only the height the
+    board hangs at moves) and the take-off area's internal layout.
 
 CONDITIONS -- WHAT THE DAY THROWS AT IT
 
@@ -87,6 +87,12 @@ TAKEOFF_PAD_SIZE = (5.0, 8.0)
 START_QR_OFFSET = (0.0, 2.0)
 SPAWN_OFFSET = (-1.0, 2.0)
 
+# The banner board: 3.7 x 1.15 m on two posts. Its height is the one thing
+# about it a spec moves (mission2.sdf hangs it at 2.805 m); the posts grow to
+# carry it.
+BOARD_BOTTOM_M = 2.805
+BOARD_BOTTOM_RANGE_M = (1.8, 4.5)
+
 HOME_FENCE_CLEARANCE_M = 2.0           # readiness: home >= 2 m inside the fence
 BANNER_NEAR_RANGE_M = 9.6              # AlignToBanner: 0.8 x the 12 m lidar range
 AUTO_FENCE_MARGIN_M = 6.0
@@ -119,6 +125,7 @@ def default_spec():
                    {"x": 34.0, "y": 9.0, "yaw_deg": math.degrees(1.2)}],
         "start_target": "random",
         "qr": {"start_m": 2.2, "target_m": 3.0},
+        "banner": {"board_bottom_m": BOARD_BOTTOM_M},
         "conditions": {"preset": "calm"},
     }
 
@@ -134,7 +141,8 @@ def normalise(spec):
     out = dict(base)
     for key, val in (spec or {}).items():
         out[key] = val
-    for key in ("takeoff", "corridor", "return_corridor", "delivery_zone", "qr"):
+    for key in ("takeoff", "corridor", "return_corridor", "delivery_zone", "qr",
+                "banner"):
         merged = dict(base[key])
         merged.update(out.get(key) or {})
         out[key] = merged
@@ -470,8 +478,17 @@ def is_simple(poly):
 # ---- checks -----------------------------------------------------------------
 
 AIRFRAME_SPAN_M = 1.0        # Iris 0.8 m prop tip to tip, plus 0.1 m each side
-CORRIDOR_ALT_M = 3.0         # mission corridor_alt
-LIDAR_ABOVE_BODY_M = 0.235   # RPLidar C1 scan plane above base_link
+LIDAR_ABOVE_BODY_M = 0.0815  # the team airframe's LD06 scan plane above base_link
+# The corridors are flown under the board: DuckUnderBoard finds the altitude
+# where the scan plane drops below its bottom edge and flies DUCK_MARGIN_M
+# lower, never below DUCK_FLOOR_M (mission_tree.DuckUnderBoard).
+DUCK_MARGIN_M, DUCK_FLOOR_M = 0.6, 1.2
+
+
+def corridor_alt(spec):
+    """The altitude the corridors are flown at under this spec's banner."""
+    bottom = float(spec["banner"]["board_bottom_m"])
+    return max(DUCK_FLOOR_M, bottom - LIDAR_ABOVE_BODY_M - DUCK_MARGIN_M)
 AIRFRAME_BELOW_BODY_M = 0.35 # legs 0.195 m + sag/altitude error below base_link
 PASS_COMFORT_M = 1.6         # the corridor navigator's 1.4 m passage strip + margin
 
@@ -577,22 +594,23 @@ def _check_obstacles(spec, errs, warns):
                          f"the corridor navigator passes reliably with "
                          f"{PASS_COMFORT_M:.1f} m or more")
         # THE LIDAR IS ONE PLANE. At the corridor altitude it scans at
-        # CORRIDOR_ALT_M + LIDAR_ABOVE_BODY_M; an obstacle whose top is below
-        # that plane but above the airframe's underside is invisible to the
-        # navigator and in the aircraft's way. Found live: a 3.2 m block,
-        # 3.23 m scan plane, flown into at 3 m (pitch 48 deg).
-        plane = CORRIDOR_ALT_M + LIDAR_ABOVE_BODY_M
-        belly = CORRIDOR_ALT_M - AIRFRAME_BELOW_BODY_M
+        # alt + LIDAR_ABOVE_BODY_M; an obstacle whose top is below that plane
+        # but above the airframe's underside is invisible to the navigator
+        # and in the aircraft's way. Found live: a 3.2 m block, 3.23 m scan
+        # plane, flown into at 3 m (pitch 48 deg).
+        alt = corridor_alt(spec)
+        plane = alt + LIDAR_ABOVE_BODY_M
+        belly = alt - AIRFRAME_BELOW_BODY_M
         if belly < h < plane + 0.1:
             errs.append(f"obstacle {i} is {h:g} m tall: its top is below the "
-                        f"lidar's scan plane ({plane:.2f} m at the {CORRIDOR_ALT_M:g} m "
-                        f"corridor altitude) but above the airframe's underside "
-                        f"({belly:.2f} m) -- the aircraft cannot see it and would "
-                        f"fly into it. Make it taller than {plane + 0.1:.2f} m or "
-                        f"shorter than {belly:.2f} m")
+                        f"lidar's scan plane ({plane:.2f} m at the {alt:.1f} m "
+                        f"corridor altitude under the board) but above the "
+                        f"airframe's underside ({belly:.2f} m) -- the aircraft "
+                        f"cannot see it and would fly into it. Make it taller "
+                        f"than {plane + 0.1:.2f} m or shorter than {belly:.2f} m")
         elif h <= belly:
             warns.append(f"obstacle {i} is {h:g} m tall; the corridor is flown "
-                         f"at {CORRIDOR_ALT_M:g} m, so the aircraft passes over it")
+                         f"at {alt:.1f} m, so the aircraft passes over it")
     if r.get("obstacles") and not errs:
         room = lane_bottleneck(r)
         if room < TEAM_AIRFRAME_R_M + 0.05:
@@ -627,6 +645,10 @@ def validate(spec):
         errs.append("missing delivery pad(s): " + ", ".join(m.upper() for m in missing))
     if spec["start_target"] not in PAD_LETTERS + ("random",):
         errs.append("start target must be a, b, c, d, e or random")
+    bottom = float(spec["banner"]["board_bottom_m"])
+    if not BOARD_BOTTOM_RANGE_M[0] <= bottom <= BOARD_BOTTOM_RANGE_M[1]:
+        errs.append(f"banner board bottom {bottom:g} m is outside "
+                    f"{BOARD_BOTTOM_RANGE_M[0]:g}-{BOARD_BOTTOM_RANGE_M[1]:g} m")
     for key in ("start_m", "target_m"):
         v = float(spec["qr"][key])
         if not 0.2 <= v <= 5.0:

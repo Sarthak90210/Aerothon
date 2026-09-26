@@ -553,6 +553,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self._seen_yaw = None
         self._recovery_origin = None
         self._banner_m = float("inf")  # nearest the banner has been measured
+        self._far_refused = False     # a far banner failed the lidar cross-check
         self._green = None            # best green_fix seen while sweeping
         self._green_prior = None      # the cut fix a gate-height look replaces
         self._probed = False          # that look has been had
@@ -1131,7 +1132,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             return self._accept_heading(self._target_yaw)
 
         if len(self.step_reports) >= len(self._offsets):
-            if self._far:
+            if self._far and not self._far_refused:
                 # Nothing nearer from here: the nearest far sighting is the
                 # best evidence of where the gate is. Face it; CENTRE and the
                 # lidar square-up then close the range.
@@ -1566,6 +1567,12 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                else float("inf"))
         if math.isfinite(cam) and fit["range_m"] < 0.5 * cam \
                 and cam - fit["range_m"] > 2.0:
+            # Nor is that banner a place to come back to, or a fallback: from
+            # here the way to it is blocked, and the gate this stage wants is
+            # the near one -- edge-on somewhere, which the green orbit finds.
+            self._far_refused = True
+            self._far = []
+            self._good_vantage = None
             return self._relocate(
                 f"the lidar face at {fit['range_m']:.1f} m is not the banner the "
                 f"camera ranges at ~{cam:.0f} m")

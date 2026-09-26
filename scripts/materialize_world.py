@@ -145,7 +145,8 @@ def green_decoy_visuals() -> str:
     ])
 
 
-def banner_geometry(wear: int = 0) -> str:
+def banner_geometry(wear: int = 0,
+                    bottom: float = world_spec.BOARD_BOTTOM_M) -> str:
     """The lettered panel, as both a visual and a SOLID.
 
     WHY THE COLLISION IS PART OF THE BANNER AND NOT AN AFTERTHOUGHT
@@ -165,7 +166,7 @@ def banner_geometry(wear: int = 0) -> str:
     rows = bitmap_runs(text)
     cols = len(rows[0])
     cell_y, cell_z = 3.25 / cols, 0.115
-    center_z = 3.38
+    center_z = bottom + 1.15 / 2
     green, white = worn(PRINT_GREEN, wear), worn(PRINT_WHITE, wear)
     visuals = [
         box_collision("banner_board_collision", f"0 0 {center_z}",
@@ -451,13 +452,18 @@ def main() -> None:
          if line.startswith(f"qr_target_{start_letter}.png")), "?")
     print(f"start pad names delivery target {start_letter.upper()} "
           f"({start_payload})")
+    bottom = (float(spec["banner"]["board_bottom_m"]) if spec
+              else world_spec.BOARD_BOTTOM_M)
+    post_h = max(4.0, bottom + 1.15)
     replacements = {
         "@QR_START_VISUALS@": qr_visuals(start_matrix, args.start_qr_size,
                                         "start_qr", cond["wear"]["qr"]),
         **{f"@QR_TARGET_{l.upper()}_VISUALS@": qr_visuals(
             matrices[f"qr_target_{l}.png"], args.target_qr_size, f"target_{l}",
             cond["wear"]["qr"]) for l in "abcde"},
-        "@AEROTHON_BANNER_GEOMETRY@": banner_geometry(cond["wear"]["banner"]),
+        "@AEROTHON_BANNER_GEOMETRY@": banner_geometry(cond["wear"]["banner"], bottom),
+        "@BANNER_POST_H@": f"{post_h:g}",
+        "@BANNER_POST_Z@": f"{post_h / 2:g}",
         "@GREEN_DECOY_VISUALS@": green_decoy_visuals(),
         "@RED_ZONE_MAIN_VISUALS@": red_zone_visuals(10.0, 7.0, "red_main"),
         "@RED_ZONE_NW_VISUALS@": red_zone_visuals(6.0, 4.0, "red_nw"),

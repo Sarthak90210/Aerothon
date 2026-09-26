@@ -124,7 +124,6 @@ RTL_ALT = 15.0
 # The banner gate (mission2.sdf, materialize_world.banner_geometry), in the
 # banner's own frame: board across y, posts either side.
 BOARD_W, BOARD_H, BOARD_T = 3.7, 1.15, 0.12
-BOARD_BOTTOM_M = 2.805
 POST_Y, POST_SIZE, POST_H = 1.92, 0.18, 4.0
 
 # Detector envelope (sim/test_perception_corruption.py, docs/QR_DECODE_ENVELOPE.md).
@@ -215,7 +214,7 @@ class Arena:
         lane = lambda c, obstacles: self._lane(c, obstacles, loc)  # noqa: E731
         lane(spec["corridor"], [])
         lane(spec["return_corridor"], W.obstacle_polygons(spec))
-        bottom = float((spec.get("banner") or {}).get("board_bottom_m", BOARD_BOTTOM_M))
+        bottom = float(spec["banner"]["board_bottom_m"])
         c, r = spec["corridor"], spec["return_corridor"]
         self.banners = [self._gate(loc((c["x"], c["y"])), math.radians(c["yaw_deg"]),
                                    bottom, "outbound"),

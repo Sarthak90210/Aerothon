@@ -313,9 +313,14 @@ class ValidationTests(unittest.TestCase):
         self.assertTrue([w for w in warns if "will stop in front of it" in w], warns)
 
     def test_an_obstacle_under_the_lidar_plane_but_in_the_way_is_refused(self):
-        """Live: a 3.2 m block under a 3.23 m scan plane, flown into at 3 m."""
+        """Live: a 3.2 m block under a 3.23 m scan plane, flown into at 3 m.
+        Under the shipped board the corridor is flown at ~2.1 m, so the
+        invisible band is now ~1.8-2.3 m, and it moves with the board."""
         s = W.default_spec()
-        s["return_corridor"]["obstacles"][2]["h"] = 3.2
+        s["return_corridor"]["obstacles"][2]["h"] = 2.0
+        self.assertRefused(s, "cannot see it")
+        s["banner"] = {"board_bottom_m": 3.6}
+        s["return_corridor"]["obstacles"][2]["h"] = 2.8
         self.assertRefused(s, "cannot see it")
 
     def test_overlapping_corridors_are_refused(self):

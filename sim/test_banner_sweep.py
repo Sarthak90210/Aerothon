@@ -1057,9 +1057,10 @@ class SquareOnWithTheLidarTests(unittest.TestCase):
 
     def test_a_face_nearer_than_the_banner_read_is_not_squared_on(self):
         """The return gate read down its lane, a structure 3 m ahead."""
-        mav, _, status = self._ranged(3.0)
+        mav, stage, status = self._ranged(3.0)
         self.assertIsNot(status, py_trees.common.Status.SUCCESS)
         self.assertIn("is not the banner", " ".join(m for m, _ in mav.logs))
+        self.assertTrue(stage._far_refused, "the far banner is still a fallback")
 
     def test_a_face_where_the_camera_ranges_the_banner_is(self):
         mav, _, status = self._ranged(1.3)          # oblique reads farther
