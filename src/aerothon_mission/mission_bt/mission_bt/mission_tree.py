@@ -4563,7 +4563,7 @@ class WinchDrop(py_trees.behaviour.Behaviour):
                  hfov_rad=1.0472, image_w_px=1280, image_h_px=720,
                  marker_m=2.2, max_offset_age_ticks=40, centre_tol_m=0.25,
                  settle_ticks=10, servo_timeout_ticks=150,
-                 payload_size_m=0.12, confirm_frames=5,
+                 payload_size_m=0.10, confirm_frames=5,
                  confirm_timeout_ticks=200, stow_timeout_ticks=300,
                  winch_reach_m=5.5):
         super().__init__("WinchDrop"); self.mav = mav
@@ -5347,7 +5347,8 @@ def build_root(mav, node, p):
                   hfov_rad=p.get('camera_hfov', 1.0472),
                   image_w_px=p.get('image_width_px', 1280),
                   image_h_px=p.get('image_height_px', 720),
-                  marker_m=p.get('target_marker_m', 2.2)),
+                  marker_m=p.get('target_marker_m', 2.2),
+                  payload_size_m=p.get('payload_size_m', 0.10)),
         # RULEBOOK: "After payload delivery, the UAS must ascend to 10-meter
         # altitude, navigate back through the corridor". Transiting the
         # delivery zone at corridor altitude was both a rule deviation and
@@ -5560,24 +5561,20 @@ def declare_mission_params(node):
     d('camera_hfov', 1.0472)
     d('target_marker_m', 2.2)      # competition size UNCONFIRMED; see
                                    # docs/QR_DECODE_ENVELOPE.md
-    d('qr_modules', 33)
     d('px_per_module_floor', 5.3)  # MEASURED in Phase 1
     d('lane_overlap', 0.30)
 
+    # --- payload: the drop's camera confirmation ------------------------ #
+    # The longest edge the nadir camera sees of the payload lying on the
+    # ground. Rulebook Figure 1: 10 x 5 x 5 cm. WinchDrop accepts a blob
+    # 0.4-2.5x the size this predicts at the release altitude.
+    d('payload_size_m', 0.10)
+
     # --- corridor / zone ------------------------------------------------ #
-    # zone_entry, zone_bounds and corridor_return_entry are GONE (audit A7, A8,
-    # A9): the zone is measured at the corridor mouth by ObserveZone and the
-    # way back in is the recorded exit, reversed. What is left is a safety
-    # inset and the rulebook corridor altitude.
-    d('zone_margin', 1.0)
-    d('fence_margin', 5.0)
-    # How far PAST the first observed window the search may push its frontier.
-    #
-    # This is not the arena's size -- the aircraft never assumes that. It is
-    # how far this airframe is willing to go looking on the available
-    # endurance, which is a property of the vehicle. The lidar decides where
-    # to stop; this decides when to give up.
-    d('search_budget_m', 60.0)
+    # The zone is the organiser's boundary (/mission/delivery_zone); the
+    # search keeps this far inside it. What is left besides is the redzone
+    # clearance and the rulebook corridor altitude.
+    d('zone_boundary_clearance', 1.0)
     d('redzone_clearance', 1.5)
     # CEILING on the lawnmower's ground speed. Under it the speed is what the
     # camera's look-ahead and measured frame rate allow (safe_search_speed).
@@ -5585,8 +5582,6 @@ def declare_mission_params(node):
     d('corridor_alt', 3.0)
 
     # --- tolerances (audit B3, C3) -------------------------------------- #
-    d('waypoint_tol', 0.8)
-    d('drop_tol', 0.5)
     d('scan_floor_alt', 2.0)
     # A FLOOR, not the commit altitude: PrecisionDescent raises it to the
     # altitude at which the marker still fits in frame (see min_track_altitude).
@@ -5638,16 +5633,13 @@ def declare_mission_params(node):
         'image_height_px': int(g('image_height_px')),
         'camera_hfov': float(g('camera_hfov')),
         'target_marker_m': float(g('target_marker_m')),
-        'qr_modules': int(g('qr_modules')),
         'px_per_module_floor': float(g('px_per_module_floor')),
         'lane_overlap': float(g('lane_overlap')),
-        'zone_margin': float(g('zone_margin')),
-        'fence_margin': float(g('fence_margin')),
-        'search_budget_m': float(g('search_budget_m')),
+        'payload_size_m': float(g('payload_size_m')),
+        'zone_boundary_clearance': float(g('zone_boundary_clearance')),
         'redzone_clearance': float(g('redzone_clearance')),
+        'search_speed_mps': float(g('search_speed_mps')),
         'corridor_alt': float(g('corridor_alt')),
-        'waypoint_tol': float(g('waypoint_tol')),
-        'drop_tol': float(g('drop_tol')),
         'scan_floor_alt': float(g('scan_floor_alt')),
         'land_commit_alt': float(g('land_commit_alt')),
         'banner_sweep_limit': float(g('banner_sweep_limit')),
@@ -5665,6 +5657,39 @@ def declare_mission_params(node):
     }
 
 
+# The GCS's name for each stage, by behaviour name. A leaf missing here
+# shows as IDLE mid-flight (sim/test_behavior_tree.py checks the tree).
+STATE_NAMES = {
+    "WaitForMissionStart": "WAITING", "SetModeArm": "ARMING",
+    "Takeoff": "TAKEOFF", "ScanStartQR": "START_QR",
+    "CameraNadirForQR": "CAMERA_NADIR", "CameraForwardForCorridor": "CAMERA_FWD",
+    "CameraNadirForSearch": "CAMERA_NADIR", "CameraForwardForReturn": "CAMERA_FWD",
+    "CameraNadirForLanding": "CAMERA_NADIR",
+    "CameraForwardForCorridor2": "CAMERA_FWD",
+    "CameraNadirForReturnTransit": "CAMERA_NADIR",
+    "CameraBannerSearch": "CAMERA_BANNER",
+    "CameraBannerReturn": "CAMERA_BANNER",
+    "AlignToBanner": "BANNER_ALIGN",
+    "Corridor": "CORRIDOR_NAV",
+    "RequireDeliveryZone": "PREFLIGHT", "UploadArenaFence": "PREFLIGHT",
+    "BackToScanAlt": "BANNER_ALIGN",
+    "EnterDeliveryZone": "ENTER_ZONE", "ClimbToSweep": "ENTER_ZONE",
+    "CenterOnTarget": "CENTER_TARGET", "DescendToDecode": "SEARCH_QR",
+    "ClimbForReturn": "RETURN_TRANSIT",
+    "ReturnToCorridorMouth": "RETURN_TRANSIT",
+    "DescendToReturnIdent": "RETURN_TRANSIT",
+    "FindReturnBanner": "RETURN_GATE_SEARCH",
+    "DuckUnderBoard": "GATE_CROSSING", "GateAdvance": "GATE_CROSSING",
+    "DescendToCorridorAlt": "GATE_CROSSING",
+    "DescendToReturnCorridor": "GATE_CROSSING",
+    "FindStartQR": "START_QR", "CenterStartQR": "START_QR",
+    "PrecisionDescent": "LAND",
+    "LawnmowerSearch": "SEARCH_QR", "WinchDrop": "WINCH_DROP",
+    "ReturnCorridor": "RETURN_CORRIDOR",
+    "GotoHome": "RETURN", "Land": "LAND", "StageAwareAbort": "ABORT",
+}
+
+
 def main():
     rclpy.init()
     node = Node("mission_bt")
@@ -5674,32 +5699,6 @@ def main():
     tree = py_trees.trees.BehaviourTree(build_root(mav, node, p))
     tree.setup(timeout=15.0)
     state_pub = node.create_publisher(String, "/mission/state", 10)
-    state_names = {
-        "WaitForMissionStart": "WAITING", "SetModeArm": "ARMING",
-        "Takeoff": "TAKEOFF", "ScanStartQR": "START_QR",
-        "CameraNadirForQR": "CAMERA_NADIR", "CameraForwardForCorridor": "CAMERA_FWD",
-        "CameraNadirForSearch": "CAMERA_NADIR", "CameraForwardForReturn": "CAMERA_FWD",
-        "CameraNadirForLanding": "CAMERA_NADIR",
-        "AlignToBanner": "BANNER_ALIGN",
-        "Corridor": "CORRIDOR_NAV",
-        "GotoZone": "ENTER_ZONE", "Climb10": "ENTER_ZONE",
-        "RequireDeliveryZone": "PREFLIGHT", "UploadArenaFence": "PREFLIGHT",
-        "BackToScanAlt": "BANNER_ALIGN",
-        "EnterDeliveryZone": "ENTER_ZONE", "ClimbToSweep": "ENTER_ZONE",
-        "CenterOnTarget": "CENTER_TARGET", "DescendToDecode": "SEARCH_QR",
-        "ClimbForReturn": "RETURN_TRANSIT",
-        "ReturnToCorridorMouth": "RETURN_TRANSIT",
-        "DescendToReturnIdent": "RETURN_TRANSIT",
-        "FindReturnBanner": "RETURN_GATE_SEARCH",
-        "DuckUnderBoard": "GATE_CROSSING", "GateAdvance": "GATE_CROSSING",
-        "DescendToCorridorAlt": "GATE_CROSSING",
-        "DescendToReturnCorridor": "GATE_CROSSING",
-        "FindStartQR": "START_QR", "CenterStartQR": "START_QR",
-        "PrecisionDescent": "LAND",
-        "LawnmowerSearch": "SEARCH_QR", "WinchDrop": "WINCH_DROP",
-        "ReturnToCorridor": "RETURN", "ReturnCorridor": "RETURN_CORRIDOR",
-        "GotoHome": "RETURN", "Land": "LAND", "StageAwareAbort": "ABORT",
-    }
     last_state = {"value": ""}
 
     def tick_tree():
@@ -5708,7 +5707,7 @@ def main():
         # response and setpoint timer in this node from being processed.
         tree.tick()
         tip = tree.tip()
-        state = state_names.get(tip.name if tip else "", "IDLE")
+        state = STATE_NAMES.get(tip.name if tip else "", "IDLE")
 
         # A failed mission sequence is terminal; latch it before anything else
         # so the memory Sequence cannot restart from the top on the next tick.

@@ -41,10 +41,10 @@ from mission_bt.mission_tree import (
 DEFAULT_PARAMS = {
     'takeoff_alt': 5.0, 'search_alt': 10.0, 'drop_alt': 5.0,
     'image_width_px': 1280, 'camera_hfov': 1.0472,
-    'target_marker_m': 2.2, 'qr_modules': 33,
+    'target_marker_m': 2.2,
     'px_per_module_floor': 5.3, 'lane_overlap': 0.30,
-    'zone_margin': 1.0, 'corridor_alt': 3.0,
-    'waypoint_tol': 0.8, 'drop_tol': 0.5, 'scan_floor_alt': 2.0,
+    'zone_boundary_clearance': 1.0, 'corridor_alt': 3.0,
+    'scan_floor_alt': 2.0,
 }
 
 
