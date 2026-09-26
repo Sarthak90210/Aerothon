@@ -4,11 +4,11 @@ Examples:
   # SITL + Gazebo (image/scan from sim bridge, launch RViz and SLAM):
   ros2 launch mission_bringup mission2.launch.py use_sim:=true rviz:=true slam:=true
 
-  # Real hardware (starts the LD06 and C270 drivers too; SLAM and RViz
-  # off, they are not part of the mission and cost the Pi 5 a core):
+  # Real hardware (starts the LD06 and C270 drivers too). use_sim:=false
+  # also defaults SLAM and RViz off (not part of the mission; they cost the
+  # Pi 5 a core) and the camera and winch backends to mavlink:
   ros2 launch mission_bringup mission2.launch.py use_sim:=false \
-       fcu_url:=/dev/ttyAMA0:921600 rviz:=false slam:=false \
-       camera_backend:=mavlink winch_backend:=mavlink \
+       fcu_url:=/dev/ttyAMA0:921600 \
        lidar_yaw_deg:=<measured> lidar_mirrored:=<measured>
 """
 import os
@@ -16,7 +16,8 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration
+from launch.substitutions import (Command, EnvironmentVariable,
+                                  LaunchConfiguration, PythonExpression)
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
 
@@ -33,6 +34,13 @@ def generate_launch_description():
     camera_hfov = ParameterValue(LaunchConfiguration('camera_hfov'), value_type=float)
     target_marker_m = ParameterValue(LaunchConfiguration('target_marker_m'),
                                      value_type=float)
+
+    # Defaults that follow use_sim: a real launch that forgets winch_backend
+    # or camera_backend must not drive the Gazebo joints while the aircraft's
+    # winch and tilt servo get nothing, nor start SLAM and RViz on the Pi.
+    in_sim = ["'", use_sim, "'.lower() in ('true', '1')"]
+    sim_or = lambda sim, real: PythonExpression(
+        [f"'{sim}' if "] + in_sim + [f" else '{real}'"])
 
     pkg_bringup = get_package_share_directory('mission_bringup')
     rviz_config_file = os.path.join(pkg_bringup, 'config', 'aerothon_slam.rviz')
@@ -65,17 +73,23 @@ def generate_launch_description():
         DeclareLaunchArgument('target_marker_m', default_value=EnvironmentVariable(
             'AEROTHON_TARGET_QR_M', default_value='2.2'),
             description='Delivery-pad QR edge length, m'),
-        DeclareLaunchArgument('rviz', default_value='true', description='Launch RViz 2 with SLAM/TF displays'),
-        DeclareLaunchArgument('slam', default_value='true', description='Launch async slam_toolbox 2D SLAM node'),
+        DeclareLaunchArgument('rviz', default_value=sim_or('true', 'false'),
+                              description='Launch RViz 2 with SLAM/TF displays '
+                                          '(default: use_sim)'),
+        DeclareLaunchArgument('slam', default_value=sim_or('true', 'false'),
+                              description='Launch async slam_toolbox 2D SLAM node '
+                                          '(default: use_sim)'),
         DeclareLaunchArgument('stream_rate_keeper', default_value='true',
                               description='Continuously re-assert MAVLink stream '
                                           'rates (SITL/MAVProxy workaround; see '
                                           'VERIFICATION.md 2.2)'),
-        DeclareLaunchArgument('winch_backend', default_value='gazebo',
+        DeclareLaunchArgument('winch_backend',
+                              default_value=sim_or('gazebo', 'mavlink'),
                               description='winch_ctrl backend: gazebo (the Iris '
                                           'winch joint and a detachable payload), '
                                           'sim (sequence only, nothing moves) or '
-                                          'mavlink (MAV_CMD_DO_WINCH)'),
+                                          'mavlink (MAV_CMD_DO_WINCH); default '
+                                          'gazebo in sim, mavlink on the aircraft'),
         # The flight sensors (use_sim:=false only). Mount yaw and direction
         # are measured with scripts/check_sensors.py.
         DeclareLaunchArgument('lidar_port', default_value='/dev/ttyUSB0'),
@@ -88,9 +102,11 @@ def generate_launch_description():
         # C270 runs to 60+ ms in shade, a 20 px smear at sweep speed; the QR
         # reader's envelope assumes 10 ms (sim/test_perception_corruption.py).
         DeclareLaunchArgument('camera_exposure', default_value='100'),
-        DeclareLaunchArgument('camera_backend', default_value='sim',
+        DeclareLaunchArgument('camera_backend',
+                              default_value=sim_or('sim', 'mavlink'),
                               description='camera_ctrl backend: sim (Gazebo joint) '
-                                          'or mavlink (MAV_CMD_DO_MOUNT_CONTROL)'),
+                                          'or mavlink (MAV_CMD_DO_MOUNT_CONTROL); '
+                                          'default follows use_sim'),
     ]
 
     # 1. Robot State Publisher (publishes TF tree and robot_description)
