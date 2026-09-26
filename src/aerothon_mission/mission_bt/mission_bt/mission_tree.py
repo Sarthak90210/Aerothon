@@ -3917,6 +3917,15 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
            is still where the gate is. As soon as a sweep has seen green that
            is not the outbound gate or corridor, the next vantage points are
            an orbit round it (banner_orbit.py), before the perimeter walk.
+
+    RED GROUND ON THE WAY. Perimeter legs and the approach to a stand-off
+    cross delivery-zone ground the sweep may never have looked at -- it ends
+    at the first match. They are flown at `transit_alt` with the camera nadir,
+    so the red-zone detector maps what is below, and the aircraft comes down
+    to look only at the vantage, still looking down, so red under the point
+    it lowers onto is confirmed before it is low. Flown at look altitude
+    with the camera level, the split-corridor arena's search crossed unmapped
+    red zones five times (sim/fly_headless.py).
     """
 
     def __init__(self, mav, alt=5.0, clock=None, hfov_rad=1.0472,
@@ -3928,10 +3937,14 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                  yaw_tol_rad=math.radians(10.0), turn_timeout_s=8.0,
                  orbit_step_rad=math.radians(45.0), orbit_vantages=7,
                  orbit_min_radius_m=5.0, fence_margin_m=2.0,
-                 orbit_alt_m=3.0, zone_side_m=3.0):
+                 orbit_alt_m=3.0, zone_side_m=3.0, transit_alt=10.0,
+                 look_pose="BANNER", camera_timeout_s=6.0):
         super().__init__("FindReturnBanner")
         self.mav = mav
         self.alt = float(alt)
+        self.transit_alt = float(transit_alt)
+        self.look_pose = look_pose
+        self.camera_timeout_s = float(camera_timeout_s)
         self.clock = clock or time.monotonic
         self.hfov = float(hfov_rad)
         self.focal_px = 0.5 * float(image_width_px) / math.tan(self.hfov / 2.0)
@@ -3988,6 +4001,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self._entry_speed = getattr(self.mav, "speed_cmd", None) or 10.0
         self._leg_speed = self._entry_speed
         self._cur_alt = self.alt
+        self._high = False           # this leg flown at transit_alt, nadir
+        self._then = "sweep"         # what the lowering at its end leads to
         self._behind = 0             # sightings refused as the board's back
         self._begin_heading()
 
@@ -4090,6 +4105,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self.target = (v["at"][0], v["at"][1], v["face"])
         self._legs = list(v["path"][:-1])
         self._guard_leg = True
+        self._high = False
         self._set_leg_speed(self.guard_speed_mps)
         self.headings = [v["face"], self._wrap(v["face"] - self.step),
                          self._wrap(v["face"] + self.step)]
@@ -4116,10 +4132,23 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         fan = [0, 1, -1, 2, -2, 3, -3]
         self.headings = [self._wrap(out + k * self.step) for k in fan]
         self.hi = 0
+        self._go_high("sweep")
         self.phase = "transit"
         self.router.reset()
         self._begin_heading()
         return True
+
+    def _go_high(self, then):
+        """Fly the next leg at transit altitude, camera down; lower at its end
+        and go on to `then`."""
+        self._high, self._then = True, then
+        self._cur_alt = self.alt
+        self._camera("NADIR")
+
+    def _camera(self, pose):
+        fn = getattr(self.mav, "set_camera_pose", None)
+        if callable(fn):
+            fn(pose)
 
     # ---- sighting -----------------------------------------------------------
     def _sighting(self):
@@ -4160,7 +4189,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                         self.mav.log("FindReturnBanner: lettering read on the "
                                      "way round the orbit")
                         return done
-            st = self.router.fly(self.mav, gx, gy, self._cur_alt, self.headings[0])
+            fly_alt = self.transit_alt if self._high else self._cur_alt
+            st = self.router.fly(self.mav, gx, gy, fly_alt, self.headings[0])
             if st is ARRIVED and self._legs:
                 self._legs.pop(0)                   # the next arc waypoint
                 self.router.reset()
@@ -4174,8 +4204,29 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                 return py_trees.common.Status.RUNNING
             if st is ARRIVED:
                 self.here = (vx, vy)
-                self.phase = "sweep"
+                self.phase = "lower" if self._high else "sweep"
                 self._begin_heading()
+            return py_trees.common.Status.RUNNING
+
+        if self.phase == "lower":
+            # Straight down onto ground the nadir camera has just seen, then
+            # the camera back up to look for the gate.
+            self.mav.goto(self.here[0], self.here[1], self._cur_alt, self.headings[0])
+            if abs(self.mav.alt() - self._cur_alt) > 0.3:
+                return py_trees.common.Status.RUNNING
+            now = self.clock()
+            if self._since is None:
+                self._since = now
+                self._camera(self.look_pose)
+            settled = getattr(self.mav, "camera_settled", None)
+            if (callable(settled) and not settled(self.look_pose)
+                    and now - self._since < self.camera_timeout_s):
+                return py_trees.common.Status.RUNNING
+            self._high = False
+            if self._then == "done":
+                return py_trees.common.Status.SUCCESS
+            self.phase = "sweep"
+            self._begin_heading()
             return py_trees.common.Status.RUNNING
 
         if self.phase == "sweep":
@@ -4216,15 +4267,26 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
 
         if self.phase == "approach":
             ax, ay, th = self.target
-            st = self.router.fly(self.mav, ax, ay, self._cur_alt, th)
+            fly_alt = self.transit_alt if self._high else self._cur_alt
+            st = self.router.fly(self.mav, ax, ay, fly_alt, th)
             if st is BLOCKED:
                 # The stand-off is on red ground or cannot be routed: square
                 # up from where the banner was seen instead.
                 self.mav.log(f"FindReturnBanner: stand-off unreachable "
                              f"({self.router.blocked_reason}); aligning from "
                              f"here", warn=True)
+                if self._high:
+                    self.here = self.mav.pos()[:2]
+                    self.phase = "lower"
+                    self._begin_heading()
+                    return py_trees.common.Status.RUNNING
                 return py_trees.common.Status.SUCCESS
             if st is ARRIVED:
+                if self._high:
+                    self.here = (ax, ay)
+                    self.phase = "lower"
+                    self._begin_heading()
+                    return py_trees.common.Status.RUNNING
                 return py_trees.common.Status.SUCCESS
             return py_trees.common.Status.RUNNING
         return py_trees.common.Status.RUNNING
@@ -4248,6 +4310,11 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             return None
         self.target = (ax, ay, th)
         self.phase = "approach"
+        self.headings = [th]
+        # A stand-off more than a few metres off is over ground the camera
+        # has not looked down at: go there high, as for a vantage.
+        if math.dist((x, y), (ax, ay)) > 3.0 and not self._guard_leg:
+            self._go_high("done")
         self.router.reset()
         where = ("from an orbit vantage" if self._guard_leg else
                  "here" if self.vi < 0 else
@@ -5094,6 +5161,7 @@ def build_root(mav, node, p):
         # stand-off on the first look; anywhere else, the aircraft searches
         # the zone's edge for it. See FindReturnBanner.
         FindReturnBanner(mav, alt=p['takeoff_alt'], clock=clock,
+                         transit_alt=p['search_alt'],
                          hfov_rad=p.get('camera_hfov', 1.0472),
                          image_width_px=p.get('image_width_px', 1280),
                          near_range_m=0.8 * p.get('lidar_range_m', 12.0),

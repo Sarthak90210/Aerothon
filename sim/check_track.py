@@ -118,8 +118,11 @@ def traversal(track, layout, start_i, outbound):
     enter_u, leave_u = 0.5, L - 0.5
     i, prev = start_i, None
     while i < len(track):
-        u, _ = to_lane(track[i], layout, lane)
-        if prev is not None and prev < enter_u <= u:
+        u, v = to_lane(track[i], layout, lane)
+        # Through the MOUTH: crossing the entry line anywhere along its
+        # infinite length -- a search lane at 10 m, 6.6 m to one side -- is
+        # not entering the corridor (editor_test, sim/fly_headless.py).
+        if prev is not None and prev < enter_u <= u and abs(v) <= W:
             break
         prev = u
         i += 1

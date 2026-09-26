@@ -483,6 +483,68 @@ def _lane_inset(c, m):
             ((-0.1 + m, -h), (L + 0.1 - m, -h), (L + 0.1 - m, h), (-0.1 + m, h))]
 
 
+TEAM_AIRFRAME_R_M = 0.36     # hub 0.242 m from centre + 0.12 m prop radius
+NAVIGATOR_HALF_STRIP_M = 0.7  # velocity_controller passage_half_width
+
+
+def lane_bottleneck(c, cell_m=0.05):
+    """The widest clearance any path through a lane keeps, in metres.
+
+    Obstacle by obstacle, every gap can be wide enough and the lane still be
+    closed: two blocks on opposite sides 1.2 m apart along the lane leave a
+    slot the airframe cannot turn through. So the lane is rasterised, every
+    cell given its distance to the nearest wall or obstacle, and the answer is
+    the best, over all paths from the banner end to the far end, of the
+    smallest clearance on the path (a maximin path: cells joined in order of
+    falling clearance until the two ends connect).
+    """
+    L, Wd = float(c["length"]), float(c["width"])
+    nu, nv = int(L / cell_m), int(Wd / cell_m)
+    polys = []
+    for o in c.get("obstacles") or []:
+        yaw = math.radians(o.get("yaw_deg", 0.0))
+        polys.append(rect_corners(float(o["u"]), float(o["v"]), float(o["w"]),
+                                  float(o["d"]), yaw))
+    clear = []
+    for i in range(nu):
+        u = (i + 0.5) * cell_m
+        row = []
+        for j in range(nv):
+            v = -Wd / 2 + (j + 0.5) * cell_m
+            d = Wd / 2 - abs(v)
+            for poly in polys:
+                d = 0.0 if point_in_polygon((u, v), poly) else \
+                    min(d, distance_to_edge((u, v), poly))
+            row.append(d)
+        clear.append(row)
+    parent = list(range(nu * nv + 2))
+    START, END = nu * nv, nu * nv + 1
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    order = sorted(((clear[i][j], i, j) for i in range(nu) for j in range(nv)),
+                   reverse=True)
+    seen = set()
+    for d, i, j in order:
+        k = i * nv + j
+        seen.add(k)
+        links = [START] if i == 0 else []
+        links += [END] if i == nu - 1 else []
+        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            ii, jj = i + di, j + dj
+            if 0 <= ii < nu and 0 <= jj < nv and ii * nv + jj in seen:
+                links.append(ii * nv + jj)
+        for other in links:
+            parent[find(k)] = find(other)
+        if find(START) == find(END):
+            return d
+    return 0.0
+
+
 def _check_obstacles(spec, errs, warns):
     """Every obstacle inside its lane, and every one leaving a way past."""
     r = spec["return_corridor"]
@@ -529,6 +591,20 @@ def _check_obstacles(spec, errs, warns):
         elif h <= belly:
             warns.append(f"obstacle {i} is {h:g} m tall; the corridor is flown "
                          f"at {CORRIDOR_ALT_M:g} m, so the aircraft passes over it")
+    if r.get("obstacles") and not errs:
+        room = lane_bottleneck(r)
+        if room < TEAM_AIRFRAME_R_M + 0.05:
+            errs.append(f"the return corridor has no way through: the widest "
+                        f"path keeps {room:.2f} m from every wall and obstacle, "
+                        f"and the airframe needs {TEAM_AIRFRAME_R_M:.2f} m plus "
+                        f"flying margin -- the obstacles close it between them "
+                        f"even where each leaves a gap on its own")
+        elif room < NAVIGATOR_HALF_STRIP_M:
+            warns.append(f"the return corridor's tightest passage keeps "
+                         f"{room:.2f} m either side of the path; the corridor "
+                         f"navigator needs {NAVIGATOR_HALF_STRIP_M:.2f} m "
+                         f"(velocity_controller passage_half_width) and will "
+                         f"stop in front of it")
 
 def validate(spec):
     """(errors, warnings). An error is a world the mission cannot legally fly

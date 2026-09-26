@@ -126,7 +126,16 @@ def main():
     ap.add_argument("--max-sim-s", type=float, default=1200.0)
     ap.add_argument("--out", type=Path, default=ROOT / "logs" / "headless")
     args = ap.parse_args()
-    runs = [(s, n) for s in args.specs for n in seeds(args.seeds)]
+    specs = []
+    for path in args.specs:
+        errs, warns = W.validate(W.load(path))
+        for w in warns:
+            print(f"{path.stem}: warning: {w}")
+        if errs:
+            print(f"{path.stem}: REFUSED: " + "; ".join(errs))
+        else:
+            specs.append(path)
+    runs = [(s, n) for s in specs for n in seeds(args.seeds)]
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(
             lambda iv: fly(iv[1][0], args.conditions, iv[1][1], args.out, args.rtf,

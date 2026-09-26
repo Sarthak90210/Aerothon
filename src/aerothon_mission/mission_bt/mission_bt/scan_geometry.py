@@ -230,6 +230,18 @@ def fit_surface(angle_min, angle_increment, ranges, bearing_rad,
     if len(inliers) >= len(chosen):
         chosen = inliers
     _, direction, normal, offset, rms = _fit_line(chosen)
+    if rms > max_residual_m:
+        # A face with something standing against it -- a post, the stub of
+        # a lane wall running away from the board -- is one continuous run
+        # of returns in the shape of an L, and no single line fits an L.
+        # Seen 53 deg off the return gate in my_world (sim/fly_headless.py)
+        # the board and its lane's wall end came back as one cluster, 29 cm
+        # off any line, from every vantage. The face being asked about is
+        # the straight run through the return the camera looks along.
+        along = _line_through_bearing(sector, bearing_rad, inlier_m=max_residual_m)
+        if along is not None:
+            chosen = along
+            _, direction, normal, offset, rms = _fit_line(chosen)
 
     span = _extent(chosen)
     if len(chosen) < min_points:
@@ -284,6 +296,33 @@ def fit_surface(angle_min, angle_increment, ranges, bearing_rad,
             "residual_m": rms,
             "extent_m": span,
             "reason": ""}
+
+
+def _line_through_bearing(points, bearing_rad, inlier_m, min_len_m=0.5):
+    """The longest straight run of `points` through the one nearest the
+    bearing, or None.
+
+    Candidate lines are drawn through that anchor and every other return at
+    least `min_len_m` from it; the one with the most returns within
+    `inlier_m` wins. Anchoring on the bearing is what makes it the surface
+    the camera identified rather than whichever straight thing in the sector
+    happens to be longest.
+    """
+    if len(points) < 3:
+        return None
+    anchor = min(points, key=lambda p: abs(_wrap(math.atan2(p[1], p[0]) - bearing_rad)))
+    best = None
+    for q in points:
+        dx, dy = q[0] - anchor[0], q[1] - anchor[1]
+        length = math.hypot(dx, dy)
+        if length < min_len_m:
+            continue
+        nx, ny = -dy / length, dx / length
+        c = nx * anchor[0] + ny * anchor[1]
+        inliers = [p for p in points if abs(nx * p[0] + ny * p[1] - c) <= inlier_m]
+        if best is None or len(inliers) > len(best):
+            best = inliers
+    return best
 
 
 def gate_opening(angle_min, angle_increment, ranges, bearing_rad,

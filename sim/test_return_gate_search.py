@@ -37,10 +37,15 @@ class World(FakeMav):
         self.corridor_exit_pose = (12.0, 2.0, 3.0, 0.0)
         self.banner_board_area = 0.0
         self.path = []
+        self.camera_poses = []
+
+    def set_camera_pose(self, pose):
+        self.camera_poses.append(pose)
 
     def goto(self, x, y, z, yaw=0.0):
         self.gotos.append((x, y, z, yaw))
         self._pos = (x, y, z)
+        self._alt = z
         self._yaw = yaw
         self.path.append((x, y))
         self._look()
@@ -132,6 +137,24 @@ class ReturnGateSearchTests(unittest.TestCase):
                     zone=(14.0, 16.0, -3.0, -1.0))
         leaf, st = run(mav)
         self.assertEqual(st, py_trees.common.Status.FAILURE)
+
+    def test_ground_the_sweep_never_saw_is_crossed_high_and_looking_down(self):
+        """Perimeter legs cross zone ground the delivery sweep may never have
+        mapped (it stops at the match). At look altitude with the camera
+        level, the split-corridor arena crossed unmapped red zones five
+        times: the legs are flown at transit altitude, camera nadir, and the
+        camera comes back up only once lowered onto the vantage."""
+        mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))
+        leaf, st = run(mav)
+        self.assertEqual(st, py_trees.common.Status.SUCCESS)
+        moves = [(x, y, z) for x, y, z, _ in mav.gotos]
+        # A step of more than 3 m is a leg across ground; within that the
+        # camera already has the stand-off in view.
+        legs = [z for (x0, y0, _), (x, y, z) in zip(moves, moves[1:])
+                if math.hypot(x - x0, y - y0) > 3.0]
+        self.assertTrue(legs)
+        self.assertTrue(all(z == leaf.transit_alt for z in legs), legs)
+        self.assertEqual(mav.camera_poses[:2], ["NADIR", "BANNER"])
 
     def test_it_never_flies_outside_the_zone_edge_it_searches(self):
         mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))

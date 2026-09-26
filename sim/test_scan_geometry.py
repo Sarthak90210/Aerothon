@@ -353,6 +353,21 @@ class TwoSurfacesTests(unittest.TestCase):
         self.assertAlmostEqual(math.degrees(f["angle_rad"]), 0.0, delta=2.0)
 
 
+    def test_a_wall_TOUCHING_the_face_does_not_hide_it(self):
+        """An L: the board, and its lane's wall leaving the board's near end
+        and running back behind it -- one continuous run of returns. This is
+        the my_world return gate as the aircraft saw it (aircraft frame,
+        sim/fly_headless.py): no single line fitted it, from any vantage,
+        and the mission gave up on a banner the camera had identified 25
+        times out of 25."""
+        board = ((2.18, -0.87), (5.44, 0.87))
+        near_wall = ((2.18, -0.76), (6.98, -9.76))
+        far_wall = ((5.35, 0.94), (10.15, -8.06))
+        f = fit(scan_of([board, near_wall, far_wall]))
+        self.assertTrue(f["ok"], f["reason"])
+        self.assertAlmostEqual(math.degrees(f["angle_rad"]), -61.9, delta=2.0)
+
+
 # --------------------------------------------------------------------------- #
 class BearingConversionTests(unittest.TestCase):
     """A camera bearing is a fraction of the half-FOV, not an angle."""
