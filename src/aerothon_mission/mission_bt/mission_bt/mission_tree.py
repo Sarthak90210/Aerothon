@@ -361,6 +361,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self.focal_px = (0.5 * float(image_width_px)
                          / math.tan(0.5 * float(hfov_rad)))
         self.banner_area_m2 = float(banner_w_m) * float(banner_h_m)
+        self.banner_h_m = float(banner_h_m)
         self.near_range_m = float(near_range_frac) * float(lidar_range_m)
         # GREEN FARTHER THAN THIS IS NOT A LEAD ON THE NEAR GATE. On my_world
         # a target pad in the delivery zone, ranged 25 m on ground contact,
@@ -1097,7 +1098,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         seen = self.mav.banner_identified()      # ONE reading per sample
         if not seen:
             f = green_fix(self.mav, self.hfov,
-                          exclude=outbound_structure(self.mav))
+                          exclude=outbound_structure(self.mav),
+                          board_h_m=self.banner_h_m)
             if (f is not None and f["range"] <= self.max_green_m
                     and better_green(f, self._green)):
                 self._green = f
@@ -4079,6 +4081,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self.hfov = float(hfov_rad)
         self.focal_px = 0.5 * float(image_width_px) / math.tan(self.hfov / 2.0)
         self.banner_area_m2 = float(banner_w_m) * float(banner_h_m)
+        self.banner_h_m = float(banner_h_m)
         self.near_range_m = float(near_range_m)
         # How far a READ banner is taken as the return gate. The lidar's
         # near range is the wrong limit for a camera sighting: the lettering
@@ -4426,7 +4429,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             elif not self.mav.banner_identified():
                 f = green_fix(self.mav, self.hfov,
                               exclude=outbound_structure(self.mav),
-                              exclude_m=self.exclude_radius_m)
+                              exclude_m=self.exclude_radius_m,
+                              board_h_m=self.banner_h_m)
                 if f is not None and better_green(f, self._green):
                     self._green = f
             if now - self._since >= self.dwell_s:
@@ -5291,6 +5295,8 @@ def build_root(mav, node, p):
                                            math.radians(5.0)),
                       lidar_range_m=p.get('lidar_range_m', 12.0),
                       min_standoff_m=p.get('min_standoff_m', 3.3),
+                      banner_w_m=p.get('banner_w_m', 3.7),
+                      banner_h_m=p.get('banner_h_m', 1.15),
                       # The lidar sweeps ONE horizontal plane, and from the
                       # scan altitude that plane can clear the gate entirely
                       # -- 0 finite returns of 720, measured. The stage may
@@ -5402,6 +5408,8 @@ def build_root(mav, node, p):
                          image_width_px=p.get('image_width_px', 1280),
                          near_range_m=0.8 * p.get('lidar_range_m', 12.0),
                          clearance_m=p.get('redzone_clearance', 1.5),
+                         banner_w_m=p.get('banner_w_m', 3.7),
+                         banner_h_m=p.get('banner_h_m', 1.15),
                          orbit_alt_m=p['corridor_alt']),
         AlignToBanner(mav, clock=clock,
                       image_width_px=p.get('image_width_px', 1280),
@@ -5415,6 +5423,8 @@ def build_root(mav, node, p):
                                            math.radians(5.0)),
                       lidar_range_m=p.get('lidar_range_m', 12.0),
                       min_standoff_m=p.get('min_standoff_m', 3.3),
+                      banner_w_m=p.get('banner_w_m', 3.7),
+                      banner_h_m=p.get('banner_h_m', 1.15),
                       # The lidar sweeps ONE horizontal plane, and from the
                       # scan altitude that plane can clear the gate entirely
                       # -- 0 finite returns of 720, measured. The stage may
@@ -5607,6 +5617,11 @@ def declare_mission_params(node):
     # DuckUnderBoard's 35 deg sector and the gap cannot be measured; a gust
     # moves the aircraft half a metre while it drops to look.
     d('min_standoff_m', 3.3)
+    # The corridor banner's board. Its range is estimated from its area in
+    # pixels, so it has to be the real banner's; the rulebook gives no
+    # size and these are the simulated board's.
+    d('banner_w_m', 3.7)
+    d('banner_h_m', 1.15)
     # The corridor's geometry, not a position in the arena: the return lane's
     # centreline relative to the outbound lane's, port-positive facing out of
     # the corridor. Measure it on the real corridor.
@@ -5649,6 +5664,8 @@ def declare_mission_params(node):
         'square_tol_rad': math.radians(float(g('square_tol_deg'))),
         'lidar_range_m': float(g('lidar_range_m')),
         'min_standoff_m': float(g('min_standoff_m')),
+        'banner_w_m': float(g('banner_w_m')),
+        'banner_h_m': float(g('banner_h_m')),
         'return_lane_offset_m': float(g('return_lane_offset_m')),
         'qr_hover_s': float(g('qr_hover_s')),
         'sweep_hover_s': float(g('sweep_hover_s')),

@@ -49,5 +49,30 @@ class LaunchDefaultsTests(unittest.TestCase):
             "winch_backend": "gazebo", "camera_backend": "sim"})
 
 
+class VenueFileTests(unittest.TestCase):
+    """Every venue.yaml key is a parameter its node declares: a misspelt one
+    is silently ignored, and the node flies on its default."""
+
+    NODES = {
+        "mission_bt": "src/aerothon_mission/mission_bt/mission_bt/mission_tree.py",
+        "winch_ctrl": "src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py",
+        "perception_payload": ("src/aerothon_perception/perception_redzone/"
+                               "perception_redzone/payload_node.py"),
+    }
+
+    def test_every_key_is_declared(self):
+        import re
+        import yaml
+        root = LAUNCH.parents[4]
+        venue = yaml.safe_load((LAUNCH.parents[1] / "config/venue.yaml").read_text())
+        self.assertEqual(set(venue), set(self.NODES))
+        for node, src in self.NODES.items():
+            text = (root / src).read_text()
+            declared = set(re.findall(
+                r"""(?:\bd|\bp|declare_parameter)\(\s*["'](\w+)["']""", text))
+            keys = set(venue[node]["ros__parameters"])
+            self.assertEqual(sorted(keys - declared), [], node)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -42,7 +42,7 @@ What the worst campaign found and fixed is in the git history under
 
 ## 2. Bench checks (props OFF)
 
-1. **Software.** On the Pi 5, set up [SETUP.md](SETUP.md) §2, including the
+1. **Software.** On the Pi 5, set up [SETUP.md](SETUP.md) §2a, including the
    perception line: `tesseract-ocr libzbar0 python3-pyzbar`. Without
    tesseract the banner is never identified. Without zbar every QR goes
    through the slower OpenCV path, and `qr_node` warns at start-up. Also
@@ -85,6 +85,17 @@ What the worst campaign found and fixed is in the git history under
    it.
 6. **Winch.** Run a full drop and retract on the bench with the real 100 g
    payload, 10×5×5 cm. Check that the hook releases on touchdown.
+   Nothing reads the line length back (PWM winch, no encoder): `winch_ctrl`
+   integrates it from `payout_rate_mps` and `stow_rate_mps`. Time a known
+   length each way and set both in
+   `src/aerothon_mission/mission_bringup/config/venue.yaml`. If the winch
+   is slower than the setting, the payload is declared down while it still
+   hangs, the gravity hook never opens, and it is reeled back up.
+   The drop only counts once the nadir camera sees the payload on the
+   ground. It looks for saturated yellow. Paint or wrap the payload yellow,
+   or set `hsv_lo` / `hsv_hi` in `venue.yaml` to its colour. Check it with
+   the payload on the ground under the hovering aircraft:
+   `ros2 topic echo /percep/payload` must show `visible: true`.
 7. **CPU budget.** Run `python3 scripts/bench_perception.py` on the Pi 5
    with the stack stopped. On a 2.1 GHz Xeon core, the NADIR set (QR on
    bare grass, the red-zone mask and the payload finder) came to 47 ms
@@ -171,3 +182,6 @@ Stop and investigate on any of these:
 - **Sensor launch arguments.** `lidar_yaw_deg`, `lidar_mirrored`,
   `camera_exposure` and `target_marker_m` are set to the day's measured
   values.
+- **Venue file.** `mission_bringup/config/venue.yaml` holds the real
+  banner size, return-lane offset, payload size and colour, and the
+  timed winch rates. It ships with the simulator's values.

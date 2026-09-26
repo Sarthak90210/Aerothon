@@ -44,6 +44,7 @@ def generate_launch_description():
 
     pkg_bringup = get_package_share_directory('mission_bringup')
     rviz_config_file = os.path.join(pkg_bringup, 'config', 'aerothon_slam.rviz')
+    params_file = LaunchConfiguration('params_file')
 
     # URDF Robot description for RViz & TF
     pkg_desc = get_package_share_directory('uav_description')
@@ -73,6 +74,12 @@ def generate_launch_description():
         DeclareLaunchArgument('target_marker_m', default_value=EnvironmentVariable(
             'AEROTHON_TARGET_QR_M', default_value='2.2'),
             description='Delivery-pad QR edge length, m'),
+        # What the rulebook leaves to the venue: banner and payload size, the
+        # return lane's offset, the winch's rates, the payload's colour.
+        DeclareLaunchArgument('params_file', default_value=os.path.join(
+            pkg_bringup, 'config', 'venue.yaml'),
+            description='Venue/airframe parameters for mission_bt, winch_ctrl '
+                        'and perception_payload'),
         DeclareLaunchArgument('rviz', default_value=sim_or('true', 'false'),
                               description='Launch RViz 2 with SLAM/TF displays '
                                           '(default: use_sim)'),
@@ -155,7 +162,8 @@ def generate_launch_description():
     # with the camera instead of trusting the winch's own "released" flag.
     payload = Node(
         package='perception_redzone', executable='payload_node', output='screen',
-        parameters=[{'image_topic': image_topic, 'use_sim_time': use_sim}],
+        parameters=[params_file,
+                    {'image_topic': image_topic, 'use_sim_time': use_sim}],
     )
 
     # 3a. Hold MAVLink stream rates where the guidance loop needs them.
@@ -204,7 +212,8 @@ def generate_launch_description():
     # and zero subscribers, and WinchDrop "delivered" on a fixed timer.
     winch = Node(
         package='winch_ctrl', executable='winch_node', output='screen',
-        parameters=[{'backend': LaunchConfiguration('winch_backend'),
+        parameters=[params_file,
+                    {'backend': LaunchConfiguration('winch_backend'),
                      'use_sim_time': use_sim}],
     )
 
@@ -249,7 +258,8 @@ def generate_launch_description():
     # 5. Autonomous Behavior Tree Mission Executive
     mission = Node(
         package='mission_bt', executable='mission_tree', output='screen',
-        parameters=[{'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
+        parameters=[params_file,
+                    {'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
                      'target_marker_m': target_marker_m}],
     )
 
