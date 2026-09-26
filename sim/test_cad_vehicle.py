@@ -4,8 +4,8 @@
 What is checked is what the physics and the perception stack depend on, not
 the mesh: rotors at the CAD motor hubs in ArduPilot's quad-X order and spin,
 thrust scaled to the flown prop, the LD06 and C270 at their CAD mounts with
-their own specs, the lidar blind to the props, the hook where a payload clears
-the ground, and the TF tree (uav.urdf.xacro) agreeing with the Gazebo model.
+their own specs, the lidar blind to the props, the claw where the CAD
+draws it, and the TF tree (uav.urdf.xacro) agreeing with the Gazebo model.
 
     source /opt/ros/jazzy/setup.bash
     python3 -m pytest sim/test_cad_vehicle.py -v
@@ -129,10 +129,20 @@ class CadVehicleTests(unittest.TestCase):
         self.assertGreaterEqual(float(ctl.find("p_gain").text), 40)
         self.assertGreaterEqual(float(ctl.find("i_gain").text), 4)
 
-    def test_the_payload_clears_the_ground_on_the_hook(self):
-        hook_z = self.link_pose("winch_hook")[2]
-        payload_bottom = hook_z - 0.012 - 0.08
-        self.assertGreater(payload_bottom, self.af["gear_bottom_z"] + 0.005)
+    def test_the_claw_is_where_the_cad_draws_it(self):
+        """The line holds the claw's top pin and the payload hangs from its
+        jaws. (The hook used to be a point placed 3.3 cm above the CAD's, so
+        that a payload on it cleared the ground; on the drawn claw the
+        rulebook payload hangs below the skids -- see sim/winch_bench.py.)"""
+        claw = self.af["claw"]
+        for link, pin in (("winch_hook", "top_pin"), ("claw_pivot", "centre_pin"),
+                          ("claw_link_a", "top_pin"), ("claw_jaw_a", "centre_pin")):
+            for a, b in zip(self.link_pose(link)[:3], claw[pin]):
+                self.assertAlmostEqual(a, b, places=4, msg=link)
+        dj = next(p for p in self.model.findall("plugin")
+                  if "DetachableJoint" in p.get("name", ""))
+        self.assertEqual(dj.findtext("parent_link"), "claw_pivot")
+        self.assertTrue(dj.findtext("attach_topic"))
 
     def test_the_tf_tree_agrees_with_the_gazebo_model(self):
         xacro = ROOT / "src/aerothon_mission/uav_description/urdf/uav.urdf.xacro"

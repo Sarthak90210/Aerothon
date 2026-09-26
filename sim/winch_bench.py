@@ -1,34 +1,39 @@
 #!/usr/bin/env python3
 """Winch bench in Gazebo: the airframe held at the drop height, one drop, filmed.
 
-    python3 sim/winch_bench.py                   # 5 m, rulebook payload
+    python3 sim/winch_bench.py                     # 5 m, the claw as drawn
+    python3 sim/winch_bench.py --claw latch        # a claw that stays open
     python3 sim/winch_bench.py --alt 5.5 --out /tmp/wb
 
-The team airframe is welded to the world at --alt (no flight controller:
-this isolates the winch), the rulebook's 10 x 5 x 5 cm, 100 g payload hangs
-on the hook, and the REAL winch_ctrl (backend:=gazebo, gravity hook) runs
-lower -> release -> stow while three cameras record:
+The team airframe is welded to the world at --alt (no flight controller: only
+the winch is under test). Its dropping mechanism is the CAD's: the spool on
+the motor's axle and the scissor claw on the line (sim_gazebo/claw.py). The
+rulebook payload (10 x 5 x 5 cm, 100 g) hangs from the claw's jaws by an
+eyelet. The REAL winch_ctrl (backend:=gazebo, gravity hook) runs
+lower -> release -> stow, and four cameras record in step, at sim-time speed:
 
-    close   at the touchdown point, low, looking at the payload landing
-    wide    from the side, the whole drop from the airframe to the ground
-    nadir   the drone's own C270, tilted straight down: what the mission sees
+    claw        16 cm from the claw, side on, where it lands on the payload
+    mechanism   the housing, spool and claw under the airframe
+    wide        the whole drop from the side
+    nadir       the drone's own C270 looking straight down: what the mission sees
 
-The line is drawn onto the close and wide views from the winch joint's
-position in Gazebo (the sim's line is a rigid prismatic joint with no
-visual). Each frame is captioned with sim time, the winch state, the line
-paid out, whether the hook has let go and the payload's height; the videos
-run at sim-time speed, the three in step. Outputs in --out: drop.mp4 (the
-three side by side), close.mp4, wide.mp4, nadir.mp4, events.txt and
-timeline.csv.
+THE CLAW. Gazebo cannot hold a closed linkage, so this bench plays the claw's
+mechanics: while the payload hangs, the line is taut and the claw shut; once
+the payload rests, line paid out beyond that is slack, the top pin comes down
+toward the jaws and they open by the linkage's geometry; with the tips spread
+past the eyelet's wire the payload is free. On the way back up:
 
-WHAT THIS DOES AND DOES NOT SHOW. The sim's hook is a point on a prismatic
-joint with a DetachableJoint to the payload. winch_ctrl opens it when it sees
-the line go slack (line paying out, payload no longer following it): that is
-the sequence and the trigger logic of a gravity hook, not the mechanics of
-the team's hook. Whether the real hook lets go on touchdown is a bench test
-with the real hook (docs/FIELD_READINESS.md, bench check 6). The rigid line
-also carries on past the ground after the release, where a real one would
-lie slack.
+    --claw as_drawn   the CAD has no latch: lifting the top pin pulls the
+                      jaws shut again, as a hanging pair of tongs does. If
+                      the eyelet is still between the tips, the claw closes
+                      on it again and lifts the payload (straight up, with
+                      the airframe welded in place, it always is).
+    --claw latch      the jaws stay open until the claw is stowed
+
+The captions set what winch_ctrl BELIEVES (it infers the release from slack)
+against what the claw DID. Outputs in --out: drop.mp4 (the four views),
+claw.mp4, mechanism.mp4, wide.mp4, nadir.mp4, claw_release_4x_slow.mp4,
+events.txt and timeline.csv.
 """
 
 import argparse
@@ -45,10 +50,16 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "src/aerothon_sim/sim_gazebo"))
+from sim_gazebo.claw import Claw                                  # noqa: E402
+
 MODEL = "aerothon_iris_c1_webcam"
 VEHICLE = "aerothon_quad"
 W, H, FPS = 960, 540, 20
-VIEWS = ("close", "wide", "nadir")
+VIEWS = ("claw", "mechanism", "wide", "nadir")
+EYELET_WIRE = 0.002          # eyelet wire diameter, m
+EYELET_H = 0.010             # eyelet height above the payload's top, m
+CLAW_TAU_S = 0.12            # the jaws swing open or shut, first order
 
 
 def sh(cmd):
@@ -58,14 +69,6 @@ def sh(cmd):
 # --------------------------------------------------------------------------- #
 # The rig
 # --------------------------------------------------------------------------- #
-HOOK_VISUAL = """<visual name="bench_hook">
-  <geometry><box><size>0.012 0.012 0.07</size></box></geometry><pose>0 0 0.035 0 0 0</pose>
-  <material><ambient>1 0.45 0 1</ambient><diffuse>1 0.5 0.05 1</diffuse></material></visual>"""
-HOOK_CURL = """<visual name="bench_hook_curl">
-  <geometry><box><size>0.045 0.012 0.012</size></box></geometry><pose>0.017 0 0 0 0 0</pose>
-  <material><ambient>1 0.45 0 1</ambient><diffuse>1 0.5 0.05 1</diffuse></material></visual>"""
-
-
 def build_vehicle(out):
     """The team airframe, welded to the world, no ArduPilot, no lidar."""
     prefix = sh("ros2 pkg prefix ardupilot_gazebo")
@@ -78,6 +81,8 @@ def build_vehicle(out):
     path = models / MODEL / "model.sdf"
     tree = ET.parse(path)
     model = tree.getroot().find("model")
+    if model.find("link[@name='claw_pivot']") is None:
+        sys.exit("the vehicle has no claw: regenerate airframe.json with scripts/cad_to_gazebo.py")
     for plugin in model.findall("plugin"):
         if "ArduPilot" in plugin.get("filename", ""):
             model.remove(plugin)            # lock-step would hold physics for SITL
@@ -85,10 +90,6 @@ def build_vehicle(out):
         for sensor in link.findall("sensor"):
             if sensor.get("type") == "gpu_lidar":
                 link.remove(sensor)         # rendering it costs, nothing reads it
-        if link.get("name") == "winch_hook":
-            # The sim hook is a 12 mm grey sphere; film something visible.
-            link.append(ET.fromstring(HOOK_VISUAL))
-            link.append(ET.fromstring(HOOK_CURL))
     rig = ET.SubElement(model, "joint", name="bench_rig", type="fixed")
     ET.SubElement(rig, "parent").text = "world"
     ET.SubElement(rig, "child").text = "base_link"
@@ -110,7 +111,7 @@ class Cam:
 
     def pose(self):
         e = self.eye
-        return f"{e[0]} {e[1]} {e[2]} 0 {self.pitch:.4f} {self.yaw:.4f}"
+        return f"{e[0]:.4f} {e[1]:.4f} {e[2]:.4f} 0 {self.pitch:.4f} {self.yaw:.4f}"
 
     def project(self, p):
         dx, dy, dz = (a - b for a, b in zip(p, self.eye))
@@ -118,7 +119,7 @@ class Cam:
         x1, y1 = cy * dx + sy * dy, -sy * dx + cy * dy
         cp, sp = math.cos(self.pitch), math.sin(self.pitch)
         x, z = cp * x1 - sp * dz, sp * x1 + cp * dz
-        if x <= 0.05:
+        if x <= 0.005:
             return None
         return (int(round(W / 2 - self.f * y1 / x)), int(round(H / 2 - self.f * z / x)))
 
@@ -133,31 +134,36 @@ def camera_model(name, cam):
           <topic>/bench/{name}</topic>
           <camera><horizontal_fov>{cam.hfov}</horizontal_fov>
             <image><width>{W}</width><height>{H}</height></image>
-            <clip><near>0.02</near><far>60</far></clip></camera>
+            <clip><near>0.005</near><far>60</far></clip></camera>
         </sensor>
       </link>
     </model>"""
 
 
-def rig_geometry(alt, payload, airframe):
-    hook_z = float(airframe["hook_z"])
-    (dx, dy, _), _ = airframe["drop_mechanism"]
+def rig_geometry(alt, payload, claw):
+    """Where everything is, in the world, with the airframe at `alt`."""
+    top, ctr = claw["top_pin"], claw["centre_pin"]
+    x, y = ctr[0], claw["jaw_y"]
+    # The eyelet's wire rests on the jaws' curled tips.
+    seat_z = alt + claw["jaw_tip_z"] + 0.5 * EYELET_WIRE + 0.0015
+    ptop = seat_z - 0.5 * EYELET_WIRE - EYELET_H
+    # Resting on the ground: the claw's centre pin this far up.
+    rest_ctr = payload[2] + EYELET_H + 0.5 * EYELET_WIRE + (ctr[2] - seat_z + alt)
     return {
-        "xy": (dx, dy),
-        "pulley_z": alt + hook_z + 0.015,     # the prismatic joint's top
-        "hook_z0": alt + hook_z,              # the hook at zero payout
-        # Hung just under the hook, as the mission world hangs its payload.
-        "payload_z0": alt + hook_z - 0.015 - payload[2] / 2.0,
+        "x": x, "y": y, "top": top, "exit": claw["line_exit"],
+        "payload_z0": ptop - payload[2] / 2.0,
         "cams": {
-            "close": Cam((dx + 0.85, dy - 0.6, 0.32), (dx, dy, 0.18), 1.0),
-            "wide": Cam((dx + 6.5, dy - 3.8, alt / 2 + 0.4), (dx, dy, alt / 2 + 0.1), 1.3),
+            "claw": Cam((x, y - 0.16, rest_ctr + 0.004), (x, y, rest_ctr + 0.002), 0.45),
+            "mechanism": Cam((x, y - 0.42, alt - 0.13), (x, y, alt - 0.14), 0.62),
+            "wide": Cam((x + 6.5, y - 3.8, alt / 2 + 0.4), (x, y, alt / 2 + 0.1), 1.3),
         },
     }
 
 
 def write_world(out, alt, payload, geo):
-    dx, dy = geo["xy"]
+    x, y = geo["x"], geo["y"]
     px, py, pz = payload
+    top = pz / 2 + EYELET_H
     world = f"""<?xml version="1.0"?>
 <sdf version="1.9">
   <world name="winch_bench">
@@ -168,7 +174,7 @@ def write_world(out, alt, payload, geo):
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
     <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine></plugin>
-    <scene><ambient>0.55 0.55 0.55 1</ambient><background>0.62 0.75 0.9 1</background>
+    <scene><ambient>0.6 0.6 0.6 1</ambient><background>0.62 0.75 0.9 1</background>
       <grid>false</grid></scene>
     <light type="directional" name="sun"><cast_shadows>true</cast_shadows>
       <pose>0 0 20 0 0 0</pose><diffuse>0.9 0.9 0.85 1</diffuse>
@@ -182,7 +188,7 @@ def write_world(out, alt, payload, geo):
     </link></model>
 
     <!-- The target pad under the drop point: white, 1.2 m, a black cross. -->
-    <model name="pad"><static>true</static><pose>{dx} {dy} 0.002 0 0 0</pose><link name="link">
+    <model name="pad"><static>true</static><pose>{x} {y} 0.002 0 0 0</pose><link name="link">
       <visual name="w"><geometry><box><size>1.2 1.2 0.004</size></box></geometry>
         <material><ambient>0.9 0.9 0.9 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material></visual>
       <visual name="x"><pose>0 0 0.003 0 0 0</pose><geometry><box><size>0.6 0.04 0.002</size></box></geometry>
@@ -191,8 +197,9 @@ def write_world(out, alt, payload, geo):
         <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
     </link></model>
 
-    <!-- Rulebook Figure 1: 10 x 5 x 5 cm, 100 g, an eyelet on top. -->
-    <model name="aerothon_payload"><pose>{dx} {dy} {geo["payload_z0"]:.4f} 0 0 0</pose>
+    <!-- Rulebook Figure 1: 10 x 5 x 5 cm, 100 g, an eyelet on top. The eyelet
+         is a wire staple whose top bar runs along y, across the jaws. -->
+    <model name="aerothon_payload"><pose>{x} {y} {geo["payload_z0"]:.5f} 0 0 0</pose>
       <link name="body">
         <inertial><mass>0.10</mass><inertia>
           <ixx>{0.1 * (py**2 + pz**2) / 12:.3e}</ixx><iyy>{0.1 * (px**2 + pz**2) / 12:.3e}</iyy>
@@ -201,14 +208,20 @@ def write_world(out, alt, payload, geo):
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision>
         <visual name="v"><geometry><box><size>{px} {py} {pz}</size></box></geometry>
           <material><ambient>0.35 0.5 0.85 1</ambient><diffuse>0.45 0.6 0.95 1</diffuse></material></visual>
-        <visual name="eyelet"><pose>0 0 {pz / 2 + 0.008} 1.5708 0 0</pose>
-          <geometry><cylinder><radius>0.008</radius><length>0.004</length></cylinder></geometry>
-          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.7 0.7 0.75 1</diffuse></material></visual>
+        <visual name="eyelet_bar"><pose>0 0 {top:.4f} 1.5708 0 0</pose>
+          <geometry><cylinder><radius>{EYELET_WIRE / 2}</radius><length>0.014</length></cylinder></geometry>
+          <material><ambient>0.75 0.75 0.8 1</ambient><diffuse>0.8 0.8 0.85 1</diffuse></material></visual>
+        <visual name="eyelet_leg_l"><pose>0 0.006 {pz / 2 + EYELET_H / 2:.4f} 0 0 0</pose>
+          <geometry><cylinder><radius>{EYELET_WIRE / 2}</radius><length>{EYELET_H}</length></cylinder></geometry>
+          <material><ambient>0.75 0.75 0.8 1</ambient><diffuse>0.8 0.8 0.85 1</diffuse></material></visual>
+        <visual name="eyelet_leg_r"><pose>0 -0.006 {pz / 2 + EYELET_H / 2:.4f} 0 0 0</pose>
+          <geometry><cylinder><radius>{EYELET_WIRE / 2}</radius><length>{EYELET_H}</length></cylinder></geometry>
+          <material><ambient>0.75 0.75 0.8 1</ambient><diffuse>0.8 0.8 0.85 1</diffuse></material></visual>
       </link>
       <plugin filename="gz-sim-pose-publisher-system" name="gz::sim::systems::PosePublisher">
         <publish_link_pose>false</publish_link_pose><publish_model_pose>true</publish_model_pose>
         <publish_nested_model_pose>false</publish_nested_model_pose>
-        <use_pose_vector_msg>false</use_pose_vector_msg><update_frequency>20</update_frequency>
+        <use_pose_vector_msg>false</use_pose_vector_msg><update_frequency>50</update_frequency>
       </plugin>
     </model>
 
@@ -222,32 +235,34 @@ def write_world(out, alt, payload, geo):
 
 
 def write_bridge(out):
-    entries = [
-        ("/clock", "/clock", "rosgraph_msgs/msg/Clock", "gz.msgs.Clock", "GZ_TO_ROS"),
-        ("/winch/gz/payout", "/aerothon/winch/payout", "std_msgs/msg/Float64",
-         "gz.msgs.Double", "ROS_TO_GZ"),
-        ("/winch/gz/detach", "/aerothon/payload/detach", "std_msgs/msg/Empty",
-         "gz.msgs.Empty", "ROS_TO_GZ"),
-        ("/gimbal/direct_pitch", "/gimbal/direct_pitch", "std_msgs/msg/Float64",
-         "gz.msgs.Double", "ROS_TO_GZ"),
-        ("/sim/payload_pose", "/model/aerothon_payload/pose", "geometry_msgs/msg/Pose",
-         "gz.msgs.Pose", "GZ_TO_ROS"),
-        ("/bench/joints", f"/world/winch_bench/model/{VEHICLE}/joint_state",
-         "sensor_msgs/msg/JointState", "gz.msgs.Model", "GZ_TO_ROS"),
-        ("/bench/close", "/bench/close", "sensor_msgs/msg/Image", "gz.msgs.Image", "GZ_TO_ROS"),
-        ("/bench/wide", "/bench/wide", "sensor_msgs/msg/Image", "gz.msgs.Image", "GZ_TO_ROS"),
-        ("/bench/nadir", "/camera/image", "sensor_msgs/msg/Image", "gz.msgs.Image", "GZ_TO_ROS"),
-    ]
+    to_gz = [("/bench/line", "/aerothon/winch/payout", "std_msgs/msg/Float64", "gz.msgs.Double"),
+             ("/bench/spool", "/aerothon/winch/spool", "std_msgs/msg/Float64", "gz.msgs.Double"),
+             ("/bench/detach", "/aerothon/payload/detach", "std_msgs/msg/Empty", "gz.msgs.Empty"),
+             ("/bench/attach", "/aerothon/payload/attach", "std_msgs/msg/Empty", "gz.msgs.Empty"),
+             ("/gimbal/direct_pitch", "/gimbal/direct_pitch", "std_msgs/msg/Float64",
+              "gz.msgs.Double")]
+    to_gz += [(f"/bench/claw/{j}", f"/aerothon/claw/{j}", "std_msgs/msg/Float64",
+               "gz.msgs.Double") for j in ("link_a", "link_b", "pivot", "jaw_a", "jaw_b")]
+    to_ros = [("/clock", "/clock", "rosgraph_msgs/msg/Clock", "gz.msgs.Clock"),
+              ("/sim/payload_pose", "/model/aerothon_payload/pose", "geometry_msgs/msg/Pose",
+               "gz.msgs.Pose"),
+              ("/bench/joints", f"/world/winch_bench/model/{VEHICLE}/joint_state",
+               "sensor_msgs/msg/JointState", "gz.msgs.Model"),
+              ("/bench/nadir", "/camera/image", "sensor_msgs/msg/Image", "gz.msgs.Image")]
+    to_ros += [(f"/bench/{v}", f"/bench/{v}", "sensor_msgs/msg/Image", "gz.msgs.Image")
+               for v in VIEWS if v != "nadir"]
     text = "".join(
         f"- ros_topic_name: \"{r}\"\n  gz_topic_name: \"{g}\"\n  ros_type_name: \"{rt}\"\n"
-        f"  gz_type_name: \"{gt}\"\n  direction: {d}\n" for r, g, rt, gt, d in entries)
+        f"  gz_type_name: \"{gt}\"\n  direction: {d}\n"
+        for entries, d in ((to_gz, "ROS_TO_GZ"), (to_ros, "GZ_TO_ROS"))
+        for r, g, rt, gt in entries)
     (out / "bridge.yaml").write_text(text)
 
 
 # --------------------------------------------------------------------------- #
-# The drop, and the recording
+# The claw's mechanics, the drop, and the recording
 # --------------------------------------------------------------------------- #
-def run_drop(out, alt, geo, max_sim_s):
+def run_drop(out, alt, payload, geo, claw_geo, mode, max_sim_s):
     import cv2
     import rclpy
     from cv_bridge import CvBridge
@@ -256,16 +271,21 @@ def run_drop(out, alt, geo, max_sim_s):
     from rclpy.parameter import Parameter
     from rclpy.qos import qos_profile_sensor_data
     from sensor_msgs.msg import Image, JointState
-    from std_msgs.msg import Float64, String
+    from std_msgs.msg import Empty, Float64, String
 
     rclpy.init()
     node = Node("winch_bench", parameter_overrides=[
         Parameter("use_sim_time", Parameter.Type.BOOL, True)])
     bridge = CvBridge()
-    st = {"status": {}, "payload": None, "line": None, "phase": "hanging", "t_written": None}
+    claw = Claw(claw_geo)
+    rest_z = payload[2] / 2.0
+    st = {"status": {}, "payload": None, "q": {}, "payout": 0.0, "phase": "hanging",
+          "t_written": None, "t_mech": None,
+          # the claw
+          "attached": True, "resting": False, "rest_line": None, "phi": 0.0,
+          "claw_note": "shut, holding the eyelet", "regrabs": 0, "t_release": None}
     latest, writers, frames = {}, {}, {}
     events, rows = [], []
-    dx, dy = geo["xy"]
 
     def now():
         return node.get_clock().now().nanoseconds * 1e-9
@@ -275,22 +295,34 @@ def run_drop(out, alt, geo, max_sim_s):
         events.append((t, what))
         node.get_logger().info(f"[t={t:6.2f}] {what}")
 
+    pub = {k: node.create_publisher(Float64, f"/bench/claw/{k}", 10)
+           for k in ("link_a", "link_b", "pivot", "jaw_a", "jaw_b")}
+    pub_line = node.create_publisher(Float64, "/bench/line", 10)
+    pub_spool = node.create_publisher(Float64, "/bench/spool", 10)
+    pub_detach = node.create_publisher(Empty, "/bench/detach", 10)
+    pub_attach = node.create_publisher(Empty, "/bench/attach", 10)
+    pub_pose = node.create_publisher(PoseStamped, "/mavros/local_position/pose", 10)
+    pub_vel = node.create_publisher(TwistStamped, "/mavros/local_position/velocity_local", 10)
+    pub_cmd = node.create_publisher(String, "/winch/cmd", 10)
+    pub_tilt = node.create_publisher(Float64, "/gimbal/direct_pitch", 10)
+
     def on_status(m):
         s = json.loads(m.data)
         old = st["status"]
         if s.get("hook_open") and not old.get("hook_open"):
-            event(f"HOOK LET GO (payload z {st['payload']:.3f} m, "
-                  f"line out {s['payout_m']:.2f} m)")
+            event("winch_ctrl infers the release (line slack)")
         if s.get("state") != old.get("state"):
             event(f"winch {old.get('state', '-')} -> {s.get('state')}")
         st["status"] = s
 
+    def on_payout(m):
+        st["payout"] = float(m.data)
+
     def on_payload(m):
-        st["payload"] = m.position.z
+        st["payload"] = (m.position.x, m.position.y, m.position.z)
 
     def on_joints(m):
-        if "winch_joint" in m.name:
-            st["line"] = m.position[m.name.index("winch_joint")]
+        st["q"] = dict(zip(m.name, m.position))
 
     def on_image(view):
         def cb(m):
@@ -301,42 +333,137 @@ def run_drop(out, alt, geo, max_sim_s):
             latest[view] = img if img.shape[1] == W else cv2.resize(img, (W, H))
         return cb
 
+    # ---- the claw -------------------------------------------------------- #
+    def mechanism():
+        """The line and the claw, from winch_ctrl's payout (50 Hz, sim time).
+
+        A line can pull but not push: while the claw rests, payout beyond
+        the resting length is slack, and the claw uses the first few mm of
+        it to open.
+        """
+        t = now()
+        dt = 0.0 if st["t_mech"] is None else t - st["t_mech"]
+        st["t_mech"] = t
+        payout, q = st["payout"], st["q"].get("winch_joint", 0.0)
+        p = st["payload"]
+        on_ground = p is not None and p[2] <= rest_z + 0.002
+        under = p is not None and math.hypot(p[0] - geo["x"], p[1] - geo["y"]) < 0.004
+
+        paying_out = payout > st.get("last_payout", 0.0)
+        st["last_payout"] = payout
+        latched = mode == "latch" and not st["attached"]
+        # A payout step can carry the jaws through the whole shut-and-lift in
+        # one update; they still pass every angle on the way, so the checks
+        # below look at where the claw was resting at the start of it.
+        was_resting = st["resting"]
+        if latched and payout < 0.05:
+            st["phi"] = max(0.0, st["phi"] - dt / CLAW_TAU_S * claw.open_max)
+        if not st["resting"]:
+            line = payout
+            if st["attached"] and on_ground and paying_out:
+                st["resting"], st["rest_line"] = True, q
+                event(f"payload touched down; claw resting, {q:.3f} m of line out")
+            elif not latched:
+                # Hanging free, the jaws' own weight shuts the tongs.
+                st["phi"] *= math.exp(-dt / CLAW_TAU_S) if dt > 0 else 1.0
+        else:
+            rest = st["rest_line"]
+            slack = payout - rest
+            if latched:
+                # A latch holds the jaws open; the claw lifts off with them
+                # open as soon as the line takes up the top pin's travel.
+                st["phi"] += (claw.open_max - st["phi"]) * (
+                    1.0 - math.exp(-dt / CLAW_TAU_S) if dt > 0 else 0.0)
+                drop = claw.pose(st["phi"])["drop"]
+                if slack < drop:
+                    st["resting"] = False
+                line = max(payout, rest) if slack >= drop else payout
+            else:
+                # The linkage. Slack lets gravity swing the jaws open (not
+                # instantly); taking the slack in pulls them shut in lockstep
+                # with the top pin, while the jaws still sit on the eyelet.
+                geo_phi = claw.phi_for_drop(max(slack, 0.0))
+                if geo_phi < st["phi"]:
+                    st["phi"] = geo_phi
+                elif dt > 0:
+                    st["phi"] += (geo_phi - st["phi"]) * (1.0 - math.exp(-dt / CLAW_TAU_S))
+                if slack < 0.0:
+                    st["resting"] = False            # shut, and lifting off
+                    line = payout
+                else:
+                    line = rest + claw.pose(st["phi"])["drop"]
+
+        if st["attached"] and st["resting"] and st["phi"] >= claw.release:
+            st["attached"] = False
+            st["t_release"] = t
+            pub_detach.publish(Empty())
+            event(f"CLAW OPEN {math.degrees(st['phi']):.0f} deg: the tips clear the "
+                  f"eyelet, payload free")
+        elif (not st["attached"] and was_resting and st["phi"] < claw.release
+              and under and on_ground and mode == "as_drawn"):
+            st["attached"] = True
+            st["regrabs"] += 1
+            pub_attach.publish(Empty())
+            event(f"CLAW SHUT ON THE EYELET AGAIN ({math.degrees(st['phi']):.0f} deg) as "
+                  f"the line took up the slack: payload re-grabbed")
+
+        deg = math.degrees(st["phi"])
+        if not st["attached"]:
+            st["claw_note"] = f"open {deg:.0f} deg, payload free"
+        elif deg > 0.5:
+            st["claw_note"] = (f"closing on the eyelet, {deg:.0f} deg" if st["regrabs"]
+                               else f"opening {deg:.0f} deg")
+        else:
+            st["claw_note"] = ("shut on the eyelet: payload RE-GRABBED" if st["regrabs"]
+                               else "shut, holding the eyelet")
+        pose = claw.pose(st["phi"])
+        for k in pub:
+            pub[k].publish(Float64(data=float(pose[k])))
+        pub_line.publish(Float64(data=float(line)))
+        # The spool turns with the motor: the line it pays out, slack or not.
+        pub_spool.publish(Float64(data=-payout / claw_geo["spool_line_r"]))
+
+    # ---- captions and frames -------------------------------------------- #
     def draw_line(img, view):
         cam = geo["cams"].get(view)
-        if cam is None or st["line"] is None:
+        if cam is None:
             return
-        top = cam.project((dx, dy, geo["pulley_z"]))
-        hook = cam.project((dx, dy, geo["hook_z0"] - st["line"]))
-        if top and hook:
-            cv2.line(img, top, hook, (40, 40, 40), 1, cv2.LINE_AA)
-            cv2.circle(img, hook, 6, (0, 140, 255), 1, cv2.LINE_AA)
+        q = st["q"].get("winch_joint", 0.0)
+        ex = geo["exit"]
+        a = cam.project((ex[0], ex[1], alt + ex[2]))
+        b = cam.project((geo["top"][0], geo["top"][1], alt + geo["top"][2] - q + 0.004))
+        if a and b:
+            cv2.line(img, a, b, (35, 35, 35), 1 if view == "wide" else 2, cv2.LINE_AA)
 
     def caption(img, view):
-        s, pz = st["status"], st["payload"]
-        lines = [f"{view}   t = {now():6.2f} s (sim)",
-                 f"winch {s.get('state', '-')}   line out {s.get('payout_m', 0):.2f} m",
-                 "hook OPEN - payload released" if s.get("hook_open") else "hook holding payload",
-                 f"payload bottom {pz - 0.025:+.3f} m above ground" if pz is not None else "",
+        s, p = st["status"], st["payload"]
+        believes = "released" if s.get("hook_open") else "holding"
+        lines = [f"{view}   t = {now():6.2f} s (sim)   claw: {mode.replace('_', ' ')}",
+                 f"winch {s.get('state', '-')}   line out {s.get('payout_m', 0):.3f} m",
+                 f"winch_ctrl believes: {believes}",
+                 f"claw: {st['claw_note']}",
+                 (f"payload bottom {p[2] - rest_z:+.3f} m" if p else ""),
                  st["phase"]]
         for i, t in enumerate(lines):
-            y = 26 + 24 * i
-            cv2.putText(img, t, (12, y), cv2.FONT_HERSHEY_SIMPLEX, 0.62, (0, 0, 0), 4,
+            y = 24 + 22 * i
+            cv2.putText(img, t, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.56, (0, 0, 0), 4,
                         cv2.LINE_AA)
-            colour = (80, 230, 255) if i == 0 else (
-                (60, 255, 60) if (i == 2 and s.get("hook_open")) else (255, 255, 255))
-            cv2.putText(img, t, (12, y), cv2.FONT_HERSHEY_SIMPLEX, 0.62, colour, 1,
+            colour = (80, 230, 255) if i == 0 else (255, 255, 255)
+            if i == 3:
+                colour = (60, 255, 60) if not st["attached"] else (
+                    (0, 200, 255) if "opening" in st["claw_note"] else (255, 255, 255))
+            cv2.putText(img, t, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.56, colour, 1,
                         cv2.LINE_AA)
         return img
 
     def write_frames():
-        """One frame per view per 1/FPS of SIM time: the videos play at sim
-        speed and stay in step, whatever rate the renderer managed."""
         t = now()
         if st["t_written"] is not None and t - st["t_written"] < 1.0 / FPS - 1e-3:
             return
         if not all(v in latest for v in VIEWS):
             return
         st["t_written"] = t
+        st.setdefault("t_first_frame", t)
         for v in VIEWS:
             if v not in writers:
                 writers[v] = cv2.VideoWriter(str(out / f"{v}.avi"),
@@ -347,15 +474,12 @@ def run_drop(out, alt, geo, max_sim_s):
             frames[v] = frames.get(v, 0) + 1
 
     node.create_subscription(String, "/winch/status", on_status, 10)
+    node.create_subscription(Float64, "/winch/gz/payout", on_payout, 10)
     node.create_subscription(Pose, "/sim/payload_pose", on_payload, qos_profile_sensor_data)
     node.create_subscription(JointState, "/bench/joints", on_joints, qos_profile_sensor_data)
     for view in VIEWS:
         node.create_subscription(Image, f"/bench/{view}", on_image(view),
                                  qos_profile_sensor_data)
-    pub_pose = node.create_publisher(PoseStamped, "/mavros/local_position/pose", 10)
-    pub_vel = node.create_publisher(TwistStamped, "/mavros/local_position/velocity_local", 10)
-    pub_cmd = node.create_publisher(String, "/winch/cmd", 10)
-    pub_tilt = node.create_publisher(Float64, "/gimbal/direct_pitch", 10)
 
     def tick():
         # The flight controller's view of the hovering aircraft: the winch
@@ -370,9 +494,10 @@ def run_drop(out, alt, geo, max_sim_s):
         pub_vel.publish(v)
         pub_tilt.publish(Float64(data=-math.pi / 2))    # C270 straight down
         write_frames()
-        s, t = st["status"], now()
-        rows.append((round(t, 3), s.get("state"), s.get("payout_m"), st["line"],
-                     s.get("hook_open"), s.get("released"), st["payload"]))
+        s, t, pl = st["status"], now(), st["payload"]
+        rows.append((round(t, 3), s.get("state"), s.get("payout_m"),
+                     st["q"].get("winch_joint"), s.get("hook_open"), st["attached"],
+                     round(math.degrees(st["phi"]), 2), pl[2] if pl else None))
         ph = st["phase"]
         if ph == "hanging" and t > 3.0 and s:
             pub_cmd.publish(String(data="lower"))
@@ -380,50 +505,66 @@ def run_drop(out, alt, geo, max_sim_s):
             event("command: lower")
         elif ph.startswith("lowering") and s.get("state") == "AT_GROUND":
             pub_cmd.publish(String(data="release"))
-            st["phase"] = "down: release recorded"
+            st["phase"] = "down: winch_ctrl records the release"
             st["t_down"] = t
             event("command: release (a gravity hook: bookkeeping only)")
         elif ph.startswith("down") and t - st["t_down"] > 2.0:
             pub_cmd.publish(String(data="stow"))
-            st["phase"] = "stowing: the motor winds the hook back up"
+            st["phase"] = "stowing: the motor winds the claw back up"
             event("command: stow")
         elif ph.startswith("stowing") and s.get("payout_m", 1) <= 1e-3:
-            st["phase"] = "stowed: the payload stayed on the ground"
+            left = pl is not None and pl[2] <= rest_z + 0.01
+            st["phase"] = ("stowed: the payload stayed on the ground" if left else
+                           "stowed: the PAYLOAD CAME BACK UP with the claw")
             st["t_done"] = t
-            event("hook stowed")
+            event(st["phase"])
         elif ph.startswith("stowed") and t - st["t_done"] > 3.0:
             st["phase"] = "done"
 
+    node.create_timer(0.02, mechanism)
     node.create_timer(1.0 / FPS, tick)
     wall0 = time.time()
     while rclpy.ok() and st["phase"] != "done":
         rclpy.spin_once(node, timeout_sec=0.1)
-        if now() > max_sim_s or time.time() - wall0 > 60 * 30:
+        if time.time() - wall0 > 60 and (now() == 0.0 or not st["status"]):
+            # Fail loudly rather than wait out the wall-clock limit.
+            raise SystemExit("no /clock or /winch/status after 60 s: the simulator, "
+                             "the bridge or winch_ctrl is not being heard")
+        if now() > max_sim_s or time.time() - wall0 > 60 * 40:
             event("timed out")
             break
     for w in writers.values():
         w.release()
     with open(out / "timeline.csv", "w", newline="") as f:
         cw = csv.writer(f)
-        cw.writerow(["sim_t", "winch_state", "payout_m", "joint_m", "hook_open",
-                     "released", "payload_z"])
+        cw.writerow(["sim_t", "winch_state", "payout_m", "line_m", "ctrl_believes_open",
+                     "payload_attached", "claw_open_deg", "payload_z"])
         cw.writerows(rows)
     (out / "events.txt").write_text("".join(f"{t:7.2f}  {w}\n" for t, w in events))
     node.destroy_node()
     rclpy.shutdown()
-    return frames
+    release = next((t for t, w in events if w.startswith("CLAW OPEN")), None)
+    return frames, release, st.get("t_first_frame", 0.0)
 
 
-def encode(out):
+def encode(out, release_t, first_frame_t):
     for v in VIEWS:
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out / f"{v}.avi"),
-                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "22",
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
                         str(out / f"{v}.mp4")], check=True)
         (out / f"{v}.avi").unlink()
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
                     *sum((["-i", str(out / f"{v}.mp4")] for v in VIEWS), []),
-                    "-filter_complex", "[0:v][1:v][2:v]hstack=inputs=3", "-c:v", "libx264",
-                    "-pix_fmt", "yuv420p", "-crf", "23", str(out / "drop.mp4")], check=True)
+                    "-filter_complex",
+                    "[0:v][1:v]hstack=inputs=2[top];[2:v][3:v]hstack=inputs=2[bot];"
+                    "[top][bot]vstack=inputs=2", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    "-crf", "22", str(out / "drop.mp4")], check=True)
+    if release_t is not None:
+        start = max(0.0, release_t - first_frame_t - 3.0)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{start:.2f}",
+                        "-t", "9", "-i", str(out / "claw.mp4"), "-vf", "setpts=4.0*PTS",
+                        "-r", str(FPS), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+                        str(out / "claw_release_4x_slow.mp4")], check=True)
 
 
 def main():
@@ -431,6 +572,7 @@ def main():
     ap.add_argument("--alt", type=float, default=5.0, help="airframe height, m")
     ap.add_argument("--payload", type=float, nargs=3, default=(0.10, 0.05, 0.05),
                     metavar=("X", "Y", "Z"), help="payload box, m (rulebook Fig. 1)")
+    ap.add_argument("--claw", choices=("as_drawn", "latch"), default="as_drawn")
     ap.add_argument("--out", type=Path, default=ROOT / "logs" / "winch_bench")
     ap.add_argument("--max-sim-s", type=float, default=90.0)
     args = ap.parse_args()
@@ -440,7 +582,7 @@ def main():
         shutil.rmtree(out)
     out.mkdir(parents=True)
     models, upstream, airframe = build_vehicle(out)
-    geo = rig_geometry(args.alt, args.payload, airframe)
+    geo = rig_geometry(args.alt, args.payload, airframe["claw"])
     write_world(out, args.alt, args.payload, geo)
     write_bridge(out)
 
@@ -448,9 +590,15 @@ def main():
                GZ_SIM_RESOURCE_PATH=os.pathsep.join(
                    [str(models), upstream, os.environ.get("GZ_SIM_RESOURCE_PATH", "")]),
                GZ_PARTITION=f"winch_bench_{os.getpid()}", GZ_IP="127.0.0.1",
-               ROS_DOMAIN_ID=os.environ.get("ROS_DOMAIN_ID", "61"), ROS_LOCALHOST_ONLY="1")
+               ROS_DOMAIN_ID=os.environ.get("ROS_DOMAIN_ID", "61"),
+               # Everything runs on this host: shared memory only. When WSL
+               # falls back to its "None" networking mode, UDP discovery on
+               # the loopback stops working and every node runs deaf.
+               FASTDDS_BUILTIN_TRANSPORTS="SHM")
+    env.pop("ROS_LOCALHOST_ONLY", None)
+    os.environ.pop("ROS_LOCALHOST_ONLY", None)
     os.environ.update({k: env[k] for k in ("GZ_PARTITION", "GZ_IP", "ROS_DOMAIN_ID",
-                                           "ROS_LOCALHOST_ONLY")})
+                                           "FASTDDS_BUILTIN_TRANSPORTS")})
     procs = []
 
     def start(cmd, log):
@@ -462,10 +610,15 @@ def main():
               "gz.log")
         start(["ros2", "run", "ros_gz_bridge", "parameter_bridge", "--ros-args",
                "-p", f"config_file:={out / 'bridge.yaml'}"], "bridge.log")
+        # winch_ctrl's payout goes to the bench (the claw's mechanics), not
+        # straight to the joint; its own detach is not bridged: the claw lets go.
         start([sys.executable, "-c", "from winch_ctrl.winch_node import main; main()",
-               "--ros-args", "-p", "backend:=gazebo", "-p", "use_sim_time:=true"],
+               "--ros-args", "-p", "backend:=gazebo", "-p", "use_sim_time:=true",
+               # 5 Hz is 9 cm steps of line at stow speed: too coarse to film.
+               "-p", "publish_rate_hz:=25.0"],
               "winch.log")
-        frames = run_drop(out, args.alt, geo, args.max_sim_s)
+        frames, release_t, first_t = run_drop(out, args.alt, args.payload, geo, airframe["claw"],
+                                     args.claw, args.max_sim_s)
     finally:
         for sig in (signal.SIGINT, signal.SIGKILL):
             for p in procs:
@@ -476,7 +629,7 @@ def main():
             time.sleep(2)
 
     print(f"frames: {frames}")
-    encode(out)
+    encode(out, release_t, first_t)
     print((out / "events.txt").read_text())
     print(f"outputs in {out}")
 

@@ -13,6 +13,9 @@ metres) and writes, into OUT:
                            the prop diameter actually flown
     meshes/camera.glb      the C270, centred on itself: it rides the tilt
                            servo, so it cannot be part of the body
+    meshes/spool.glb,      the dropping mechanism's moving parts: the spool
+    meshes/claw_*.glb      and the scissor claw's hanger, links and jaws,
+                           each centred on the pin it turns on (MECH_MOVING)
     airframe.json          what the vehicle model is built from: motor hubs,
                            prop plane, sensor and payload mounts, the landing
                            gear's lowest point, collision boxes, and the mass,
@@ -73,6 +76,32 @@ PARTS = [
 ]
 
 
+# THE DROPPING MECHANISM'S MOVING PARTS, by CAD label (the assembly's parts
+# are unnamed). A spool on the motor's axle, and a gravity-release scissor
+# claw ("ice tongs") on the line: the line loops over the claw's top pin; two
+# links run from it to the upper ends of two jaws crossed on a centre pin, and
+# the jaws' curled tips hold the payload's eyelet. Loaded, the line pulls the
+# top pin up and the links pull the jaws shut; slack, the top pin drops and
+# the links push the tips apart. Everything else in the mechanism (housing,
+# motor, axle, guide bar) is rigid with the airframe.
+MECHANISM = "Dropping Mechanism"
+MECH_MOVING = {
+    "spool": ["=>[0:1:1:75]"],
+    "line": ["=>[0:1:1:82]"],                       # drawn by the sim instead
+    "claw_hanger": ["=>[0:1:1:84]", "=>[0:1:1:86]", "=>[0:1:1:89]", "=>[0:1:1:94]"],
+    "claw_link_a": ["=>[0:1:1:83]"],
+    "claw_link_b": ["=>[0:1:1:85]"],
+    "claw_jaw_a": ["=>[0:1:1:87]", "=>[0:1:1:88]", "=>[0:1:1:90]"],
+    "claw_jaw_b": ["=>[0:1:1:91]", "=>[0:1:1:92]"],
+}
+MECH_PINS = {"top_pin": "=>[0:1:1:86]", "centre_pin": "=>[0:1:1:88]",
+             "pin_a": "=>[0:1:1:90]", "pin_b": "=>[0:1:1:92]",
+             "axle": "=>[0:1:1:77]", "guide_bar": "=>[0:1:1:76]"}
+CLAW_RGB = {"spool": (0.20, 0.35, 0.80), "claw_hanger": (0.30, 0.30, 0.32),
+            "claw_link_a": (0.72, 0.72, 0.76), "claw_link_b": (0.72, 0.72, 0.76),
+            "claw_jaw_a": (0.85, 0.30, 0.10), "claw_jaw_b": (0.95, 0.55, 0.10)}
+
+
 def spec_of(name):
     for key, kg, rgb in PARTS:
         if key.lower() in name.lower():
@@ -122,12 +151,15 @@ def load(path):
         W = M @ local(n)
         name = top or n.get("name", f"node{i}")
         if "mesh" in n:
+            # The dropping mechanism's parts move against each other, so each
+            # keeps its own entry, keyed by its CAD label ("=>[0:1:1:83]").
+            key = f"{name}#{n.get('name')}" if name == MECHANISM else name
             for p in g["meshes"][n["mesh"]]["primitives"]:
                 v = acc(p["attributes"]["POSITION"]).astype(float)
                 v = (W[:3, :3] @ v.T).T + W[:3, 3]
                 t = (acc(p["indices"]).reshape(-1, 3).astype(np.int64)
                      if "indices" in p else np.arange(len(v)).reshape(-1, 3))
-                parts.setdefault(name, []).append((v @ CAD_TO_FLU.T, t))
+                parts.setdefault(key, []).append((v @ CAD_TO_FLU.T, t))
         for c in n.get("children", []):
             walk(c, W, name)
 
@@ -240,6 +272,27 @@ def main():
     src, out = sys.argv[1], sys.argv[2]
     os.makedirs(os.path.join(out, "meshes"), exist_ok=True)
     parts = load(src)
+    # The mechanism's parts, one by one; everything below the body mesh
+    # (masses, mounts, collision) sees the mechanism whole, as before.
+    mech = {k.split("#", 1)[1]: parts.pop(k) for k in list(parts)
+            if k.startswith(MECHANISM + "#")}
+    wanted = sum(MECH_MOVING.values(), []) + list(MECH_PINS.values())
+    missing = [lbl for lbl in wanted if lbl not in mech]
+    if missing:
+        sys.exit(f"{MECHANISM}: CAD labels {missing} not found -- the assembly "
+                 f"changed; update MECH_MOVING / MECH_PINS")
+
+    def merge(items):
+        vs, ts, base = [], [], 0
+        for v, t in items:
+            vs.append(v)
+            ts.append(t + base)
+            base += len(v)
+        return np.vstack(vs), np.vstack(ts)
+
+    parts[MECHANISM] = merge(mech.values())
+    moving = set(sum(MECH_MOVING.values(), []))
+    mech_static = merge([p for lbl, p in mech.items() if lbl not in moving])
 
     # ---- mounts, measured ----
     def centre(key):
@@ -263,11 +316,42 @@ def main():
     for n, (v, t) in parts.items():
         if n.endswith(" Propeller") or "Logitech c270" in n:
             continue
+        if n == MECHANISM:
+            v, t = mech_static            # its moving parts are their own links
         key, _, rgb = spec_of(n)
         nv, nt = reduce_part(v, t, target=4000 if len(t) > 20000 else 2500)
         total += len(nt)
         prims.append((n, nv, nt, rgb))
     write_glb(os.path.join(out, "meshes", "body.glb"), prims)
+
+    # ---- the spool and the claw: each centred on the pin it turns on ----
+    pin = {k: np.array(box_of(mech[lbl][0])[0]) for k, lbl in MECH_PINS.items()}
+    origin = {"spool": pin["axle"], "claw_hanger": pin["top_pin"],
+              "claw_link_a": pin["top_pin"], "claw_link_b": pin["top_pin"],
+              "claw_jaw_a": pin["centre_pin"], "claw_jaw_b": pin["centre_pin"]}
+    mech_files = {}
+    for part, o in origin.items():
+        v, t = merge([mech[lbl] for lbl in MECH_MOVING[part]])
+        nv, nt = reduce_part(v - o, t, target=3000)
+        fn = f"{part}.glb"
+        write_glb(os.path.join(out, "meshes", fn), [(part, nv, nt, CLAW_RGB[part])])
+        mech_files[part] = fn
+    jaws = merge([mech[lbl] for lbl in MECH_MOVING["claw_jaw_a"] + MECH_MOVING["claw_jaw_b"]])[0]
+    line = mech[MECH_MOVING["line"][0]][0]
+    bar = mech[MECH_PINS["guide_bar"]][0]
+    claw = {
+        "meshes": mech_files,
+        # Every pin runs along y; the claw moves in the x-z plane.
+        **{k: pin[k].tolist() for k in ("top_pin", "centre_pin", "pin_a", "pin_b")},
+        "spool_centre": pin["axle"].tolist(),
+        # The line's wound radius, from the turns drawn on the spool.
+        "spool_line_r": float(box_of(line)[1][1] / 2.0),
+        # The line leaves the mechanism under the guide bar, above the top pin.
+        "line_exit": [float(pin["top_pin"][0]), float(pin["top_pin"][1]),
+                      float(bar[:, 2].min())],
+        "jaw_tip_z": float(jaws[:, 2].min()),
+        "jaw_y": float((jaws[:, 1].min() + jaws[:, 1].max()) / 2.0),
+    }
 
     # ---- props: centred on their hub, scaled to the flown diameter ----
     k = PROP_DIAMETER_M / cad_prop_d
@@ -340,6 +424,7 @@ def main():
         # The hook: high enough that a 0.08 m payload clears the ground with the
         # aircraft on its gear (1 cm), which puts it inside the mechanism.
         "hook_z": float(gear[:, 2].min()) + 0.08 + 0.012 + 0.011,
+        "claw": claw,
         "prop_top_z": float(max(v[:, 2].max() for v, _ in props.values())),
         "bounds": [allv.min(0).tolist(), allv.max(0).tolist()],
         "collision": {"core": box_of(core), "skids": lg, "arms": arms,
