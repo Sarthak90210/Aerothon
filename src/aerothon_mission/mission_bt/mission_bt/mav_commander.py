@@ -128,6 +128,7 @@ class Mav:
         # (banner_orbit.SELF_M), so the band is 0.55..keepout_m.
         self.keepout_m = node.declare_parameter('keepout_m', 1.0).value
         self.keepout_events = 0
+        self.board_face_t = None           # when a square-up last fitted the board
         self._keepout_on = False
         # Beyond this roll/pitch the aircraft is not flying the mission any
         # more, it is falling into something. The last recorded live run sat at
@@ -747,17 +748,28 @@ class Mav:
         self.pub_sp.publish(self._kept_out(self._sp))
         self._track_altitude_error()
 
-    def _nearest_return(self):
+    def _nearest_return(self, beams=3, agree_m=0.15):
         """(range, local-frame bearing) of the nearest fresh lidar return
-        beyond the airframe itself, or None."""
+        beyond the airframe itself, or None.
+
+        Only a return with `beams` neighbours in a row agreeing within
+        `agree_m` counts. Dust and insects come back as one or two beams --
+        two in a row get through the 3-beam median several times a second
+        at 1% false returns, and the keep-out shoved the aircraft about on
+        each -- while anything solid within a metre spans dozens."""
         age = self.scan_age_s()
         if self._scan is None or age is None or age > 0.5:
             return None
         scan, best = self._scan, None
+        r = scan.ranges
         lo = max(float(scan.range_min), SELF_M)
-        for i, r in enumerate(scan.ranges):
-            if lo < r < float(scan.range_max) and (best is None or r < best[0]):
-                best = (r, float(scan.angle_min) + i * float(scan.angle_increment))
+        hi = float(scan.range_max)
+        half = beams // 2
+        for i in range(half, len(r) - half):
+            if not lo < r[i] < hi or (best is not None and r[i] >= best[0]):
+                continue
+            if all(abs(r[i + k] - r[i]) <= agree_m for k in range(-half, half + 1)):
+                best = (r[i], float(scan.angle_min) + i * float(scan.angle_increment))
         return None if best is None else (best[0], best[1] + self.yaw())
 
     def _kept_out(self, sp):

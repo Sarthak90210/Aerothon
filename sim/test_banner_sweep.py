@@ -1037,6 +1037,34 @@ class SquareOnWithTheLidarTests(unittest.TestCase):
             self.clock.advance(0.1)
         self.assertIs(status, py_trees.common.Status.SUCCESS, mav.abort_reason)
 
+    class Ranged(GateMav):
+        """The camera ranges the banner it reads at `cam_scale` times the
+        distance of the face the lidar measures."""
+        cam_scale = 1.0
+        focal_px = banner_area_m2 = None
+
+        @property
+        def banner_board_area(self):
+            r = self.cam_scale * math.hypot(*self._to_gate())
+            return self.focal_px ** 2 * self.banner_area_m2 / r ** 2
+
+    def _ranged(self, scale):
+        mav = self.Ranged(gate=(5.0, 0.0), face_rad=math.pi)
+        mav.cam_scale = scale
+        stage = self._stage(mav)
+        mav.focal_px, mav.banner_area_m2 = stage.focal_px, stage.banner_area_m2
+        return mav, stage, run(stage, mav, self.clock, ticks=1500)
+
+    def test_a_face_nearer_than_the_banner_read_is_not_squared_on(self):
+        """The return gate read down its lane, a structure 3 m ahead."""
+        mav, _, status = self._ranged(3.0)
+        self.assertIsNot(status, py_trees.common.Status.SUCCESS)
+        self.assertIn("is not the banner", " ".join(m for m, _ in mav.logs))
+
+    def test_a_face_where_the_camera_ranges_the_banner_is(self):
+        mav, _, status = self._ranged(1.3)          # oblique reads farther
+        self.assertIs(status, py_trees.common.Status.SUCCESS, mav.abort_reason)
+
     def test_an_aircraft_already_square_finishes_without_moving(self):
         mav = GateMav(gate=(5.0, 0.0), face_rad=math.pi)
         start = mav.pos()[:2]
@@ -1623,6 +1651,24 @@ class RecoverTheBannerByMovingTests(unittest.TestCase):
             (round(stage._anchor[0], 3), round(stage._anchor[1], 3)),
             (round(good[0], 3), round(good[1], 3)),
             "went back to the same pose twice instead of searching")
+
+    def test_the_pattern_never_steps_up_to_a_board_it_has_measured(self):
+        """Split arena, worst conditions: 2.5 m 'along the last bearing'
+        from a board measured at 3.6 m put the aircraft under its edge."""
+        mav = GateMav(gate=(3.6, 0.0), face_rad=math.pi)
+        stage = self._stage(mav)
+        for _ in range(3000):
+            if stage.update() is not py_trees.common.Status.RUNNING:
+                break
+            self.clock.advance(0.1)
+            if stage._standoff is not None:
+                break
+        self.assertIsNotNone(stage._standoff, "never measured the board")
+        for why in ("first loss", "second loss", "third loss"):
+            stage._relocate(why)
+            self.assertGreaterEqual(
+                math.dist(stage._anchor[:2], mav.gate), stage.min_standoff - 0.3,
+                f"{why}: relocated up to the board")
 
     def test_it_gives_up_inside_its_bound_and_says_where_it_stood(self):
         mav = GateMav(gate=(60.0, 0.0), face_rad=math.pi,

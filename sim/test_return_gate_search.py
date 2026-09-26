@@ -166,7 +166,23 @@ class ReturnGateSearchTests(unittest.TestCase):
                 if math.hypot(x - x0, y - y0) > 3.0]
         self.assertTrue(legs)
         self.assertTrue(all(z == leaf.transit_alt for z in legs), legs)
-        self.assertEqual(mav.camera_poses[:2], ["NADIR", "BANNER"])
+        i = mav.camera_poses.index("NADIR")
+        self.assertEqual(mav.camera_poses[i + 1], "BANNER",
+                         "the camera did not come back up once lowered")
+
+    def test_a_board_the_look_tilt_misses_is_found_level(self):
+        """With the baro a metre out, the BANNER tilt frames the ground in
+        front of the board; the level re-sweep frames the board."""
+        class Level(World):
+            def _look(self):
+                super()._look()
+                if (self.camera_poses or ["BANNER"])[-1] != "FORWARD":
+                    self.banner_z, self.banner_board_area = 0.0, 0.0
+
+        mav = Level([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))
+        _, st = run(mav)
+        self.assertEqual(st, py_trees.common.Status.SUCCESS)
+        self.assertIn("FORWARD", mav.camera_poses)
 
     def test_it_never_flies_outside_the_zone_edge_it_searches(self):
         mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))

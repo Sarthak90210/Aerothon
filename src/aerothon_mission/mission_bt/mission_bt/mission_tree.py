@@ -552,6 +552,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self._entry_yaw = None
         self._seen_yaw = None
         self._recovery_origin = None
+        self._banner_m = float("inf")  # nearest the banner has been measured
         self._green = None            # best green_fix seen while sweeping
         self._green_prior = None      # the cut fix a gate-height look replaces
         self._probed = False          # that look has been had
@@ -666,6 +667,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
 
     def _close_dwell(self):
         ratio = (self._hits / self._samples) if self._samples else 0.0
+        self._banner_m = min(self._banner_m, self.range_from_area(self._best_area))
         self.step_reports.append({
             "step": self.step_index,
             "heading_deg": round(math.degrees(self._wrap(self._target_yaw)), 1),
@@ -792,6 +794,13 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                                     - (1 if self._good_vantage else 0))
                                    % len(self.recovery_steps)]
         along, up = step
+        # Never up to the board. The last bearing points AT the banner, and
+        # the pattern's 2.5-5 m steps are blind to its range: in the split
+        # arena the first one ended under the board it had just measured at
+        # 3.6 m, at board height, where 0.5 m of baro drift had put the scan
+        # plane just below the board and the airframe's top into it.
+        if math.isfinite(self._banner_m):
+            along = min(along, max(0.0, self._banner_m - self.min_standoff))
         psi = self._seen_yaw
         if psi is None:
             psi = (self._entry_yaw if self._entry_yaw is not None
@@ -1546,9 +1555,25 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if not fit["ok"]:
             return self._no_surface(fit)
 
+        # THE FACE MUST BE THE BANNER. The camera ranges the board from its
+        # size; an oblique or clipped board reads FARTHER, at most ~1.6x at
+        # the detector's 65 deg limit. A lidar face at under half that range
+        # is something else in the line of sight. Watched under worst
+        # conditions: the near gate was edge-on, the one banner readable was
+        # the return gate ~12 m down the return lane, and the square-up fitted
+        # a face 3 m away and flew the return lane backwards into its posts.
+        cam = (self._sighting_range() if self.mav.banner_identified()
+               else float("inf"))
+        if math.isfinite(cam) and fit["range_m"] < 0.5 * cam \
+                and cam - fit["range_m"] > 2.0:
+            return self._relocate(
+                f"the lidar face at {fit['range_m']:.1f} m is not the banner the "
+                f"camera ranges at ~{cam:.0f} m")
+
         self._refusals = 0
         self._surface = fit
         self._standoff = fit["range_m"]
+        self._banner_m = min(self._banner_m, fit["range_m"])
         alpha, standoff = fit["angle_rad"], fit["range_m"]
 
         # 1. OBLIQUITY IS FIXED BY MOVING, NOT BY TURNING.
@@ -1727,6 +1752,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             self.feedback_message = (
                 f"square on: {math.degrees(alpha):+.1f} deg, "
                 f"{standoff:.1f} m")
+            self.mav.board_face_t = self.clock()
             return py_trees.common.Status.SUCCESS
         self.feedback_message = (f"holding square "
                                  f"{self._stable}/{self.stable_frames}")
@@ -2476,7 +2502,8 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                  need_clear_m=10.0, settle_s=1.5, arrive_tol_m=0.2,
                  sector_half_width_rad=math.radians(35.0),
                  hfov_rad=1.0472, clock=None, max_steps=12,
-                 crossing_margin_m=0.6, obstacle_margin_m=0.4):
+                 crossing_margin_m=0.6, obstacle_margin_m=0.4,
+                 board_memory_s=30.0):
         # The margins must fit the gap between the posts and the first
         # obstacle behind them. On the shipped arena the return lane's first
         # slalom block stands 1.2 m past the return gate; 1.0 + 0.75 m could
@@ -2497,6 +2524,7 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self.max_steps = int(max_steps)
         self.crossing_margin_m = float(crossing_margin_m)
         self.obstacle_margin_m = float(obstacle_margin_m)
+        self.board_memory_s = float(board_memory_s)
         self.clock = clock or time.monotonic
         self._reset()
 
@@ -2513,6 +2541,15 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         self._reset()
+        # The square-up just fitted the board's face on the lidar, in the
+        # bearing the camera identified the banner on: the board HAS been
+        # seen. Without this the transition had to be witnessed here, and
+        # 0.7 m of baro drift put the scan plane under the board from the
+        # first look -- open at once, refused as "never seen" (worst
+        # conditions, shipped arena).
+        seen = getattr(self.mav, "board_face_t", None)
+        self._saw_board = (seen is not None
+                           and self.clock() - seen <= self.board_memory_s)
         # Takeoff arms a general low-altitude guard at 40% of takeoff height.
         # This stage deliberately flies below that floor, so move the guard to
         # just under this stage's own hard floor before commanding the descent.
@@ -4017,6 +4054,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self._entry_speed = getattr(self.mav, "speed_cmd", None) or 10.0
         self._leg_speed = self._entry_speed
         self._cur_alt = self.alt
+        self._look = self.look_pose  # the tilt this vantage is swept at
         self._high = False           # this leg flown at transit_alt, nadir
         self._then = "sweep"         # what the lowering at its end leads to
         self._behind = 0             # sightings refused as the board's back
@@ -4144,6 +4182,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             return False
         vx, vy, out = self.vantages[self.vi]
         self.target = (vx, vy, out)
+        self._look = self.look_pose
         # Outward half only: the return entrance is at or beyond the edge.
         fan = [0, 1, -1, 2, -2, 3, -3]
         self.headings = [self._wrap(out + k * self.step) for k in fan]
@@ -4233,9 +4272,9 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             now = self.clock()
             if self._since is None:
                 self._since = now
-                self._camera(self.look_pose)
+                self._camera(self._look)
             settled = getattr(self.mav, "camera_settled", None)
-            if (callable(settled) and not settled(self.look_pose)
+            if (callable(settled) and not settled(self._look)
                     and now - self._since < self.camera_timeout_s):
                 return py_trees.common.Status.RUNNING
             self._high = False
@@ -4246,6 +4285,16 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.RUNNING
 
         if self.phase == "sweep":
+            if self.hi >= len(self.headings) and self._look != "FORWARD":
+                # Nothing at the look tilt: sweep again level. Which tilt
+                # frames the board depends on the TRUE height, and the baro
+                # can be a metre or more out by the return: at 3.8 m real
+                # against 5 m believed, the BANNER tilt cut the board's top
+                # off and its clipped area ranged it beyond the near range.
+                self._look, self.hi = "FORWARD", 0
+                self._then, self.phase = "sweep", "lower"
+                self._begin_heading()
+                return py_trees.common.Status.RUNNING
             if self.hi >= len(self.headings):
                 self.seen_from.append(tuple(round(v, 1) for v in self.here))
                 if not self._next_vantage():

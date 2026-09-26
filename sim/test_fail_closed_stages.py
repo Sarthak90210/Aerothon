@@ -347,6 +347,21 @@ class DuckUnderBoardTests(unittest.TestCase):
         self.assertIn("3.0 m", mav.abort_reason)
         self.assertGreaterEqual(len(mav.opening_calls), 3)
 
+    def test_already_under_an_unidentified_board_is_refused(self):
+        mav = _LaggedGateMav(opening_below_m=3.5)
+        leaf = self._fly(mav)
+        self.assertIs(leaf.status, py_trees.common.Status.FAILURE)
+        self.assertIn("without the board ever being seen", mav.abort_reason)
+
+    def test_already_under_the_board_the_square_up_fitted_goes_through(self):
+        """Baro drift puts the scan plane under the board from the first
+        look; the square-up's lidar fit is the sighting."""
+        mav = _LaggedGateMav(opening_below_m=3.5)
+        mav.board_face_t = 0.0
+        leaf = self._fly(mav)
+        self.assertIs(leaf.status, py_trees.common.Status.SUCCESS, mav.abort_reason)
+        self.assertLessEqual(leaf.alt, 3.0 - 0.6 + 1e-6)
+
     def test_the_advance_after_the_duck_never_uses_board_height(self):
         from mission_bt.mission_tree import GateAdvance
         mav = _LaggedGateMav(opening_below_m=2.6)

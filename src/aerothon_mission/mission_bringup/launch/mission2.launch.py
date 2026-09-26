@@ -4,15 +4,18 @@ Examples:
   # SITL + Gazebo (image/scan from sim bridge, launch RViz and SLAM):
   ros2 launch mission_bringup mission2.launch.py use_sim:=true rviz:=true slam:=true
 
-  # Real hardware:
+  # Real hardware (starts the LD06 and C270 drivers too; SLAM and RViz
+  # off, they are not part of the mission and cost the Pi 5 a core):
   ros2 launch mission_bringup mission2.launch.py use_sim:=false \
-       fcu_url:=/dev/ttyAMA0:921600 image_topic:=/image_raw rviz:=false
+       fcu_url:=/dev/ttyAMA0:921600 rviz:=false slam:=false \
+       camera_backend:=mavlink winch_backend:=mavlink \
+       lidar_yaw_deg:=<measured> lidar_mirrored:=<measured>
 """
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
@@ -73,6 +76,18 @@ def generate_launch_description():
                                           'winch joint and a detachable payload), '
                                           'sim (sequence only, nothing moves) or '
                                           'mavlink (MAV_CMD_DO_WINCH)'),
+        # The flight sensors (use_sim:=false only). Mount yaw and direction
+        # are measured with scripts/check_sensors.py.
+        DeclareLaunchArgument('lidar_port', default_value='/dev/ttyUSB0'),
+        DeclareLaunchArgument('lidar_yaw_deg', default_value='0.0',
+                              description="LD06's 0 deg, CCW from the nose"),
+        DeclareLaunchArgument('lidar_mirrored', default_value='false',
+                              description='driver angles run clockwise'),
+        DeclareLaunchArgument('camera_device', default_value='/dev/video0'),
+        # Manual exposure in 100 us units: 100 = 10 ms. Auto exposure on a
+        # C270 runs to 60+ ms in shade, a 20 px smear at sweep speed; the QR
+        # reader's envelope assumes 10 ms (sim/test_perception_corruption.py).
+        DeclareLaunchArgument('camera_exposure', default_value='100'),
         DeclareLaunchArgument('camera_backend', default_value='sim',
                               description='camera_ctrl backend: sim (Gazebo joint) '
                                           'or mavlink (MAV_CMD_DO_MOUNT_CONTROL)'),
@@ -177,6 +192,38 @@ def generate_launch_description():
                      'use_sim_time': use_sim}],
     )
 
+    # 3d. Flight sensors. In the sim Gazebo publishes both.
+    real = UnlessCondition(use_sim)
+    lidar = Node(
+        package='ldlidar_stl_ros2', executable='ldlidar_stl_ros2_node',
+        name='ld06', output='screen', condition=real,
+        parameters=[{'product_name': 'LDLiDAR_LD06', 'topic_name': 'scan_raw',
+                     'frame_id': 'base_scan',
+                     'port_name': LaunchConfiguration('lidar_port'),
+                     'port_baudrate': 230400, 'laser_scan_dir': True,
+                     'enable_angle_crop_func': False}],
+    )
+    lidar_mount = Node(
+        package='mission_bringup', executable='scan_mount', output='screen',
+        condition=real,
+        parameters=[{'lidar_yaw_deg': ParameterValue(
+                        LaunchConfiguration('lidar_yaw_deg'), value_type=float),
+                     'mirrored': ParameterValue(
+                        LaunchConfiguration('lidar_mirrored'), value_type=bool)}],
+    )
+    webcam = Node(
+        package='usb_cam', executable='usb_cam_node_exe', name='c270',
+        output='screen', condition=real,
+        parameters=[{'video_device': LaunchConfiguration('camera_device'),
+                     'image_width': 1280, 'image_height': 720,
+                     'framerate': 30.0, 'pixel_format': 'mjpeg2rgb',
+                     'frame_id': 'camera_link', 'autoexposure': False,
+                     'exposure': ParameterValue(
+                        LaunchConfiguration('camera_exposure'), value_type=int),
+                     'autofocus': False}],
+        remappings=[('image_raw', image_topic)],
+    )
+
     # 4. Reactive Obstacle Avoidance Controller
     controller = Node(
         package='avoidance', executable='velocity_controller', output='screen',
@@ -264,7 +311,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription(args + [
-        rsp_node, mavros, qr, banner, redzone, payload, overlay, camera, winch, stream_rates,
+        rsp_node, mavros, lidar, lidar_mount, webcam,
+        qr, banner, redzone, payload, overlay, camera, winch, stream_rates,
         controller, mission, readiness, aggregator, video,
         # The Gazebo odometry bridge needs a few seconds to establish odom TF.
         # Activating slam_toolbox before that point leaves its initial scan

@@ -455,6 +455,17 @@ class TestKeepOut(RailTestCase):
                              "not pushed back out to the keep-out range")
         self.assertEqual(self.mav.keepout_events, 1)
 
+    def test_a_speck_of_dust_is_not_a_wall(self):
+        from sensor_msgs.msg import LaserScan
+        m = LaserScan()
+        m.angle_min, m.angle_increment = -math.pi, 2 * math.pi / 360
+        m.range_min, m.range_max = 0.05, 12.0
+        m.ranges = [float("inf")] * 360
+        m.ranges[200] = m.ranges[201] = 0.7     # two beams: survives the median
+        self.mav._on_scan(m)
+        p = self.stream(1.0, 1.0)
+        self.assertEqual((p.x, p.y), (1.0, 1.0))
+
     def test_the_airframe_itself_is_not_an_obstacle(self):
         self.scan(180.0, 0.3)
         p = self.stream(-1.0, 0.0)
