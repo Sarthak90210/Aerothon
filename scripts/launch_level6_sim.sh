@@ -199,6 +199,31 @@ if [ -f "$OFFICIAL_WS/src/ardupilot/Tools/autotest/sim_vehicle.py" ]; then
     export PATH="$OFFICIAL_WS/src/ardupilot/Tools/autotest:$OFFICIAL_WS/src/ardupilot/build/sitl/bin:$HOME/.local/bin:$PATH"
 fi
 
+# WSL APPENDS WINDOWS' PATH. A Windows Python's Scripts/mavproxy.py (no
+# shebang) was found first and run by /bin/sh: "from: not found", MAVProxy
+# dead, no heartbeat, and the harness waited 15 minutes for a stack that could
+# never become ready. Nothing in this stack runs Windows programs.
+PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -v '^/mnt/' | paste -sd: -)"
+# MAVProxy often lives in the ArduPilot Python venv, which a non-login shell
+# has not activated. Expose that one script only: the venv's own python3 on
+# PATH would shadow the system one that ROS's cv_bridge is built against.
+if ! command -v mavproxy.py >/dev/null 2>&1; then
+    for d in "${AEROTHON_MAVPROXY_DIR:-}" "$HOME/venv-ardupilot/bin" "$HOME/.local/bin"; do
+        if [ -n "$d" ] && [ -x "$d/mavproxy.py" ]; then
+            mkdir -p "$HOME/.cache/aerothon/bin"
+            ln -sf "$d/mavproxy.py" "$HOME/.cache/aerothon/bin/mavproxy.py"
+            PATH="$HOME/.cache/aerothon/bin:$PATH"
+            break
+        fi
+    done
+fi
+export PATH
+if ! command -v mavproxy.py >/dev/null 2>&1; then
+    echo "[BLOCKED] mavproxy.py not found (set AEROTHON_MAVPROXY_DIR to the folder holding it)"
+    exit 1
+fi
+echo "[OK] MAVProxy: $(command -v mavproxy.py)"
+
 # package:// resources inside the official Iris model need the parent of the
 # package share directory when the model is preloaded directly by gz-server.
 ARDUPILOT_GAZEBO_PREFIX="$(ros2 pkg prefix ardupilot_gazebo 2>/dev/null || true)"
