@@ -263,6 +263,53 @@ def write_glb(path, prims):
         f.write(struct.pack("<II", len(bin_), 0x004E4942) + bytes(bin_))
 
 
+def jaw_pocket(v, t, tip, res=2e-5):
+    """The hook pocket above a jaw's curled tip, measured on its side profile.
+
+    Each jaw is a plate in the x-z plane ending in a hook: a round pocket
+    above the tip, open to the claw's centre through a slot. Returns the
+    pocket's centre (x, z) and radius, the widest round bar that can pass the
+    slot (from inside the pocket to outside the jaw), and the plate's y range.
+    Something held by the claw has to cross the plate here, along y.
+    """
+    from PIL import Image, ImageDraw          # noqa: PLC0415 (converter-only deps)
+    from scipy import ndimage                 # noqa: PLC0415
+
+    lo = v[:, [0, 2]].min(0) - 0.002
+    hi = v[:, [0, 2]].max(0) + 0.002
+    nx, nz = (np.ceil((hi - lo) / res)).astype(int)
+    img = Image.new("L", (nx, nz), 0)
+    draw = ImageDraw.Draw(img)
+    px = (v[:, 0] - lo[0]) / res
+    pz = nz - (v[:, 2] - lo[1]) / res
+    for tri in t:
+        draw.polygon([(px[i], pz[i]) for i in tri], fill=255)
+    solid = np.array(img) > 0
+    free = ndimage.distance_transform_edt(~solid) * res
+    # The pocket sits a few mm above the tip: the largest free circle there.
+    cx, cz = (tip[0] - lo[0]) / res, nz - (tip[2] + 0.0025 - lo[1]) / res
+    w = int(0.002 / res)
+    r0, c0 = int(cz) - w, int(cx) - w
+    window = free[r0:r0 + 2 * w, c0:c0 + 2 * w]
+    k = np.unravel_index(np.argmax(window), window.shape)
+    row, col = r0 + k[0], c0 + k[1]
+    radius = float(window.max())
+    near = v[v[:, 2] < tip[2] + 0.005]
+    lo_r, hi_r = 0.0, radius
+    for _ in range(24):                       # widest bar that escapes
+        r = 0.5 * (lo_r + hi_r)
+        lab, _ = ndimage.label(free > r)
+        border = set(np.unique(np.r_[lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+        if lab[row, col] and lab[row, col] in border:
+            lo_r = r
+        else:
+            hi_r = r
+    return {"centre": [float(lo[0] + col * res), float(lo[1] + (nz - row) * res)],
+            "radius": radius, "slot": 2.0 * lo_r,
+            # The plate itself, not the pins through it, near the tip.
+            "plate_y": [float(near[:, 1].min()), float(near[:, 1].max())]}
+
+
 def box_of(v):
     lo, hi = v.min(0), v.max(0)
     return ((lo + hi) / 2).tolist(), (hi - lo).tolist()
@@ -337,6 +384,16 @@ def main():
         write_glb(os.path.join(out, "meshes", fn), [(part, nv, nt, CLAW_RGB[part])])
         mech_files[part] = fn
     jaws = merge([mech[lbl] for lbl in MECH_MOVING["claw_jaw_a"] + MECH_MOVING["claw_jaw_b"]])[0]
+    tips, tip_bounds = {}, {}
+    for side in ("a", "b"):
+        vertices = merge([mech[lbl] for lbl in MECH_MOVING[f"claw_jaw_{side}"]])[0]
+        tip_vertices = vertices[vertices[:, 2] < vertices[:, 2].min() + 0.0015]
+        tips[side] = tip_vertices.mean(axis=0).tolist()
+        tip_bounds[side] = {"min": tip_vertices.min(axis=0).tolist(),
+                            "max": tip_vertices.max(axis=0).tolist()}
+    pockets = {side: jaw_pocket(*merge([mech[lbl] for lbl in MECH_MOVING[f"claw_jaw_{side}"]]),
+                                tips[side])
+               for side in ("a", "b")}
     line = mech[MECH_MOVING["line"][0]][0]
     bar = mech[MECH_PINS["guide_bar"]][0]
     claw = {
@@ -350,6 +407,9 @@ def main():
         "line_exit": [float(pin["top_pin"][0]), float(pin["top_pin"][1]),
                       float(bar[:, 2].min())],
         "jaw_tip_z": float(jaws[:, 2].min()),
+        "jaw_tips": tips,
+        "jaw_tip_bounds": tip_bounds,
+        "pockets": pockets,
         "jaw_y": float((jaws[:, 1].min() + jaws[:, 1].max()) / 2.0),
     }
 

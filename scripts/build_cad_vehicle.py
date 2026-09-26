@@ -261,7 +261,7 @@ def _driven(model, joint, topic, gain, cmd_max):
         "</plugin>"))
 
 
-def add_claw(model, c, uri):
+def add_claw(model, c, uri, detachable=True):
     """The team's dropping mechanism as it is drawn: the spool on the motor's
     axle, and the scissor claw on the line (sim_gazebo/claw.py).
 
@@ -271,8 +271,10 @@ def add_claw(model, c, uri):
     turn on the centre pin, which slides up the hanger as they open. All are
     held at 0 (the claw as drawn: shut) until something commands them; the
     winch bench opens them from the line's slack. The payload hangs from the
-    jaws (claw_pivot) by its eyelet. None of the claw's parts collide: the
-    sim decides when the tips have let the eyelet go, not contact at 1 mm.
+    jaws by contact with the payload's lifting tab in the close-up bench.
+    Each jaw's contact box sits at the tip measured from the CAD. The normal
+    mission model retains its legacy detachable payload joint until that
+    flight path can be migrated and qualified separately.
     """
     top, ctr, exit_ = c["top_pin"], c["centre_pin"], c["line_exit"]
     mesh = lambda name, part: (                                     # noqa: E731
@@ -326,21 +328,32 @@ def add_claw(model, c, uri):
         "<upper>0.01</upper><effort>1e6</effort></limit></axis></joint>"))
     _driven(model, "claw_pivot_joint", "/aerothon/claw/pivot", 30, 1)
     for side in ("a", "b"):
+        bounds = c["jaw_tip_bounds"][side]
+        tip = [(bounds["min"][i] + bounds["max"][i]) / 2 for i in range(3)]
+        tip_local = [tip[i] - ctr[i] for i in range(3)]
+        tip_size = [bounds["max"][i] - bounds["min"][i] + 0.0002 for i in range(3)]
+        tip_collision = (
+            f"<collision name='contact_tip_{side}'><pose>{pose(*tip_local)}</pose>"
+            f"<geometry><box><size>{' '.join(map(str, tip_size))}</size></box></geometry>"
+            "<surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode>"
+            "</friction></surface></collision>")
         model.append(ET.fromstring(
             f"<link name='claw_jaw_{side}'><pose>{pose(*ctr)}</pose>{tiny}"
-            f"{mesh('jaw', f'claw_jaw_{side}')}</link>"))
+            f"{mesh('jaw', f'claw_jaw_{side}')}{tip_collision}</link>"))
         model.append(ET.fromstring(
             f"<joint name='claw_jaw_{side}_joint' type='revolute'><parent>claw_pivot</parent>"
             f"<child>claw_jaw_{side}</child><axis><xyz>0 1 0</xyz><limit><lower>-1</lower>"
             "<upper>1</upper><effort>1e6</effort></limit></axis></joint>"))
         _driven(model, f"claw_jaw_{side}_joint", f"/aerothon/claw/jaw_{side}", 30, 20)
 
-    model.append(ET.fromstring(
-        "<plugin filename='gz-sim-detachable-joint-system' "
-        "name='gz::sim::systems::DetachableJoint'><parent_link>claw_pivot</parent_link>"
-        "<child_model>aerothon_payload</child_model><child_link>body</child_link>"
-        "<detach_topic>/aerothon/payload/detach</detach_topic>"
-        "<attach_topic>/aerothon/payload/attach</attach_topic></plugin>"))
+    if detachable:
+        model.append(ET.fromstring(
+            "<plugin filename='gz-sim-detachable-joint-system' "
+            "name='gz::sim::systems::DetachableJoint'><parent_link>claw_pivot</parent_link>"
+            "<child_model>aerothon_payload</child_model><child_link>body</child_link>"
+            "<detach_topic>/aerothon/payload/detach</detach_topic>"
+            "<attach_topic>/aerothon/payload/attach</attach_topic></plugin>"))
+
 
 
 def add_hook(model, af):
