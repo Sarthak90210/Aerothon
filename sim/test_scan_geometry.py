@@ -610,5 +610,19 @@ class GateOpeningTests(unittest.TestCase):
         self.assertTrue(r["open"], r["reason"])
 
 
+
+class GapCentreTests(unittest.TestCase):
+    """Where the hole's middle is, from the posts alone."""
+
+    def test_the_middle_of_the_posts_across_the_flight_line(self):
+        from mission_bt.scan_geometry import gate_opening
+        for off in (0.0, 0.6, -0.8):
+            with self.subTest(off=off):
+                segs = [post(5.0, 0.0, -1.9 + off), post(5.0, 0.0, 1.9 + off)]
+                o = gate_opening(ANGLE_MIN, ANGLE_INC, scan_of(segs), 0.0,
+                                 math.radians(35.0), need_clear_m=0.0)
+                self.assertAlmostEqual(o["centre_m"], off, delta=0.1)
+
+
 if __name__ == "__main__":
     unittest.main()

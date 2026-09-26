@@ -2544,7 +2544,7 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                  sector_half_width_rad=math.radians(35.0),
                  hfov_rad=1.0472, clock=None, max_steps=12,
                  crossing_margin_m=0.6, obstacle_margin_m=0.4,
-                 board_memory_s=30.0):
+                 board_memory_s=30.0, recentre_m=0.25, max_recentres=4):
         # The margins must fit the gap between the posts and the first
         # obstacle behind them. On the shipped arena the return lane's first
         # slalom block stands 1.2 m past the return gate; 1.0 + 0.75 m could
@@ -2566,6 +2566,8 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self.crossing_margin_m = float(crossing_margin_m)
         self.obstacle_margin_m = float(obstacle_margin_m)
         self.board_memory_s = float(board_memory_s)
+        self.recentre_m = float(recentre_m)
+        self.max_recentres = int(max_recentres)
         self.clock = clock or time.monotonic
         self._reset()
 
@@ -2579,6 +2581,7 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self._steps = 0
         self._advance_m = None
         self._heading = None
+        self._recentres = 0
 
     def initialise(self):
         self._reset()
@@ -2651,6 +2654,25 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                                          self.sector_half_width,
                                          need_clear_m=0.0)
         here = self.mav.alt()
+        centre = opening.get("centre_m")
+        if (centre is not None and abs(centre) > self.recentre_m
+                and self._recentres < self.max_recentres):
+            # LINE UP ON THE POSTS, NOT ON GPS. Fourteen seconds of descent
+            # in wind moved the aircraft 0.9 m off the gate's centreline, and
+            # in a 3 m lane that put the corridor wall inside the strip the
+            # crossing has to keep clear (random conditions, rb_low_board).
+            # The posts say where the middle is; move there and look again.
+            self._recentres += 1
+            x, y, _ = self.mav.pos()
+            psi = self._heading
+            self._anchor = (x - centre * math.sin(psi), y + centre * math.cos(psi),
+                            self._anchor[2])
+            self._t0 = self.clock()
+            self.mav.log(f"DuckUnderBoard: {abs(centre):.2f} m "
+                         f"{'right' if centre < 0 else 'left'} of the gap's "
+                         f"middle; moving across to it ({self._recentres}/"
+                         f"{self.max_recentres})")
+            return py_trees.common.Status.RUNNING
         gate = opening.get("gate_m")
         distance = None
         if opening["open"] and gate is not None and math.isfinite(gate):
@@ -4445,6 +4467,16 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         if not zone:
             return None
         x0, x1, y0, y1 = zone
+        # Outside the zone, the nearest EDGE is the one the point faces across,
+        # not the nearest edge LINE: a gate 7 m below the zone's south edge
+        # and 2 m inside its west edge's line was taken to face west, stood
+        # off outside the zone and refused as the back of the board (rotated
+        # layout, random conditions).
+        dx = min(max(x, x0), x1) - x
+        dy = min(max(y, y0), y1) - y
+        if dx or dy:
+            return ((math.copysign(1.0, dx), 0.0) if abs(dx) > abs(dy)
+                    else (0.0, math.copysign(1.0, dy)))
         edges = {(0.0, 1.0): abs(y - y0), (-1.0, 0.0): abs(x1 - x),
                  (0.0, -1.0): abs(y1 - y), (1.0, 0.0): abs(x - x0)}
         return min(edges, key=edges.get)
@@ -4948,6 +4980,15 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
         the camera's field of view, and climbing back up to look for it would
         be worse than finishing. That is a deliberate, bounded commitment, not
         an oversight.
+
+    THE MARKER IS A LANDMARK, NOT THE TOUCHDOWN
+        The start QR stands forward of the take-off point -- the rulebook has
+        the aircraft "move forward" to scan it -- and landing on it put the
+        aircraft 2-3 m from where it took off. Centred on it, the aircraft
+        knows how far its estimate has drifted since the start (where it
+        stands now, against where the marker was fixed then), and flies the
+        same drift-corrected offset back to the take-off point before
+        handing over to LAND.
     """
 
     def __init__(self, mav, start_alt=5.0, commit_alt=1.5, step_m=0.4,
@@ -4989,6 +5030,8 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
         self._t = 0
         self._lost = 0
         self.reacquisitions = 0
+        self._centred_xy = None      # estimate when last centred on the marker
+        self._home = None            # drift-corrected take-off point, once set
         self.mav.landing_precision = "UNKNOWN"
         self.mav.log(
             f"precision descent: committing at {self.commit_alt:.2f} m "
@@ -4999,6 +5042,14 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
         x, y, z = self.mav.pos()
         psi = self.mav.yaw()
 
+        if z <= self.commit_alt and self._home is None:
+            self._home = self._corrected_home()
+        if self._home is not None and self._t <= self.timeout_ticks \
+                and math.hypot(self._home[0] - x, self._home[1] - y) > 0.3:
+            self.mav.goto(self._home[0], self._home[1], z, psi)
+            self.feedback_message = (f"over the marker; to the take-off point "
+                                     f"({self._home[0]:.1f}, {self._home[1]:.1f})")
+            return py_trees.common.Status.RUNNING
         if z <= self.commit_alt:
             # Committed: close enough that the pad is out of frame anyway.
             self.mav.landing_precision = (
@@ -5061,11 +5112,23 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
 
         # Only descend once centred: coming down off-centre just moves the
         # error closer to the ground where there is less room to fix it.
+        if err <= self.tol:
+            self._centred_xy = (x, y)
         tz = z - self.step_m if err <= self.tol else z
         self.mav.goto(tx, ty, max(self.commit_alt, tz), psi)
         self.feedback_message = (f"descending {z:.2f} m, err {err:.3f} "
                                  f"{'(centred)' if err <= self.tol else ''}")
         return py_trees.common.Status.RUNNING
+
+
+    def _corrected_home(self):
+        """The take-off point in the estimate's CURRENT frame, or None when
+        the marker was never fixed at the start or never centred on now."""
+        fix = getattr(self.mav, "home_marker_xy", None)
+        if fix is None or self._centred_xy is None:
+            return None
+        hx, hy = self.mav.home_local_xy()
+        return (hx + self._centred_xy[0] - fix[0], hy + self._centred_xy[1] - fix[1])
 
 
 class Land(py_trees.behaviour.Behaviour):

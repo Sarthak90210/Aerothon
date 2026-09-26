@@ -252,6 +252,8 @@ class Mav:
         # Corridor navigator feedback: exit is DETECTED, not assumed from a
         # hardcoded x threshold (geometry audit A6/A10).
         self.avoid_detail = {}
+        self._avoiding = False
+        self._avoid_fresh = 0
         # Observed geometry, recorded in flight. These replace the asserted
         # zone_entry / zone_bounds / corridor_return_entry constants (audit
         # A7, A8, A9): everything here is measured during this mission.
@@ -963,6 +965,14 @@ class Mav:
             # already carries the correction rather than a zero.
             self.pub_hold_alt.publish(Float32(data=float(hold_alt)))
         self.pub_enable.publish(Bool(data=bool(on)))
+        if on and not self._avoiding:
+            # A new traversal: the last detail is the previous one's ending.
+            # Enabled and checked on the same tick, the return corridor read
+            # the outbound corridor's "exited" and ended at its own mouth
+            # (random conditions, rb_high_board).
+            self.avoid_detail = {}
+            self._avoid_fresh = 0
+        self._avoiding = bool(on)
         if on:
             self._sp = None    # stop position streaming; avoidance drives velocity
 
@@ -976,19 +986,26 @@ class Mav:
     # camera pointing (Phase 2)
     # ------------------------------------------------------------------ #
     def _on_avoid_detail(self, m):
+        self._avoid_fresh += 1
         try:
             self.avoid_detail = json.loads(m.data)
         except json.JSONDecodeError:
             self.avoid_detail = {}
 
+    def _avoid_current(self):
+        """Detail published since this traversal was handed over. The first
+        few can predate the navigator seeing the enable."""
+        return self._avoid_fresh >= 3
+
     def corridor_exited(self):
         # OBSERVING retains the last traversal's exit flag. It cannot end a
         # new traversal before the navigator has even taken control.
-        return (self.avoid_detail.get("state") == "CRUISE"
+        return (self._avoid_current()
+                and self.avoid_detail.get("state") == "CRUISE"
                 and bool(self.avoid_detail.get("corridor_exited")))
 
     def avoidance_stuck(self):
-        return self.avoid_detail.get("state") == "STUCK"
+        return self._avoid_current() and self.avoid_detail.get("state") == "STUCK"
 
     def _on_winch_status(self, m):
         try:

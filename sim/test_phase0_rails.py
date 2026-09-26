@@ -443,6 +443,29 @@ class TestBannerClipped(RailTestCase):
             self.assertTrue(self.detail(box), box)
 
 
+class TestNewTraversal(RailTestCase):
+
+    def detail(self, exited):
+        import json
+        from std_msgs.msg import String
+        self.mav._on_avoid_detail(String(data=json.dumps(
+            {"state": "CRUISE", "corridor_exited": exited})))
+
+    def test_the_last_traversals_exit_does_not_end_the_next(self):
+        self.mav.enable_avoidance(True, hold_alt=2.0)
+        for _ in range(3):
+            self.detail(True)
+        self.assertTrue(self.mav.corridor_exited())      # outbound, genuinely
+        self.mav.enable_avoidance(False)
+        self.mav.enable_avoidance(True, hold_alt=2.0)    # the return lane
+        self.assertFalse(self.mav.corridor_exited())
+        self.detail(True)                                # in flight before the enable
+        self.assertFalse(self.mav.corridor_exited())
+        for _ in range(3):
+            self.detail(False)
+        self.assertFalse(self.mav.corridor_exited())
+
+
 class TestKeepOut(RailTestCase):
     """A held position setpoint is only as good as the GPS; the lidar keeps
     it off whatever is beside the aircraft."""

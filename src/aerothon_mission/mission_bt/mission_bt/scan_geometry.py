@@ -387,6 +387,8 @@ def gate_opening(angle_min, angle_increment, ranges, bearing_rad,
         clear_m     how far the flight line is clear, measured down a
                     corridor `corridor_m` wide -- the width the airframe
                     actually needs, not the width of the hole
+        centre_m    where the middle of that pair is across the flight line,
+                    + left; only when a pair was measured
         reason      why it is not open, empty when it is
 
     `open` is False both for a solid face and for a gap with something
@@ -503,6 +505,10 @@ def gate_opening(angle_min, angle_increment, ranges, bearing_rad,
 
     gate, a, b, ap, bp = min(pairs, key=lambda item: item[0])
     gap = math.hypot(bp[0] - ap[0], bp[1] - ap[1])
+    # Where the hole's middle is, across the flight line (+ left): the
+    # lidar's own answer to "am I lined up", which GPS cannot give to the
+    # half-metre a 3 m lane leaves.
+    centre = 0.5 * (_lat(ap) + _lat(bp))
 
     # Distance to the gate itself, separate from how far the centreline stays
     # clear behind it. The return corridor puts its first slalom obstacle only
@@ -529,15 +535,15 @@ def gate_opening(angle_min, angle_increment, ranges, bearing_rad,
 
     if gap < float(min_gap_m):
         return {"open": False, "clusters": len(groups), "gap_m": gap,
-                "gate_m": gate, "clear_m": clear,
+                "gate_m": gate, "clear_m": clear, "centre_m": centre,
                 "reason": (f"the hole between the two nearest surfaces is "
                            f"only {gap:.1f} m across; too narrow to fly")}
     if clear < float(need_clear_m):
         return {"open": False, "clusters": len(groups), "gap_m": gap,
-                "gate_m": gate, "clear_m": clear,
+                "gate_m": gate, "clear_m": clear, "centre_m": centre,
                 "reason": (f"a {gap:.1f} m hole with something standing "
                            f"{clear:.1f} m into it, against the "
                            f"{float(need_clear_m):.0f} m the aircraft means "
                            f"to fly")}
     return {"open": True, "clusters": len(groups), "gap_m": gap,
-            "gate_m": gate, "clear_m": clear, "reason": ""}
+            "gate_m": gate, "clear_m": clear, "centre_m": centre, "reason": ""}

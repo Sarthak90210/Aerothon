@@ -333,6 +333,27 @@ class DuckUnderBoardTests(unittest.TestCase):
         self.assertTrue(all(abs(g[0]) < 1e-9 and abs(g[1]) < 1e-9
                             for g in mav.gotos))
 
+    def test_it_lines_up_on_the_posts_before_crossing(self):
+        """0.8 m off the gate's middle in a 3 m lane: the wall is in the
+        strip the crossing keeps clear until it moves across."""
+        class OffCentre(_LaggedGateMav):
+            def opening_ahead(self, bearing_rad, half_width_rad, need_clear_m=10.0):
+                o = super().opening_ahead(bearing_rad, half_width_rad, need_clear_m)
+                if o.get("gate_m") is None:
+                    return o
+                off = -self._pos[1]                # the gap is at y = 0
+                o = dict(o, centre_m=off)
+                if abs(off) > 0.5:                 # the wall is in the strip
+                    o.update(open=False, clear_m=5.2,
+                             reason="gate at 5.00 m, something standing at 5.20 m")
+                return o
+
+        mav = OffCentre(opening_below_m=2.6)
+        mav._pos = (0.0, 0.8, 3.0)
+        leaf = self._fly(mav)
+        self.assertIs(leaf.status, py_trees.common.Status.SUCCESS, mav.abort_reason)
+        self.assertLess(abs(mav.pos()[1]), 0.3)
+
     def test_an_edge_read_a_step_high_is_stepped_under(self):
         """Baro noise: one look at 2.6 m finds the way open, and 0.6 m lower
         the board is back in the scan; lower still it is open for good."""
@@ -449,6 +470,7 @@ class CorridorAltitudeTests(unittest.TestCase):
         mav._pos = (20.0, 0.0, 3.0)
         mav.avoid_detail = {"state": "OBSERVING", "corridor_exited": True}
         mav.corridor_exited = lambda: Mav.corridor_exited(mav)
+        mav._avoid_current = lambda: True
         stage = Corridor("ReturnCorridor", mav, forward=False, alt=3.0)
         self.assertIs(stage.update(), py_trees.common.Status.RUNNING)
         mav.avoid_detail = {"state": "CRUISE", "corridor_exited": False}

@@ -313,10 +313,37 @@ class HomePadLandingTests(unittest.TestCase):
     5 m with the pad 1 m off and a commit altitude of 4.96 m -- 4 cm of room
     to lock -- never locked, and landed 2.7 m from the pad."""
 
+    def _land(self, marker_now):
+        """Fixed at (0.94, 0) at the start; seen at `marker_now` on return."""
+        from mission_bt.mission_tree import PrecisionDescent
+        mav = NadirMav(marker=marker_now, pos=(0.0, 0.0, 5.0), visible_ticks=1)
+        mav.home_marker_xy = (0.94, 0.0)
+        mav.home_local_xy = lambda: (0.0, 0.0)
+        mav.landing_precision = None
+        stage = PrecisionDescent(mav, start_alt=5.0, marker_m=2.2, hfov_rad=HFOV)
+        stage.initialise()
+        for _ in range(800):
+            if stage.update() is not py_trees.common.Status.RUNNING:
+                break
+        return mav
+
+    def test_it_lands_where_it_took_off_not_on_the_marker(self):
+        """The start QR stands forward of the take-off point."""
+        mav = self._land((0.94, 0.0))
+        self.assertTrue(str(mav.landing_precision).startswith("PRECISE"))
+        self.assertLess(math.hypot(*mav.pos()[:2]), 0.4)
+
+    def test_estimate_drift_is_taken_out_by_the_marker(self):
+        """A metre of drift since take-off: the marker reads 1 m further on,
+        and so must the take-off point."""
+        mav = self._land((1.94, 0.0))
+        self.assertAlmostEqual(mav.pos()[0], 1.0, delta=0.4)
+
     def test_the_landing_goes_to_the_pad_and_locks(self):
         from mission_bt.mission_tree import PrecisionDescent
         mav = NadirMav(marker=(0.94, 0.0), pos=(0.0, 0.0, 5.0), visible_ticks=1)
         mav.home_marker_xy = (0.94, 0.0)
+        mav.home_local_xy = lambda: (0.0, 0.0)
         mav.landing_precision = None
         stage = PrecisionDescent(mav, start_alt=5.0, marker_m=2.2, hfov_rad=HFOV)
         self.assertGreaterEqual(stage.start_alt, stage.commit_alt + 1.5)
@@ -329,4 +356,4 @@ class HomePadLandingTests(unittest.TestCase):
         self.assertIs(status, py_trees.common.Status.SUCCESS)
         self.assertTrue(str(mav.landing_precision).startswith("PRECISE"),
                         mav.landing_precision)
-        self.assertAlmostEqual(mav.pos()[0], 0.94, delta=0.3)
+        self.assertLess(abs(mav.pos()[0]), 0.4, "did not return to take-off")

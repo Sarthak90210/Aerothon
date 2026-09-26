@@ -221,6 +221,15 @@ class ReturnGateSearchTests(unittest.TestCase):
         mav.outbound_banner_xy = (4.0, 12.0)       # elsewhere: now it counts
         self.assertIsNotNone(leaf._sighting())
 
+    def test_a_gate_below_the_zone_faces_up_into_it(self):
+        """Below the south edge and just inside the west edge's line."""
+        from mission_bt.mission_tree import FindReturnBanner
+        mav = World([], zone=(24.9, 54.9, -3.2, 22.8))
+        leaf = FindReturnBanner(mav, alt=5.0, clock=Clock())
+        self.assertEqual(leaf._inward_normal(27.2, -9.8), (0.0, 1.0))
+        self.assertEqual(leaf._inward_normal(20.0, 5.0), (1.0, 0.0))
+        self.assertEqual(leaf._inward_normal(26.0, 5.0), (1.0, 0.0))  # inside
+
     def test_it_never_flies_outside_the_zone_edge_it_searches(self):
         mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))
         run(mav)
