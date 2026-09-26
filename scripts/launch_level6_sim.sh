@@ -381,11 +381,18 @@ python3 "$SCRIPT_DIR/materialize_vehicle_model.py" \
     --source "$ARDUPILOT_GAZEBO_PREFIX/share/ardupilot_gazebo/models/iris_with_gimbal/model.sdf" \
     --output-root "$VEHICLE_MODELS_DIR"
 export GZ_SIM_RESOURCE_PATH="$VEHICLE_MODELS_DIR:${GZ_SIM_RESOURCE_PATH:-}"
+# The day's conditions (AEROTHON_CONDITIONS = calm|field|worst|random or a
+# JSON object; a world spec may carry its own) become the world's wind and
+# marker wear, SITL's sensor faults and degrade_node's camera and lidar.
+export AEROTHON_CONDITIONS_FILE=/tmp/aerothon_conditions.json
+export AEROTHON_CONDITIONS_PARM=/tmp/aerothon_conditions.parm
 python3 "$SCRIPT_DIR/materialize_world.py" \
     --source "$WORKSPACE_ROOT/src/aerothon_sim/sim_gazebo/worlds/mission2.sdf" \
     --assets "$WORKSPACE_ROOT/src/aerothon_sim/sim_gazebo/materials" \
     --output "$WORLD_RUNTIME" \
-    --layout-out /tmp/aerothon_arena_layout.json
+    --layout-out /tmp/aerothon_arena_layout.json \
+    --conditions-out "$AEROTHON_CONDITIONS_FILE" \
+    --sitl-params-out "$AEROTHON_CONDITIONS_PARM"
 
 # The organiser inputs for THIS arena. A randomised arena moves the delivery
 # field, and publishing the shipped arena's boundary for it sent the search

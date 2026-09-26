@@ -4293,8 +4293,19 @@ class WinchDrop(py_trees.behaviour.Behaviour):
                  marker_m=2.2, max_offset_age_ticks=40, centre_tol_m=0.25,
                  settle_ticks=10, servo_timeout_ticks=150,
                  payload_size_m=0.12, confirm_frames=5,
-                 confirm_timeout_ticks=200, stow_timeout_ticks=300):
+                 confirm_timeout_ticks=200, stow_timeout_ticks=300,
+                 winch_reach_m=5.5):
         super().__init__("WinchDrop"); self.mav = mav
+        # THE HIGHEST RELEASE THE LINE CAN MAKE. The gravity hook lets go
+        # only once the payload rests on the ground with slack in the line,
+        # and the winch holds 6 m. The tracking floor below once raised the
+        # drop to 6.76 m for a 3 m pad: the payload hung 0.5 m up, the
+        # interlock took "payout at its limit" for "down", and the mission
+        # reported a delivery with the payload still on the hook
+        # (sim/fly_headless.py, shipped arena). The pad is centred at the
+        # tracking floor; the release is made from no higher than this.
+        self.winch_reach_m = float(winch_reach_m)
+        self._held_from = None
         # CAMERA CONFIRMATION of the drop (phase 4). The winch's "released"
         # is only what it was told to do; the payload on the ground under the
         # pad is what the rulebook scores, so the nadir camera must see it
@@ -4365,13 +4376,16 @@ class WinchDrop(py_trees.behaviour.Behaviour):
         self._last_payload_reason = "no payload detection received"
         self.mav.delivery_confirmed = None
         floor = self.tracking_floor()
-        if self.drop_alt < floor:
+        self.servo_alt = max(self.drop_alt, floor)
+        self.release_alt = min(self.servo_alt, self.winch_reach_m)
+        self._held_from = None
+        if self.servo_alt > self.drop_alt:
             self.mav.log(
                 f"drop altitude {self.drop_alt:.2f} m is below the "
                 f"{floor:.2f} m tracking floor for a {self.marker_m:.1f} m "
-                f"pad; raising it, because below the floor the delivery "
-                f"offset cannot be measured at all", warn=True)
-            self.drop_alt = floor
+                f"pad; centring from {self.servo_alt:.2f} m, where the whole "
+                f"pad is in frame, and releasing from {self.release_alt:.2f} m",
+                warn=True)
         # Start from the current position; _servo_drop_point() then walks it
         # onto the matched pad during the descent.
         self.drop_x, self.drop_y = self.mav.pos()[:2]
@@ -4437,7 +4451,11 @@ class WinchDrop(py_trees.behaviour.Behaviour):
         elif self._last_offset is not None:
             ox, oy, at_alt, when = self._last_offset
             age = self._t - when
-            if age > self.max_offset_age_ticks:
+            # A sighting from the centred hold still stands: the aircraft has
+            # held that point since, straight down to the release.
+            held = (self._held_from is not None
+                    and when >= self._held_from - self.settle_ticks)
+            if age > self.max_offset_age_ticks and not held:
                 self.mav.delivery_offset_m = None
                 self.mav.delivery_note = (
                     f"no target in frame at release; the last sighting was "
@@ -4480,24 +4498,32 @@ class WinchDrop(py_trees.behaviour.Behaviour):
             # Keep the MATCHED pad under the aircraft all the way down. The
             # drop point used to be latched once at stage start, so any error
             # left by the search went straight into the scored drop accuracy.
-            centred = self._servo_drop_point()
-            self.mav.goto(self.drop_x, self.drop_y, self.drop_alt,
-                          self.mav.yaw())
-            at_alt = self.mav.reached(self.drop_x, self.drop_y,
-                                      self.drop_alt, 0.5)
-            self._settle = self._settle + 1 if (at_alt and centred) else 0
-            waited = self._t - self._phase_started
-            if self._settle >= self.settle_ticks or \
-                    (at_alt and waited > self.servo_timeout):
-                if self._settle < self.settle_ticks:
-                    self.mav.log("drop: pad not held centred within the "
-                                 f"servo window ({waited} ticks); lowering "
-                                 "at the last tracked point", warn=True)
-                self.phase = 1
-                self._phase_started = self._t
+            if self._held_from is None:
+                centred = self._servo_drop_point()
+                self.mav.goto(self.drop_x, self.drop_y, self.servo_alt,
+                              self.mav.yaw())
+                at_alt = self.mav.reached(self.drop_x, self.drop_y,
+                                          self.servo_alt, 0.5)
+                self._settle = self._settle + 1 if (at_alt and centred) else 0
+                waited = self._t - self._phase_started
+                if self._settle >= self.settle_ticks or \
+                        (at_alt and waited > self.servo_timeout):
+                    if self._settle < self.settle_ticks:
+                        self.mav.log("drop: pad not held centred within the "
+                                     f"servo window ({waited} ticks); lowering "
+                                     "at the last tracked point", warn=True)
+                    self._held_from = self._t
+            # Then straight down to the release altitude, holding the point.
+            if self._held_from is not None:
+                self.mav.goto(self.drop_x, self.drop_y, self.release_alt,
+                              self._yaw)
+                if self.mav.reached(self.drop_x, self.drop_y,
+                                    self.release_alt, 0.5):
+                    self.phase = 1
+                    self._phase_started = self._t
 
         elif self.phase == 1:                          # lower until DOWN
-            self.mav.goto(self.drop_x, self.drop_y, self.drop_alt, self._yaw)
+            self.mav.goto(self.drop_x, self.drop_y, self.release_alt, self._yaw)
             self.mav.winch("lower")
             self.feedback_message = (f"lowering: payout="
                                      f"{w.get('payout_m', 0.0)} "
@@ -4517,7 +4543,7 @@ class WinchDrop(py_trees.behaviour.Behaviour):
                 return py_trees.common.Status.FAILURE
 
         elif self.phase == 2:                          # release, gated
-            self.mav.goto(self.drop_x, self.drop_y, self.drop_alt, self._yaw)
+            self.mav.goto(self.drop_x, self.drop_y, self.release_alt, self._yaw)
             if w.get("released"):
                 self._record_delivery_offset()
                 self.phase = 3
@@ -4537,7 +4563,7 @@ class WinchDrop(py_trees.behaviour.Behaviour):
             # Hold the drop point while the hook winds up, so the camera's
             # view of the pad is the same one the payload fell into.
             self.mav.winch("stow")
-            self.mav.goto(self.drop_x, self.drop_y, self.drop_alt, self._yaw)
+            self.mav.goto(self.drop_x, self.drop_y, self.release_alt, self._yaw)
             stowed = float(w.get("payout_m", 0.0)) <= 0.1
             if stowed or self._t - self._phase_started > self.stow_timeout:
                 self.phase = 4
@@ -4545,7 +4571,7 @@ class WinchDrop(py_trees.behaviour.Behaviour):
                 self._confirm = 0
 
         elif self.phase == 4:                          # the camera confirms
-            self.mav.goto(self.drop_x, self.drop_y, self.drop_alt, self._yaw)
+            self.mav.goto(self.drop_x, self.drop_y, self.release_alt, self._yaw)
             verdict = self._check_payload()
             if verdict is not None:
                 self._settle_delivery(True, verdict)
@@ -4941,6 +4967,15 @@ def build_root(mav, node, p):
         # swept 271 degrees past it. The fix is to point the camera where the
         # banner actually is rather than to move the aircraft: the BANNER pose
         # looks 20 degrees down, which covers the gate from scan altitude.
+        #
+        # FROM SCAN ALTITUDE, so back to it first. CenterStartQR climbs until
+        # the whole marker fits the frame -- 8 m for the simulated 2.2 m pad
+        # under the C270's 28 deg vertical view -- and from 8 m a gate 4 m
+        # ahead is 50 deg down, below the BANNER view. The sweep then found
+        # only the RETURN gate, 14 m off, squared up on it 2.2 m starboard of
+        # the outbound lane and refused at the lane's wall end
+        # (sim/fly_headless.py, shipped arena, calm).
+        ClimbInPlace("BackToScanAlt", mav, p['takeoff_alt']),
         SetCameraPose("CameraBannerSearch", mav, "BANNER"),
         AlignToBanner(mav, clock=clock,
                       image_width_px=p.get('image_width_px', 1280),
@@ -5006,6 +5041,7 @@ def build_root(mav, node, p):
                    image_w_px=p.get('image_width_px', 1280),
                    image_h_px=p.get('image_height_px', 720)),
         WinchDrop(mav, p['drop_alt'], p['search_alt'],
+                  winch_reach_m=p.get('winch_reach_m', 5.5),
                   hfov_rad=p.get('camera_hfov', 1.0472),
                   image_w_px=p.get('image_width_px', 1280),
                   image_h_px=p.get('image_height_px', 720),
@@ -5208,6 +5244,9 @@ def declare_mission_params(node):
     d('takeoff_alt', 5.0)
     d('search_alt_max', 10.0)      # CEILING for the derived sweep, not a target
     d('drop_alt', 5.0)
+    # The highest release the winch's 6 m of line can make with the slack the
+    # gravity hook needs to let go (WinchDrop).
+    d('winch_reach_m', 5.5)
 
     # --- camera + marker: inputs to the derived search geometry --------- #
     d('image_width_px', 1280)
@@ -5284,6 +5323,7 @@ def declare_mission_params(node):
         'takeoff_alt': float(g('takeoff_alt')),
         'search_alt': float(g('search_alt_max')),
         'drop_alt': float(g('drop_alt')),
+        'winch_reach_m': float(g('winch_reach_m')),
         'image_width_px': int(g('image_width_px')),
         'image_height_px': int(g('image_height_px')),
         'camera_hfov': float(g('camera_hfov')),
@@ -5334,6 +5374,7 @@ def main():
         "Corridor": "CORRIDOR_NAV",
         "GotoZone": "ENTER_ZONE", "Climb10": "ENTER_ZONE",
         "RequireDeliveryZone": "PREFLIGHT", "UploadArenaFence": "PREFLIGHT",
+        "BackToScanAlt": "BANNER_ALIGN",
         "EnterDeliveryZone": "ENTER_ZONE", "ClimbToSweep": "ENTER_ZONE",
         "CenterOnTarget": "CENTER_TARGET", "DescendToDecode": "SEARCH_QR",
         "ClimbForReturn": "RETURN_TRANSIT",

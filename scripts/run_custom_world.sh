@@ -5,6 +5,12 @@
 #   scripts/run_custom_world.sh sim/worlds/my_world.json
 #   scripts/run_custom_world.sh sim/worlds/my_world.json --gui       # watch it
 #   scripts/run_custom_world.sh sim/worlds/my_world.json --record    # + video
+#   scripts/run_custom_world.sh sim/worlds/my_world.json --conditions worst
+#   scripts/run_custom_world.sh sim/worlds/my_world.json --conditions random --seed 7
+#
+# --conditions overrides the world's own (scripts/world_spec.py: calm, field,
+# worst, random); --seed picks the day for "random". Outputs are then named
+# NAME_CONDITIONS_sSEED so a campaign of days does not overwrite itself.
 #
 # Everything the mission meets -- where it takes off, where the corridor is and
 # which way it points, the delivery zone's size, the geofence, every red zone,
@@ -21,23 +27,35 @@ cd "$ROOT" || exit 1
 
 SPEC="$(realpath "${1:?usage: run_custom_world.sh WORLD.json [--gui] [--record]}")"
 shift
-GUI=0; REC=0
-for a in "$@"; do
-    case "$a" in
-        --gui) GUI=1 ;;
-        --record) GUI=1; REC=1 ;;
-        *) echo "unknown arg: $a"; exit 2 ;;
+GUI=0; REC=0; COND=""; CSEED=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --gui) GUI=1; shift ;;
+        --record) GUI=1; REC=1; shift ;;
+        --conditions) COND="$2"; shift 2 ;;
+        --seed) CSEED="$2"; shift 2 ;;
+        *) echo "unknown arg: $1"; exit 2 ;;
     esac
 done
 NAME="$(basename "$SPEC" .json)"
+if [[ -n "$COND" ]]; then
+    NAME="${NAME}_${COND}_s${CSEED}"
+    export AEROTHON_CONDITIONS="$COND"
+else
+    unset AEROTHON_CONDITIONS
+fi
+export AEROTHON_CONDITIONS_SEED="$CSEED"
 OUT="$ROOT/logs/custom"
 mkdir -p "$OUT"
 
 # Refuse a bad world before touching the simulator.
-python3 - "$SPEC" <<'PY' || exit 3
+python3 - "$SPEC" "$COND" <<'PY' || exit 3
 import sys; sys.path.insert(0, "scripts")
 import world_spec
-errs, warns = world_spec.validate(world_spec.load(sys.argv[1]))
+spec = world_spec.load(sys.argv[1])
+if sys.argv[2]:
+    spec["conditions"] = {"preset": sys.argv[2]}
+errs, warns = world_spec.validate(spec)
 for w in warns: print("warning:", w)
 for e in errs: print("ERROR:", e)
 sys.exit(1 if errs else 0)

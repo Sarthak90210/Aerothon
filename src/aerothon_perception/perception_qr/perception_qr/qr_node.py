@@ -53,6 +53,7 @@ from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import String, Bool
 
 from perception_qr.qr_decode import QrDecoder, zbar_available
+from perception_qr.qr_match import matches
 
 UNREAD = 0.25      # mission_bt.decode_hover.UNREAD
 
@@ -64,7 +65,7 @@ class QrNode(Node):
         p('image_topic', '/image_raw')
         p('camera_info_topic', '/camera/camera_info')
         p('target', '')
-        p('match_mode', 'exact')
+        p('match_mode', 'identifiers')   # or 'exact'; see qr_match.py
         p('process_every', 1)
         # Plausibility bounds on the PHYSICAL marker. Wide on purpose: the
         # competition size is unconfirmed. This rejects nonsense, not detail.
@@ -120,11 +121,9 @@ class QrNode(Node):
         self.get_logger().info(f"target set -> '{self.target}'")
 
     def _matches(self, payload: str) -> bool:
-        if not self.target or not payload:
-            return False
-        if self.match_mode == 'substring':
-            return self.target in payload or payload in self.target
-        return payload == self.target
+        if self.match_mode == 'exact':
+            return bool(self.target) and payload == self.target
+        return matches(self.target, payload)
 
     # ------------------------------------------------------------------ #
     def expected_px_range(self):

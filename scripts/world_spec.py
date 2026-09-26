@@ -25,6 +25,25 @@ WHAT A SPEC CAN MOVE, AND WHAT IT CANNOT
     Fixed shape: the banners (the board and its posts) and the take-off
     area's internal layout.
 
+CONDITIONS -- WHAT THE DAY THROWS AT IT
+
+    "conditions" sets the weather, the sensors and the state of the printed
+    markers the mission flies in (see conditions() and CONDITION_PRESETS):
+
+        wind    Gazebo WindEffects: mean speed and heading, sinusoidal gusts,
+                a meandering direction; drag calibrated to the airframe
+        camera  sim_gazebo/corruptions.py severities (0-5) on every frame,
+                plus dropped frames and delivery latency
+        lidar   range noise, missing returns, false short returns
+        wear    faded, dusty print on the banner and the QR pads (0-5)
+        fcu     ArduPilot SITL sensor faults: GPS noise, a timed GPS glitch,
+                baro noise and drift, IMU noise, a part-used battery
+
+    Either a preset -- {"preset": "worst"} -- with any field overridden, or
+    {"preset": "random"}: every factor drawn between calm and worst from the
+    run's seed (domain randomisation), so a campaign of seeds covers the
+    space instead of one point in it.
+
 CORRIDOR FRAMES
 
     Outbound: origin at its banner (the entrance), +x down the lane towards
@@ -39,6 +58,13 @@ the spawn point, so the materialiser converts what it publishes.
 
 import json
 import math
+import os
+import random
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
+    __file__))), "src", "aerothon_sim", "sim_gazebo"))
+from sim_gazebo.corruptions import CAMERA_KEYS  # noqa: E402
 
 SCHEMA = "aerothon-world/1"
 PAD_LETTERS = ("a", "b", "c", "d", "e")
@@ -93,6 +119,7 @@ def default_spec():
                    {"x": 34.0, "y": 9.0, "yaw_deg": math.degrees(1.2)}],
         "start_target": "random",
         "qr": {"start_m": 2.2, "target_m": 3.0},
+        "conditions": {"preset": "calm"},
     }
 
 
@@ -127,7 +154,131 @@ def normalise(spec):
     for d in out["decoys"]:
         d.setdefault("yaw_deg", 0.0)
     out["start_target"] = str(out.get("start_target", "random")).lower()
+    out["conditions"] = dict(out.get("conditions") or {"preset": "calm"})
     return out
+
+
+# ---- conditions ---------------------------------------------------------------
+
+_CALM = {
+    "wind": {"speed": 0.0, "dir_deg": 0.0, "gust": 0.0, "gust_period_s": 6.0,
+             "veer_deg": 0.0},
+    "camera": {**{k: 0 for k in CAMERA_KEYS}, "frame_drop": 0.0, "latency_ms": 0},
+    "lidar": {"noise_m": 0.0, "dropout": 0.0, "spurious": 0.0},
+    "wear": {"banner": 0, "qr": 0},
+    "fcu": {"gps_noise_m": 0.0, "gps_glitch_m": 0.0, "glitch_at_s": 150.0,
+            "glitch_s": 5.0, "baro_noise_m": 0.0, "baro_drift_mps": 0.0,
+            "imu_noise": 0.0, "battery_v": 16.8},
+}
+
+# The worst credible day. Wind: above ~8 m/s mean with 4 m/s gusts flying
+# stops for every team. Camera: severity 2 of everything at once, the
+# envelope sim/test_perception_corruption.py holds every detector to one at
+# a time. GPS: a 5 m glitch for 5 s mid-search. Battery: a pack already
+# flown once, at 3.85 V/cell.
+CONDITION_PRESETS = {
+    "calm": _CALM,
+    "field": {
+        "wind": {"speed": 4.0, "gust": 2.0, "veer_deg": 10.0},
+        "camera": {"noise": 1, "motion_blur": 1, "jpeg": 1, "vibration": 1,
+                   "frame_drop": 0.05, "latency_ms": 60},
+        "lidar": {"noise_m": 0.01, "dropout": 0.02, "spurious": 0.002},
+        "wear": {"banner": 1, "qr": 1},
+        "fcu": {"gps_noise_m": 0.5, "baro_noise_m": 0.2, "imu_noise": 0.5},
+    },
+    "worst": {
+        "wind": {"speed": 8.0, "gust": 4.0, "veer_deg": 20.0},
+        "camera": {"noise": 2, "motion_blur": 2, "defocus": 1, "haze": 2,
+                   "exposure": -2, "glare": 2, "jpeg": 2, "lens_dust": 2,
+                   "vibration": 2, "frame_drop": 0.2, "latency_ms": 150},
+        "lidar": {"noise_m": 0.03, "dropout": 0.10, "spurious": 0.01},
+        "wear": {"banner": 3, "qr": 3},
+        "fcu": {"gps_noise_m": 1.5, "gps_glitch_m": 5.0, "baro_noise_m": 0.5,
+                "baro_drift_mps": 0.02, "imu_noise": 1.0, "battery_v": 15.4},
+    },
+}
+
+
+def _merge(base, over):
+    out = {k: dict(v) for k, v in base.items()}
+    for group, fields in (over or {}).items():
+        if group in out and isinstance(fields, dict):
+            out[group].update(fields)
+    return out
+
+
+def _randomised(rng):
+    """Every factor uniform between calm and worst; wind from any heading."""
+    worst = _merge(_CALM, CONDITION_PRESETS["worst"])
+    out = {}
+    for group, fields in _CALM.items():
+        out[group] = {}
+        for k, calm in fields.items():
+            hi = worst[group][k]
+            if isinstance(calm, int) and isinstance(hi, int):
+                v = rng.randint(min(calm, hi), max(calm, hi))
+            else:
+                v = round(rng.uniform(min(calm, hi), max(calm, hi)), 3)
+            out[group][k] = v
+    out["wind"]["dir_deg"] = round(rng.uniform(0.0, 360.0), 1)
+    out["fcu"]["glitch_at_s"] = round(rng.uniform(60.0, 300.0), 1)
+    return out
+
+
+def conditions(spec, seed=0):
+    """The concrete conditions a spec asks for: every field filled in.
+
+    `seed` only matters for {"preset": "random"}; the same seed gives the
+    same day, so a failure can be flown again.
+    """
+    c = dict((spec or {}).get("conditions") or {})
+    name = str(c.pop("preset", "calm")).lower()
+    if name == "random":
+        base = _randomised(random.Random(seed))
+    else:
+        base = _merge(_CALM, CONDITION_PRESETS.get(name, {}))
+    return _merge(base, c)
+
+
+_CONDITION_LIMITS = {
+    ("wind", "speed"): (0.0, 15.0), ("wind", "gust"): (0.0, 10.0),
+    ("wind", "gust_period_s"): (1.0, 120.0), ("wind", "veer_deg"): (0.0, 90.0),
+    ("camera", "frame_drop"): (0.0, 0.9), ("camera", "latency_ms"): (0, 1000),
+    ("lidar", "noise_m"): (0.0, 0.5), ("lidar", "dropout"): (0.0, 0.9),
+    ("lidar", "spurious"): (0.0, 0.5),
+    ("wear", "banner"): (0, 5), ("wear", "qr"): (0, 5),
+    ("fcu", "gps_noise_m"): (0.0, 10.0), ("fcu", "gps_glitch_m"): (0.0, 50.0),
+    ("fcu", "glitch_at_s"): (0.0, 1200.0), ("fcu", "glitch_s"): (0.0, 120.0),
+    ("fcu", "baro_noise_m"): (0.0, 5.0), ("fcu", "baro_drift_mps"): (0.0, 0.5),
+    ("fcu", "imu_noise"): (0.0, 5.0), ("fcu", "battery_v"): (12.0, 16.8),
+}
+
+
+def _check_conditions(spec, errs):
+    c = spec.get("conditions") or {}
+    name = str(c.get("preset", "calm")).lower()
+    if name not in tuple(CONDITION_PRESETS) + ("random",):
+        errs.append(f"conditions preset '{name}' is not one of "
+                    f"{', '.join(tuple(CONDITION_PRESETS) + ('random',))}")
+        return
+    for group, fields in c.items():
+        if group == "preset":
+            continue
+        if group not in _CALM or not isinstance(fields, dict):
+            errs.append(f"conditions: unknown group '{group}'")
+            continue
+        for k in fields:
+            if k not in _CALM[group]:
+                errs.append(f"conditions.{group}: unknown field '{k}'")
+    resolved = conditions(spec)
+    for key in CAMERA_KEYS:
+        lo = -5 if key == "exposure" else 0
+        if not lo <= resolved["camera"][key] <= 5:
+            errs.append(f"conditions.camera.{key} must be {lo}..5")
+    for (group, k), (lo, hi) in _CONDITION_LIMITS.items():
+        v = resolved[group][k]
+        if not lo <= float(v) <= hi:
+            errs.append(f"conditions.{group}.{k} = {v} is outside {lo:g}-{hi:g}")
 
 
 # ---- geometry ---------------------------------------------------------------
@@ -385,6 +536,7 @@ def validate(spec):
     """
     spec = normalise(spec)
     errs, warns = [], []
+    _check_conditions(spec, errs)
     z = spec["delivery_zone"]
     if not (z["w"] > 0 and z["h"] > 0):
         errs.append("delivery zone needs a positive width and height")

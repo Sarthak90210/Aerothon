@@ -78,6 +78,10 @@ def generate_launch_description():
         sitl_params,
         # Rulebook 5.4 item 6 fail-safes, identical to the aircraft's file.
         failsafe_params,
+        # The world's sensor faults (materialize_world.py --sitl-params-out),
+        # when the master launcher generated them for this run.
+        *[p for p in [os.environ.get('AEROTHON_CONDITIONS_PARM', '')]
+          if p and os.path.isfile(p)],
     ])
 
     world_template = os.path.join(pkg_sim, 'worlds', 'mission2.sdf')
@@ -240,7 +244,20 @@ def generate_launch_description():
     # upstream create node starts. Starting every graphical and ROS process at
     # t=0 can starve Ogre/Gazebo initialization on this workstation.
     delayed_vehicle = TimerAction(period=5.0, actions=[vehicle])
-    delayed_ros = TimerAction(period=8.0, actions=[gz_bridge, odom_tf, mission_stack])
+    # The camera and lidar reach the stack through the world's conditions
+    # (gz_bridge.yaml bridges them to *_gz); calm conditions pass through.
+    degrade = Node(
+        package='sim_gazebo',
+        executable='degrade_node',
+        name='sim_degrade',
+        parameters=[{'use_sim_time': True,
+                     'conditions_file': os.environ.get('AEROTHON_CONDITIONS_FILE', ''),
+                     'seed': int(os.environ.get('AEROTHON_CONDITIONS_SEED', '0'))}],
+        output='screen',
+    )
+
+    delayed_ros = TimerAction(period=8.0, actions=[gz_bridge, degrade, odom_tf,
+                                                   mission_stack])
     delayed_rviz = TimerAction(period=15.0, actions=[rviz_node])
 
     return LaunchDescription(args + [

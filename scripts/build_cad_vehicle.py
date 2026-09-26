@@ -102,8 +102,10 @@ def build(airframe_dir, upstream_models, out_root, camera_w=1280, camera_h=720,
            "</ode></contact><friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>"
            "</surface>" if n.startswith("skid") else "")
         + "</collision>" for n, c, s in boxes)
+    # enable_wind: the world's WindEffects system (a "wind" condition,
+    # materialize_world.py) pushes this link; without it wind does nothing.
     base = ET.fromstring(
-        f"<link name='base_link'>"
+        f"<link name='base_link'><enable_wind>true</enable_wind>"
         f"{inertial(body_m, I['ixx'], I['iyy'], I['izz'], af['com'], I['ixy'], I['ixz'], I['iyz'])}"
         f"{collisions}"
         f"<visual name='airframe'><geometry><mesh><uri>{uri}/body.glb</uri></mesh></geometry></visual>"

@@ -2140,14 +2140,35 @@ class DeliveryMeasurementSurvivesTests(unittest.TestCase):
         return leaf, mav
 
     # ---- guard 1: the geometry has to permit a measurement ---- #
-    def test_a_drop_below_the_tracking_floor_is_raised_to_it(self):
+    def test_a_drop_below_the_tracking_floor_is_centred_from_it(self):
         """Below it the pad cannot fit in frame, so the offset cannot exist.
         A drop altitude that makes the scored quantity unmeasurable is not a
         trade-off anyone chose."""
         leaf, mav = self.build(drop_alt=2.0, marker_m=2.2)
         leaf.initialise()
-        self.assertGreater(leaf.drop_alt, 2.0)
-        self.assertGreaterEqual(leaf.drop_alt, leaf.tracking_floor())
+        self.assertGreater(leaf.servo_alt, 2.0)
+        self.assertGreaterEqual(leaf.servo_alt, leaf.tracking_floor())
+
+    def test_the_release_is_never_above_the_winchs_reach(self):
+        """A 3 m pad's floor is 6.8 m on the C270; 6 m of line cannot reach
+        the ground from there, and a gravity hook never opens."""
+        leaf, mav = self.build(drop_alt=5.0, marker_m=3.0, hfov_rad=0.851919)
+        leaf.initialise()
+        self.assertGreater(leaf.servo_alt, 5.5)
+        self.assertLessEqual(leaf.release_alt, leaf.winch_reach_m)
+
+    def test_the_pad_sighting_from_the_centred_hold_survives_the_descent(self):
+        """Below the floor the pad is not in frame; the aircraft has held the
+        centred point since, so that sighting still measures the release."""
+        leaf, mav = self.build(0.1, 0.0, alt=6.8)
+        leaf.initialise()
+        leaf._t = 100
+        leaf.observe_offset()
+        leaf._held_from = 100
+        mav.qr_off = None
+        leaf._t = 100 + leaf.max_offset_age_ticks + 50
+        leaf._record_delivery_offset()
+        self.assertIsNotNone(mav.delivery_offset_m)
 
     def test_raising_the_drop_altitude_is_LOGGED(self):
         leaf, mav = self.build(drop_alt=2.0, marker_m=2.2)
@@ -2158,7 +2179,8 @@ class DeliveryMeasurementSurvivesTests(unittest.TestCase):
     def test_a_drop_altitude_already_above_the_floor_is_left_alone(self):
         leaf, mav = self.build(drop_alt=5.0, marker_m=2.2)
         leaf.initialise()
-        self.assertAlmostEqual(leaf.drop_alt, 5.0)
+        self.assertAlmostEqual(leaf.servo_alt, 5.0)
+        self.assertAlmostEqual(leaf.release_alt, 5.0)
 
     def test_the_floor_is_derived_from_the_marker_and_the_camera(self):
         """Not a constant. A bigger pad needs more altitude to fit in frame."""

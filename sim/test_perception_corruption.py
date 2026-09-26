@@ -38,6 +38,7 @@ import rclpy
 from cv_bridge import CvBridge
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
 for pkg in (("aerothon_sim", "sim_gazebo"), ("aerothon_perception", "perception_qr"),
             ("aerothon_perception", "perception_banner"),
             ("aerothon_perception", "perception_redzone")):
@@ -47,6 +48,11 @@ from perception_banner.banner_node import BannerNode        # noqa: E402
 from perception_qr.qr_decode import QrDecoder               # noqa: E402
 from perception_redzone.redzone_node import RedZoneNode     # noqa: E402
 from sim_gazebo.corruptions import CAMERA_KEYS, CameraCorruptor  # noqa: E402
+import world_spec                                           # noqa: E402
+
+# Every camera corruption of the "worst" conditions preset, at once.
+WORST = {k: v for k, v in world_spec.conditions(
+    {"conditions": {"preset": "worst"}})["camera"].items() if k in CAMERA_KEYS}
 
 W, H, HFOV = 1280, 720, 0.851919          # the team airframe's C270
 FX = (W / 2) / math.tan(HFOV / 2)
@@ -172,6 +178,27 @@ class QrEnvelopeTests(unittest.TestCase):
                     self.assertTrue(self.reads(img))
 
 
+class WorstDayQrTests(unittest.TestCase):
+    """All of the worst preset's corruptions together, frame by frame. A
+    frame that does not read is either read on the next (the sweep holds
+    over a located marker) -- so what matters is that nearly every frame
+    either reads or locates."""
+
+    def test_each_geometry_reads_or_locates(self):
+        dec = QrDecoder()
+        for size, alt in GEOMETRIES:
+            with self.subTest(size=size, alt=alt):
+                read = seen = 0
+                for t in range(8):
+                    img = CameraCorruptor(WORST, seed=t).apply(render_pad(
+                        size, alt, off=(0.1 * t, 0.05 * t), rot=0.2 + 0.3 * t))
+                    r = any(p == PAYLOAD for p, _ in dec.decode(img))
+                    read += r
+                    seen += r or dec.locate(img) is not None
+                self.assertGreaterEqual(read, 5)
+                self.assertGreaterEqual(seen, 7)
+
+
 class _RosCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -214,6 +241,11 @@ class BannerEnvelopeTests(_RosCase):
                     self.frame)) for t in range(3))
                 self.assertEqual(got, 3)
 
+    def test_the_worst_day_all_at_once(self):
+        got = sum(self.identified(CameraCorruptor(WORST, seed=t).apply(self.frame))
+                  for t in range(4))
+        self.assertEqual(got, 4)
+
 
 class RedZoneEnvelopeTests(_RosCase):
 
@@ -251,6 +283,12 @@ class RedZoneEnvelopeTests(_RosCase):
                 floor = 0.6 if key == "glare" else 0.8
                 self.assertGreaterEqual(mask[truth > 0].mean(), floor)
                 self.assertLess(mask[~near].mean(), 0.001)
+
+    def test_the_worst_day_all_at_once(self):
+        img, truth = self.zone_scene(6.0)
+        for t in range(3):
+            mask = self.node.red_mask(CameraCorruptor(WORST, seed=t).apply(img)) > 0
+            self.assertGreaterEqual(mask[truth > 0].mean(), 0.8)
 
     def test_a_small_zone_is_still_a_zone(self):
         for side in (1.0, 2.0):
