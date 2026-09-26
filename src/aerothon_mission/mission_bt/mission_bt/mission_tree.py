@@ -21,10 +21,6 @@ import math
 import rclpy
 from rclpy.node import Node
 import py_trees
-try:
-    import py_trees_ros
-except ImportError:
-    py_trees_ros = None
 from std_msgs.msg import String
 
 from mission_bt.mav_commander import Mav
@@ -336,7 +332,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                  stall_before_square=2,
                  square_tol_rad=math.radians(5.0),
                  sector_half_width_rad=math.radians(35.0),
-                 min_standoff_m=2.5, lidar_range_m=12.0,
+                 min_standoff_m=3.3, lidar_range_m=12.0,
                  lateral_tol_m=0.4, max_square_steps=14,
                  orbit_arrive_tol=0.7, alt_arrive_tol=0.25,
                  guard_speed_mps=1.5, free_speed_mps=10.0,
@@ -1132,7 +1128,12 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             return self._accept_heading(self._target_yaw)
 
         if len(self.step_reports) >= len(self._offsets):
-            if self._far and not self._far_refused:
+            # A near green that would not read is likelier the gate in front
+            # -- too close to fit the frame, or edge-on -- than a banner seen
+            # over the walls a dozen metres off. Go round the green first.
+            near_green = (self._green is not None
+                          and self._green["range"] <= self.near_range_m)
+            if self._far and not self._far_refused and not near_green:
                 # Nothing nearer from here: the nearest far sighting is the
                 # best evidence of where the gate is. Face it; CENTRE and the
                 # lidar square-up then close the range.
@@ -1564,6 +1565,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         # the return gate ~12 m down the return lane, and the square-up fitted
         # a face 3 m away and flew the return lane backwards into its posts.
         cam = (self._sighting_range() if self.mav.banner_identified()
+               and not getattr(self.mav, "banner_clipped", False)
                else float("inf"))
         if math.isfinite(cam) and fit["range_m"] < 0.5 * cam \
                 and cam - fit["range_m"] > 2.0:
@@ -2268,7 +2270,7 @@ class ScanStartQR(py_trees.behaviour.Behaviour):
         self._t = 0
         self._hold = None
         self._confirmed = None
-        self.hover.reset()
+        self.hover.begin(getattr(self.mav, "mission_seq", 0))
 
     def update(self):
         self._t += 1
@@ -3394,7 +3396,7 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         self.i = 0
         self.skipped = 0
         self.router.reset()
-        self.hover.reset()
+        self.hover.begin(getattr(self.mav, "mission_seq", 0))
         self._budget_left = self.search_budget_m
         self.expansions = 0
         self._replans = 0
@@ -3881,7 +3883,7 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
         corridor in plain sight. Nothing in the rulebook keeps red ground
         away from the corridor mouth, so the point has to give way: the
         nearest one along the approach and up to 2 m to either side that is
-        clear, within the stand-off band AlignToBanner accepts (2.5-6.0 m,
+        clear, within the stand-off band AlignToBanner accepts (3.3-6.0 m,
         aimed 0.5 m inside it) -- it squares up on the board from wherever
         it starts. None clear: the nominal point, and the router refuses it.
         """
@@ -4223,6 +4225,12 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                if area > 0 else self.standoff_m)
         if rng > self.near_range_m:
             return None
+        if getattr(self.mav, "banner_clipped", False):
+            # Cut off by the frame, the board ranges long, and a stand-off
+            # placed from that range ended 1.6 m from the board (worst
+            # conditions, shipped arena). Stand off from here instead;
+            # AlignToBanner squares up and ranges it on the lidar.
+            rng = min(rng, self.standoff_m)
         th = self.mav.yaw() + bearing_to_angle(self.mav.banner_bearing(), self.hfov)
         x, y = self.mav.pos()[:2]
         bx, by = x + rng * math.cos(th), y + rng * math.sin(th)
@@ -5152,7 +5160,7 @@ def build_root(mav, node, p):
                       square_tol_rad=p.get('square_tol_rad',
                                            math.radians(5.0)),
                       lidar_range_m=p.get('lidar_range_m', 12.0),
-                      min_standoff_m=p.get('min_standoff_m', 2.5),
+                      min_standoff_m=p.get('min_standoff_m', 3.3),
                       # The lidar sweeps ONE horizontal plane, and from the
                       # scan altitude that plane can clear the gate entirely
                       # -- 0 finite returns of 720, measured. The stage may
@@ -5275,7 +5283,7 @@ def build_root(mav, node, p):
                       square_tol_rad=p.get('square_tol_rad',
                                            math.radians(5.0)),
                       lidar_range_m=p.get('lidar_range_m', 12.0),
-                      min_standoff_m=p.get('min_standoff_m', 2.5),
+                      min_standoff_m=p.get('min_standoff_m', 3.3),
                       # The lidar sweeps ONE horizontal plane, and from the
                       # scan altitude that plane can clear the gate entirely
                       # -- 0 finite returns of 720, measured. The stage may
@@ -5470,7 +5478,10 @@ def declare_mission_params(node):
     # useful range sets how far off the banner the aircraft may drift, and the
     # airframe clearance sets how close it may come.
     d('lidar_range_m', 12.0)
-    d('min_standoff_m', 2.5)
+    # Nearer than 2.74 m the posts (1.92 m either side) fall outside
+    # DuckUnderBoard's 35 deg sector and the gap cannot be measured; a gust
+    # moves the aircraft half a metre while it drops to look.
+    d('min_standoff_m', 3.3)
     # The corridor's geometry, not a position in the arena: the return lane's
     # centreline relative to the outbound lane's, port-positive facing out of
     # the corridor. Measure it on the real corridor.

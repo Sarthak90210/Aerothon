@@ -184,6 +184,22 @@ class ReturnGateSearchTests(unittest.TestCase):
         self.assertEqual(st, py_trees.common.Status.SUCCESS)
         self.assertIn("FORWARD", mav.camera_poses)
 
+    def test_a_board_cut_off_by_the_frame_is_not_ranged_by_its_area(self):
+        """Clipped, the board's area is a quarter of its size and it ranges
+        twice as far: a stand-off placed from that range is inside the gate."""
+        class Clipped(World):
+            def _look(self):
+                super()._look()
+                self.banner_board_area /= 4.0
+                self.banner_clipped = self.banner_z >= 1.0
+
+        mav = Clipped([(10.0, -2.0, 0.0)], start=(14.5, -2.0, math.pi))
+        run(mav)
+        board = (10.0, -2.0)
+        self.assertTrue(all(math.dist((x, y), board) >= 4.0
+                            for x, y, *_ in mav.gotos),
+                        "stood off inside the gate from a clipped range")
+
     def test_it_never_flies_outside_the_zone_edge_it_searches(self):
         mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))
         run(mav)

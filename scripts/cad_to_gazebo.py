@@ -37,7 +37,6 @@ weight. Each part is a solid box of its CAD extent for the inertia.
 """
 
 import json
-import math
 import os
 import struct
 import sys

@@ -141,7 +141,7 @@ class SlowFrameMav(NadirMav):
         self._pos = now
 
     def step(self):
-        (px, py, pz), (gx, gy, gz) = self._pos, self._goal
+        (px, py, _), (gx, gy, gz) = self._pos, self._goal
         wx, wy = self.kp * (gx - px), self.kp * (gy - py)
         w = math.hypot(wx, wy)
         if w > self.vmax:

@@ -66,17 +66,6 @@ def load_track(path):
     return rows
 
 
-def to_corridor(p, layout):
-    """Home-local track point -> the shipped corridor's own frame."""
-    hx, hy = layout.get("home_world", [0.0, 0.0])
-    gx, gy, gyaw = layout.get("gate", [BANNER_PIVOT[0], BANNER_PIVOT[1], 0.0])
-    wx, wy = p["x"] + hx, p["y"] + hy
-    dx, dy = wx - gx, wy - gy
-    c, s = math.cos(-gyaw), math.sin(-gyaw)
-    return (BANNER_PIVOT[0] + dx * c - dy * s,
-            BANNER_PIVOT[1] + dx * s + dy * c)
-
-
 def lanes(layout):
     """(outbound, return) lanes as (x, y, yaw, length, width, wall height),
     WORLD frame, origin at each lane's banner and +x down it.

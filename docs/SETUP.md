@@ -16,7 +16,7 @@ The whole point of this file: **a known-good version matrix** so the team doesn'
 | Nav2 | **ros-jazzy-navigation2** | for `costmap_2d` (we don't use the full planner) |
 | rplidar driver | **rplidar_ros (ros2 branch)** | supports C1 |
 | web_video_server | **ros-jazzy-web-video-server** | MJPEG for GCS |
-| py_trees | **py_trees + py_trees_ros (jazzy)** | behavior tree |
+| py_trees | **py_trees** | behavior tree |
 | Rust | **stable (rustup)** | Tauri backend |
 | Tauri | **2.x** | desktop shell |
 | Node | **20 LTS** | React build |
@@ -51,7 +51,7 @@ sudo apt install -y \
 # identified and every QR goes through the slower OpenCV fallback; qr_node
 # warns at start-up when zbar is missing.
 sudo apt install -y ros-jazzy-cv-bridge tesseract-ocr libzbar0 python3-pyzbar
-pip3 install --break-system-packages py_trees py_trees_ros pyproj
+pip3 install --break-system-packages py_trees pyproj
 
 # Tauri GCS dependencies (for native Linux build)
 sudo apt install -y \
@@ -90,8 +90,8 @@ source install/setup.bash
 ## 5. Quick smoke tests
 
 ```bash
-# 1. SITL + Gazebo world
-ros2 launch sim_gazebo mission2_world.launch.py
+# 1. SITL + Gazebo world + the stack (materialises the world first)
+scripts/launch_level6_sim.sh
 
 # 2. MAVROS connected?
 ros2 topic echo /mavros/state          # expect connected: true

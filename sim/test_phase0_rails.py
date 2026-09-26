@@ -412,6 +412,37 @@ class TestBatteryAbort(RailTestCase):
         self.assertIsNone(self.mav._battery_low_since)
 
 
+class TestMissionSequence(RailTestCase):
+
+    def test_repeated_start_messages_are_one_mission(self):
+        from std_msgs.msg import Bool
+        for _ in range(3):
+            self.mav._on_start(Bool(data=True))
+        self.assertEqual(self.mav.mission_seq, 1)
+        self.mav.mission_started = False        # latched COMPLETE / FAILED
+        self.mav._on_start(Bool(data=True))
+        self.assertEqual(self.mav.mission_seq, 2)
+
+
+class TestBannerClipped(RailTestCase):
+
+    def detail(self, box):
+        import json
+        from std_msgs.msg import String
+        self.mav._on_banner_detail(String(data=json.dumps(
+            {"identified": True, "board_px": box, "board_area_px": 1,
+             "image_wh": [1280, 720]})))
+        return self.mav.banner_clipped
+
+    def test_a_board_inside_the_frame_is_whole(self):
+        self.assertFalse(self.detail([300, 200, 500, 150]))
+
+    def test_a_board_against_any_edge_is_cut_off(self):
+        for box in ([0, 200, 500, 150], [300, 0, 500, 150],
+                    [900, 200, 380, 150], [300, 600, 500, 120]):
+            self.assertTrue(self.detail(box), box)
+
+
 class TestKeepOut(RailTestCase):
     """A held position setpoint is only as good as the GPS; the lidar keeps
     it off whatever is beside the aircraft."""

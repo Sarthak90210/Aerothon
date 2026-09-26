@@ -9,9 +9,7 @@
     Grading     check_track reads the payload's true final position.
 """
 
-import json
 import math
-import os
 import sys
 import unittest
 from pathlib import Path

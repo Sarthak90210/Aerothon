@@ -23,7 +23,7 @@ RUN wget -q https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scrip
 
 # Python deps for perception / mission (CPU OpenCV, py_trees)
 RUN pip3 install --break-system-packages \
-      py_trees py_trees_ros opencv-python numpy pyproj
+      py_trees opencv-python numpy pyproj
 
 WORKDIR /aerothon_ws
 # Source ROS in every shell

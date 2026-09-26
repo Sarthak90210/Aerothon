@@ -513,8 +513,7 @@ class LegRoutingTests(unittest.TestCase):
         delivery zone's northern edge, each within 3 m of the next, merged
         into one box that covered the target pad. The strip north of them
         must still be swept, and the pad must be under a lane."""
-        from mission_bt.search_planner import (clip_lane,
-                                               plan_lawnmower_excluding)
+        from mission_bt.search_planner import plan_lawnmower_excluding
         red = [(34.5, 44.5, -11.0, -4.0), (27.5, 33.5, -4.5, -0.5),
                (47.5, 52.5, -11.0, -7.0)]
         cells = []

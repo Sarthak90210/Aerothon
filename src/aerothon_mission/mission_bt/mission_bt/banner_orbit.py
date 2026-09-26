@@ -184,19 +184,21 @@ def orbit_plan(centre, here, radius, ok, step_rad=math.radians(45.0), n=7,
             a_prev, path = a, []
         return out
 
-    # Onto the circle first, at the aircraft's own angle.
-    entry = [pt(a0)]
-    if not ok(*entry[0]):
+    # Onto the circle first, at the aircraft's own angle, and look from
+    # there: straight back from a board too close to read is where it is
+    # likeliest to fit the frame, and the leg the aircraft arrived by.
+    entry = pt(a0)
+    if not ok(*entry):
         return []
+    plan = [{"at": entry, "face": _wrap(a0 + math.pi), "path": [entry]}]
     first = max((1, -1), key=lambda d: 1 if ok(*pt(a0 + d * step_rad)) else 0)
-    plan = way(first, a0, entry, n)
+    plan += way(first, a0, [], n - 1)
     left = n - len(plan)
     if left > 0:
         # Back round the arc to the start angle, then the other way.
-        back_from = a0 + first * len(plan) * step_rad
-        back = arc(back_from, a0) if plan else entry
+        back = arc(a0 + first * (len(plan) - 1) * step_rad, a0)
         if all(ok(*p) for p in back):
-            plan += way(-first, a0, back if plan else entry, left)
+            plan += way(-first, a0, back if len(plan) > 1 else [], left)
     return plan
 
 

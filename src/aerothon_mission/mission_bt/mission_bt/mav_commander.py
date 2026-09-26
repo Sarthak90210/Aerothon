@@ -97,6 +97,7 @@ class Mav:
         self.banner_reject_counts = {}
         self.banner_board_aspect = 0.0
         self.banner_board_area = 0.0
+        self.banner_clipped = False
         self.banner_green = None       # largest green region in view, if any
         self.abort_requested = False
         self.abort_reason = ""
@@ -107,6 +108,7 @@ class Mav:
         # new START or a mission reset.
         self.abort_latched = False
         self.mission_started = False
+        self.mission_seq = 0               # counts STARTs; a new one resets memory
 
         # The team's 4S2P Li-ion pack: 3.0 V/cell under load is the last of
         # its usable charge (Li-ion runs to 2.5 V; LiPo figures of 3.5 V/cell
@@ -440,6 +442,13 @@ class Mav:
         if d.get('identified'):
             self.banner_board_aspect = float(d.get('board_aspect') or 0.0)
             self.banner_board_area = float(d.get('board_area_px') or 0.0)
+            # A box against the frame's edge is a board cut off by it: its
+            # area understates the board, so a range from it reads long.
+            box = d.get('board_px')
+            iw, ih = (d.get('image_wh') or [1280, 720])[:2]
+            self.banner_clipped = bool(box) and (
+                box[0] <= 1 or box[1] <= 1 or box[0] + box[2] >= iw - 1
+                or box[1] + box[3] >= ih - 1)
 
         # Where the biggest green thing in view is, identified or not: the
         # lead an edge-on banner leaves (see banner_orbit.green_fix).
@@ -564,6 +573,8 @@ class Mav:
         self.abort_requested = m.data
 
     def _on_start(self, m):
+        if m.data and not self.mission_started:
+            self.mission_seq += 1
         self.mission_started = m.data
         if m.data:
             self._result = None
@@ -581,6 +592,7 @@ class Mav:
             self.corridor_exit_pose = None
             self.gate_heading = None
             self.outbound_banner_xy = None
+            self.board_face_t = None
             self.delivery_confirmed = None     # set by WinchDrop's camera check
             self.node.get_logger().info("Mission 2 start received from GCS")
 
@@ -1147,14 +1159,6 @@ class Mav:
         """
         (self.node.get_logger().warning if warn
          else self.node.get_logger().info)(msg)
-
-    def corridor_entered(self):
-        """Has the navigator OBSERVED walls close in on both sides?
-
-        Published whether or not the navigator is steering, because the stage
-        that hands control to it has to know this before it does so.
-        """
-        return bool((self.avoid_detail or {}).get("corridor_entered", False))
 
     def open_extent(self):
         """(depth_ahead_m, width_m) of the open area, as the navigator sees it.

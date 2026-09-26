@@ -120,6 +120,10 @@ YAW_RATE_MAX = math.radians(90.0)
 ACCEL_MAX = WPNAV_ACCEL
 GUIDED_VEL_TIMEOUT_S = 3.0
 RTL_ALT = 15.0
+# ArduPilot EKF3 GPS handling: innovations past EK3_POS_I_GATE (5 sigma of a
+# ~0.6 m GPS) are rejected and the estimate dead-reckons, drifting; rejected
+# for long enough it resets to the GPS.
+EKF_GATE_M, EKF_RESET_S, EKF_COAST_MPS = 3.0, 10.0, 0.1
 
 # The banner gate (mission2.sdf, materialize_world.banner_geometry), in the
 # banner's own frame: board across y, posts either side.
@@ -130,6 +134,7 @@ POST_Y, POST_SIZE, POST_H = 1.92, 0.18, 4.0
 PX_PER_MODULE_READ = 5.3        # reliable read at or above
 PX_PER_MODULE_LOCATE = 2.5      # finder patterns still found at or above
 BLUR_PX_BY_SEVERITY = (0, 4, 8, 14, 22, 32)
+QR_SEV_50, QR_SEV_50_PER_PPM, QR_SEV_SCALE = 17.6, 0.79, 1.5   # _read_factor
 EXPOSURE_S = 0.01               # the flight camera's capped exposure
 BANNER_MIN_BOARD_PX = 20        # lettering legible from this board height
 BANNER_MAX_INCIDENCE = math.radians(65.0)
@@ -280,6 +285,26 @@ class Arena:
         self.edge_z0 = np.array(self.edge_z0)
         self.edge_z1 = np.array(self.edge_z1)
 
+    def clear_los(self, p, q, stop_short_m=0.2):
+        """True when nothing solid stands between 3-D points p and q. The
+        segment ends `stop_short_m` before q, so the thing looked at does not
+        hide itself. A crossing of a box's side below its top is a hit."""
+        p, q = np.asarray(p, float), np.asarray(q, float)
+        d = q[:2] - p[:2]
+        length = math.hypot(*d)
+        if length <= stop_short_m:
+            return True
+        e = self.edge_b - self.edge_a
+        w0 = self.edge_a - p[:2]
+        den = d[0] * e[:, 1] - d[1] * e[:, 0]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            t = (w0[:, 0] * e[:, 1] - w0[:, 1] * e[:, 0]) / den
+            u = (w0[:, 0] * d[1] - w0[:, 1] * d[0]) / den
+        cross = (np.abs(den) > 1e-12) & (t > 0.0) & (t < 1.0 - stop_short_m / length) \
+            & (u >= 0.0) & (u <= 1.0)
+        z = p[2] + t * (q[2] - p[2])
+        return not np.any(cross & (z >= self.edge_z0) & (z <= self.edge_z1))
+
     def raycast(self, x, y, z_plane, yaw, n=450, rmax=12.0):
         """LD06 ranges, counter-clockwise from -pi, inf where nothing is hit."""
         live = (self.edge_z0 <= z_plane) & (self.edge_z1 >= z_plane)
@@ -413,8 +438,11 @@ class HeadlessWorld(Node):
         self.landed_t = None
         # ---- estimator error ----
         self.gps_err = np.zeros(2)
-        self.glitch = np.zeros(2)
+        self.glitch = np.zeros(2)            # the glitch's share of the estimate
+        self.glitch_gps = np.zeros(2)        # the glitch in the GPS itself
         self.glitch_phase = 0
+        self.rejected_s = 0.0
+        self.coast_v = np.zeros(2)
         self.armed_at = None
         self.baro_err = 0.0
         self.baro_noise = 0.0
@@ -610,13 +638,29 @@ class HeadlessWorld(Node):
             since = self.t - self.armed_at
             if self.glitch_phase == 0 and since >= self.fcu["glitch_at_s"]:
                 a = self.rng.uniform(0, 2 * math.pi)
-                self.glitch = np.array([g * math.cos(a), g * math.sin(a)])
+                self.glitch_gps = np.array([g * math.cos(a), g * math.sin(a)])
+                b = self.rng.uniform(0, 2 * math.pi)
+                self.coast_v = EKF_COAST_MPS * np.array([math.cos(b), math.sin(b)])
                 self.glitch_phase = 1
                 self._event(f"GPS glitch {g:.1f} m")
             elif self.glitch_phase == 1 and since >= self.fcu["glitch_at_s"] + self.fcu["glitch_s"]:
-                self.glitch = np.zeros(2)
+                self.glitch_gps = np.zeros(2)
                 self.glitch_phase = 2
                 self._event("GPS glitch cleared")
+        # The EKF's innovation gate: a GPS jump beyond it is rejected and the
+        # estimate coasts on the IMU; still rejected after EKF_RESET_S, it
+        # resets onto the GPS. Within the gate the GPS is fused (~1 s).
+        off = self.glitch_gps - self.glitch
+        if float(np.hypot(*off)) <= EKF_GATE_M:
+            self.glitch += off * min(1.0, DT / 1.0)
+            self.rejected_s = 0.0
+        elif self.rejected_s >= EKF_RESET_S:
+            self.glitch = self.glitch_gps.copy()
+            self.rejected_s = 0.0
+            self._event("EKF reset onto the GPS")
+        else:
+            self.rejected_s += DT
+            self.glitch += self.coast_v * DT
 
     # ---- flight controller + airframe --------------------------------------
     def _desired_velocity(self, est):
@@ -799,12 +843,18 @@ class HeadlessWorld(Node):
         self.pub_scan.publish(s)
 
     # ---- camera: the detectors' outputs ---------------------------------------
-    def _read_factor(self):
-        """Share of frames a readable marker still reads through the corruptions
-        other than motion blur (which is modelled from the speed), and through
-        faded, dusty print."""
-        other = sum(abs(v) for k, v in self.cam_sev.items() if k != "motion_blur")
-        return max(0.0, 1.0 - 0.02 * (other + self.cond["wear"]["qr"]))
+    def _read_factor(self, ppm):
+        """Share of frames a marker at `ppm` px/module still reads through
+        the camera corruptions: logistic in their total severity, with a
+        midpoint that rises with resolution. Fitted to the REAL decoder
+        (sim/test_perception_corruption.render_pad, 24 seeds each): at the
+        worst preset's total 17, 22/24 at 12.8 px/module and 17/24 at 8.5;
+        at 26, none. Worn print costs contrast, which the reader measured
+        almost indifferent to (haze and dust read at every severity)."""
+        sev = sum(abs(v) for v in self.cam_sev.values())
+        mid = QR_SEV_50 + QR_SEV_50_PER_PPM * (ppm - 8.5)
+        p = 1.0 / (1.0 + math.exp((sev - mid) / QR_SEV_SCALE))
+        return p * (1.0 - 0.02 * self.cond["wear"]["qr"])
 
     def _camera_frame(self):
         eye = self.p + np.array([0.16 * math.cos(self.yaw), 0.16 * math.sin(self.yaw), 0.0])
@@ -830,7 +880,7 @@ class HeadlessWorld(Node):
             p_read = 0.0
             if ppm >= 4.0:
                 p_read = min(1.0, 0.3 + 0.65 * (ppm - 4.0) / (PX_PER_MODULE_READ - 4.0))
-                p_read *= (1.0, 1.0, 1.0, 0.5, 0.1, 0.0)[sev_blur] * self._read_factor()
+                p_read *= (1.0, 1.0, 1.0, 0.5, 0.1, 0.0)[sev_blur] * self._read_factor(ppm)
             cx, cy = px.mean(axis=0)
             read = self.rng.random() < p_read
             located = (not read) and ppm >= PX_PER_MODULE_LOCATE and self.rng.random() < 0.9
@@ -855,7 +905,13 @@ class HeadlessWorld(Node):
                            "unread": bool(best and not best[5])}}
 
     def _board_view(self, xy, facing, width, z0, z1, eye, pitch):
-        """(bbox, centre px, incidence rad, px height) of a vertical board."""
+        """(bbox, centre px, incidence rad, px height) of a vertical board,
+        or None when it is out of view or mostly hidden behind something."""
+        zm = (z0 + z1) / 2
+        seen = sum(self.arena.clear_los(eye, (*place((0.0, s * width / 3), xy, facing), zm))
+                   for s in (-1, 0, 1))
+        if seen < 2:
+            return None
         corners = []
         for side in (-0.5, 0.5):
             bx, by = place((0.0, side * width), xy, facing)

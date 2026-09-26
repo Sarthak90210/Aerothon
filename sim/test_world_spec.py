@@ -7,7 +7,6 @@ spec rebuilds the shipped arena exactly -- so a custom run and a shipped run
 differ only in what the person changed.
 """
 
-import copy
 import json
 import math
 import os
@@ -256,7 +255,6 @@ class SeparateCorridorTests(unittest.TestCase):
 
     def _track_along(self, lane, across, z=3.0):
         """A straight flight down a lane's centre (offset `across`)."""
-        from check_track import to_lane  # noqa: F401
         x0, y0, yaw, L = lane[:4]
         hx, hy = self.lay["home_world"]
         rows = []

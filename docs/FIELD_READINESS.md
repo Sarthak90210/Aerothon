@@ -98,10 +98,17 @@ What the worst campaign found and fixed is in the git history under
   synthetic corruptions. Shoot the real corpus in
   [CORPUS_SHOT_LIST.md](CORPUS_SHOT_LIST.md). `tests/perception/test_real_corpus.py`
   picks it up automatically.
-- **GPS glitches.** The headless world passes a glitch straight into the
-  position estimate. The real EKF gates most of it (`EK3_POS_I_GATE`), so
-  the headless result is the pessimistic one. Gazebo SITL
-  (`SIM_GPS_GLITCH_*`, from the `conditions` block) exercises the real EKF.
+- **GPS glitches.** The headless world models the EKF3 innovation gate.
+  A jump of more than 3 m is rejected, and the estimate dead-reckons at
+  0.1 m/s until the GPS agrees again. If the GPS is still rejected after
+  10 s, the estimate resets onto it. The real numbers depend on
+  `EK3_POS_I_GATE` and the IMU, and only Gazebo SITL (`SIM_GPS_GLITCH_*`,
+  from the `conditions` block) runs the real EKF. Before the gate was
+  modelled, a 5 m glitch passed straight into the estimate and the red-zone
+  map was drawn 5 m off.
+- **Red-zone clearance.** Red zones are kept 1.5 m clear
+  (`redzone_clearance`). That is about 2σ of GPS wander at the readiness
+  interlock's HDOP of 1.2 or less. On a day with worse GPS, raise it.
 
 ## 4. Build-up flights
 

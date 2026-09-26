@@ -58,6 +58,7 @@ class DecodeHover:
         self.unread_cell_m = float(unread_cell_m)
         self.seen = set()
         self.seen_unread = set()
+        self._mission = None
         self._t0 = None
         self._span = 0.0
         self._payload = ""
@@ -72,6 +73,15 @@ class DecodeHover:
         self._t0 = None
         self._payload = ""
         self._hold = None
+
+    def begin(self, mission):
+        """A stage (re)starting: `reset` within the same mission, `forget`
+        when `mission` -- Mav.mission_seq -- says it is a new one."""
+        if mission != self._mission:
+            self._mission = mission
+            self.forget()
+        else:
+            self.reset()
 
     def forget(self):
         """Full reset, including history. For a new mission, not a new stage."""

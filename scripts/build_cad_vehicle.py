@@ -30,7 +30,6 @@ import copy
 import json
 import math
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
 MODEL = "aerothon_iris_c1_webcam"      # the world's vehicle slot; kept stable
 # 4S2P Li-ion at 4S, a 9450 on a 2312 980 KV: ~1.17 kg of thrust per motor.
@@ -218,11 +217,11 @@ def build(airframe_dir, upstream_models, out_root, camera_w=1280, camera_h=720,
     # Axis -Y so a NEGATIVE angle looks down: see the Iris variant's note in
     # materialize_vehicle_model.py; the camera stack assumes it.
     model.append(ET.fromstring(
-        f"<joint name='webcam_pitch_joint' type='revolute'><pose>0 0 0 0 0 0</pose>"
-        f"<parent>webcam_servo_base</parent><child>webcam_link</child>"
-        f"<axis><xyz>0 -1 0</xyz><limit><lower>-1.65</lower><upper>0.523599</upper>"
-        f"<effort>2</effort><velocity>2</velocity></limit><dynamics><damping>0.08</damping>"
-        f"</dynamics></axis></joint>"))
+        "<joint name='webcam_pitch_joint' type='revolute'><pose>0 0 0 0 0 0</pose>"
+        "<parent>webcam_servo_base</parent><child>webcam_link</child>"
+        "<axis><xyz>0 -1 0</xyz><limit><lower>-1.65</lower><upper>0.523599</upper>"
+        "<effort>2</effort><velocity>2</velocity></limit><dynamics><damping>0.08</damping>"
+        "</dynamics></axis></joint>"))
     model.append(ET.fromstring(
         "<plugin filename='gz-sim-joint-position-controller-system' "
         "name='gz::sim::systems::JointPositionController'><joint_name>webcam_pitch_joint</joint_name>"

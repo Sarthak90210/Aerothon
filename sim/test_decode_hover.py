@@ -161,9 +161,14 @@ class DecodeHoverTests(unittest.TestCase):
         self.assertFalse(self.h.tick(self.mav))
 
     def test_a_new_mission_hovers_again(self):
+        self.h.begin(1)
         self.mav.qr_decoded = "PAD_A"
         self.h.tick(self.mav)
-        self.h.forget()
+        self.clock.advance(6.0)
+        self.h.tick(self.mav)
+        self.h.begin(1)                     # the same mission, stage re-entered
+        self.assertFalse(self.h.tick(self.mav))
+        self.h.begin(2)                     # the next START
         self.assertTrue(self.h.tick(self.mav))
 
     def test_it_can_be_switched_off(self):

@@ -466,6 +466,24 @@ class NearGateTests(unittest.TestCase):
             self.clock.advance(0.1)
         self.fail("never committed to a banner")
 
+    def test_a_near_green_board_outranks_a_far_banner(self):
+        """Blown to within 2.3 m of the entrance, the board would not fit the
+        frame; the one banner that read was the return gate over the walls."""
+        mav = TwoGateMav([self.FAR])
+        stage = AlignToBanner(mav, clock=self.clock)
+        stage.initialise()
+        for _ in range(6000):
+            if stage._target_yaw is not None and stage._green is None:
+                stage._green = {"x": 2.3, "y": 0.0, "range": 2.3, "area": 5e5,
+                                "heading": 0.0, "source": "lidar", "cut": False}
+            stage.update()
+            if stage._vantages:
+                break
+            self.clock.advance(0.1)
+        logs = " ".join(m for m, _ in mav.logs)
+        self.assertNotIn("taking the nearest one seen", logs)
+        self.assertTrue(stage._vantages, "never went round the green")
+
     def test_range_estimate_orders_the_gates(self):
         stage = AlignToBanner(TwoGateMav([]), clock=self.clock)
         self.assertGreater(stage.range_from_area(self.FAR[1]), stage.near_range_m)
@@ -1707,7 +1725,6 @@ class TheAspectGateIsGoneTests(unittest.TestCase):
     def test_the_stage_has_no_aspect_knobs_left_to_turn(self):
         """These parameters named a measurement that could not answer the
         question. A stage that still accepts them still has the code."""
-        import inspect
         args = inspect.signature(AlignToBanner.__init__).parameters
         for gone in ("min_square_aspect", "peak_min_aspect", "square_gain",
                      "max_strafes", "max_strafes_square", "stall_before_strafe"):

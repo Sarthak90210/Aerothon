@@ -238,7 +238,6 @@ class CustomSlalomTests(SlalomTraverseTests):
     """
 
     def lane(self, L, W, obstacles):
-        global BLOCKS
         wy = W / 2 + 0.05
         WALLS[:] = [rect(L / 2, wy, L + 0.2, 0.1), rect(L / 2, -wy, L + 0.2, 0.1)]
         blocks = []

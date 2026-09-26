@@ -23,10 +23,8 @@ sys.path.insert(0, os.path.join(_ROOT, "src", "aerothon_perception", "camera_ctr
 sys.path.insert(0, os.path.join(_ROOT, "src", "aerothon_mission", "mission_bt"))
 
 import rclpy
-from rclpy.node import Node
 import py_trees
 from sensor_msgs.msg import JointState
-from std_msgs.msg import String
 
 from camera_ctrl.camera_ctrl_node import CameraCtrl, NAMED_POSES_DEG
 from mission_bt.mission_tree import SetCameraPose

@@ -118,9 +118,6 @@ class FakeMav:
     def corridor_exited(self):
         return self.exited
 
-    def corridor_entered(self):
-        return bool((self.avoid_detail or {}).get("corridor_entered", False))
-
     def banner_identified(self):
         return self.banner_z >= 1.0
 
