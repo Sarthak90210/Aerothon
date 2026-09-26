@@ -141,18 +141,23 @@ class StageAwareAbort(py_trees.behaviour.Behaviour):
         if self._command_sent:
             return py_trees.common.Status.RUNNING
         self.mav.enable_avoidance(False)
-        reason = self.mav.abort_reason or "unspecified"
-        # In near-ground conditions, land immediately; otherwise RTL
-        if self.mav.alt() < 1.5:
-            self.mav.land()
-            self.logger.warning("ABORT -> LAND (low alt)")
-            self.mav.publish_result("ABORTED_LAND", reason)
-        else:
-            self.mav.set_mode("RTL")
-            self.logger.warning("ABORT -> RTL")
-            self.mav.publish_result("ABORTED_RTL", reason)
+        mode = recover(self.mav)
+        self.logger.warning(f"ABORT -> {mode}")
+        self.mav.publish_result(f"ABORTED_{mode}",
+                                self.mav.abort_reason or "unspecified")
         self._command_sent = True
         return py_trees.common.Status.RUNNING
+
+
+def recover(mav):
+    """Bring the aircraft home by the flight controller: LAND where it is
+    when near the ground, else RTL (which climbs above every wall first).
+    Returns the mode commanded."""
+    if mav.alt() < 1.5:
+        mav.land()
+        return "LAND"
+    mav.set_mode("RTL")
+    return "RTL"
 
 
 # --------------------------------------------------------------------------- #
@@ -647,6 +652,17 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             if b[0] <= x <= b[1] and b[2] <= y <= b[3]:
                 return b
         return None
+
+    def _square_tol(self):
+        """The perpendicular tolerance, doubled once half the step budget
+        is spent. 5 deg at 4 m is 0.35 m of lateral error, and position is
+        held on GPS: with a metre of wander and gusts, square-up flew all
+        fourteen steps between +5 and +9 deg and never closed (worst
+        conditions). 10 deg is still well inside the crossing, which does not
+        trust this angle anyway -- DuckUnderBoard measures the gap between
+        the posts on the lidar before it will advance."""
+        late = self._sq_steps >= self.max_square_steps // 2
+        return self.square_tol * (2.0 if late else 1.0)
 
     def _close_dwell(self):
         ratio = (self._hits / self._samples) if self._samples else 0.0
@@ -1558,7 +1574,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         # So obliquity commands a TANGENTIAL step and the camera keeps the
         # board centred with yaw -- which is the arc the spec asked for, and
         # the reason the two jobs are split between the two instruments.
-        if abs(alpha) > self.square_tol:
+        if abs(alpha) > self._square_tol():
             # THE ARC NEEDS BOTH INSTRUMENTS. A tangential step does not move
             # `alpha` by itself -- perpendicularity is a property of HEADING,
             # measured at station 3 of the ground probe as 1.1 degrees of
@@ -1703,7 +1719,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             self.mav.log(
                 f"AlignToBanner: SQUARE ON -- "
                 f"{math.degrees(alpha):+.1f} deg off perpendicular "
-                f"(tolerance {math.degrees(self.square_tol):.0f} deg) at "
+                f"(tolerance {math.degrees(self._square_tol()):.0f} deg) at "
                 f"{standoff:.1f} m standoff, bearing "
                 f"{self._last_good_bearing:+.2f}, from {fit['points']} "
                 f"lidar returns, pose {self.mav.pos()}, yaw "
@@ -5265,8 +5281,10 @@ def latch_mission_failure(root, mav):
     mid-flight. Observed live as SEARCH_QR -> START_QR with the aircraft still
     airborne.
 
-    A failed mission is a terminal outcome. Latch it, report why, and require
-    an explicit new START.
+    A failed mission is a terminal outcome. Latch it, report why, require
+    an explicit new START -- and bring the aircraft home. Parked in GUIDED it
+    held its last setpoint indefinitely, and a GPS glitch a minute later walked
+    it into a corridor wall (sim/fly_headless.py, worst conditions).
 
     Returns the reason if a failure was latched on this tick, else None.
     """
@@ -5281,6 +5299,8 @@ def latch_mission_failure(root, mav):
     mav.mission_started = False
     mav.enable_avoidance(False)
     root.stop(py_trees.common.Status.INVALID)
+    if mav.state.armed:
+        mav.log(f"mission failed in the air -> {recover(mav)}", warn=True)
     return reason
 
 

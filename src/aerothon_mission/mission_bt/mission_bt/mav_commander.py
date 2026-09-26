@@ -30,6 +30,7 @@ from rcl_interfaces.msg import ParameterType, ParameterValue
 from mission_bt.delivery_zone import (boundary_to_local_zone, inset_zone,
                                       parse_boundary, parse_polygon,
                                       polygon_to_local)
+from mission_bt.banner_orbit import SELF_M
 from mission_bt.scan_geometry import (despeckle, fit_surface, gate_opening,
                                       no_surface as _no_surface)
 
@@ -107,10 +108,27 @@ class Mav:
         self.abort_latched = False
         self.mission_started = False
 
-        # Default matches the official Iris SITL 3S battery. Override this ROS
-        # parameter for a real airframe's battery chemistry / cell count.
+        # The team's 4S2P Li-ion pack: 3.0 V/cell under load is the last of
+        # its usable charge (Li-ion runs to 2.5 V; LiPo figures of 3.5 V/cell
+        # would call a Li-ion pack flat at half charge). Held below for
+        # `critical_battery_hold_s`, because a climb or a gust draws the pack
+        # down for a second or two and recovers.
         self.critical_battery_voltage = node.declare_parameter(
-            'critical_battery_voltage', 10.5).value
+            'critical_battery_voltage', 12.0).value
+        self.critical_battery_hold_s = node.declare_parameter(
+            'critical_battery_hold_s', 5.0).value
+        self._battery_low_since = None
+        self._logged = set()
+        # Keep-out round the airframe on every POSITION setpoint. ArduPilot's
+        # own proximity avoidance does not run in GUIDED, and a held setpoint
+        # beside a wall is exactly as good as the GPS: with a metre of wander
+        # and a gust, the square-up flew into the corridor wall it was
+        # standing 1.5 m from (sim/fly_headless.py, worst conditions).
+        # Returns nearer than the lidar sees its own airframe are ignored
+        # (banner_orbit.SELF_M), so the band is 0.55..keepout_m.
+        self.keepout_m = node.declare_parameter('keepout_m', 1.0).value
+        self.keepout_events = 0
+        self._keepout_on = False
         # Beyond this roll/pitch the aircraft is not flying the mission any
         # more, it is falling into something. The last recorded live run sat at
         # 54 deg against a corridor wall and nothing in the stack objected.
@@ -273,7 +291,14 @@ class Mav:
     # ------------------------------------------------------------------ #
     # callbacks
     # ------------------------------------------------------------------ #
-    def _on_battery(self, m): self.battery = m
+    def _on_battery(self, m):
+        self.battery = m
+        low = ((m.voltage > 0.0 and m.voltage < self.critical_battery_voltage)
+               or (m.percentage > 0.0 and m.percentage < 0.15))
+        if not low:
+            self._battery_low_since = None
+        elif self._battery_low_since is None:
+            self._battery_low_since = self.node.get_clock().now().nanoseconds / 1e9
     def _on_match(self, m): self.qr_matched = m.data
 
     def _on_qr(self, m):
@@ -310,7 +335,7 @@ class Mav:
         if pts is not None:
             xs = [p[0] for p in pts]
             ys = [p[1] for p in pts]
-            self.node.get_logger().info(
+            self._log_once(
                 f"Arena geofence loaded: {len(pts)} vertices, "
                 f"x {min(xs):.1f}..{max(xs):.1f}, y {min(ys):.1f}..{max(ys):.1f}")
 
@@ -330,10 +355,17 @@ class Mav:
         self.delivery_zone_local = zone
         self.delivery_zone_reason = why or "four-corner boundary resolved in local ENU"
         if zone is not None:
-            self.node.get_logger().info(
+            self._log_once(
                 "Delivery-zone boundary loaded: "
                 f"x {zone[0]:.1f}..{zone[1]:.1f}, "
                 f"y {zone[2]:.1f}..{zone[3]:.1f}")
+
+    def _log_once(self, text):
+        """Log a line unless it repeats the last one: home arrives at 1 Hz
+        and the organiser's inputs are re-published, each re-resolving."""
+        if text not in self._logged:
+            self._logged.add(text)
+            self.node.get_logger().info(text)
 
     def delivery_search_zone(self, clearance_m):
         if self.delivery_zone_local is None:
@@ -712,8 +744,51 @@ class Mav:
         self.setpoint_block_reason = ""
         self._sp.header.stamp = self.node.get_clock().now().to_msg()
         self._sp.header.frame_id = 'map'
-        self.pub_sp.publish(self._sp)
+        self.pub_sp.publish(self._kept_out(self._sp))
         self._track_altitude_error()
+
+    def _nearest_return(self):
+        """(range, local-frame bearing) of the nearest fresh lidar return
+        beyond the airframe itself, or None."""
+        age = self.scan_age_s()
+        if self._scan is None or age is None or age > 0.5:
+            return None
+        scan, best = self._scan, None
+        lo = max(float(scan.range_min), SELF_M)
+        for i, r in enumerate(scan.ranges):
+            if lo < r < float(scan.range_max) and (best is None or r < best[0]):
+                best = (r, float(scan.angle_min) + i * float(scan.angle_increment))
+        return None if best is None else (best[0], best[1] + self.yaw())
+
+    def _kept_out(self, sp):
+        """`sp`, or a copy that neither closes on nor stays inside
+        `keepout_m` of the nearest return: the part of the move toward it is
+        dropped and the aircraft is pushed back out to the keep-out range."""
+        near = self._nearest_return() if self.alt() > 0.5 else None
+        inside = near is not None and near[0] < self.keepout_m
+        if inside != self._keepout_on:
+            self._keepout_on = inside
+            if inside:
+                self.keepout_events += 1
+                self.log(f"KEEP-OUT: return at {near[0]:.2f} m, bearing "
+                         f"{math.degrees(near[1]):.0f} deg; holding the "
+                         f"setpoint {self.keepout_m:.1f} m clear", warn=True)
+        if not inside:
+            return sp
+        r, b = near
+        ux, uy = math.cos(b), math.sin(b)
+        px, py, _ = self.pos()
+        dx = sp.pose.position.x - px
+        dy = sp.pose.position.y - py
+        toward = max(0.0, dx * ux + dy * uy)
+        back = self.keepout_m - r
+        out = PoseStamped()
+        out.header = sp.header
+        out.pose.orientation = sp.pose.orientation
+        out.pose.position.x = px + dx - (toward + back) * ux
+        out.pose.position.y = py + dy - (toward + back) * uy
+        out.pose.position.z = sp.pose.position.z
+        return out
 
     def _track_altitude_error(self):
         """Watch commanded z against measured z while position-streaming.
@@ -779,15 +854,13 @@ class Mav:
     def connected(self):
         return self.state.connected
 
-    def battery_critical(self, min_volt=None, min_pct=0.15):
-        """Returns True if battery is below safe critical threshold."""
-        if min_volt is None:
-            min_volt = self.critical_battery_voltage
-        if self.battery.voltage > 0.0 and self.battery.voltage < min_volt:
-            return True
-        if self.battery.percentage > 0.0 and self.battery.percentage < min_pct:
-            return True
-        return False
+    def battery_critical(self):
+        """True once the pack has been below its critical voltage (or 15 %)
+        for `critical_battery_hold_s`."""
+        if self._battery_low_since is None:
+            return False
+        now = self.node.get_clock().now().nanoseconds / 1e9
+        return now - self._battery_low_since >= self.critical_battery_hold_s
 
     def _note_mode_command(self, mode):
         self._commanded_modes[mode] = self.node.get_clock().now().nanoseconds / 1e9

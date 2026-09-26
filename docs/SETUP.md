@@ -46,6 +46,13 @@ sudo apt install -y \
   ros-jazzy-web-video-server ros-jazzy-ros-gz \
   python3-vcstool python3-colcon-common-extensions
 
+# Perception: the banner check reads its lettering with the tesseract binary,
+# and the QR reader's first pass is zbar. Without them the banner is never
+# identified and every QR goes through the slower OpenCV fallback; qr_node
+# warns at start-up when zbar is missing.
+sudo apt install -y ros-jazzy-cv-bridge tesseract-ocr libzbar0 python3-pyzbar
+pip3 install --break-system-packages py_trees py_trees_ros pyproj
+
 # Tauri GCS dependencies (for native Linux build)
 sudo apt install -y \
   libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \

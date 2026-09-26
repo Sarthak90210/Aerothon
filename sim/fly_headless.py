@@ -36,6 +36,18 @@ PKGS = [("aerothon_mission", "mission_bt"), ("aerothon_avoidance", "avoidance"),
         ("aerothon_perception", "perception_qr"),
         ("aerothon_perception", "perception_redzone"),
         ("aerothon_perception", "perception_banner"), ("aerothon_sim", "sim_gazebo")]
+LIVE = set()          # process groups of every run in flight
+
+
+def stop_all(signum, _frame):
+    """Killed mid-campaign: take every run's processes with us. Left behind,
+    they keep flying on their ROS domain and join the next campaign's runs."""
+    for pid in list(LIVE):
+        try:
+            os.killpg(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    sys.exit(128 + signum)
 
 
 def node_cmd(module, params):
@@ -77,6 +89,7 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain):
     time.sleep(1.0)
     procs += [subprocess.Popen(c, env=env, stdout=log, stderr=subprocess.STDOUT,
                                start_new_session=True) for c in stack]
+    LIVE.update(p.pid for p in procs)
     try:
         procs[0].wait(timeout=max_sim_s / max(0.2, rtf) * 3 + 120)
     except subprocess.TimeoutExpired:
@@ -89,6 +102,7 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain):
             p.wait(timeout=10)
         except subprocess.TimeoutExpired:
             os.killpg(p.pid, signal.SIGKILL)
+    LIVE.difference_update(p.pid for p in procs)
     log.close()
 
     run = json.loads((out / "run.json").read_text()) if (out / "run.json").exists() else {}
@@ -126,6 +140,8 @@ def main():
     ap.add_argument("--max-sim-s", type=float, default=1200.0)
     ap.add_argument("--out", type=Path, default=ROOT / "logs" / "headless")
     args = ap.parse_args()
+    signal.signal(signal.SIGTERM, stop_all)
+    signal.signal(signal.SIGINT, stop_all)
     specs = []
     for path in args.specs:
         errs, warns = W.validate(W.load(path))

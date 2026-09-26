@@ -134,6 +134,12 @@ BLUR_PX_BY_SEVERITY = (0, 4, 8, 14, 22, 32)
 EXPOSURE_S = 0.01               # the flight camera's capped exposure
 BANNER_MIN_BOARD_PX = 20        # lettering legible from this board height
 BANNER_MAX_INCIDENCE = math.radians(65.0)
+# Banner identity vs total camera severity (sum over the corruptions, plus
+# print wear): logistic, fitted to the REAL detector on the 3 m sim frame,
+# 30 seeds per point -- severity 17 (the worst preset) 30/30, 26 27/30,
+# 32 12/30 (tests/fixtures/banner_sim_ambient_3m.png).
+BANNER_SEV_50 = 31.0
+BANNER_SEV_SCALE = 2.5
 
 
 def latched(depth=1):
@@ -412,6 +418,7 @@ class HeadlessWorld(Node):
         self.glitch_phase = 0
         self.armed_at = None
         self.baro_err = 0.0
+        self.baro_noise = 0.0
         # ---- camera servo, winch, payload ----
         self.cam_cmd = 0.0           # joint rad, negative = down
         self.cam_joint = 0.0
@@ -585,7 +592,7 @@ class HeadlessWorld(Node):
         """What the flight controller believes: truth plus GPS and baro error."""
         return np.array([self.p[0] + self.gps_err[0] + self.glitch[0],
                          self.p[1] + self.gps_err[1] + self.glitch[1],
-                         self.p[2] + self.baro_err])
+                         self.p[2] + self.baro_err + self.baro_noise])
 
     def _step_errors(self):
         # GPS: a slowly wandering error (the receiver's), sigma = noise / 2.
@@ -593,8 +600,12 @@ class HeadlessWorld(Node):
         self.gps_err += (-self.gps_err / 20.0) * DT + s * math.sqrt(2 * DT / 20.0) \
             * self.np_rng.normal(size=2)
         self.baro_err += self.fcu["baro_drift_mps"] * DT
-        noise = self.fcu["baro_noise_m"]
-        self.baro_noise = noise * self.np_rng.normal() if noise else 0.0
+        # The EKF blends the baro with the accelerometers: its height carries
+        # about half the sensor's noise, correlated over ~1 s -- and it is the
+        # one estimate both the position controller and MAVROS see.
+        s = 0.5 * self.fcu["baro_noise_m"]
+        self.baro_noise += -self.baro_noise * DT + s * math.sqrt(2 * DT) \
+            * self.np_rng.normal()
         g = self.fcu["gps_glitch_m"]
         if g > 0 and self.armed_at is not None:
             since = self.t - self.armed_at
@@ -733,7 +744,7 @@ class HeadlessWorld(Node):
         m = PoseStamped()
         m.header.stamp, m.header.frame_id = stamp, "map"
         m.pose.position.x, m.pose.position.y = float(est[0]), float(est[1])
-        m.pose.position.z = float(est[2] + self.baro_noise)
+        m.pose.position.z = float(est[2])
         r, p, y = math.radians(self.roll), math.radians(self.pitch), self.yaw
         cr, sr, cp, sp, cy, sy = (math.cos(r / 2), math.sin(r / 2), math.cos(p / 2),
                                   math.sin(p / 2), math.cos(y / 2), math.sin(y / 2))
@@ -890,8 +901,8 @@ class HeadlessWorld(Node):
         ident = [v for kind, v in views if kind == "banner"
                  and v[3] >= BANNER_MIN_BOARD_PX and v[2] <= BANNER_MAX_INCIDENCE
                  and v[4] >= 0.7 and v[5] <= 15.0]
-        p_ident = max(0.0, 1.0 - 0.02 * (sum(abs(s) for s in self.cam_sev.values())
-                                         + self.cond["wear"]["banner"]))
+        sev = sum(abs(s) for s in self.cam_sev.values()) + self.cond["wear"]["banner"]
+        p_ident = 1.0 / (1.0 + math.exp((sev - BANNER_SEV_50) / BANNER_SEV_SCALE))
         if ident and self.rng.random() < p_ident:
             bbox, (cx, cy), _, _, _, _ = max(ident, key=lambda v: v[3])
             out.x = (cx - IMAGE_W / 2) / (IMAGE_W / 2)

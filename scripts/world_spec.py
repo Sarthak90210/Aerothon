@@ -174,8 +174,10 @@ _CALM = {
 # The worst credible day. Wind: above ~8 m/s mean with 4 m/s gusts flying
 # stops for every team. Camera: severity 2 of everything at once, the
 # envelope sim/test_perception_corruption.py holds every detector to one at
-# a time. GPS: a 5 m glitch for 5 s mid-search. Battery: a pack already
-# flown once, at 3.85 V/cell.
+# a time. GPS: a 5 m glitch for 5 s mid-search. Baro: 3 mm/s of drift, 2.7 m
+# over a full 15 min -- a weather front is ~2 mm/s, the rest is a flight
+# controller armed before it warmed up (docs/FIELD_READINESS.md). Battery: a
+# pack already flown once, at 3.85 V/cell.
 CONDITION_PRESETS = {
     "calm": _CALM,
     "field": {
@@ -194,7 +196,7 @@ CONDITION_PRESETS = {
         "lidar": {"noise_m": 0.03, "dropout": 0.10, "spurious": 0.01},
         "wear": {"banner": 3, "qr": 3},
         "fcu": {"gps_noise_m": 1.5, "gps_glitch_m": 5.0, "baro_noise_m": 0.5,
-                "baro_drift_mps": 0.02, "imu_noise": 1.0, "battery_v": 15.4},
+                "baro_drift_mps": 0.003, "imu_noise": 1.0, "battery_v": 15.4},
     },
 }
 

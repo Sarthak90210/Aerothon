@@ -388,6 +388,87 @@ class TestAttitudeAbort(RailTestCase):
 # --------------------------------------------------------------------------- #
 # Rail 4: the tree actually returns to WAITING
 # --------------------------------------------------------------------------- #
+class TestBatteryAbort(RailTestCase):
+    """The pack is Li-ion: it sags under a climb and recovers."""
+
+    def battery(self, volts):
+        from sensor_msgs.msg import BatteryState
+        self.mav._on_battery(BatteryState(voltage=volts, percentage=-1.0))
+
+    def test_a_sag_is_not_a_flat_pack(self):
+        self.battery(11.6)
+        self.assertFalse(self.mav.battery_critical())
+        self.battery(14.2)                  # recovered: the clock restarts
+        self.assertIsNone(self.mav._battery_low_since)
+
+    def test_held_below_critical_trips(self):
+        self.battery(11.6)
+        self.mav._battery_low_since -= self.mav.critical_battery_hold_s
+        self.battery(11.7)
+        self.assertTrue(self.mav.battery_critical())
+
+    def test_a_half_charged_li_ion_pack_is_not_critical(self):
+        self.battery(14.0)                  # 3.5 V/cell: LiPo "empty"
+        self.assertIsNone(self.mav._battery_low_since)
+
+
+class TestKeepOut(RailTestCase):
+    """A held position setpoint is only as good as the GPS; the lidar keeps
+    it off whatever is beside the aircraft."""
+
+    def scan(self, wall_bearing_deg=None, wall_m=None):
+        from sensor_msgs.msg import LaserScan
+        m = LaserScan()
+        m.angle_min, m.angle_increment = -math.pi, 2 * math.pi / 360
+        m.range_min, m.range_max = 0.05, 12.0
+        m.ranges = [float("inf")] * 360
+        if wall_m is not None:
+            i = int(round((math.radians(wall_bearing_deg) + math.pi)
+                          / m.angle_increment))
+            for k in range(i - 3, i + 4):
+                m.ranges[k % 360] = wall_m
+        self.mav._on_scan(m)
+
+    def stream(self, x, y):
+        self.arm()
+        self.mav._on_pose(pose_with(z=3.0))          # at the origin, facing +x
+        self.mav.goto(x, y, 3.0, 0.0)
+        self.mav._stream()
+        return self.published_setpoints[-1].pose.position
+
+    def test_open_air_setpoints_pass_untouched(self):
+        self.scan()
+        p = self.stream(2.0, 1.0)
+        self.assertEqual((p.x, p.y), (2.0, 1.0))
+
+    def test_a_wall_beyond_the_keep_out_changes_nothing(self):
+        self.scan(0.0, 1.5)
+        p = self.stream(0.4, 0.0)
+        self.assertEqual(p.x, 0.4)
+
+    def test_it_will_not_close_on_a_wall_inside_the_keep_out(self):
+        self.scan(90.0, 0.8)                         # wall 0.8 m to port
+        p = self.stream(1.0, 0.5)                    # asked to drift toward it
+        self.assertAlmostEqual(p.x, 1.0, delta=0.05, msg="along-wall motion kept")
+        self.assertLess(p.y, 0.0, "the setpoint must back away from the wall")
+        self.assertLessEqual(p.y, -(self.mav.keepout_m - 0.8) + 0.01,
+                             "not pushed back out to the keep-out range")
+        self.assertEqual(self.mav.keepout_events, 1)
+
+    def test_the_airframe_itself_is_not_an_obstacle(self):
+        self.scan(180.0, 0.3)
+        p = self.stream(-1.0, 0.0)
+        self.assertEqual(p.x, -1.0)
+
+    def test_on_the_ground_it_stands_down(self):
+        self.scan(0.0, 0.7)
+        self.arm()
+        self.mav._on_pose(pose_with(z=0.2))
+        self.mav.goto(1.0, 0.0, 0.2, 0.0)
+        self.mav._stream()
+        self.assertEqual(self.published_setpoints[-1].pose.position.x, 1.0)
+
+
 class TestTreeReset(RailTestCase):
 
     def _tick(self, root, n=1):

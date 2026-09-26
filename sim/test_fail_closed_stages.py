@@ -86,8 +86,16 @@ class FakeMav:
         self.surface_calls = []
         self.square_on = []
         self.camera_poses = []
+        self.state = type("State", (), {"armed": False})()
+        self.modes = []
 
     # ---- stage interface ---- #
+    def set_mode(self, mode):
+        self.modes.append(mode)
+
+    def land(self):
+        self.modes.append("LAND")
+
     def goto(self, *a, **k):
         self.gotos.append(a)
 
@@ -560,6 +568,23 @@ class MissionFailureLatchTests(unittest.TestCase):
         self.assertIsNone(latch_mission_failure(root, mav))
         self.assertTrue(mav.mission_started)
         self.assertEqual(mav.results, [])
+
+    def test_a_failure_in_the_air_brings_the_aircraft_home(self):
+        mav = FakeMav()
+        mav.state.armed = True
+        latch_mission_failure(_StubRoot(py_trees.common.Status.FAILURE), mav)
+        self.assertEqual(mav.modes, ["RTL"])
+
+    def test_a_failure_near_the_ground_lands_where_it_is(self):
+        mav = FakeMav()
+        mav.state.armed, mav._alt = True, 1.0
+        latch_mission_failure(_StubRoot(py_trees.common.Status.FAILURE), mav)
+        self.assertEqual(mav.modes, ["LAND"])
+
+    def test_a_failure_on_the_ground_commands_nothing(self):
+        mav = FakeMav()
+        latch_mission_failure(_StubRoot(py_trees.common.Status.FAILURE), mav)
+        self.assertEqual(mav.modes, [])
 
     def test_idle_tree_failure_is_not_a_mission_failure(self):
         """Before START the root legitimately fails; that is not an outcome."""
