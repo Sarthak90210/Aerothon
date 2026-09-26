@@ -52,6 +52,7 @@ from geometry_msgs.msg import PoseStamped, Vector3
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import String, Bool
 
+from camera_ctrl.gate import CameraGate
 from perception_qr.qr_decode import QrDecoder, zbar_available
 from perception_qr.qr_match import matches
 
@@ -86,6 +87,8 @@ class QrNode(Node):
         self._fx = None
 
         self.create_subscription(Image, image_topic, self.on_image, 5)
+        # Markers lie on the ground: read them looking down.
+        self.gate = CameraGate(self, ("NADIR", "ALIGN"))
         self.create_subscription(String, '/mission/target', self.on_target, 10)
         self.create_subscription(
             PoseStamped, '/mavros/local_position/pose',
@@ -164,6 +167,13 @@ class QrNode(Node):
         self._frame_i += 1
         if self._frame_i % self.process_every:
             return
+        if not self.gate.open():
+            # Nothing in view, said explicitly: a stale match or offset must
+            # not outlive the view it came from.
+            self.pub_offset.publish(Vector3())
+            self.pub_decoded.publish(String(data=""))
+            self.pub_matched.publish(Bool(data=False))
+            return
         try:
             frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         except Exception as e:  # noqa: BLE001
@@ -177,7 +187,7 @@ class QrNode(Node):
         rejected = []
         best = None            # (is_match, payload, cx, cy, px)
 
-        decoded = self.decoder.decode(frame)
+        decoded, located = self.decoder.read(frame)
 
         require = bool(self.get_parameter('require_plausible').value)
         # The annotated copy is for a GCS debug view; nobody subscribed, no
@@ -221,9 +231,9 @@ class QrNode(Node):
                 best = cand
 
         unread = None
-        if not decoded:
-            quad = self.decoder.locate(frame)
-            if quad is not None and self.plausible(self._marker_px(quad))[0]:
+        if located is not None:
+            quad = located
+            if self.plausible(self._marker_px(quad))[0]:
                 unread = quad
                 boxes.append({"quad": quad.astype(int).tolist(),
                               "label": "UNREAD", "ok": False})

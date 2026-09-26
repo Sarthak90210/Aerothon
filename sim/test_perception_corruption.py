@@ -121,7 +121,7 @@ class QrEnvelopeTests(unittest.TestCase):
         cls.dec = QrDecoder()
 
     def reads(self, img):
-        return any(p == PAYLOAD for p, _ in self.dec.decode(img))
+        return any(p == PAYLOAD for p, _ in self.dec.read(img)[0])
 
     def test_every_corruption_to_severity_2_reads_on_every_geometry(self):
         for size, alt in GEOMETRIES:
@@ -164,7 +164,7 @@ class QrEnvelopeTests(unittest.TestCase):
                 img = CameraCorruptor({key: sev}, seed=seed).apply(ground(seed))
                 frames += 1
                 located += self.dec.locate(img) is not None
-                self.assertEqual(self.dec.decode(img), [])
+                self.assertEqual(self.dec.read(img)[0], [])
         self.assertLess(located / frames, 0.01)
 
     def test_the_rulebook_ink_colours_read(self):
@@ -192,7 +192,7 @@ class WorstDayQrTests(unittest.TestCase):
                 for t in range(8):
                     img = CameraCorruptor(WORST, seed=t).apply(render_pad(
                         size, alt, off=(0.1 * t, 0.05 * t), rot=0.2 + 0.3 * t))
-                    r = any(p == PAYLOAD for p, _ in dec.decode(img))
+                    r = any(p == PAYLOAD for p, _ in dec.read(img)[0])
                     read += r
                     seen += r or dec.locate(img) is not None
                 self.assertGreaterEqual(read, 5)

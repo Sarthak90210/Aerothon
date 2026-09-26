@@ -111,7 +111,7 @@ def detect_green_banner(img, s_lo=90, v_lo=60):
 
 def first_decode(decoder, img):
     """(payload, marker px) of the first marker the flight decoder reads."""
-    for text, quad in decoder.decode(img):
+    for text, quad in decoder.read(img)[0]:
         xs, ys = quad[:, 0], quad[:, 1]
         return text, float(max(xs.max() - xs.min(), ys.max() - ys.min()))
     return "", 0.0

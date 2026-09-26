@@ -30,7 +30,7 @@ from rcl_interfaces.msg import ParameterType, ParameterValue
 from mission_bt.delivery_zone import (boundary_to_local_zone, inset_zone,
                                       parse_boundary, parse_polygon,
                                       polygon_to_local)
-from mission_bt.scan_geometry import (fit_surface, gate_opening,
+from mission_bt.scan_geometry import (despeckle, fit_surface, gate_opening,
                                       no_surface as _no_surface)
 
 
@@ -442,6 +442,9 @@ class Mav:
     # lidar
     # ------------------------------------------------------------------ #
     def _on_scan(self, m):
+        # Every consumer -- the square-up, the gate check, the orbit's leg
+        # check -- reads the despeckled scan (scan_geometry.despeckle).
+        m.ranges = despeckle(m.ranges)
         self._scan = m
         self._scan_t = self.node.get_clock().now().nanoseconds / 1e9
 

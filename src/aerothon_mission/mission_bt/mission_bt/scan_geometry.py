@@ -64,6 +64,30 @@ def _wrap(a):
     return math.atan2(math.sin(a), math.cos(a))
 
 
+def despeckle(ranges):
+    """Ranges with every lone return replaced by its neighbours' median.
+
+    A single short return between two longer ones is dust, an insect or sun
+    speckle, not a structure: every real obstacle the aircraft meets spans
+    more than one beam. One of them in front of the gate read as "something
+    standing at 1.3 m" and the aircraft refused a clear crossing (field
+    conditions, sim/fly_headless.py). Same 3-beam median as the corridor
+    navigator's conditioning, so the mission and the navigator agree on what
+    is there. Missing returns (None, NaN, +inf) count as infinitely far.
+    """
+    inf = float("inf")
+    r = [inf if (v is None or v != v) else float(v) for v in ranges]
+    n = len(r)
+    if n < 3:
+        return r
+    out = [sorted(r[:2])[1]]
+    for i in range(1, n - 1):
+        a, b, c = r[i - 1], r[i], r[i + 1]
+        out.append(max(min(a, b), min(max(a, b), c)))
+    out.append(sorted(r[-2:])[1])
+    return out
+
+
 def _fit_line(points):
     """Total-least-squares line through `points`.
 

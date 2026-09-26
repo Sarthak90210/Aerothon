@@ -138,6 +138,18 @@ class ReturnGateSearchTests(unittest.TestCase):
         leaf, st = run(mav)
         self.assertEqual(st, py_trees.common.Status.FAILURE)
 
+    def test_it_stands_off_FACE_ON_not_on_the_line_it_first_read_it_along(self):
+        """The board faces into the zone across its nearest edge; a stand-off
+        on the oblique sighting line left the aircraft 65 deg off the board
+        and identification flickered below the hit ratio."""
+        mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))
+        leaf, st = run(mav)
+        self.assertEqual(st, py_trees.common.Status.SUCCESS)
+        x, y = mav.pos()[:2]
+        self.assertAlmostEqual(x, 26.0, delta=0.5)
+        self.assertAlmostEqual(y, -13.0, delta=0.5)
+        self.assertAlmostEqual(mav.gotos[-1][3], -math.pi / 2, delta=0.05)
+
     def test_ground_the_sweep_never_saw_is_crossed_high_and_looking_down(self):
         """Perimeter legs cross zone ground the delivery sweep may never have
         mapped (it stops at the match). At look altitude with the camera

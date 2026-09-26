@@ -240,14 +240,18 @@ class RedZoneNode(Node):
             return
 
         h, w = frame.shape[:2]
-        mask = self.red_mask(frame)
-        frac = float(np.count_nonzero(mask)) / mask.size
-        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
-                                   cv2.CHAIN_APPROX_SIMPLE)
-        min_area = float(self._g('min_area_frac')) * w * h
-        cnts = [c for c in cnts if cv2.contourArea(c) >= min_area]
-
+        # Red found where it cannot be placed on the ground is a number with
+        # nowhere to go: skip the mask, keep publishing the map.
         ok, why = self.can_georeference()
+        cnts, frac = [], 0.0
+        if ok:
+            mask = self.red_mask(frame)
+            frac = float(np.count_nonzero(mask)) / mask.size
+            cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
+                                       cv2.CHAIN_APPROX_SIMPLE)
+            min_area = float(self._g('min_area_frac')) * w * h
+            cnts = [c for c in cnts if cv2.contourArea(c) >= min_area]
+
         detail = {"status": NOT_VISIBLE, "reason": why,
                   "red_frac": round(frac, 5), "blobs": len(cnts),
                   "exclusions": [], "confirmed_area_m2": 0.0,

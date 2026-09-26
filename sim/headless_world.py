@@ -791,9 +791,10 @@ class HeadlessWorld(Node):
     # ---- camera: the detectors' outputs ---------------------------------------
     def _read_factor(self):
         """Share of frames a readable marker still reads through the corruptions
-        other than motion blur (which is modelled from the speed)."""
+        other than motion blur (which is modelled from the speed), and through
+        faded, dusty print."""
         other = sum(abs(v) for k, v in self.cam_sev.items() if k != "motion_blur")
-        return max(0.0, 1.0 - 0.02 * other)
+        return max(0.0, 1.0 - 0.02 * (other + self.cond["wear"]["qr"]))
 
     def _camera_frame(self):
         eye = self.p + np.array([0.16 * math.cos(self.yaw), 0.16 * math.sin(self.yaw), 0.0])
@@ -889,7 +890,8 @@ class HeadlessWorld(Node):
         ident = [v for kind, v in views if kind == "banner"
                  and v[3] >= BANNER_MIN_BOARD_PX and v[2] <= BANNER_MAX_INCIDENCE
                  and v[4] >= 0.7 and v[5] <= 15.0]
-        p_ident = max(0.0, 1.0 - 0.02 * sum(abs(s) for s in self.cam_sev.values()))
+        p_ident = max(0.0, 1.0 - 0.02 * (sum(abs(s) for s in self.cam_sev.values())
+                                         + self.cond["wear"]["banner"]))
         if ident and self.rng.random() < p_ident:
             bbox, (cx, cy), _, _, _, _ = max(ident, key=lambda v: v[3])
             out.x = (cx - IMAGE_W / 2) / (IMAGE_W / 2)

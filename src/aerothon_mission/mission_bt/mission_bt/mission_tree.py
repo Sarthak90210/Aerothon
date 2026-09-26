@@ -4291,10 +4291,35 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.RUNNING
         return py_trees.common.Status.RUNNING
 
+    def _inward_normal(self, x, y):
+        """Unit vector from the zone edge nearest (x, y) into the zone."""
+        get = getattr(self.mav, "delivery_search_zone", None)
+        zone = get(0.0) if callable(get) else None
+        if not zone:
+            return None
+        x0, x1, y0, y1 = zone
+        edges = {(0.0, 1.0): abs(y - y0), (-1.0, 0.0): abs(x1 - x),
+                 (0.0, -1.0): abs(y1 - y), (1.0, 0.0): abs(x - x0)}
+        return min(edges, key=edges.get)
+
     def _found(self, bx, by, th, rng):
-        """Stand off in front of the sighting -- or None if it is the back."""
+        """Stand off in front of the board -- or None if it is the back.
+
+        IN FRONT means along the board's normal, not along the line it was
+        read on. The camera cannot say which way a board faces, and a
+        stand-off on the sighting line from an oblique vantage put the
+        aircraft 65 deg off the board, where identification flickered below
+        AlignToBanner's hit ratio (split-corridor arena, field conditions,
+        sim/fly_headless.py). The rulebook supplies the facing: the return
+        gate is entered from the delivery zone, so its board faces into the
+        zone, across the zone edge nearest it."""
         x, y = self.mav.pos()[:2]
-        if rng <= self.standoff_m + 1.0:
+        normal = self._inward_normal(bx, by)
+        if normal is not None:
+            ax = bx + self.standoff_m * normal[0]
+            ay = by + self.standoff_m * normal[1]
+            th = math.atan2(-normal[1], -normal[0])
+        elif rng <= self.standoff_m + 1.0:
             ax, ay = x, y
         else:
             ax = bx - self.standoff_m * math.cos(th)

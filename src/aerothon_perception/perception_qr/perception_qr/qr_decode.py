@@ -1,4 +1,4 @@
-"""Two QR decoders in cascade: zbar first, OpenCV when zbar finds nothing.
+"""QR reading on a Pi 5 budget: zbar, then locate, then OpenCV on the crop.
 
 Measured on rendered pads under the camera corruptions of
 sim_gazebo/corruptions.py (sim/test_perception_corruption.py):
@@ -8,21 +8,26 @@ sim_gazebo/corruptions.py (sim/test_perception_corruption.py):
              on a 1280x720 frame -- but fails on heavy sensor noise.
     OpenCV   survives heavy sensor noise that defeats zbar.
 
-Neither alone covers what a vibrating aircraft sees in poor light; together
-they do, and the common case (zbar reads it) is the cheap one. zbar is the
-libzbar0 system library behind pyzbar; without it the cascade is OpenCV
-alone, and the node says so at start-up.
+Neither alone covers what a vibrating aircraft sees in poor light. So read()
+tries zbar on the whole frame; only if that finds nothing does it LOCATE a
+marker by its three finder patterns (OpenCV, on a half-size frame -- the
+finder squares are a code's largest features), and only if something is
+located does OpenCV try to decode, on a crop around it. Most frames of a
+search contain no marker at all, and those now cost zbar and a half-size
+finder search instead of two full-frame decoders (62 -> ~30 ms per frame on
+the test host; the Pi 5 is roughly half its speed).
 
-When neither reads anything, locate() still finds a marker by its three
-finder patterns, which survive the blur and vibration that defeat decoding:
-the mission stops over it (DecodeHover) so the blur goes away. It runs on a
-half-size frame -- the finder squares are the largest features of a code --
-and only on frames where nothing decoded. A located patch must also look
-like a code seen from above: near-square (MAX_SIDE_RATIO) and printed -- dark
-modules on a white plate, a spread of at least MIN_CONTRAST grey levels with
-both tones well represented. OpenCV's finder search alone reported a code in
-plain grass texture in one frame in five, and in sun glare as a lopsided
+A marker located but not decoded is returned as such: the finder patterns
+survive blur and vibration that defeat decoding, and the mission stops over
+it (DecodeHover) so the blur goes away. A located patch must look like a code
+seen from above: near-square (MAX_SIDE_RATIO) and printed -- dark modules on
+a white plate, a spread of at least MIN_CONTRAST grey levels with both tones
+well represented. OpenCV's finder search alone reported a code in plain
+grass texture in one frame in five, and in sun glare as a lopsided
 quadrilateral half the frame across.
+
+zbar is the libzbar0 system library behind pyzbar; without it every frame
+goes to the locate step, and the node says so at start-up.
 """
 
 import cv2
@@ -48,10 +53,17 @@ class QrDecoder:
     def __init__(self):
         self._cv = cv2.QRCodeDetector()
 
-    def decode(self, bgr):
-        """[(payload, quad)] with quad a 4x2 float32 array of image corners."""
+    def read(self, bgr):
+        """([(payload, quad)], unread quad or None); quads are 4x2 float32
+        image corners."""
         found = self._zbar(bgr) if pyzbar is not None else []
-        return found or self._opencv(bgr)
+        if found:
+            return found, None
+        quad = self.locate(bgr)
+        if quad is None:
+            return [], None
+        found = self._opencv_crop(bgr, quad)
+        return (found, None) if found else ([], quad)
 
     @staticmethod
     def _zbar(bgr):
@@ -79,15 +91,28 @@ class QrDecoder:
         quad = pts.reshape(4, 2).astype(np.float32) * 2.0
         return quad if _square(quad) and _looks_printed(bgr, quad) else None
 
-    def _opencv(self, bgr):
+    def _opencv_crop(self, bgr, quad, margin=0.25):
+        """OpenCV's decoder on the located marker: first from the corners
+        already found, then by its own detection on a crop around them."""
         try:
-            ok, infos, points, _ = self._cv.detectAndDecodeMulti(bgr)
+            text, _ = self._cv.decode(bgr, quad.reshape(1, 4, 2))
+        except cv2.error:
+            text = ""
+        if text:
+            return [(text, quad)]
+        h, w = bgr.shape[:2]
+        side = float(np.ptp(quad, axis=0).max())
+        x0, y0 = np.maximum((quad.min(axis=0) - margin * side).astype(int), 0)
+        x1, y1 = (quad.max(axis=0) + margin * side).astype(int)
+        crop = bgr[y0:min(h, y1), x0:min(w, x1)]
+        try:
+            ok, infos, points, _ = self._cv.detectAndDecodeMulti(crop)
         except cv2.error:
             return []
         if not ok or points is None:
             return []
-        return [(info, quad.astype(np.float32))
-                for info, quad in zip(infos, points) if info]
+        return [(info, q.astype(np.float32) + np.float32([x0, y0]))
+                for info, q in zip(infos, points) if info]
 
 
 def _square(quad):

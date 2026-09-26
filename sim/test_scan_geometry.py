@@ -42,6 +42,7 @@ sys.path.insert(0, os.path.join(
 
 from mission_bt.scan_geometry import (                        # noqa: E402
     bearing_to_angle,
+    despeckle,
     fit_surface,
     gate_opening,
 )
@@ -413,6 +414,33 @@ class PurityTests(unittest.TestCase):
                   for r in scan_of([wall(5.0, 0.0)])]
         f = fit(ranges)
         self.assertTrue(f["ok"], f["reason"])
+
+
+class DespeckleTests(unittest.TestCase):
+
+    def test_a_lone_short_return_is_dust_not_a_structure(self):
+        """In front of an open gate: 'something standing at 1.3 m', one
+        beam, refused the crossing on a field-conditions run."""
+        segs = [post(4.0, 0.0, -1.92), post(4.0, 0.0, 1.92)]
+        ranges = scan_of(segs)
+        ranges[SAMPLES // 2] = 1.3
+        before = gate_opening(ANGLE_MIN, ANGLE_INC, ranges, 0.0,
+                              math.radians(35.0), need_clear_m=0.0)
+        after = gate_opening(ANGLE_MIN, ANGLE_INC, despeckle(ranges), 0.0,
+                             math.radians(35.0), need_clear_m=0.0)
+        self.assertLess(before["clear_m"], 1.5)
+        self.assertGreater(after["clear_m"], 4.0)
+
+    def test_a_real_surface_survives(self):
+        ranges = scan_of([wall(3.0, 0.0)])
+        for a, b in zip(despeckle(ranges), ranges):
+            self.assertAlmostEqual(a, b, delta=0.001)
+
+    def test_missing_returns_are_far_and_a_lone_return_among_them_goes(self):
+        """The end windows are truncated and take the upper middle, as the
+        navigator's conditioning does."""
+        self.assertEqual(despeckle([None, 2.0, float("nan"), 2.0, 2.0]),
+                         [float("inf"), float("inf"), 2.0, 2.0, 2.0])
 
 
 # --------------------------------------------------------------------------- #
