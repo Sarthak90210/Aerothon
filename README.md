@@ -8,6 +8,7 @@ Autonomous QR-guided delivery multirotor + custom control GCS for **SAEINDIA Aer
 - 📋 **[CURRENT_PROGRESS_HANDOFF.md](CURRENT_PROGRESS_HANDOFF.md)** — honest defect inventory that the phase plan works through.
 - 📘 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — full system design (75 locked decisions, diagrams, node graph, GCS protocol).
 - ⚙️ **[docs/SETUP.md](docs/SETUP.md)** — version-locked environment + install.
+- ✈️ **[docs/FIELD_READINESS.md](docs/FIELD_READINESS.md)** — the adverse-conditions test pyramid (`sim/fly_headless.py`), bench checks, Pixhawk parameters and build-up flights before the first real flight.
 - 🚦 **[docs/STACK_AND_DEPLOYMENT.md](docs/STACK_AND_DEPLOYMENT.md)** — current qualification status, GCS connection, test ladder, and real-aircraft deployment gates.
 - 📦 **[aerothon.repos](aerothon.repos)** — vcstool workspace manifest.
 - 🐳 **[docker/](docker/)** — reproducible dev/sim containers.
