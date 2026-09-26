@@ -1671,6 +1671,30 @@ class RecoverTheBannerByMovingTests(unittest.TestCase):
             (round(good[0], 3), round(good[1], 3)),
             "went back to the same pose twice instead of searching")
 
+    def test_a_board_too_close_to_frame_is_backed_away_from(self):
+        """2.4 m from a 3.7 m board: it reads on alternate frames, cut off."""
+        import random
+
+        class TooClose(GateMav):
+            coin = random.Random(0)
+
+            @property
+            def banner_clipped(self):
+                return math.hypot(*self._to_gate()) < 4.0
+
+            def banner_identified(self):
+                if not super().banner_identified():
+                    return False
+                return not self.banner_clipped or self.coin.random() < 0.5
+
+        mav = TooClose(gate=(2.4, 0.0), face_rad=math.pi)
+        mav._yaw = math.pi                  # facing away: it has to sweep
+        stage = self._stage(mav, dwell_s=2.0)
+        status = run(stage, mav, self.clock, ticks=9000)
+        self.assertIn("overflows the frame", " ".join(m for m, _ in mav.logs))
+        self.assertIs(status, py_trees.common.Status.SUCCESS, mav.abort_reason)
+        self.assertGreaterEqual(math.hypot(*mav._to_gate()), 3.3)
+
     def test_the_pattern_never_steps_up_to_a_board_it_has_measured(self):
         """Split arena, worst conditions: 2.5 m 'along the last bearing'
         from a board measured at 3.6 m put the aircraft under its edge."""

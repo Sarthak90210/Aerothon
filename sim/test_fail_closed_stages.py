@@ -333,6 +333,23 @@ class DuckUnderBoardTests(unittest.TestCase):
         self.assertTrue(all(abs(g[0]) < 1e-9 and abs(g[1]) < 1e-9
                             for g in mav.gotos))
 
+    def test_an_edge_read_a_step_high_is_stepped_under(self):
+        """Baro noise: one look at 2.6 m finds the way open, and 0.6 m lower
+        the board is back in the scan; lower still it is open for good."""
+        class Noisy(_LaggedGateMav):
+            def opening_ahead(self, bearing_rad, half_width_rad, need_clear_m=10.0):
+                if 1.9 < self._alt < 2.3:
+                    self.opening_calls.append((self._alt, need_clear_m))
+                    return {"open": False, "clusters": 1, "gap_m": 0.0,
+                            "gate_m": None, "clear_m": 0.0,
+                            "reason": "one continuous board face"}
+                return super().opening_ahead(bearing_rad, half_width_rad, need_clear_m)
+
+        mav = Noisy(opening_below_m=2.65)
+        leaf = self._fly(mav)
+        self.assertIs(leaf.status, py_trees.common.Status.SUCCESS, mav.abort_reason)
+        self.assertLess(leaf.alt, 1.9)
+
     def test_no_transition_before_the_floor_is_refused_with_measurements(self):
         mav = _LaggedGateMav(never_opens=True)
 

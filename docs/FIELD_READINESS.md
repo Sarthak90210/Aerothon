@@ -58,6 +58,13 @@ What the worst campaign found and fixed is in the git history under
 
    Set `BATT_CAPACITY` to the pack's rated mAh, so the percentage the
    mission also watches is real.
+
+   Then load
+   `src/aerothon_mission/mission_bringup/config/aerothon_hardware.parm`.
+   It configures the companion port (TELEM2 at 921600), the tilt servo as a
+   MAVLink-targeted mount and the PWM winch. Without it, the stack's mount
+   and winch commands are accepted and do nothing. Its servo output
+   numbers are a guess at the wiring, so edit them first.
 3. **Lidar mount.** Launch with `use_sim:=false`, then run
    `python3 scripts/check_sensors.py lidar`. It asks for a box ahead of the
    nose and then one to port, and prints `lidar_yaw_deg:=… lidar_mirrored:=…`.
@@ -78,6 +85,14 @@ What the worst campaign found and fixed is in the git history under
    it.
 6. **Winch.** Run a full drop and retract on the bench with the real 100 g
    payload, 10×5×5 cm. Check that the hook releases on touchdown.
+7. **CPU budget.** Run `python3 scripts/bench_perception.py` on the Pi 5
+   with the stack stopped. On a 2.1 GHz Xeon core, the NADIR set (QR on
+   bare grass, the red-zone mask and the payload finder) came to 47 ms
+   (21 Hz), and the banner check to 27 ms. The QR reader is the slowest
+   node at 37 ms on an empty frame. A Pi 5 core runs this kind of code
+   1.5–2.5× slower. Below the 10 Hz target the search still works, but
+   sweeps more slowly, because its speed comes from the measured frame
+   rate.
 
 ## 3. Things the simulation could not settle
 

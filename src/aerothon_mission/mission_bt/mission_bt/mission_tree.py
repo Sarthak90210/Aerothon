@@ -412,6 +412,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         # aircraft and this sensor -- airframe clearance at one end, the C1's
         # useful range at the other -- and neither is a fact about the arena.
         self.min_standoff = float(min_standoff_m)
+        self.backoff_m, self.max_backoffs = 2.0, 2
         self.max_standoff = 0.5 * float(lidar_range_m)
         self.lateral_tol_m = float(lateral_tol_m)
         self.max_square_steps = int(max_square_steps)
@@ -519,6 +520,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self._phase_t0 = None
         self._hits = 0
         self._samples = 0
+        self._clipped = 0           # this dwell's hits on a board cut off by the frame
         self._best_bearing = None
         self._best_area = 0.0
         self._far = []              # confident dwells on a FAR banner
@@ -549,6 +551,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self._seen_yaw = None
         self._recovery_origin = None
         self._banner_m = float("inf")  # nearest the banner has been measured
+        self._backoffs = 0            # steps back from a board too big to frame
         self._far_refused = False     # a far banner failed the lidar cross-check
         self._green = None            # best green_fix seen while sweeping
         self._green_prior = None      # the cut fix a gate-height look replaces
@@ -1067,6 +1070,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if err <= self.settle_tol:
             self._hits = 0
             self._samples = 0
+            self._clipped = 0
             self._best_bearing = None
             self._best_area = 0.0
             self._enter(self.DWELL)
@@ -1099,6 +1103,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 self._green = f
         if seen:
             self._hits += 1
+            self._clipped += bool(getattr(self.mav, "banner_clipped", False))
             b = self.mav.banner_bearing()
             if self._best_bearing is None or abs(b) < abs(self._best_bearing):
                 self._best_bearing = b
@@ -1114,6 +1119,27 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.RUNNING
 
         ratio = self._close_dwell()
+        if (not self._confident(ratio) and self._clipped >= self.min_samples
+                and self._backoffs < self.max_backoffs):
+            # TOO CLOSE TO FRAME IT. The banner reads, but only on the
+            # frames the sway happens to fit enough of it in: the C270's
+            # 48.8 deg needs ~4 m for a 3.7 m board, and wind had left the
+            # aircraft 2.4 m from the gate (worst conditions). Back off along
+            # the heading and look again; do not go hunting elsewhere for a
+            # board that is right here.
+            self._backoffs += 1
+            x, y, z = self.mav.pos()
+            th = self._target_yaw
+            self.mav.log(
+                f"AlignToBanner: the banner at {math.degrees(self._wrap(th)):.0f}"
+                f" deg overflows the frame ({self._hits}/{self._samples} "
+                f"frames, {self._clipped} cut off); backing off "
+                f"{self.backoff_m:.1f} m to fit it (back-off {self._backoffs}/"
+                f"{self.max_backoffs})")
+            return self._restart_sweep_at(
+                x - self.backoff_m * math.cos(th), y - self.backoff_m * math.sin(th),
+                z, th, offsets=[0.0, -self.hfov / 4.0, self.hfov / 4.0],
+                transit_yaw=th, guard=True)
         rng = self.range_from_area(self._best_area)
         if self._confident(ratio) and not self._is_near(rng):
             # A real banner, but the far gate. Remember it and keep looking:
@@ -2650,6 +2676,20 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                                          f"gap {opening['gap_m']:.1f} m")
                 return py_trees.common.Status.SUCCESS
             self._tried.append((here, opening["reason"][:60]))
+            # The edge is an altitude read off a noisy baro while gusts move
+            # the aircraft: under worst conditions the look that found it came
+            # a step high, and the confirming look still had the board in the
+            # scan ("gate at 5.17 m, something standing at 5.16 m"). One more
+            # step down, in place, while the floor and step budget allow.
+            if self._steps < self.max_steps and here - self.step_m >= self.floor_m:
+                self._steps += 1
+                self._target_alt = here - self.step_m
+                self._t0 = self.clock()
+                self.mav.log(
+                    f"DuckUnderBoard: {self.margin_m:.1f} m under the edge the "
+                    f"way is still not open ({opening['reason']}); one more "
+                    f"step down, to {self._target_alt:.1f} m")
+                return py_trees.common.Status.RUNNING
             return self._give_up(
                 f"dropped below the measured edge at {self._edge_alt:.1f} m "
                 f"and the way through did not open -- {opening['reason']}")
