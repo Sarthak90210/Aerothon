@@ -683,8 +683,8 @@ class SearchSpeedTests(unittest.TestCase):
     has just seen: look-ahead, confirmation frames at the MEASURED rate,
     braking, margin."""
 
-    def _stops_in_time(self, v, look, hz, frames=4, a=2.0, margin=0.7):
-        return v * frames / hz + v * v / (2 * a) <= look - margin + 1e-9
+    def _stops_in_time(self, v, look, hz, frames=4, a=2.0, margin=1.2, react=0.3):
+        return v * (frames / hz + react) + v * v / (2 * a) <= look - margin + 1e-9
 
     def test_the_speed_stops_inside_the_look_ahead(self):
         from mission_bt.mission_tree import safe_search_speed
@@ -704,7 +704,7 @@ class SearchSpeedTests(unittest.TestCase):
 
     def test_the_aircrafts_camera_flies_near_the_ceiling(self):
         from mission_bt.mission_tree import safe_search_speed
-        self.assertGreater(safe_search_speed(2.55, 10.0), 1.9)
+        self.assertGreater(safe_search_speed(2.55, 10.0), 1.2)
         self.assertEqual(safe_search_speed(10.0, 30.0), 2.5)
 
 

@@ -200,6 +200,13 @@ class ReturnGateSearchTests(unittest.TestCase):
                             for x, y, *_ in mav.gotos),
                         "stood off inside the gate from a clipped range")
 
+    def test_a_gate_well_outside_the_zone_edge_is_taken_from_the_edge(self):
+        """Rotated layout: the return gate 7 m beyond the zone reads at
+        11 m from the perimeter, past the lidar's near range."""
+        mav = World([(25.0, -2.0, 0.0)], start=(36.0, -2.0, math.pi))
+        leaf, st = run(mav)
+        self.assertEqual(st, py_trees.common.Status.SUCCESS)
+
     def test_it_never_flies_outside_the_zone_edge_it_searches(self):
         mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))
         run(mav)

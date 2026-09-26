@@ -2361,15 +2361,21 @@ def _blocked(stage, router):
 
 
 def safe_search_speed(look_ahead_m, frame_hz, confirm_frames=4,
-                      accel_mps2=2.0, margin_m=0.7, ceiling_mps=2.5):
+                      accel_mps2=2.0, margin_m=1.2, react_s=0.3,
+                      ceiling_mps=2.5):
     """The fastest sweep that still stops short of red ground it has just seen.
 
     Red ground enters the view `look_ahead_m` ahead. It is a zone only once
     confirmed -- `confirm_frames` frames at `frame_hz` (three hits and one of
-    latency) -- and from then the aircraft has to brake, at `accel_mps2`,
-    with `margin_m` of airframe radius and slack to spare:
+    latency) -- the mission reacts within `react_s` (its tick and the
+    re-plan), and from then the aircraft has to brake, at `accel_mps2`, with
+    `margin_m` to spare -- airframe radius and two sigma of GPS:
 
-        v * confirm_frames / frame_hz + v^2 / (2 a)  <=  look_ahead - margin
+        v * (confirm_frames / frame_hz + react_s) + v^2 / (2 a)
+            <=  look_ahead - margin
+
+    With 0.7 m and no reaction time a field-conditions sweep clipped a red
+    zone's corner by 0.25 m (sim/fly_headless.py, rb_low_board).
 
     A fixed 2.5 m/s, tuned on the Iris's 60 deg camera, ran a lane to 0.19 m
     of a red zone on the C270 (my_world). The frame rate is MEASURED in
@@ -2380,7 +2386,7 @@ def safe_search_speed(look_ahead_m, frame_hz, confirm_frames=4,
     room = float(look_ahead_m) - float(margin_m)
     if room <= 0.0 or frame_hz <= 0.0:
         return 0.3
-    lag = float(confirm_frames) / float(frame_hz)
+    lag = float(confirm_frames) / float(frame_hz) + float(react_s)
     a = float(accel_mps2)
     v = a * (-lag + math.sqrt(lag * lag + 2.0 * room / a))
     return max(0.3, min(float(ceiling_mps), v))
@@ -4032,7 +4038,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
 
     def __init__(self, mav, alt=5.0, clock=None, hfov_rad=1.0472,
                  image_width_px=1280, banner_w_m=3.7, banner_h_m=1.15,
-                 near_range_m=9.6, standoff_m=5.0,
+                 near_range_m=9.6, ident_range_m=15.0, standoff_m=5.0,
                  step_rad=math.radians(30.0), dwell_s=1.5, hits_needed=2,
                  spacing_m=8.0, inset_m=3.0, max_vantages=16,
                  exclude_radius_m=4.0, clearance_m=DEFAULT_CLEARANCE_M,
@@ -4052,6 +4058,13 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self.focal_px = 0.5 * float(image_width_px) / math.tan(self.hfov / 2.0)
         self.banner_area_m2 = float(banner_w_m) * float(banner_h_m)
         self.near_range_m = float(near_range_m)
+        # How far a READ banner is taken as the return gate. The lidar's
+        # near range is the wrong limit for a camera sighting: the lettering
+        # was measured to identify at 30 m (docs/BANNER_IDENTITY_ENVELOPE.md),
+        # and a return gate 7 m outside the zone edge -- rotated layout --
+        # read at 11-12 m from every perimeter vantage and was refused each
+        # time. The stand-off it leads to is squared up on the lidar anyway.
+        self.ident_range_m = float(ident_range_m)
         self.standoff_m = float(standoff_m)
         self.step = float(step_rad)
         self.dwell_s = float(dwell_s)
@@ -4257,13 +4270,13 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
     # ---- sighting -----------------------------------------------------------
     def _sighting(self):
         """World (x, y) of an identified banner in view that is not the
-        outbound one and is within the near range; else None."""
+        outbound one and is within the identification range; else None."""
         if not self.mav.banner_identified():
             return None
         area = float(getattr(self.mav, "banner_board_area", 0.0) or 0.0)
         rng = (self.focal_px * math.sqrt(self.banner_area_m2 / area)
                if area > 0 else self.standoff_m)
-        if rng > self.near_range_m:
+        if rng > self.ident_range_m:
             return None
         if getattr(self.mav, "banner_clipped", False):
             # Cut off by the frame, the board ranges long, and a stand-off
