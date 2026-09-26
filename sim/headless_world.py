@@ -525,7 +525,10 @@ class HeadlessWorld(Node):
 
     def _srv_arm(self, req, res):
         with self.lock:
-            ok = (not req.value) or (self.mode == "GUIDED" and self.p[2] < 0.2)
+            # A plain bool: self.p is numpy, and the message bindings assert
+            # PyBool_Check on the reply (apt ROS builds keep asserts on).
+            ok = bool((not req.value)
+                      or (self.mode == "GUIDED" and self.p[2] < 0.2))
             if ok:
                 self.armed = bool(req.value)
                 if self.armed and self.armed_at is None:
@@ -545,7 +548,7 @@ class HeadlessWorld(Node):
 
     def _srv_takeoff(self, req, res):
         with self.lock:
-            ok = self.armed and self.mode == "GUIDED"
+            ok = bool(self.armed and self.mode == "GUIDED")
             if ok:
                 self.takeoff_alt = float(req.altitude)
                 self.sp_pos = self.sp_vel = None
