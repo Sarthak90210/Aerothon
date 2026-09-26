@@ -207,6 +207,20 @@ class ReturnGateSearchTests(unittest.TestCase):
         leaf, st = run(mav)
         self.assertEqual(st, py_trees.common.Status.SUCCESS)
 
+    def test_the_outbound_banner_down_its_own_lane_is_not_the_return_gate(self):
+        """Read 13 m off and ranged at 20: the point estimate lands 7 m
+        past the outbound banner, the bearing runs straight through it."""
+        from mission_bt.mission_tree import FindReturnBanner
+        mav = World([], start=(16.9, 0.6, math.pi))
+        mav.outbound_banner_xy = (4.0, 0.6)
+        leaf = FindReturnBanner(mav, alt=5.0, clock=Clock(), hfov_rad=HFOV,
+                                image_width_px=W_PX, ident_range_m=25.0)
+        mav.banner_z, mav.banner_x = 1.0, 0.0
+        mav.banner_board_area = FOCAL ** 2 * AREA_M2 / 20.0 ** 2
+        self.assertIsNone(leaf._sighting())
+        mav.outbound_banner_xy = (4.0, 12.0)       # elsewhere: now it counts
+        self.assertIsNotNone(leaf._sighting())
+
     def test_it_never_flies_outside_the_zone_edge_it_searches(self):
         mav = World([(26.0, -18.0, math.pi / 2)], start=(14.5, 2.0, math.pi))
         run(mav)

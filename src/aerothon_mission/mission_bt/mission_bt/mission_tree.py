@@ -4288,9 +4288,23 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         x, y = self.mav.pos()[:2]
         bx, by = x + rng * math.cos(th), y + rng * math.sin(th)
         ob = getattr(self.mav, "outbound_banner_xy", None)
-        if ob is not None and math.dist((bx, by), ob) < self.exclude_radius_m:
+        if ob is not None and self._toward(ob, x, y, th, rng):
             return None
         return bx, by, th, rng
+
+    def _toward(self, ob, x, y, th, rng):
+        """Is the outbound banner on this line of sight, at a range the
+        sighting could be? The BEARING is what the camera knows; the range
+        comes from the board's pixel area, and an oblique or distant board
+        reads it metres out. Judged by the point alone, the outbound banner
+        read 13 m down its own lane passed as the return gate, and the
+        aircraft squared up inside the outbound corridor (split corridors,
+        field conditions)."""
+        d = math.dist((x, y), ob)
+        off = abs(self._wrap(math.atan2(ob[1] - y, ob[0] - x) - th))
+        across = d * math.sin(min(off, math.pi / 2))
+        return (off < math.pi / 2 and across < self.exclude_radius_m
+                and 0.5 * rng <= d <= 2.0 * rng)
 
     # ---- tick ---------------------------------------------------------------
     def update(self):
