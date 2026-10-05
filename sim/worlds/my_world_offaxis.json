@@ -1,10 +1,10 @@
 {
   "schema": "aerothon-world/1",
-  "name": "my_world",
+  "name": "my_world_offaxis",
   "takeoff": {
-    "x": -4.2,
-    "y": 3.2,
-    "yaw_deg": -25
+    "x": -0.5,
+    "y": 10.5,
+    "yaw_deg": 0
   },
   "corridor": {
     "x": 2,
@@ -56,10 +56,10 @@
         "yaw_deg": 0
       },
       {
-        "u": 2.6,
-        "v": 1.35,
+        "u": 2.55,
+        "v": -0.06,
         "w": 0.35,
-        "d": 0.8,
+        "d": 1.2,
         "h": 3.4,
         "yaw_deg": 0
       }

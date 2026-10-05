@@ -380,6 +380,33 @@ class RedZoneLookaheadTests(unittest.TestCase):
                                safe_search_speed(look, leaf.frame_hz0,
                                                  ceiling_mps=2.5))
 
+    def test_the_slower_detector_sets_the_search_speed(self):
+        """Red ground is confirmed by the red-zone detector, not the QR one.
+        On my_world (Gazebo) the sweep paced on the QR detector's 17 Hz and
+        stopped 0.3 m from a red zone's edge, the airframe over it."""
+        from mission_bt.mission_tree import safe_search_speed
+        mav = SearchMav()
+        mav.speeds = []
+        mav.set_speed = lambda v: (mav.speeds.append(v), object())[1]
+        mav.qr_offset_seq = mav.redzone_seq = 0
+        t = [0.0]
+        leaf = LawnmowerSearch(mav, lambda: self.ZONE, 10.0, marker_m=3.0,
+                               exclusions=lambda: mav.exclusions,
+                               search_budget_m=0.0, crab=True,
+                               image_height_px=720, search_speed_mps=2.5,
+                               clock=lambda: t[0])
+        leaf.initialise()
+        for k in range(1, 101):                 # 10 s: QR at 17 Hz, red at 3 Hz
+            t[0] = 0.1 * k
+            mav.qr_offset_seq = 17 * k // 10
+            mav.redzone_seq = 3 * k // 10
+            leaf.tick_once()
+        look = leaf.alt * math.tan(leaf._ahead_rad)
+        red = safe_search_speed(look, 3.0, ceiling_mps=2.5)
+        self.assertLess(red, safe_search_speed(look, 17.0, ceiling_mps=2.5))
+        self.assertTrue(any(abs(v - red) < 0.05 for v in mav.speeds), mav.speeds)
+        self.assertLessEqual(max(mav.speeds), red + 0.05)
+
     def test_a_replan_resumes_at_the_current_lane_not_waypoint_zero(self):
         mav = SearchMav()
         leaf = self._leaf(mav)

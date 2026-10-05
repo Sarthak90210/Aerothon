@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import py_trees                                              # noqa: E402
 from mission_bt.banner_orbit import (better_green, green_fix,  # noqa: E402
+                                     lidar_refutes,
                                      leg_clear, orbit_plan)
 from mission_bt.mission_tree import (AlignToBanner,          # noqa: E402
                                      FindReturnBanner)
@@ -199,7 +200,80 @@ class GreenFixTests(unittest.TestCase):
         self.assertAlmostEqual(f["x"], 0.0, delta=0.3)
         self.assertAlmostEqual(f["y"], 0.0, delta=0.3)
 
-    def test_ground_contact_is_preferred_when_the_camera_pitch_is_known(self):
+    def test_a_raised_board_is_ranged_by_its_height_not_the_ground_beyond_it(self):
+        """my_world: the edge-on board 11 m off, 5 m up. The ray under its
+        2.8 m bottom edge meets the ground ~25 m off, and the board was
+        dropped as farther than any gate could be."""
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()
+        pitch = math.radians(20.0)
+        m.camera_state = {"actual_rad": -pitch}
+        rng, alt, z0 = 11.0, 5.0, 2.805
+
+        def row(z):
+            return H / 2 + FOCAL * math.tan(math.atan((alt - z) / rng) - pitch)
+        top, bottom = row(z0 + BOARD_H), row(z0)
+        m.banner_green["px"] = [635, top, 10, bottom - top]
+        f = green_fix(m, HFOV)
+        self.assertEqual(f["source"], "height")
+        self.assertAlmostEqual(f["range"], rng, delta=0.6)
+
+    def test_green_wider_than_the_view_is_not_a_lead(self):
+        """The grassed delivery zone, 13 m off, across the whole frame."""
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()
+        m.banner_green["px"] = [0, 380, W, 150]
+        self.assertIsNone(green_fix(m, HFOV))
+
+    def test_green_off_the_bottom_and_a_side_is_ground_round_the_aircraft(self):
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()
+        m.banner_green["px"] = [0, 480, 1180, H - 480]      # rb_rotated, return
+        self.assertIsNone(green_fix(m, HFOV))
+        m.banner_green["px"] = [600, 200, 80, H - 200]      # corridor floor: kept
+        self.assertTrue(green_fix(m, HFOV)["cut"])
+
+    def test_a_whole_board_beats_a_bigger_region_the_frame_cuts(self):
+        """my_world: the board a sliver beside a chunk of grass running off
+        the side of the frame. The grass is bigger; the board is the lead."""
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()
+        board = m.banner_green["px"]
+        m.banner_green["regions"] = [
+            {"px": [1100, 380, W - 1100, 150], "area": 180.0 * 150},
+            {"px": board, "area": m.banner_green["area"]}]
+        f = green_fix(m, HFOV)
+        self.assertFalse(f["edge"])
+        self.assertAlmostEqual(f["x"], 0.0, delta=0.3)
+        self.assertAlmostEqual(f["y"], 0.0, delta=0.3)
+
+    def test_green_the_lidar_should_see_and_does_not_is_ground(self):
+        """my_world from 5 m up: the grass read as a board 4.2 m off. From
+        gate height the lidar would see posts there; it sees nothing."""
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()
+        m.banner_green["px"] = [600, 300, 80, FOCAL * BOARD_H / 4.0]
+        m._scan = scan_with({})
+        self.assertIsNotNone(green_fix(m, HFOV))
+        self.assertIsNone(green_fix(m, HFOV, refute=True))
+        m._scan = scan_with({180: 4.4})                    # posts, dead ahead
+        self.assertEqual(green_fix(m, HFOV, refute=True)["source"], "lidar")
+
+    def test_green_beyond_the_lidar_is_not_refuted_by_it(self):
+        m = self.mav()
+        m._yaw = -math.pi / 2
+        m._refresh()                                     # the board, 10 m off
+        m._scan = scan_with({})
+        f = green_fix(m, HFOV, refute=True)
+        self.assertIsNotNone(f)
+        self.assertFalse(lidar_refutes(m, f))
+
+    def test_ground_contact_is_used_when_it_is_the_nearer_range(self):
         m = self.mav()
         m._yaw = -math.pi / 2
         m._refresh()

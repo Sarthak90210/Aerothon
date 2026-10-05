@@ -200,6 +200,20 @@ class ReturnGateSearchTests(unittest.TestCase):
                             for x, y, *_ in mav.gotos),
                         "stood off inside the gate from a clipped range")
 
+    def test_a_clipped_distant_board_does_not_become_a_near_sighting(self):
+        """rb_rotated: a clipped board 14 m away was placed just 5 m away,
+        so the stand-off was laid out beside a different lidar surface."""
+        from mission_bt.mission_tree import FindReturnBanner
+        mav = World([], start=(28.0, 2.0, -math.pi / 2))
+        mav.banner_z, mav.banner_x = 1.0, 0.0
+        mav.banner_board_area = FOCAL ** 2 * AREA_M2 / 14.0 ** 2
+        mav.banner_clipped = True
+        leaf = FindReturnBanner(mav, clock=Clock(), hfov_rad=HFOV)
+        self.assertIsNone(leaf._sighting(),
+                          "an incomplete board cannot locate the stand-off")
+        mav.banner_clipped = False
+        self.assertAlmostEqual(leaf._sighting()[3], 14.0)
+
     def test_a_gate_well_outside_the_zone_edge_is_taken_from_the_edge(self):
         """Rotated layout: the return gate 7 m beyond the zone reads at
         11 m from the perimeter, past the lidar's near range."""

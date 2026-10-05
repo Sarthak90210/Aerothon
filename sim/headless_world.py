@@ -248,6 +248,13 @@ class Arena:
                              self.home_yaw, self.start_payload))
         self.target_xy = loc((spec["pads"][start_letter]["x"], spec["pads"][start_letter]["y"]))
         self.red = [ccw([loc(p) for p in W.red_polygon(rz)]) for rz in spec["red_zones"]]
+        # Green GROUND the banner detector's mask takes in: the delivery zone
+        # is grassed (mission2.sdf, 0.50 0.76 0.38 -- inside the detector's
+        # hue/saturation band). In Gazebo it was the largest green in view
+        # from my_world's take-off pad, and the search orbited it.
+        zx0, zx1, zy0, zy1 = W.zone_rect(spec)
+        self.green_ground = [ccw([loc(p) for p in
+                                  ((zx0, zy0), (zx1, zy0), (zx1, zy1), (zx0, zy1))])]
         self.fence_local = [loc(p) for p in W.fence_polygon(spec)]
         self._edges()
 
@@ -364,6 +371,24 @@ class Camera:
         u = IMAGE_W / 2 + self.f * (d @ right) / zc
         v = IMAGE_H / 2 + self.f * (d @ down) / zc
         return np.stack([u, v], axis=1), front
+
+    def ground_view(self, eye, yaw, pitch, rmax=150.0, n=8):
+        """The ground the frame covers out to `rmax`, as a polygon. The rays
+        through the frame's border that pass above the horizon are cut off at
+        `rmax`, so this works for a camera looking ahead as well as down."""
+        optical, right, down = self.axes(yaw, pitch)
+        border = ([(IMAGE_W * i / n, 0) for i in range(n)]
+                  + [(IMAGE_W, IMAGE_H * i / n) for i in range(n)]
+                  + [(IMAGE_W * (n - i) / n, IMAGE_H) for i in range(n)]
+                  + [(0, IMAGE_H * (n - i) / n) for i in range(n)])
+        out = []
+        for u, v in border:
+            ray = optical + right * (u - IMAGE_W / 2) / self.f + down * (v - IMAGE_H / 2) / self.f
+            flat = math.hypot(ray[0], ray[1])
+            t = -eye[2] / ray[2] if ray[2] < -1e-6 else math.inf
+            t = min(t, rmax / max(flat, 1e-6))
+            out.append((eye[0] + t * ray[0], eye[1] + t * ray[1]))
+        return out
 
     def footprint(self, eye, yaw, pitch):
         """Ground polygon the frame covers, or [] when it reaches the horizon."""
@@ -911,8 +936,15 @@ class HeadlessWorld(Node):
         """(bbox, centre px, incidence rad, px height) of a vertical board,
         or None when it is out of view or mostly hidden behind something."""
         zm = (z0 + z1) / 2
-        seen = sum(self.arena.clear_los(eye, (*place((0.0, s * width / 3), xy, facing), zm))
-                   for s in (-1, 0, 1))
+        # Sighted 0.15 m in front of the face the eye is on. Sighted on the
+        # board's own centre plane, every line of sight to an edge-on board
+        # ran inside its 0.12 m box and hid it, where Gazebo draws the green
+        # sliver (58 px from my_world's take-off pad) the search steers by.
+        normal = np.array([math.cos(facing), math.sin(facing)])
+        side = 0.15 * (1.0 if normal @ (np.asarray(eye[:2]) - xy) >= 0 else -1.0)
+        seen = sum(self.arena.clear_los(
+            eye, (*(np.array(place((0.0, s * width / 3), xy, facing)) + side * normal), zm))
+            for s in (-1, 0, 1))
         if seen < 2:
             return None
         corners = []
@@ -936,6 +968,22 @@ class HeadlessWorld(Node):
                  int(min(IMAGE_H, y1) - max(0, y0))], (cx / 2, cy / 2), inc,
                 float(y1 - y0), frac_in, dist)
 
+    def _ground_green_view(self, poly, eye, pitch):
+        """(bbox, centre px) of green ground `poly` in the frame, or None."""
+        part = clip_convex(self.camera.ground_view(eye, self.yaw, pitch), poly)
+        if len(part) < 3:
+            return None
+        px, front = self.camera.project([(x, y, 0.0) for x, y in part], eye, self.yaw, pitch)
+        px = px[front]
+        if len(px) < 3:
+            return None
+        x0, y0 = np.clip(px.min(axis=0), 0, [IMAGE_W, IMAGE_H])
+        x1, y1 = np.clip(px.max(axis=0), 0, [IMAGE_W, IMAGE_H])
+        if x1 - x0 < 2 or y1 - y0 < 2:
+            return None
+        return ([int(x0), int(y0), int(x1 - x0), int(y1 - y0)],
+                ((x0 + x1) / 2, (y0 + y1) / 2))
+
     def _banner(self, eye, pitch):
         detail = {"identified": False, "reason": "", "candidates": 0,
                   "image_wh": [IMAGE_W, IMAGE_H]}
@@ -949,13 +997,19 @@ class HeadlessWorld(Node):
             v = self._board_view(xy, yaw, w, z0, z1, eye, pitch)
             if v is not None:
                 views.append(("decoy", v))
+        for poly in self.arena.green_ground:
+            v = self._ground_green_view(poly, eye, pitch)
+            if v is not None:
+                views.append(("ground", v))
         if not views:
             return {"vec": out, "detail": detail}
         detail["candidates"] = len(views)
-        big = max(views, key=lambda kv: kv[1][0][2] * kv[1][0][3])[1]
+        ranked = sorted(views, key=lambda kv: -kv[1][0][2] * kv[1][0][3])
+        big = ranked[0][1]
         detail["green_px"] = big[0]
         detail["green_area_px"] = big[0][2] * big[0][3]
         detail["green_bearing"] = round((big[1][0] - IMAGE_W / 2) / (IMAGE_W / 2), 3)
+        detail["green_regions"] = [[*v[0], v[0][2] * v[0][3]] for _, v in ranked[:4]]
         ident = [v for kind, v in views if kind == "banner"
                  and v[3] >= BANNER_MIN_BOARD_PX and v[2] <= BANNER_MAX_INCIDENCE
                  and v[4] >= 0.7 and v[5] <= 15.0]

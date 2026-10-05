@@ -459,6 +459,8 @@ class Mav:
                 "px": d['green_px'], "area": float(d.get('green_area_px') or 0.0),
                 "bearing": float(d.get('green_bearing') or 0.0),
                 "wh": d.get('image_wh') or [1280, 720],
+                "regions": [{"px": r[:4], "area": float(r[4])}
+                            for r in d.get('green_regions') or []],
                 "t": self.node.get_clock().now().nanoseconds * 1e-9}
         else:
             self.banner_green = None
@@ -1162,6 +1164,8 @@ class Mav:
         except (ValueError, TypeError):
             return
         self.redzone_status = d.get("status", "NOT_VISIBLE")
+        # One detail per frame processed: the search paces itself on it.
+        self.redzone_seq = getattr(self, "redzone_seq", 0) + 1
         ex = d.get("exclusions") or []
         self.exclusions = [tuple(float(v) for v in r) for r in ex if len(r) == 4]
 

@@ -138,6 +138,9 @@ def main():
     ap.add_argument("-j", "--jobs", type=int, default=1)
     ap.add_argument("--rtf", type=float, default=2.0)
     ap.add_argument("--max-sim-s", type=float, default=1200.0)
+    ap.add_argument("--domain-base", type=int, default=100,
+                    help="first ROS domain; give concurrent campaigns disjoint "
+                         "ranges or their runs hear each other")
     ap.add_argument("--out", type=Path, default=ROOT / "logs" / "headless")
     args = ap.parse_args()
     signal.signal(signal.SIGTERM, stop_all)
@@ -155,7 +158,7 @@ def main():
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(
             lambda iv: fly(iv[1][0], args.conditions, iv[1][1], args.out, args.rtf,
-                           args.max_sim_s, 100 + iv[0] % 100),
+                           args.max_sim_s, args.domain_base + iv[0] % 100),
             enumerate(runs)))
     ok = 0
     print(f"\n{'run':44s} {'result':10s} {'grade':5s} {'hits':>4s} {'fence':>5s} "

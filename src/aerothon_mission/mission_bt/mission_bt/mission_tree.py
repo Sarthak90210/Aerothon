@@ -25,6 +25,7 @@ from std_msgs.msg import String
 
 from mission_bt.mav_commander import Mav
 from mission_bt.banner_orbit import (better_green, fence_ok, green_fix,
+                                     lidar_refutes,
                                      leg_clear, orbit_plan,
                                      outbound_structure)
 from mission_bt.decode_hover import DecodeHover
@@ -752,7 +753,17 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         # 0. ONLY EDGE-ON GREEN SO FAR: go round it. Not counted against the
         #    relocation budget -- it is its own, bounded, search.
         if self._green is None and self._green_prior is not None:
-            self._green = self._green_prior     # the look saw nothing better
+            g = self._green_prior
+            if self._at_gate_height() and lidar_refutes(self.mav, g):
+                # From gate height the lidar looked where the camera put it.
+                self.mav.log(
+                    f"AlignToBanner: the lidar sees nothing where the camera "
+                    f"put the green (~{g['range']:.1f} m on "
+                    f"{math.degrees(g['heading']):.0f} deg): ground, not a "
+                    f"board; not orbiting it")
+                self._green_prior = None
+            else:
+                self._green = g                 # the look saw nothing better
         if self._good_vantage is None and self._green is not None:
             v = self._next_orbit_vantage(z)
             if v is not None:
@@ -829,6 +840,11 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         # my_world its first step ended beside the banner board and the leg
         # flew into it.
         return self._restart_sweep_at(nx, ny, nz, psi, guard=True)
+
+    def _at_gate_height(self):
+        """In the lidar's reach of the gate's posts: at the gate-height floor
+        the orbit and the probe fly at."""
+        return self.mav.alt() <= self.alt_floor_m + 0.5
 
     def _next_ring_vantage(self, z):
         """RUNNING toward the next ring vantage, or None when there is none."""
@@ -1099,7 +1115,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if not seen:
             f = green_fix(self.mav, self.hfov,
                           exclude=outbound_structure(self.mav),
-                          board_h_m=self.banner_h_m)
+                          board_h_m=self.banner_h_m,
+                          refute=self._at_gate_height())
             if (f is not None and f["range"] <= self.max_green_m
                     and better_green(f, self._green)):
                 self._green = f
@@ -3208,8 +3225,8 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         self.frame_hz0 = float(frame_hz)
         self.turn_tol = float(turn_tol_rad)
         self.clock_fn = clock
-        self._rate = None           # (t0, seq0) of the frame-rate window
-        self._frame_hz = None
+        self._rate = {}             # detector -> (t0, seq0) of its rate window
+        self._frame_hz = {}         # detector -> measured frames per second
         self._speed = None          # the cap last sent
         self._turn_hold = None
         # Ticks to hold, on a match, for the offset that places the pad.
@@ -3404,21 +3421,32 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         return list(src() if callable(src) else src)
 
     def _pace(self):
-        """Measure the camera's frame rate; cap the speed to what it allows."""
+        """Measure the detectors' frame rates; cap the speed to what they allow.
+
+        BOTH detectors, and the slower one sets the pace. Red ground is
+        confirmed by perception_redzone, not the QR detector, and it runs
+        slower: paced on the QR detector's 17 Hz on my_world, a sweep at
+        1.5 m/s saw red zone 3 enter the view 2.6 m ahead and stopped 0.3 m
+        from its edge -- inside it, counting the airframe (Gazebo, t = 214 s).
+        """
         clk = self.clock_fn
         now = clk() if callable(clk) else None
-        seq = getattr(self.mav, "qr_offset_seq", None)
-        if isinstance(seq, int) and now is not None:
-            if self._rate is None:
-                self._rate = (now, seq)
-            else:
-                t0, s0 = self._rate
-                if now - t0 >= 4.0 and seq - s0 >= 4:
-                    hz = (seq - s0) / (now - t0)
-                    self._frame_hz = (hz if self._frame_hz is None
-                                      else 0.5 * (self._frame_hz + hz))
-                    self._rate = (now, seq)
-        hz = self._frame_hz or self.frame_hz0
+        for name, attr in (("qr", "qr_offset_seq"), ("red", "redzone_seq")):
+            seq = getattr(self.mav, attr, None)
+            if not isinstance(seq, int) or now is None:
+                continue
+            if name not in self._rate:
+                self._rate[name] = (now, seq)
+                continue
+            t0, s0 = self._rate[name]
+            if now - t0 >= 4.0 and seq - s0 >= 4:
+                hz = (seq - s0) / (now - t0)
+                old = self._frame_hz.get(name)
+                self._frame_hz[name] = hz if old is None else 0.5 * (old + hz)
+                self._rate[name] = (now, seq)
+        measured = bool(self._frame_hz)
+        name, hz = (min(self._frame_hz.items(), key=lambda kv: kv[1]) if measured
+                    else ("camera", self.frame_hz0))
         look = self.alt * math.tan(self._ahead_rad)
         v = safe_search_speed(look, hz, ceiling_mps=self.search_speed_mps)
         if self._speed is not None and abs(v - self._speed) < 0.15:
@@ -3430,7 +3458,8 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
             self.mav.log(
                 f"search ground speed {v:.1f} m/s: red ground enters the view "
                 f"{look:.1f} m ahead and is confirmed in 4 frames at "
-                f"{hz:.1f} Hz{'' if self._frame_hz else ' (assumed)'}")
+                f"{hz:.1f} Hz ({name} detector"
+                f"{'' if measured else ', assumed'})")
 
     def _turning(self, yaw):
         """Turn in place to face a leg before flying it (nose-first only).
@@ -3472,8 +3501,8 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         self._replans = 0
         self._ticks_since_replan = self.replan_min_ticks
         self._speed_sent = False
-        self._rate = None
-        self._frame_hz = None
+        self._rate = {}
+        self._frame_hz = {}
         self._speed = None
         self._turn_hold = None
         self.mav.target_xy = None           # no pad fixed yet this mission
@@ -4298,17 +4327,17 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         outbound one and is within the identification range; else None."""
         if not self.mav.banner_identified():
             return None
+        if getattr(self.mav, "banner_clipped", False):
+            # An incomplete board gives no usable area range. Clamping it to
+            # standoff_m invents a near board, then _found places a stand-off
+            # relative to that false position. Keep sweeping; the level look
+            # and subsequent vantages can recover the complete board.
+            return None
         area = float(getattr(self.mav, "banner_board_area", 0.0) or 0.0)
         rng = (self.focal_px * math.sqrt(self.banner_area_m2 / area)
                if area > 0 else self.standoff_m)
         if rng > self.ident_range_m:
             return None
-        if getattr(self.mav, "banner_clipped", False):
-            # Cut off by the frame, the board ranges long, and a stand-off
-            # placed from that range ended 1.6 m from the board (worst
-            # conditions, shipped arena). Stand off from here instead;
-            # AlignToBanner squares up and ranges it on the lidar.
-            rng = min(rng, self.standoff_m)
         th = self.mav.yaw() + bearing_to_angle(self.mav.banner_bearing(), self.hfov)
         x, y = self.mav.pos()[:2]
         bx, by = x + rng * math.cos(th), y + rng * math.sin(th)

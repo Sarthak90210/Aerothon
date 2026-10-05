@@ -300,8 +300,13 @@ class VelocityController(Node):
         if (now - self._progress_t) < window:
             return False
         moved = math.dist(self._pos, self._progress_ref)
+        if moved < float(self._g('min_progress_m')):
+            # Keep this expired reference until movement earns a new window.
+            # Resetting it on every stall produced a single blocked tick per
+            # window; CRUISE cleared that tick before recovery could begin.
+            return True
         self._progress_ref, self._progress_t = self._pos, now
-        return moved < float(self._g('min_progress_m'))
+        return False
 
     def _on_scan(self, m: LaserScan):
         self.scan = m

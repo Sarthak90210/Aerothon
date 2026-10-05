@@ -18,9 +18,10 @@ THE CASE THIS EXISTS FOR
 WHAT IT DOES
 
     The unreadable green region is still evidence: it is where the gate is.
-    `green_fix` turns the detector's largest green region into a position
-    (bearing from the camera; range from where the region meets the ground,
-    else from its height, which foreshortening does not shrink). `orbit_plan`
+    `green_fix` turns the likeliest of the detector's largest green regions
+    into a position (bearing from the camera; range from the lidar, else from
+    the region's height, which foreshortening does not shrink, or where it
+    meets the ground if that is nearer). `orbit_plan`
     lays out vantage points on a circle round that position, one way round
     from the aircraft's own angle, each facing the centre, with arc waypoints
     between them so no leg cuts across the structure. At every vantage the
@@ -76,22 +77,45 @@ def _dist_to_segment(p, a, b):
 
 
 def green_fix(mav, hfov_rad, max_age_s=1.0, exclude=(), exclude_m=3.0,
-              board_h_m=BOARD_H_M, lidar_half_rad=math.radians(3.0)):
-    """Where the largest green region in view is, or None.
+              board_h_m=BOARD_H_M, lidar_half_rad=math.radians(3.0),
+              refute=False):
+    """Where the likeliest board among the green regions in view is, or None.
 
-    Returns {"x", "y", "range", "area", "heading", "source", "cut"} in the
-    mission's local frame. Range, in order of trust:
+    Returns {"x", "y", "range", "area", "heading", "source", "cut", "edge"}
+    in the mission's local frame. Range, in order of trust:
 
       * LIDAR. A return on the region's bearing is a measurement, not a model
         of what the green is. Only at gate height: above the walls the LD06's
         slice passes over everything.
-      * GROUND CONTACT. With the camera's measured pitch and the aircraft's
-        altitude, the region's bottom row is a ray that meets the ground where
-        the structure stands. Not used when the region is cut off by the
-        bottom of the frame (its real bottom is lower, i.e. nearer).
-      * HEIGHT. A board seen edge-on loses width, not height, so its pixel
-        height still gives range for a board of known height. A taller green
-        structure reads NEARER than it is, which only tightens the orbit.
+      * THE NEARER OF GROUND CONTACT AND HEIGHT. With the camera's measured
+        pitch and the aircraft's altitude, the region's bottom row is a ray
+        that meets the ground. That is where a thing standing ON the ground
+        is -- but the banner hangs 2.8 m up, and the ray under its bottom
+        edge meets the ground far beyond it: on my_world, 11 m off, it read
+        25 m from 5 m up and 165 m from gate height, and the real board was
+        thrown away as too far to be the gate. A board seen edge-on loses
+        width, not height, so its pixel height gives its range. A raised
+        board's ground contact only ever reads long and a taller green
+        thing's height only ever reads short: the nearer of the two is right
+        for the board and errs towards a tighter orbit for anything else.
+        Ground contact is not used when the region is cut off by the bottom
+        of the frame (its real bottom is lower, i.e. nearer).
+
+    WHICH REGION. The detector reports its few largest green regions, not just
+    the largest: from my_world's take-off pad the delivery zone's grass, 13 m
+    off, filled most of every frame the edge-on board was in, and the board
+    never got to be the lead. A region spanning the whole width of the view
+    is ground or a fence -- a 3.7 m board does that only from nearer than
+    3.2 m, where it is read, not orbited -- and is no lead at all. One cut by
+    a side of the frame (`edge`) has an unknown centre; whole ones win. One
+    cut by the bottom and a side both is ground round the aircraft -- the
+    grassed zone, on the way back -- and is no lead either.
+
+    `refute`: the aircraft is at gate height, where the lidar's slice meets
+    the gate's posts. A camera range cannot tell a flat patch of green from a
+    small board hung nearer -- from 5 m up my_world's grass read as a board
+    4.2 m off -- but the lidar can: a region it should see and does not is
+    ground (see lidar_refutes), and is no lead.
 
     `cut` is True when the region runs off the bottom of the frame and no
     lidar range was had. Then the height is not the board's: on my_world the
@@ -106,12 +130,37 @@ def green_fix(mav, hfov_rad, max_age_s=1.0, exclude=(), exclude_m=3.0,
     now = _now(mav)
     if now is not None and now - float(g.get("t", now)) > max_age_s:
         return None
-    x0, y0, w, h = g["px"]
     W, H = (g.get("wh") or [1280, 720])[:2]
-    if h <= 0 or W <= 0:
+    if W <= 0:
         return None
+    regions = g.get("regions") or [
+        {"px": g["px"], "area": float(g.get("area", 0.0)), "bearing": g.get("bearing")}]
+    best = None
+    for r in regions:
+        f = _region_fix(mav, r, W, H, hfov_rad, board_h_m, lidar_half_rad)
+        if f is None:
+            continue
+        if any(_dist_to_segment((f["x"], f["y"]), a, b) < exclude_m for a, b in exclude):
+            continue
+        if refute and f["source"] != "lidar" and lidar_refutes(mav, f):
+            continue
+        if better_green(f, best):
+            best = f
+    return best
+
+
+def _region_fix(mav, r, W, H, hfov_rad, board_h_m, lidar_half_rad):
+    """green_fix for one region {"px", "area", "bearing"?}, or None."""
+    x0, y0, w, h = r["px"]
+    if h <= 0:
+        return None
+    if x0 <= 1 and x0 + w >= W - 1:
+        return None                       # wider than the view: not a board
     focal = 0.5 * float(W) / math.tan(0.5 * float(hfov_rad))
-    heading = _wrap(mav.yaw() + bearing_to_angle(float(g["bearing"]), hfov_rad))
+    bearing = r.get("bearing")
+    if bearing is None:
+        bearing = ((x0 + w / 2.0) - W / 2.0) / (W / 2.0)
+    heading = _wrap(mav.yaw() + bearing_to_angle(float(bearing), hfov_rad))
 
     cam = getattr(mav, "camera_state", None) or {}
     pitch = cam.get("actual_rad")
@@ -120,31 +169,60 @@ def green_fix(mav, hfov_rad, max_age_s=1.0, exclude=(), exclude_m=3.0,
     cut = bottom >= H - 2
     source = "lidar"
     rng = scan_min(mav, heading, lidar_half_rad)
-    if rng is None and pitch is not None and alt > 0.5 and not cut:
-        down = -float(pitch) + math.atan((bottom - H / 2.0) / focal)
-        if down > math.radians(3.0):
-            rng, source = alt / math.tan(down), "ground"
     if rng is None:
         rng, source = focal * float(board_h_m) / float(h), "height"
+        if pitch is not None and alt > 0.5 and not cut:
+            down = -float(pitch) + math.atan((bottom - H / 2.0) / focal)
+            if down > math.radians(3.0) and alt / math.tan(down) < rng:
+                rng, source = alt / math.tan(down), "ground"
     rng = max(2.0, min(25.0, rng))
+    edge = x0 <= 1 or x0 + w >= W - 1
+    if cut and edge and source != "lidar":
+        # Off the bottom AND a side: ground under and beside the aircraft
+        # (the grassed zone, on the way back), with no range and no centre.
+        return None
 
     px, py = mav.pos()[:2]
-    gx, gy = px + rng * math.cos(heading), py + rng * math.sin(heading)
-    for a, b in exclude:
-        if _dist_to_segment((gx, gy), a, b) < exclude_m:
-            return None
-    return {"x": gx, "y": gy, "range": rng, "area": float(g.get("area", 0.0)),
+    return {"x": px + rng * math.cos(heading), "y": py + rng * math.sin(heading),
+            "range": rng, "area": float(r.get("area", 0.0)),
             "heading": heading, "source": source,
-            "cut": cut and source != "lidar"}
+            "cut": cut and source != "lidar",
+            "edge": edge}
+
+
+def lidar_refutes(mav, fix, board_w_m=3.7, slack=1.5, pad_m=1.0):
+    """True when the lidar should see a gate where the camera put `fix` and
+    sees nothing there.
+
+    Only meaningful with the scan plane at gate height, where it meets the
+    posts (they stand on the ground and rise above the board, whatever height
+    it hangs at). The camera's range is allowed `slack` times over plus
+    `pad_m`, and the sector spans the whole board and its posts. A fix the
+    lidar cannot reach is never refuted: out of range is not evidence.
+    """
+    scan = getattr(mav, "_scan", None)
+    if scan is None or not getattr(scan, "ranges", None):
+        return False
+    px, py = mav.pos()[:2]
+    rng = math.hypot(fix["x"] - px, fix["y"] - py)
+    reach = slack * rng + pad_m
+    if reach >= float(scan.range_max):
+        return False
+    half = math.atan2(0.5 * board_w_m + 0.3, max(rng, 1.0))
+    near = scan_min(mav, math.atan2(fix["y"] - py, fix["x"] - px), half)
+    return near is None or near > reach
 
 
 def better_green(f, best):
     """Whether fix `f` should replace `best`: one with a range beats one that
-    is only a bearing (`cut`), then the larger region wins."""
+    is only a bearing (`cut`), a whole region beats one a side of the frame
+    cuts off (`edge`), then the larger region wins."""
     if best is None:
         return True
     if bool(f.get("cut")) != bool(best.get("cut")):
         return not f.get("cut")
+    if bool(f.get("edge")) != bool(best.get("edge")):
+        return not f.get("edge")
     return f["area"] > best["area"]
 
 

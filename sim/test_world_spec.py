@@ -306,7 +306,7 @@ class ValidationTests(unittest.TestCase):
         self.assertAlmostEqual(room, 1.0, delta=0.06)
 
     def test_a_chicane_the_navigator_will_not_take_is_warned_about(self):
-        s = W.load(ROOT / "sim/worlds/my_world.json")
+        s = W.load(ROOT / "sim/worlds/my_world_offaxis.json")
         errs, warns = W.validate(s)
         self.assertTrue([w for w in warns if "will stop in front of it" in w], warns)
 

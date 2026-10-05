@@ -650,6 +650,11 @@ class BannerNode(Node):
             detail["green_area_px"] = int(cv2.contourArea(big))
             detail["green_bearing"] = round(((gx + gw / 2.0) - w / 2.0) / (w / 2.0), 3)
             detail["image_wh"] = [int(w), int(h)]
+            # ...and the next few: the largest is often ground (a grassed
+            # delivery zone) beside the board the mission is looking for.
+            detail["green_regions"] = [
+                [*map(int, cv2.boundingRect(c)), int(cv2.contourArea(c))]
+                for c in sorted(cnts, key=cv2.contourArea, reverse=True)[:4]]
 
         best = None
         for c in sorted(cnts, key=cv2.contourArea, reverse=True)[:5]:
