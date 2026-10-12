@@ -65,6 +65,16 @@ class ObserverTests(unittest.TestCase):
         self.assertGreaterEqual(self.o.status()['load_samples'], 10)
         self.assertLessEqual(self.payout, .02)
 
+    def test_the_release_test_lifts_the_empty_claw_clear_before_waiting(self):
+        # Rendered p2r6: after a 0.25 m probe the claw lay on the field through
+        # a 16 s wait for steady telemetry and was dragged 2 m off the pad.
+        self.touchdown()
+        start = self.payout
+        while self.o.state == 'PROBE':
+            self.step(effort=.24)
+        self.assertEqual(self.o.state, 'PROBE_HOLD')
+        self.assertGreaterEqual(start - self.payout, 0.6 - 1e-9)
+
     def test_visual_ground_without_unloading_does_not_confirm(self):
         self.baseline()
         for _ in range(50): self.step(effort=.26)

@@ -40,7 +40,10 @@ class ProvisionalProbe(unittest.TestCase):
             self.step()
             if self.o.state=='PROBE_HOLD':break
         self.assertEqual(self.o.state,'PROBE_HOLD')
-        self.assertLessEqual(initial-self.payout,.30)
+        # Bounded, but enough to lift the empty claw clear of the ground for
+        # the wait (DeliveryObserver.PROBE_RETRACT_M; rendered p2r6).
+        self.assertGreaterEqual(initial-self.payout,self.o.PROBE_RETRACT_M-1e-9)
+        self.assertLessEqual(initial-self.payout,self.o.PROBE_RETRACT_M+.1)
         for _ in range(40):self.assertEqual(self.step(),'stop')
         self.assertFalse(self.o.confirmed)
         for _ in range(200):

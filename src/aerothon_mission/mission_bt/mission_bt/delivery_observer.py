@@ -37,6 +37,14 @@ def calibration(loaded, unloaded):
 
 
 class DeliveryObserver:
+    # The release test's retraction. It also lifts the EMPTY claw off the
+    # ground while unloaded hover is confirmed, which can take ~15 s of
+    # waiting for steady telemetry. At 0.25 m a 0.35 m sag left the claw on
+    # the field; the aircraft drifted, the claw dragged 2 m off the pad and
+    # the taut line yanked it to 4.16 m (rendered, clarified arena, p2r6;
+    # 5.5 cm payload). A payload still attached is lifted the more clearly.
+    PROBE_RETRACT_M = 0.6
+
     def __init__(self, profile, hfov, payload_size=0.10, max_attempts=3):
         self.profile = profile
         self.hfov, self.payload_size = hfov, payload_size
@@ -193,7 +201,7 @@ class DeliveryObserver:
         if self.state == 'CANDIDATE_PROBE' and fresh_telemetry(telemetry,now):
             # Stop an extended mechanism pressing against supported payload;
             # only stable unloaded hover after this probe can certify release.
-            if self.probe_payout-payout >= .25:
+            if self.probe_payout-payout >= self.PROBE_RETRACT_M:
                 self._enter('PROBE_HOLD',now,'bounded candidate retraction complete; awaiting qualified hover')
                 return 'stop'
             if now-self.entered>45:
@@ -305,7 +313,7 @@ class DeliveryObserver:
             if loaded:
                 return self._retry(now, 'suspended load returned during retraction')
         if self.state in ('PROBE', 'STOW'):
-            if self.state == 'PROBE' and self.probe_payout-payout >= 0.25:
+            if self.state == 'PROBE' and self.probe_payout-payout >= self.PROBE_RETRACT_M:
                 self._enter('PROBE_HOLD', now, 'short retraction complete; checking payload remains')
                 return 'stop'
             if self.state == 'STOW' and payout <= 0.02:
