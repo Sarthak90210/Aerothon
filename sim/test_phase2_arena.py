@@ -477,3 +477,13 @@ def test_a_known_clear_spot_or_a_high_leg_is_left_alone():
     mav.pos.return_value = (12.0, 3.0, 2.0)
     note_low(mav, 3.048)
     assert (12.0, 3.0) in mav.low_known_xy
+
+
+def test_a_route_down_where_it_is_clear_is_not_cut_short_by_a_sighting():
+    from mission_bt.mission_tree import AlignToBanner
+    mav = _low_mav((23.2, -6.8, 5.0), low=((21.1, -2.6),))
+    mav.yaw.return_value = 3.14
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, wall_top_m=3.048)
+    leaf._restart_sweep_at(21.7, -6.8, 2.44, 3.14)
+    assert leaf._mouth_leg, "the sighting interrupt is off for the route"
+    assert leaf._anchor[:2] == (21.1, -2.6)

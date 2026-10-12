@@ -1234,10 +1234,16 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         across the structure.
         """
         legs = [(px, py, z) for px, py in (path or [])] or [(x, y, z)]
-        legs = self._down_where_low(legs)
-        if len(legs) > 1 and not path:
+        routed = self._down_where_low(legs)
+        rerouted = len(routed) != len(legs)
+        legs = routed
+        if rerouted:
             guard = True
-        self._mouth_leg = False
+        # A route down where it is known clear is flown to the end: stopping
+        # at the first sighting -- the banner is in view from its start --
+        # stopped it where it began, and the stage looped on it until the
+        # battery ran down (headless, ground-only, all three runs).
+        self._mouth_leg = rerouted
         self._anchor, self._path = legs[0], legs[1:]
         self._pending_offsets = offsets or self.sweep_offsets
         self._guard_leg = bool(guard)      # orbit legs: lidar-checked
