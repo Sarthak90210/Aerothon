@@ -1791,6 +1791,12 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                     min_range_m=sheet + 0.3, widest_first=True)
                 if beyond.get("ok"):
                     return beyond
+            if not getattr(self, "_beyond_logged", False):
+                self._beyond_logged = True
+                self.mav.log(
+                    f"AlignToBanner: past-the-sheet retry: sheet "
+                    f"{'unknown' if sheet is None else f'{sheet:.1f} m'}; "
+                    f"{'not tried' if sheet is None else beyond.get('reason', '')}")
         return fit
 
     def _laid_face(self, fit):
@@ -1950,6 +1956,19 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
 
         if self._sq_phase is self.MOVING:
             ax, ay, az = self._anchor
+            # THE STEPS ROUND THE BANNER ARE LIDAR-CHECKED TOO. Side by side,
+            # the corridors stand 0.3 m apart: rendered, an arc step 2.2 m to
+            # starboard of the outbound gate flew into the return lane's end
+            # and the orange banner hung across it, and the aircraft fell.
+            # A pure descent is not a leg (leg_clear passes anything < 0.3 m).
+            if not leg_clear(self.mav, ax, ay):
+                x, y, _ = self.mav.pos()
+                self._anchor = (x, y, az)
+                self.mav.log(f"AlignToBanner: the square-up step to ({ax:.1f}, "
+                             f"{ay:.1f}) is blocked on the lidar; holding here",
+                             warn=True)
+                return self._relocate(
+                    "the step round the banner was blocked on the lidar")
             # ALTITUDE IS CHECKED SEPARATELY, and tightly. A descent step of
             # half a metre is already inside the horizontal arrival tolerance,
             # so a position check alone calls the aircraft "arrived" the
