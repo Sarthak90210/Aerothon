@@ -179,6 +179,7 @@ def test_the_headless_arena_builds_the_rod_hung_banners_and_the_orange_ones():
 def _align(banner_h_m, banner_bottom_m=None, z=5.0):
     from mission_bt.mission_tree import AlignToBanner
     mav = MagicMock()
+    mav.low_known_xy = [(0.0, 0.0)]                   # it has been low right here
     leaf = AlignToBanner(mav, clock=lambda: 0.0, banner_w_m=3.5, banner_h_m=banner_h_m,
                          banner_bottom_m=banner_bottom_m, alt_floor_m=2.4384)
     leaf._anchor = (0.0, 0.0, z)
@@ -354,6 +355,7 @@ def test_a_far_laid_sheet_is_closed_in_on_while_descending_to_square_up():
     mav = MagicMock()
     mav.pos.return_value = (23.2, -6.8, 5.0)
     mav.yaw.return_value = math.pi
+    mav.low_known_xy = [(23.2, -6.8)]                 # been low here before
     leaf = AlignToBanner(mav, clock=lambda: 0.0, search_camera_pose="GROUND",
                          alt_floor_m=2.4384)
     leaf.ground_range = lambda: 7.5
@@ -445,3 +447,33 @@ def test_past_the_mouth_an_edge_on_wall_gives_the_corridor_direction():
     assert fit["ok"] and fit["laid_axis"]
     assert math.degrees(fit["angle_rad"]) == pytest.approx(5.0)
     assert fit["range_m"] == pytest.approx(leaf.ground_range())
+
+
+# ---- never straight down onto what the lidar cannot see ----------------- #
+
+def _low_mav(pos, low=((0.0, 0.0),)):
+    mav = MagicMock()
+    mav.pos.return_value = pos
+    mav.low_known_xy = list(low)
+    return mav
+
+
+def test_a_descent_past_the_wall_tops_goes_down_where_it_has_been_low():
+    from mission_bt.mission_tree import AlignToBanner
+    mav = _low_mav((7.44, -5.4, 3.95))               # over the gap between lanes
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, wall_top_m=3.048)
+    legs = leaf._down_where_low([(7.44, -5.4, 2.44)])
+    assert legs[0] == (0.0, 0.0, 3.95), "across high to home first"
+    assert legs[1] == (0.0, 0.0, 2.44), "down there"
+    assert legs[-1] == (7.44, -5.4, 2.44), "then across low, lidar-guarded"
+
+
+def test_a_known_clear_spot_or_a_high_leg_is_left_alone():
+    from mission_bt.mission_tree import AlignToBanner, note_low
+    mav = _low_mav((7.44, -5.4, 3.95), low=((0.0, 0.0), (7.0, -5.0)))
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, wall_top_m=3.048)
+    assert leaf._down_where_low([(7.44, -5.4, 2.44)]) == [(7.44, -5.4, 2.44)]
+    assert leaf._down_where_low([(20.0, 0.0, 5.0)]) == [(20.0, 0.0, 5.0)]
+    mav.pos.return_value = (12.0, 3.0, 2.0)
+    note_low(mav, 3.048)
+    assert (12.0, 3.0) in mav.low_known_xy

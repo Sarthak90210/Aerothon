@@ -278,6 +278,56 @@ class SetCameraPose(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.RUNNING
 
 
+# ---- descending below the wall tops ------------------------------------- #
+#
+# THE LIDAR CANNOT SEE WHAT IS UNDER THE AIRCRAFT. It scans one horizontal
+# plane, so a wall top appears only once that plane is below it -- by when the
+# legs and arms, lower still, are on it. Rendered (clarified arena), a
+# relocation left the aircraft at 3.95 m over the 0.3 m gap between the two
+# corridors and "descended to gate height" straight onto the wall tops.
+# So the aircraft only goes down past the wall tops where it has already been
+# low: home, and wherever it has since flown under wall height.
+LOW_CLEAR_M = 1.5          # within this of a known-low spot counts as known
+LOW_SPACING_M = 0.75       # how densely the known-low spots are recorded
+DEFAULT_WALL_TOP_M = 3.6   # the simulator's walls; the GCS gives the real ones
+
+
+def _low_spots(mav):
+    spots = getattr(mav, "low_known_xy", None)
+    if not isinstance(spots, list):
+        spots = []
+        try:
+            spots.append(tuple(mav.home_local_xy()))
+        except (AttributeError, TypeError, ValueError):
+            spots.append((0.0, 0.0))
+        try:
+            mav.low_known_xy = spots
+        except AttributeError:
+            pass
+    return spots
+
+
+def note_low(mav, wall_top_m):
+    """Record where the aircraft is if it is below the wall tops."""
+    try:
+        x, y, z = mav.pos()
+    except (TypeError, ValueError):
+        return
+    if z >= wall_top_m:
+        return
+    spots = _low_spots(mav)
+    if all(math.hypot(x - a, y - b) > LOW_SPACING_M for a, b in spots[-50:]):
+        spots.append((float(x), float(y)))
+
+
+def nearest_low(mav, x, y):
+    """(distance, spot) of the known-low spot nearest (x, y)."""
+    spots = _low_spots(mav)
+    if not spots:
+        return float("inf"), (x, y)
+    return min((math.hypot(x - a, y - b), (a, b)) for a, b in spots)
+
+
 class AlignToBanner(py_trees.behaviour.Behaviour):
     """Stop, stare, decide -- then face the banner. That heading IS the corridor.
 
@@ -352,6 +402,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                  image_width_px=1280, image_height_px=720,
                  banner_w_m=3.7, banner_h_m=1.15, near_range_frac=0.8,
                  banner_bottom_m=None, lidar_above_body_m=0.0815,
+                 wall_top_m=None,
                  redzone_clearance_m=DEFAULT_CLEARANCE_M,
                  orbit_step_rad=math.radians(45.0), orbit_vantages=7,
                  orbit_min_radius_m=5.0, fence_margin_m=2.0,
@@ -379,6 +430,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self.banner_bottom_m = (None if banner_bottom_m is None
                                 else float(banner_bottom_m))
         self.lidar_above_body_m = float(lidar_above_body_m)
+        self.wall_top_m = float(wall_top_m or DEFAULT_WALL_TOP_M)
         self.near_range_m = float(near_range_frac) * float(lidar_range_m)
         # GREEN FARTHER THAN THIS IS NOT A LEAD ON THE NEAR GATE. On my_world
         # a target pad in the delivery zone, ranged 25 m on ground contact,
@@ -1145,6 +1197,30 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                                       v["face"], path=v["path"], offsets=fan,
                                       transit_yaw=v["face"], guard=True)
 
+    def _down_where_low(self, legs):
+        """Legs that end below the wall tops start by going down where the
+        aircraft has been low before, then cross at that height (lidar-
+        guarded) -- never straight down onto whatever is below."""
+        try:
+            cx, cy, cz = self.mav.pos()
+        except (TypeError, ValueError):
+            return legs
+        floor = self.wall_top_m + 0.2
+        x, y, z = legs[0]
+        if z >= floor or cz < floor:
+            return legs
+        dist, (lx, ly) = nearest_low(self.mav, x, y)
+        if dist <= LOW_CLEAR_M:
+            return legs
+        here, _ = nearest_low(self.mav, cx, cy)
+        if here <= LOW_CLEAR_M:
+            return [(cx, cy, z)] + legs          # straight down here, then across
+        self.mav.log(f"AlignToBanner: ({x:.1f}, {y:.1f}) is not known clear "
+                     f"below the {self.wall_top_m:.1f} m wall tops; going down "
+                     f"at ({lx:.1f}, {ly:.1f}), where the aircraft has been low, "
+                     f"and across from there")
+        return [(lx, ly, cz), (lx, ly, z)] + legs
+
     def _restart_sweep_at(self, x, y, z, yaw, path=None, offsets=None,
                           transit_yaw=None, guard=False):
         """Fly to a new vantage point, THEN sweep it.
@@ -1158,6 +1234,9 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         across the structure.
         """
         legs = [(px, py, z) for px, py in (path or [])] or [(x, y, z)]
+        legs = self._down_where_low(legs)
+        if len(legs) > 1 and not path:
+            guard = True
         self._mouth_leg = False
         self._anchor, self._path = legs[0], legs[1:]
         self._pending_offsets = offsets or self.sweep_offsets
@@ -1747,6 +1826,12 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             closer = 0.0
             if laid is not None and laid > self.max_standoff:
                 closer = laid - 0.5 * (self.min_standoff + self.max_standoff)
+            if (self.alt_floor_m < self.wall_top_m + 0.2 <= z
+                    and nearest_low(self.mav, x, y)[0] > LOW_CLEAR_M):
+                psi = self.mav.yaw()
+                return self._restart_sweep_at(
+                    x + closer * math.cos(psi), y + closer * math.sin(psi),
+                    self.alt_floor_m, psi)
             if z > self.alt_floor_m + self.alt_arrive_tol or closer > 0.0:
                 psi = self.mav.yaw()
                 self._anchor = (x + closer * math.cos(psi),
@@ -2492,6 +2577,9 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if not seen_before and self._descents < self.max_descents \
                 and room_below:
             self._descents += 1
+            if (target < self.wall_top_m + 0.2 <= az
+                    and nearest_low(self.mav, ax, ay)[0] > LOW_CLEAR_M):
+                return self._restart_sweep_at(ax, ay, target, self.mav.yaw())
             self._anchor = (ax, ay, target)
             self._sq_phase = self.MOVING
             self._align_t0 = self.clock()
@@ -6443,6 +6531,7 @@ def align_to_every_banner(mav, clock, p, label, **extra):
             banner_w_m=p.get('banner_w_m', 3.7),
             banner_h_m=p.get('banner_h_m', 1.15),
             banner_bottom_m=p.get('banner_bottom_m'),
+            wall_top_m=p.get('corridor_wall_m'),
             **{**extra, **view})
 
     # A laid sheet is only visible looking down: the ground pass searches,
@@ -6871,6 +6960,7 @@ def declare_mission_params(node):
     # From the GCS's arena dimensions; 0 = not given (see arena_dimensions).
     d('start_marker_m', 0.0)       # the start QR, for the precision landing
     d('banner_bottom_m', 0.0)      # the hung banner's lower edge
+    d('corridor_wall_m', 0.0)      # corridor wall height (descents near it)
     d('target_marker_m', 2.2)      # competition size UNCONFIRMED; see
                                    # docs/QR_DECODE_ENVELOPE.md
     d('px_per_module_floor', 5.3)  # MEASURED in Phase 1
@@ -6960,6 +7050,7 @@ def declare_mission_params(node):
         'start_marker_m': (float(g('start_marker_m'))
                            or float(g('target_marker_m'))),
         'banner_bottom_m': float(g('banner_bottom_m')) or None,
+        'corridor_wall_m': float(g('corridor_wall_m')) or None,
         'px_per_module_floor': float(g('px_per_module_floor')),
         'lane_overlap': float(g('lane_overlap')),
         'payload_size_m': float(g('payload_size_m')),
@@ -7126,6 +7217,7 @@ def main():
     holder = {"tree": None}
 
     def build(params):
+        holder["wall_top"] = params.get('corridor_wall_m')
         # A ground-only arena declared at the GCS lets the first gate go
         # straight to the ground view, as a learnt one does for the second.
         mav.banner_placement_learned = (
@@ -7138,6 +7230,7 @@ def main():
     attach_arena_dimensions(node, mav, p, holder, build, last_state)
 
     def tick_tree():
+        note_low(mav, float(holder.get("wall_top") or DEFAULT_WALL_TOP_M))
         # BehaviourTree.tick_tock() blocks forever. Running it before
         # rclpy.spin() previously prevented every subscription, service
         # response and setpoint timer in this node from being processed.

@@ -43,6 +43,7 @@ def test_each_dimension_sets_the_parameter_it_means():
                  "return_lane_offset_m": 5.0, "banner_w_m": 3.0,
                  "banner_h_m": 1.0, "target_marker_m": 1.0,
                  "banner_bottom_m": 2.805, "start_marker_m": 2.2,
+                 "corridor_wall_m": 3.048,
                  "payload_size_m": 0.10, "banner_placement": "ground"}
 
 

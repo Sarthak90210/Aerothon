@@ -132,6 +132,7 @@ def mission_params(dims, base):
     side = -1.0 if c["return_side"] == "right" else 1.0
     out = {
         "corridor_alt": c["nav_height_m"],
+        "corridor_wall_m": c["wall_height_m"],
         "gate_advance_m": c["length_m"],
         "return_lane_offset_m": side * c["spacing_m"],
         "banner_w_m": d["banner"]["width_m"],
