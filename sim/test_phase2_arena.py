@@ -516,3 +516,17 @@ def test_without_the_banner_edge_the_gate_work_is_at_the_navigation_height():
     # Laid on the ground, nothing hangs: the edge the GCS records steers nothing.
     assert all(f == pytest.approx(2.4384) for f in _align_floors(
         {'banner_bottom_m': 2.7432, 'banner_placement': 'ground'}))
+
+
+def test_a_gate_floor_under_the_takeoff_guard_moves_the_guard_down():
+    from mission_bt.mission_tree import AlignToBanner
+    mav = MagicMock()
+    mav.airborne_floor = 2.0
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, alt_floor_m=1.5)
+    leaf.initialise()
+    (floor,), _ = mav.set_airborne_floor.call_args
+    assert 0.5 <= floor < 1.5
+    mav2 = MagicMock()
+    mav2.airborne_floor = 1.0
+    AlignToBanner(mav2, clock=lambda: 0.0, alt_floor_m=2.4).initialise()
+    mav2.set_airborne_floor.assert_not_called()

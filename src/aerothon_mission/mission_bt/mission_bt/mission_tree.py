@@ -669,6 +669,16 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         self._reset()
+        # A gate-height floor under the hung banner can sit below the floor
+        # take-off armed (40% of take-off height): the 1.15 m banner's 1.5 m
+        # work tripped the 2.0 m guard at once. Move the guard just under the
+        # floor this stage flies to, as DuckUnderBoard does; it still catches
+        # a sink towards the ground.
+        floor = getattr(self.mav, "airborne_floor", None)
+        fn = getattr(self.mav, "set_airborne_floor", None)
+        if (callable(fn) and isinstance(floor, (int, float))
+                and floor > self.alt_floor_m - self.alt_arrive_tol):
+            fn(max(0.5, self.alt_floor_m - 2 * self.alt_arrive_tol))
 
     # ---- helpers ---- #
     @staticmethod
@@ -6977,6 +6987,7 @@ def declare_mission_params(node):
     d('start_marker_m', 0.0)       # the start QR, for the precision landing
     d('banner_bottom_m', 0.0)      # the hung banner's lower edge
     d('corridor_wall_m', 0.0)      # corridor wall height (descents near it)
+    d('banner_placement', '')      # suspended | ground | both; '' = not given
     d('target_marker_m', 2.2)      # competition size UNCONFIRMED; see
                                    # docs/QR_DECODE_ENVELOPE.md
     d('px_per_module_floor', 5.3)  # MEASURED in Phase 1
@@ -7067,6 +7078,7 @@ def declare_mission_params(node):
                            or float(g('target_marker_m'))),
         'banner_bottom_m': float(g('banner_bottom_m')) or None,
         'corridor_wall_m': float(g('corridor_wall_m')) or None,
+        'banner_placement': str(g('banner_placement') or '') or None,
         'px_per_module_floor': float(g('px_per_module_floor')),
         'lane_overlap': float(g('lane_overlap')),
         'payload_size_m': float(g('payload_size_m')),
