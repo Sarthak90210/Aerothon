@@ -81,7 +81,14 @@ c.update(trial='focused rendered hover/drop; full mission not exercised',drop_al
 p.write_text(json.dumps(c,indent=2)+'\n')
 PY
 fi
-export AEROTHON_TARGET_QR_M="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["qr"]["target_m"])' "$spec")"
+# The world is built from the spec either way. The MISSION is told the QR
+# size at launch only when no GCS preset is given; with one, it starts on the
+# launch default and learns the arena from the operator, as on the day.
+if [[ -z "${AEROTHON_GCS_PRESET:-}" ]]; then
+ export AEROTHON_TARGET_QR_M="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["qr"]["target_m"])' "$spec")"
+else
+ unset AEROTHON_TARGET_QR_M
+fi
 unset AEROTHON_RANDOM_ARENA AEROTHON_START_TARGET AEROTHON_DELIVERY_ZONE AEROTHON_GEOFENCE
 stack_pid='' recorder_pid='' truth_pid='' contact_pid='' vehicle_contact_pid='' audit_pid=''
 cleanup() {
@@ -124,6 +131,18 @@ match=re.search(r'start pad names delivery target ([ABCDE])', (out/'stack.log').
 if match is None:raise SystemExit('Generated start-pad target missing from evaluation record')
 (out/'evaluation_target.json').write_text(json.dumps(dict(target=match[1].lower(),source='generated start-pad visual; evaluation only'))+'\n')
 PY
+# THE OPERATOR'S PATH. With AEROTHON_GCS_PRESET set, the arena's dimensions
+# reach the aircraft as at the competition: a preset saved at the GCS (from
+# AEROTHON_GCS_PRESET_FILE the first time) and applied over the aggregator
+# before START. No confirmation from the aircraft, no mission.
+if [[ -n "${AEROTHON_GCS_PRESET:-}" ]]; then
+ if ! python3 scripts/gcs_operator.py --preset "$AEROTHON_GCS_PRESET" \
+      ${AEROTHON_GCS_PRESET_FILE:+--create-from-file "$AEROTHON_GCS_PRESET_FILE"} \
+      --record "$out/gcs_dimensions.json" > "$out/gcs_operator.log" 2>&1; then
+  echo "GCS dimensions were not applied; mission not started" | tee "$out/gcs_refused.txt"
+  exit 3
+ fi
+fi
 mission_rc=0
 # Record both the initial graph and mounting subscriptions activated during
 # actual navigation. An early snapshot alone misses lazy subscriptions.

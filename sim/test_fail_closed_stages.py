@@ -382,11 +382,31 @@ class DuckUnderBoardTests(unittest.TestCase):
         self.assertIn("3.0 m", mav.abort_reason)
         self.assertGreaterEqual(len(mav.opening_calls), 3)
 
-    def test_already_under_an_unidentified_board_is_refused(self):
+    def test_already_under_an_unseen_board_looks_up_and_ducks_under_it(self):
+        """Aligned on a laid sheet below a hung banner (the "both" placement):
+        open from the first look, the board never scanned. It climbs into the
+        board's face, so the edge is MEASURED, and crosses a margin under it --
+        never at the board's height."""
         mav = _LaggedGateMav(opening_below_m=3.5)
         leaf = self._fly(mav)
-        self.assertIs(leaf.status, py_trees.common.Status.FAILURE)
-        self.assertIn("without the board ever being seen", mav.abort_reason)
+        self.assertIs(leaf.status, py_trees.common.Status.SUCCESS, mav.abort_reason)
+        self.assertTrue(any(z > 3.5 for z, _ in mav.opening_calls), "it looked up")
+        self.assertLessEqual(leaf.alt, 3.5 - 0.6 + 0.4 + 1e-6)
+
+    def test_nothing_hung_within_the_upward_look_crosses_where_it_began(self):
+        """A ground-only gate: nothing above. The crossing is made from the
+        starting altitude, with the way measured open there."""
+        class Clear(_LaggedGateMav):
+            def opening_ahead(self, bearing_rad, half_width_rad, need_clear_m=10.0):
+                self.opening_calls.append((self._alt, need_clear_m))
+                return {"open": True, "clusters": 2, "gap_m": 3.8,
+                        "gate_m": 5.0, "clear_m": 12.0, "reason": ""}
+
+        mav = Clear()
+        leaf = self._fly(mav)
+        self.assertIs(leaf.status, py_trees.common.Status.SUCCESS, mav.abort_reason)
+        self.assertAlmostEqual(leaf.alt, 3.0, places=6)
+        self.assertTrue(any(z > 3.5 for z, _ in mav.opening_calls), "it looked up")
 
     def test_already_under_the_board_the_square_up_fitted_goes_through(self):
         """Baro drift puts the scan plane under the board from the first

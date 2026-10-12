@@ -37,10 +37,12 @@ FIELDS = (
     ("banner", "width_m", "Banner width", 3.7, 0.3, 10.0, "range to the banner"),
     ("banner", "height_m", "Banner height", 1.15, 0.2, 5.0, "range to the banner"),
     ("banner", "border_m", "Banner border", 3 * INCH, 0.0, 0.5, None),
-    ("banner", "suspended_bottom_m", "Hung banner lower edge", 2.805, 0.5, 8.0, None),
+    ("banner", "suspended_bottom_m", "Hung banner lower edge", 2.805, 0.5, 8.0,
+     "the height the square-up scans the hung banner at"),
     ("qr", "target_m", "Target QR side", 2.2, 0.2, 5.0,
      "search altitude and landing"),
-    ("qr", "start_m", "Start QR side", 2.2, 0.2, 5.0, None),
+    ("qr", "start_m", "Start QR side", 2.2, 0.2, 5.0,
+     "precision landing on the start QR"),
     ("qr", "border_m", "QR white border", 3 * INCH, 0.0, 0.5, None),
     ("red_zone", "side_m", "Red zone side", 5 * FT, 0.3, 20.0, None),
     ("red_zone", "border_m", "Red zone border", 0.5 * FT, 0.0, 2.0, None),
@@ -134,7 +136,9 @@ def mission_params(dims, base):
         "return_lane_offset_m": side * c["spacing_m"],
         "banner_w_m": d["banner"]["width_m"],
         "banner_h_m": d["banner"]["height_m"],
+        "banner_bottom_m": d["banner"]["suspended_bottom_m"],
         "target_marker_m": d["qr"]["target_m"],
+        "start_marker_m": d["qr"]["start_m"],
         "payload_size_m": max(d["payload"]["length_m"], d["payload"]["width_m"]),
         "banner_placement": d["banner"]["placement"],
     }
@@ -155,13 +159,19 @@ def apply(base, dims):
 # may not reuse their names.
 BUILTIN_PRESETS = {
     "Simulator arena": defaults(),
+    # The organisers' clarifications. Corridor width and banner height are
+    # not given: the width stays the simulator's 3.5 m (the banner is "equal
+    # to the width of the corridor"), the height the rulebook board's 1.15 m.
+    # A hung banner hangs from "a horizontal rod connecting the two corridor
+    # walls", so its top is the 10 ft wall top and its lower edge 1.9 m --
+    # under the 8 ft navigation height, so the gate crossing ducks.
     "SAE Aerothon 2026 (clarified)": {
         **defaults(),
         "corridor": {"length_m": 10.0, "width_m": 3.5, "wall_height_m": 10 * FT,
                      "nav_height_m": 8 * FT, "spacing_m": 4.0,
                      "return_side": "right"},
         "banner": {"width_m": 3.5, "height_m": 1.15, "border_m": 3 * INCH,
-                   "suspended_bottom_m": 2.6, "placement": "suspended"},
+                   "suspended_bottom_m": 10 * FT - 1.15, "placement": "suspended"},
         "qr": {"target_m": 1.0, "start_m": 1.0, "border_m": 3 * INCH},
         "red_zone": {"side_m": 5 * FT, "border_m": 0.5 * FT},
         "payload": {"length_m": 0.10, "width_m": 0.055, "mass_kg": 0.10},

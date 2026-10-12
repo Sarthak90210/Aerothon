@@ -38,7 +38,8 @@ PKGS = [("aerothon_mission", "mission_bt"), ("aerothon_avoidance", "avoidance"),
         ("aerothon_perception", "camera_ctrl"), ("aerothon_payload", "winch_ctrl"),
         ("aerothon_perception", "perception_qr"),
         ("aerothon_perception", "perception_redzone"),
-        ("aerothon_perception", "perception_banner"), ("aerothon_sim", "sim_gazebo")]
+        ("aerothon_perception", "perception_banner"), ("aerothon_sim", "sim_gazebo"),
+        ("aerothon_gcs", "gcs_aggregator")]
 LIVE = set()          # process groups of every run in flight
 
 
@@ -61,7 +62,8 @@ def node_cmd(module, params):
 
 
 def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigation_only=False,
-        injected_command_delay_s=.4):
+        injected_command_delay_s=.4, gcs_preset=None, gcs_create_from=None,
+        gcs_create_from_file=None):
     if not math.isfinite(injected_command_delay_s) or injected_command_delay_s<0:
         raise ValueError('Injected command delay must be finite and nonnegative')
     spec = W.load(spec_path)
@@ -76,11 +78,14 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigatio
         vel_command_delay_s=injected_command_delay_s,vel_response_s=0.6,
         injected_command_delay_s=injected_command_delay_s,
         artificial_transport_delay_injected=injected_command_delay_s>0,
+        arena_dimensions=('GCS preset ' + repr(gcs_preset)) if gcs_preset
+            else 'launch parameters from the world spec',
         camera_capture_hz=CAMERA_CAPTURE_HZ,lidar_scan_hz=LIDAR_SCAN_HZ),indent=2))
     (out/'source_manifest.json').write_text(json.dumps(source_manifest(ROOT),indent=2))
     zone, fence = organiser_inputs(spec)
     env = dict(os.environ, ROS_DOMAIN_ID=str(domain), ROS_LOCALHOST_ONLY="1",
                AEROTHON_DELIVERY_ZONE=zone, AEROTHON_GEOFENCE=fence,
+               AEROTHON_GCS_WS_PORT=str(18700 + domain),
                PYTHONPATH=os.pathsep.join(
                    [str(ROOT / "src" / a / b) for a, b in PKGS]
                    + [os.environ.get("PYTHONPATH", "")]))
@@ -89,18 +94,32 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigatio
              "--max-sim-s", str(max_sim_s), "--vel-command-delay-s", str(injected_command_delay_s)]
     if conditions:
         world += ["--conditions", conditions]
+    # THE OPERATOR'S PATH. With a preset, the arena's dimensions reach the
+    # aircraft only as the competition delivers them: typed at the GCS, saved,
+    # applied over the aggregator before START -- never as launch parameters.
+    mission_params = {"camera_hfov": 0.851919}
+    gcs = []
+    if gcs_preset:
+        world += ["--start-after-dimensions"]
+        gcs = [node_cmd("gcs_aggregator.aggregator", {}),
+               [sys.executable, str(ROOT / "scripts/gcs_operator.py"),
+                "--preset", gcs_preset, "--record", str(out / "gcs_dimensions.json")]
+               + (["--create-from", gcs_create_from] if gcs_create_from else [])
+               + (["--create-from-file", str(gcs_create_from_file)]
+                  if gcs_create_from_file else [])]
+    else:
+        mission_params["target_marker_m"] = float(spec["qr"]["target_m"])
     stack = [
         [sys.executable,str(ROOT/'sim/record_delivery.py'),'--out',str(out),
          '--timeout',str(max_sim_s/max(.2,rtf)*3+120)],
-        node_cmd("sim.navigation_mission" if navigation_only else "mission_bt.mission_tree", {
-            "camera_hfov": 0.851919,
-            "target_marker_m": float(spec["qr"]["target_m"])}),
+        node_cmd("sim.navigation_mission" if navigation_only else "mission_bt.mission_tree",
+                 mission_params),
         node_cmd("avoidance.velocity_controller", {"scan_topic": "/scan",
                                                   "vel_command_delay_s": float(injected_command_delay_s)}),
         node_cmd("camera_ctrl.camera_ctrl_node", {"backend": "sim"}),
         node_cmd("winch_ctrl.winch_node", {"backend": "gazebo"}),
         [sys.executable, str(ROOT / "scripts/publish_delivery_zone.py")],
-    ]
+    ] + gcs
     log = open(out / "stack.log", "w", encoding="utf-8")
     t0 = time.monotonic()
     procs = [subprocess.Popen(world, env=env, stdout=log, stderr=subprocess.STDOUT,
@@ -175,6 +194,13 @@ def main():
                     help="first ROS domain; give concurrent campaigns disjoint "
                          "ranges or their runs hear each other")
     ap.add_argument("--out", type=Path, default=ROOT / "logs" / "headless")
+    ap.add_argument("--gcs-preset", default=None,
+                    help="apply the arena dimensions through the GCS from this "
+                         "saved preset before START (the competition's path)")
+    ap.add_argument("--gcs-create-from", default=None,
+                    help="built-in preset to save --gcs-preset from if missing")
+    ap.add_argument("--gcs-create-from-file", type=Path, default=None,
+                    help="dimensions JSON to save --gcs-preset from if missing")
     args = ap.parse_args()
     signal.signal(signal.SIGTERM, stop_all)
     signal.signal(signal.SIGINT, stop_all)
@@ -191,7 +217,9 @@ def main():
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(
             lambda iv: fly(iv[1][0], args.conditions, iv[1][1], args.out, args.rtf,
-                           args.max_sim_s, args.domain_base + iv[0] % 100,args.navigation_only),
+                           args.max_sim_s, args.domain_base + iv[0] % 100,args.navigation_only,
+                           gcs_preset=args.gcs_preset, gcs_create_from=args.gcs_create_from,
+                           gcs_create_from_file=args.gcs_create_from_file),
             enumerate(runs)))
     ok = 0
     print(f"\n{'run':44s} {'result':10s} {'grade':5s} {'hits':>4s} {'fence':>5s} "

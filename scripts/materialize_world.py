@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 import json
 import math
+import re
 import os
 import random
 import shutil
@@ -43,6 +44,7 @@ def worn(colour, wear):
 
 WHITE = worn(PRINT_WHITE, 0)
 GREEN = worn(PRINT_GREEN, 0)
+POST_GREY = material((0.38, 0.38, 0.38), (0.45, 0.45, 0.45))
 
 # Compact 5x7 block font used for signs. Geometry, unlike synchronized PBR
 # textures, renders reliably in both the Gazebo GUI and simulated camera.
@@ -148,7 +150,8 @@ def green_decoy_visuals() -> str:
 def banner_geometry(wear: int = 0,
                     bottom: float = world_spec.BOARD_BOTTOM_M,
                     lettered: bool = False,
-                    colour=None) -> str:
+                    colour=None, width: float = 3.7, height: float = 1.15,
+                    rod: bool = False, prefix: str = "banner") -> str:
     """The banner panel, as both a visual and a SOLID.
 
     NO TEXT BY DEFAULT
@@ -176,25 +179,40 @@ def banner_geometry(wear: int = 0,
     rows = bitmap_runs(text)
     cols = len(rows[0])
     cell_y, cell_z = 3.25 / cols, 0.115
-    center_z = bottom + 1.15 / 2
+    center_z = bottom + height / 2
     green = worn(colour or PRINT_GREEN, wear)
     white = worn(PRINT_WHITE, wear)
+    size = f"0.12 {width:.4f} {height:.4f}"
     visuals = [
-        box_collision("banner_board_collision", f"0 0 {center_z}",
-                      "0.12 3.7 1.15"),
-        box_visual("banner_board", f"0 0 {center_z}", "0.12 3.7 1.15", green),
+        box_collision(f"{prefix}_board_collision", f"0 0 {center_z:.4f}", size),
+        box_visual(f"{prefix}_board", f"0 0 {center_z:.4f}", size, green),
     ]
+    if (width, height) == (3.7, 1.15):
+        # The measured board's frame, unchanged so its evidence still holds.
+        frame = ((0.50, "0.022 3.48 0.07"), (1.705, "0.022 0.07 1.07"))
+        (fz, fz_size), (fy, fy_size) = frame
+    else:
+        # The organisers' 3-inch border on a banner of any size.
+        t = 3 * 0.0254
+        fz, fz_size = height / 2 - t / 2, f"0.022 {width:.4f} {t:.4f}"
+        fy, fy_size = width / 2 - t / 2, f"0.022 {t:.4f} {height:.4f}"
     # Raised white frame on both faces.
     for face, x in (("front", -0.071), ("back", 0.071)):
         visuals.extend([
-            box_visual(f"banner_{face}_frame_top", f"{x} 0 {center_z + 0.50}", "0.022 3.48 0.07", white),
-            box_visual(f"banner_{face}_frame_bottom", f"{x} 0 {center_z - 0.50}", "0.022 3.48 0.07", white),
-            box_visual(f"banner_{face}_frame_left", f"{x} 1.705 {center_z}", "0.022 0.07 1.07", white),
-            box_visual(f"banner_{face}_frame_right", f"{x} -1.705 {center_z}", "0.022 0.07 1.07", white),
+            box_visual(f"{prefix}_{face}_frame_top", f"{x} 0 {center_z + fz:.4f}", fz_size, white),
+            box_visual(f"{prefix}_{face}_frame_bottom", f"{x} 0 {center_z - fz:.4f}", fz_size, white),
+            box_visual(f"{prefix}_{face}_frame_left", f"{x} {fy:.4f} {center_z:.4f}", fy_size, white),
+            box_visual(f"{prefix}_{face}_frame_right", f"{x} {-fy:.4f} {center_z:.4f}", fy_size, white),
         ])
+    if rod:
+        # "Hung from a horizontal rod connecting the two corridor walls."
+        top = bottom + height + 0.02
+        rod_size = f"0.04 {width + 2 * world_spec.WALL_T:.4f} 0.04"
+        visuals += [box_collision(f"{prefix}_rod_collision", f"0 0 {top:.4f}", rod_size),
+                    box_visual(f"{prefix}_rod", f"0 0 {top:.4f}", rod_size, POST_GREY)]
     idx = 0
     for face, x, mirror in ((("front", -0.071, False), ("back", 0.071, True))
-                            if lettered else ()):
+                            if lettered and (width, height) == (3.7, 1.15) else ()):
         for row, bits in enumerate(rows):
             source = bits[::-1] if mirror else bits
             col = 0
@@ -217,7 +235,7 @@ def banner_geometry(wear: int = 0,
 
 def ground_banner_geometry(wear: int = 0, colour=None,
                            width: float = 3.7, depth: float = 1.15,
-                           x0: float = 0.0) -> str:
+                           x0: float = 0.0, prefix: str = "ground_banner") -> str:
     """The banner laid flat in front of the corridor, colour facing the sky.
 
     The organisers may ground-mount a banner instead of hanging it: "laid flat
@@ -233,9 +251,11 @@ def ground_banner_geometry(wear: int = 0, colour=None,
     panel = worn(colour or PRINT_GREEN, wear)
     white = worn(PRINT_WHITE, wear)
     t = min(width, depth) * 0.024          # 3 inches on a corridor-width banner
+    if (width, depth) != (3.7, 1.15):
+        t = 3 * 0.0254                     # the organisers' border, any size
     z = 0.012                              # lying on the surface, not sunk in
     visuals = [
-        box_visual("ground_banner_panel", f"{x0:.3f} 0 {z}",
+        box_visual(f"{prefix}_panel", f"{x0:.3f} 0 {z}",
                    f"{depth:.3f} {width:.3f} 0.008", panel),
     ]
     for name, pose, size in (
@@ -243,7 +263,7 @@ def ground_banner_geometry(wear: int = 0, colour=None,
             ("border_s", f"{x0:.3f} {-width/2 + t/2:.4f} {z + 0.004}", f"{depth:.3f} {t:.4f} 0.006"),
             ("border_e", f"{x0 + depth/2 - t/2:.4f} 0 {z + 0.004}", f"{t:.4f} {width:.3f} 0.006"),
             ("border_w", f"{x0 - depth/2 + t/2:.4f} 0 {z + 0.004}", f"{t:.4f} {width:.3f} 0.006")):
-        visuals.append(box_visual(f"ground_banner_{name}", pose, size, white))
+        visuals.append(box_visual(f"{prefix}_{name}", pose, size, white))
     return "\n".join(visuals)
 
 
@@ -509,7 +529,10 @@ def main() -> None:
           f"({start_payload})")
     bottom = (float(spec["banner"]["board_bottom_m"]) if spec
               else world_spec.BOARD_BOTTOM_M)
-    post_h = max(4.0, bottom + 1.15)
+    bw = float(spec["banner"].get("width_m", 3.7)) if spec else 3.7
+    bh = float(spec["banner"].get("height_m", 1.15)) if spec else 1.15
+    rod = bool(spec) and spec["banner"].get("mount", "posts") == "rod"
+    post_h = max(4.0, bottom + bh)
     # Ground-mounted, suspended, or both: the organisers may do either, and
     # the aircraft has to align to whichever is actually there.
     placement = ((spec["banner"].get("placement") or "suspended") if spec
@@ -518,10 +541,11 @@ def main() -> None:
     banner_colours = (spec["banner"].get("colours") or {}) if spec else {}
     green_print = (world_spec.print_colour(banner_colours.get("green"))
                    if banner_colours.get("green") else PRINT_GREEN)
-    hung = (banner_geometry(cond["wear"]["banner"], bottom, lettered, green_print)
+    hung = (banner_geometry(cond["wear"]["banner"], bottom, lettered, green_print,
+                            width=bw, height=bh, rod=rod)
             if placement in ("suspended", "both") else "")
     laid = (ground_banner_geometry(cond["wear"]["banner"], green_print,
-                                   x0=laid_banner_x0())
+                                   width=bw, depth=bh, x0=laid_banner_x0(bh))
             if placement in ("ground", "both") else "")
     print(f"BANNER PLACEMENT: {placement}"
           + ("" if lettered else "; no lettering (organiser clarification)"))
@@ -552,6 +576,15 @@ def main() -> None:
                 continue
             raise SystemExit(f"World is missing geometry token {token}")
         world = world.replace(token, geometry)
+    if rod:
+        # Hung from a rod between the walls: the walls carry it, no posts.
+        world = re.sub(r'\s*<(collision|visual) name="(left|right)_post(_collision)?">'
+                       r'.*?</\1>', "", world)
+    if spec and spec["banner"].get("orange"):
+        orange_print = (world_spec.print_colour(banner_colours["orange"])
+                        if banner_colours.get("orange") else PRINT_ORANGE)
+        world = _append_models(world, orange_banner_models(
+            spec, cond["wear"]["banner"], orange_print, placement, bottom, bw, bh, rod))
     world = world.replace("@SIM_GAZEBO_ASSET_URI@", runtime_assets.as_uri())
     args.output.write_text(world, encoding="utf-8")
 
@@ -907,6 +940,41 @@ LAID_GAP_M = 0.15
 def laid_banner_x0(depth=1.15):
     """Lane-frame x of a laid banner's centre: in front of the mouth."""
     return -(depth / 2.0 + LAID_GAP_M)
+
+
+PRINT_ORANGE = ((0.72, 0.27, 0.02), (0.92, 0.35, 0.04))
+
+
+def orange_banner_models(spec, wear, colour, placement, bottom, width, height, rod):
+    """ORANGE at every opening the aircraft must not use.
+
+    The organisers: the exit corridor carries an orange banner at the opening
+    beside the entry corridor's entrance, and the entry corridor one at its
+    far opening, so each corridor has green at the end the aircraft enters
+    and orange at the other. In lane frames (+x down the lane from its green
+    end) that is x = length for both lanes. Hung across the opening, or laid
+    on the ground just outside it -- whichever the green banners are.
+    """
+    out = ""
+    for name, lane in (("outbound_exit_orange_banner", spec["corridor"]),
+                       ("return_exit_orange_banner", spec["return_corridor"])):
+        L = float(lane["length"])
+        yaw = math.radians(float(lane["yaw_deg"]))
+        x = float(lane["x"]) + L * math.cos(yaw)
+        y = float(lane["y"]) + L * math.sin(yaw)
+        parts = []
+        if placement in ("suspended", "both"):
+            parts.append(banner_geometry(wear, bottom, False, colour, width=width,
+                                         height=height, rod=rod, prefix="orange"))
+        if placement in ("ground", "both"):
+            parts.append(ground_banner_geometry(wear, colour, width=width, depth=height,
+                                                x0=-laid_banner_x0(height),
+                                                prefix="orange_ground"))
+        body = "\n        ".join(parts)
+        out += (f'\n    <model name="{name}">\n      <static>true</static>\n'
+                f'      <link name="gate">\n        {body}\n      </link>\n'
+                f'      <pose>{x:.3f} {y:.3f} 0 0 0 {yaw:.4f}</pose>\n    </model>')
+    return out
 
 
 def lane_model(name, c, floor_material, obstacles=(), laid=False):

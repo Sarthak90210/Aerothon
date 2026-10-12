@@ -91,6 +91,19 @@ inches and applied by rebuilding the mission on the ground. A field no
 algorithm reads is still recorded, and marked so. Named sets of them are
 **presets**; the built-in ones cannot be overwritten.
 
+**Operator's path** — the only way arena dimensions reach the aircraft, in
+simulation as at the competition: a preset saved at the GCS, applied over
+the aggregator before START, confirmed by the mission as applied. A run that
+passed them as launch parameters has not tested the path the day uses.
+
+**Green and orange banners** — every corridor opening carries one. Green
+marks the corridor to use for the current direction of travel, orange the
+one beside it that must not be used. The gate search looks for green only;
+orange is named when asked about a panel but never aligned to. A hung
+banner hangs from a rod between the corridor walls, top at the wall top,
+and the aircraft always passes UNDER it. Its height is not given, so it is
+entered at the GCS and flown at more than one value.
+
 **Square on** — the aircraft is perpendicular to the banner's face, within
 tolerance, at a measured standoff. Stronger than align, and measured by the
 lidar rather than inferred from the camera. An aircraft can be aligned while

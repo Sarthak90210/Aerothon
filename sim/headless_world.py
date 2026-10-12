@@ -96,6 +96,7 @@ for pkg in (("aerothon_sim", "sim_gazebo"), ("aerothon_mission", "mission_bt"),
     sys.path.insert(0, str(ROOT / "src" / pkg[0] / pkg[1]))
 
 import materialize_world as MW                              # noqa: E402
+from perception_banner import banner_shape                  # noqa: E402
 import world_spec as W                                      # noqa: E402
 from mission_bt.geofence import (FENCE_POLYGON_INCLUSION,   # noqa: E402
                                  global_to_local)
@@ -249,12 +250,28 @@ class Arena:
         lane(spec["corridor"], [])
         lane(spec["return_corridor"], W.obstacle_polygons(spec))
         bottom = float(spec["banner"]["board_bottom_m"])
+        # The banner's own size (the organisers': the corridor's width, of
+        # unconfirmed height); the simulator's 3.7 x 1.15 m board by default.
+        self.board_w = float(spec["banner"].get("width_m", BOARD_W))
+        self.board_h = float(spec["banner"].get("height_m", BOARD_H))
+        self.rod_mount = spec["banner"].get("mount", "posts") == "rod"
         c, r = spec["corridor"], spec["return_corridor"]
         self.banners = [self._gate(loc((c["x"], c["y"])), math.radians(c["yaw_deg"]),
                                    bottom, "outbound", math.radians(c["yaw_deg"])),
                         self._gate(loc((r["x"], r["y"])),
                                    math.radians(r["yaw_deg"]) + math.pi, bottom, "return",
                                    math.radians(r["yaw_deg"]))]
+        # ORANGE at every opening the aircraft must not use: the outbound
+        # lane's far end and the return lane's home end. A hung one is a board
+        # across that opening, which the lidar sees and the aircraft must pass
+        # under; the camera's search is for green and never takes it.
+        if spec["banner"].get("orange"):
+            for lane in (c, r):
+                if (spec["banner"].get("placement") or "suspended") in ("suspended", "both"):
+                    yaw = math.radians(lane["yaw_deg"])
+                    ox, oy = place((float(lane["length"]), 0.0), loc((lane["x"], lane["y"])), yaw)
+                    self.boxes.append((ccw(rect(ox, oy, BOARD_T, self.board_w, yaw)),
+                                       bottom, bottom + self.board_h, "board"))
         # Decoys: a banner-shaped tarp and a smaller panel (green_decoy_visuals).
         self.green = []          # (centre xy, facing yaw, width, z0, z1) for the camera
         for d in spec["decoys"]:
@@ -305,21 +322,24 @@ class Arena:
         # of the posts that only the camera sees, never a collision.
         placement = self.spec["banner"].get("placement") or "suspended"
         hung = placement in ("suspended", "both")
-        for side in (1, -1):
-            cx, cy = place((0.0, side * POST_Y), origin, facing)
+        bw, bh = self.board_w, self.board_h
+        # Hung from a rod between the corridor walls there are no posts: the
+        # walls carry it. On posts, they stand just outside the board.
+        for side in (() if self.rod_mount else (1, -1)):
+            cx, cy = place((0.0, side * max(POST_Y, bw / 2 + 0.07)), origin, facing)
             self.boxes.append((ccw(rect(cx, cy, POST_SIZE, POST_SIZE, facing)),
-                               0.0, max(POST_H, bottom + BOARD_H), "post"))
+                               0.0, max(POST_H, bottom + bh), "post"))
         if hung:
-            self.boxes.append((ccw(rect(origin[0], origin[1], BOARD_T, BOARD_W, facing)),
-                               bottom, bottom + BOARD_H, "board"))
+            self.boxes.append((ccw(rect(origin[0], origin[1], BOARD_T, bw, facing)),
+                               bottom, bottom + bh, "board"))
         # In front of the mouth, clear of the lane floor, as materialize_world
         # lays it: -x in the LANE's frame for both lanes.
         lane = facing if lane_yaw is None else lane_yaw
-        lx, ly = place((MW.laid_banner_x0(BOARD_H), 0.0), origin, lane)
-        laid = (ccw(rect(lx, ly, BOARD_H, BOARD_W, lane))
+        lx, ly = place((MW.laid_banner_x0(bh), 0.0), origin, lane)
+        laid = (ccw(rect(lx, ly, bh, bw, lane))
                 if placement in ("ground", "both") else None)
         return {"xy": origin, "facing": facing, "z0": bottom,
-                "z1": bottom + BOARD_H, "name": name, "hung": hung, "laid": laid}
+                "z1": bottom + bh, "name": name, "hung": hung, "laid": laid}
 
     def _edges(self):
         self.edge_a, self.edge_b, self.edge_z0, self.edge_z1 = [], [], [], []
@@ -576,6 +596,9 @@ class HeadlessWorld(Node):
         S(String, "/mission/target", lambda m: setattr(self, "target_str", m.data), 10)
         S(String, "/mission/result", self._on_result, latched())
         S(String, "/mission/state", lambda m: setattr(self, "mission_state", m.data), 10)
+        # The operator applies the arena's dimensions at the GCS before START.
+        self.dims_applied = False
+        S(String, "/mission/arena_dimensions/applied", self._on_dims_applied, latched())
         self.banner_gate = CameraGate(self, BANNER_CAMERA_POSES)
 
     def _serve(self):
@@ -1113,7 +1136,7 @@ class HeadlessWorld(Node):
         views = []
         for b in self.arena.banners:
             if b["hung"]:
-                v = self._board_view(b["xy"], b["facing"], BOARD_W, b["z0"], b["z1"],
+                v = self._board_view(b["xy"], b["facing"], self.arena.board_w, b["z0"], b["z1"],
                                      eye, pitch)
                 if v is not None:
                     views.append(("banner", v))
@@ -1142,7 +1165,11 @@ class HeadlessWorld(Node):
         ground = gate is not None and gate.requested == "GROUND"
         lo = (max(BANNER_MIN_ASPECT, BANNER_GROUND_MIN_ASPECT) if ground
               else BANNER_MIN_ASPECT)
-        hi = BANNER_GROUND_MAX_ASPECT if ground else BANNER_MAX_ASPECT
+        # Stretched for a banner thinner than the measured board, exactly as
+        # the detector does (perception_banner.banner_shape).
+        hi = banner_shape.max_aspect(self.arena.board_w, self.arena.board_h, ground=ground,
+                                     upright_max=BANNER_MAX_ASPECT,
+                                     ground_max=BANNER_GROUND_MAX_ASPECT)
         ident = [v for kind, v in views
                  if (kind == "banner" and v[2] <= BANNER_MAX_INCIDENCE
                      or kind == "laid" and v[2] <= BANNER_MAX_GROUND_INCIDENCE
@@ -1268,9 +1295,20 @@ class HeadlessWorld(Node):
         if not self.track or self.track[-1][0] != round(self.t, 2):
             self._record()
 
+    def _on_dims_applied(self, msg):
+        try:
+            ok = bool(json.loads(msg.data).get("applied"))
+        except (ValueError, AttributeError):
+            ok = False
+        if ok and not self.dims_applied:
+            self._event("arena dimensions applied from the GCS")
+        self.dims_applied = self.dims_applied or ok
+
     def _start_and_stop(self):
-        # Once a second until the tree takes it: every START resets it.
-        if not self.started and self.t >= self.args.start_after_s:
+        # Once a second until the tree takes it: every START resets it. With
+        # the operator's path, START waits for the dimensions, as on the day.
+        ready = self.dims_applied or not self.args.start_after_dimensions
+        if not self.started and ready and self.t >= self.args.start_after_s:
             if self.mission_state not in ("", "WAITING", "PREFLIGHT"):
                 self.started = True
                 self._event(f"mission started ({self.mission_state})")
@@ -1334,6 +1372,9 @@ def main():
     ap.add_argument("--vel-command-delay-s", type=float, default=0.4)
     ap.add_argument("--rtf", type=float, default=2.0)
     ap.add_argument("--start-after-s", type=float, default=8.0)
+    ap.add_argument("--start-after-dimensions", action="store_true",
+                    help="hold START until mission_bt reports the GCS's arena "
+                         "dimensions applied")
     ap.add_argument("--max-sim-s", type=float, default=1200.0)
     args, _ = ap.parse_known_args()
     if not math.isfinite(args.vel_command_delay_s) or args.vel_command_delay_s < 0:

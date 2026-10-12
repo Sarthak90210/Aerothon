@@ -57,8 +57,10 @@ import numpy as np
 from camera_ctrl.gate import CameraGate
 from perception_banner import colours
 from perception_banner.photometry import normalise
+from perception_banner import banner_shape
 from perception_banner.word_reader import reads_banner
 from cv_bridge import CvBridge
+from rclpy.parameter import Parameter
 from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
@@ -225,6 +227,11 @@ class BannerNode(Node):
         self.create_subscription(
             String, '/mission/banner_colours', self._on_banner_colours,
             QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        # The banner's size, as the operator entered it at the GCS and the
+        # mission applied it: the area floor is derived from it.
+        self.create_subscription(
+            String, '/mission/arena_dimensions/applied', self._on_arena_dimensions,
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         # The banner is looked for with the camera level, 20 deg down for a
         # hung board, or 30 deg down for one laid on the ground.
         self.gate = CameraGate(self, CAMERA_POSES)
@@ -338,6 +345,15 @@ class BannerNode(Node):
         if name is not None:
             value = supplied.get(name)
             return colours.separated_ranges(name, supplied) if value else []
+        # THE SEARCH IS FOR THE GREEN BANNER. "The green banner always
+        # identifies the correct corridor for the drone's current direction of
+        # travel" -- and the orange one hangs at the adjacent opening of the
+        # corridor beside it. A mask that took either let the gate search
+        # align on the orange banner and fly into the wrong corridor. With a
+        # green supplied, orange is never a candidate; it is still named by
+        # dominant_colour when asked about a panel.
+        if supplied.get('green'):
+            return colours.separated_ranges('green', supplied)
         out = []
         for key in ('green', 'orange'):
             if supplied.get(key):
@@ -377,6 +393,25 @@ class BannerNode(Node):
         self.get_logger().info(
             "banner colours set -> "
             + ", ".join(f"{k}={v}" for k, v in sorted(supplied.items())))
+
+    def _on_arena_dimensions(self, msg):
+        """Take the banner size from dimensions the mission APPLIED.
+
+        Only applied ones: the mission refuses dimensions in flight, and a
+        detector sized for a banner the mission is not flying to would gate
+        on the wrong area.
+        """
+        try:
+            data = json.loads(msg.data)
+            banner = (data.get('dimensions') or {}).get('banner') or {}
+            w, h = float(banner['width_m']), float(banner['height_m'])
+        except (ValueError, TypeError, KeyError, AttributeError):
+            return
+        if not data.get('applied') or w <= 0.0 or h <= 0.0:
+            return
+        self.set_parameters([Parameter('banner_width_m', value=w),
+                             Parameter('banner_height_m', value=h)])
+        self.get_logger().info(f"banner size from the GCS -> {w:.2f} x {h:.2f} m")
 
     def identity(self, frame, bbox):
         """(is_banner, reason, stats, board_bbox) for the green region at `bbox`.
@@ -962,17 +997,24 @@ class BannerNode(Node):
                 # Accepting the second squared the aircraft up on the side
                 # wall. Refused here it is green-not-identified, and the
                 # search orbits round to the face-on view instead.
-                hi = float(self._g('max_aspect'))
+                # The upper limits stretch for a banner thinner than the
+                # board they were measured on (banner_shape): the GCS gives
+                # the banner's size, and a foot-tall one is 11.7:1 face-on.
+                size = (self._g('banner_width_m'), self._g('banner_height_m'))
+                hi = banner_shape.max_aspect(
+                    *size, upright_max=float(self._g('max_aspect')))
                 if getattr(getattr(self, "gate", None), "requested", None) == "GROUND":
                     lo = max(lo, float(self._g('ground_min_aspect')))
                     # ...and a laid sheet seen from close in and low is a long
                     # strip: rendered from 4.9 m out at 3.1 m up, 949 x 80 px
                     # (aspect 11.9), refused by the board-shaped limit of 8.
-                    hi = max(hi, float(self._g('ground_max_aspect')))
+                    hi = max(hi, banner_shape.max_aspect(
+                        *size, ground=True,
+                        ground_max=float(self._g('ground_max_aspect'))))
                 if not (lo <= board_aspect <= hi):
                     ok = False
                     reason = (f"board aspect {board_aspect:.2f} outside "
-                              f"{lo}-{hi}")
+                              f"{lo:g}-{hi:.1f}")
                 info["board_aspect"] = round(board_aspect, 2)
 
             # TEXT RESCUE -- confirming only, never a veto.

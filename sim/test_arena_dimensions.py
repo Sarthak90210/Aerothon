@@ -42,6 +42,7 @@ def test_each_dimension_sets_the_parameter_it_means():
     assert p == {"corridor_alt": 2.438, "gate_advance_m": 5.0,
                  "return_lane_offset_m": 5.0, "banner_w_m": 3.0,
                  "banner_h_m": 1.0, "target_marker_m": 1.0,
+                 "banner_bottom_m": 2.805, "start_marker_m": 2.2,
                  "payload_size_m": 0.10, "banner_placement": "ground"}
 
 
@@ -84,6 +85,13 @@ def test_every_builtin_preset_is_valid_and_the_clarified_one_is_the_rulebook():
     assert sae["corridor"]["nav_height_m"] == pytest.approx(2.438, abs=1e-3)
     assert sae["red_zone"]["side_m"] == pytest.approx(1.524)
     assert sae["banner"]["border_m"] == pytest.approx(0.0762)
+    # Hung from a rod between the walls: within them, and below the
+    # navigation height, so the crossing must duck under it.
+    b, c = sae["banner"], sae["corridor"]
+    assert b["suspended_bottom_m"] + b["height_m"] == pytest.approx(c["wall_height_m"])
+    assert b["suspended_bottom_m"] < c["nav_height_m"]
+    assert b["width_m"] == c["width_m"]
+    assert sae["payload"]["width_m"] == pytest.approx(0.055)
 
 
 # ---- the GCS -------------------------------------------------------------- #

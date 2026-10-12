@@ -351,6 +351,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                  low_camera_pose="FORWARD", search_camera_pose="BANNER",
                  image_width_px=1280, image_height_px=720,
                  banner_w_m=3.7, banner_h_m=1.15, near_range_frac=0.8,
+                 banner_bottom_m=None, lidar_above_body_m=0.0815,
                  redzone_clearance_m=DEFAULT_CLEARANCE_M,
                  orbit_step_rad=math.radians(45.0), orbit_vantages=7,
                  orbit_min_radius_m=5.0, fence_margin_m=2.0,
@@ -373,6 +374,11 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self.image_height_px = float(image_height_px)
         self.banner_area_m2 = float(banner_w_m) * float(banner_h_m)
         self.banner_h_m = float(banner_h_m)
+        # The hung banner's lower edge, as entered at the GCS (None: unknown),
+        # and where the scan plane sits on this airframe.
+        self.banner_bottom_m = (None if banner_bottom_m is None
+                                else float(banner_bottom_m))
+        self.lidar_above_body_m = float(lidar_above_body_m)
         self.near_range_m = float(near_range_frac) * float(lidar_range_m)
         # GREEN FARTHER THAN THIS IS NOT A LEAD ON THE NEAR GATE. On my_world
         # a target pad in the delivery zone, ranged 25 m on ground contact,
@@ -579,6 +585,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self._green = None            # best green_fix seen while sweeping
         self._green_prior = None      # the cut fix a gate-height look replaces
         self._probed = False          # that look has been had
+        self._ground_backoffs = 0     # GROUND pass: steps back from cut green
         self._orbit = None            # planned orbit vantages, once planned
         self._ring = None             # ring vantages when nothing green seen
         self._orbit_alt = None
@@ -954,12 +961,18 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                                     - (1 if self._good_vantage else 0))
                                    % len(self.recovery_steps)]
         along, up = step
+        # A GROUND pass steps BACK. The GROUND pose's frame starts ~0.9 x the
+        # altitude ahead, so a laid sheet nearer than that is under the frame,
+        # and stepping towards it -- the hung board's recovery -- only hides it
+        # further (clarified arena, return gate, 3.8 m from the sheet at 5 m).
+        if self.search_camera_pose == "GROUND":
+            along = -abs(along)
         # Never up to the board. The last bearing points AT the banner, and
         # the pattern's 2.5-5 m steps are blind to its range: in the split
         # arena the first one ended under the board it had just measured at
         # 3.6 m, at board height, where 0.5 m of baro drift had put the scan
         # plane just below the board and the airframe's top into it.
-        if math.isfinite(self._banner_m):
+        if math.isfinite(self._banner_m) and along > 0.0:
             along = min(along, max(0.0, self._banner_m - self.min_standoff))
         psi = self._seen_yaw
         if psi is None:
@@ -1021,8 +1034,44 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         (x, y), a = self._ring.pop(0)
         return self._restart_sweep_at(x, y, self._orbit_alt, a, guard=True)
 
+    GROUND_BACKOFFS, GROUND_BACKOFF_M = 2, 3.0
+
+    def _ground_backoff(self, z):
+        """GROUND pass: step back from green the camera cannot identify.
+
+        A laid sheet seen from close in runs off the bottom of the frame, and
+        seen from beside the corridor it runs diagonally across it; either
+        way at most two adjacent sides of its border are in view, which the
+        detector rightly refuses. Rendered r10 then dropped to gate height to
+        range it on the lidar -- nearer and flatter, so worse -- and orbited
+        it at 8 m into the return lane's wall. Backing away along the bearing
+        at the same height puts the whole sheet in frame. None once spent.
+        """
+        g = self._green
+        if (self.search_camera_pose != "GROUND" or g is None
+                or self._ground_backoffs >= self.GROUND_BACKOFFS):
+            return None
+        self._ground_backoffs += 1
+        x, y, pz = self.mav.pos()
+        hd = float(g["heading"])
+        nx = x - self.GROUND_BACKOFF_M * math.cos(hd)
+        ny = y - self.GROUND_BACKOFF_M * math.sin(hd)
+        nz = max(pz, z)
+        self.mav.log(
+            f"AlignToBanner: green on {math.degrees(hd):.0f} deg is not a "
+            f"banner from here (a laid sheet cut off or seen from its side); "
+            f"backing {self.GROUND_BACKOFF_M:.0f} m away from it to "
+            f"({nx:.1f}, {ny:.1f}, {nz:.1f}) so it fits the frame "
+            f"(back-off {self._ground_backoffs}/{self.GROUND_BACKOFFS})")
+        return self._restart_sweep_at(
+            nx, ny, nz, hd, offsets=[0.0, -self.hfov / 4.0, self.hfov / 4.0],
+            guard=True)
+
     def _next_orbit_vantage(self, z):
         """RUNNING toward the next orbit vantage, or None when there is none."""
+        back = self._ground_backoff(z)
+        if back is not None:
+            return back
         if (self._orbit is None and self._green.get("source") != "lidar"
                 and not self._probed):
             # A CAMERA RANGE IS A GUESS ABOUT WHAT THE GREEN IS. Run off the
@@ -1669,13 +1718,26 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 x, y, z = self.mav.pos()
             except (TypeError, ValueError):
                 return py_trees.common.Status.RUNNING
-            if z > self.alt_floor_m + self.alt_arrive_tol:
-                self._anchor = (x, y, self.alt_floor_m)
+            # ...and from within the stand-off band. The camera sees a laid
+            # sheet best from well back; the lidar meets the corridor mouth
+            # only from nearer: from the return stand-off, 7.5 m out, the
+            # walls drew 4 returns and every fit was refused. Close in along
+            # the bearing while descending.
+            laid = self.ground_range()
+            closer = 0.0
+            if laid is not None and laid > self.max_standoff:
+                closer = laid - 0.5 * (self.min_standoff + self.max_standoff)
+            if z > self.alt_floor_m + self.alt_arrive_tol or closer > 0.0:
+                psi = self.mav.yaw()
+                self._anchor = (x + closer * math.cos(psi),
+                                y + closer * math.sin(psi), self.alt_floor_m)
                 self._sq_phase = self.MOVING
                 self._lower_camera()
                 self.mav.log(f"AlignToBanner: laid banner centred; descending "
                              f"from {z:.1f} m to {self.alt_floor_m:.1f} m so "
-                             f"the corridor walls are in the lidar's plane")
+                             f"the corridor walls are in the lidar's plane"
+                             + (f", {closer:.1f} m nearer (sheet ~{laid:.1f} m "
+                                f"off)" if closer > 0.0 else ""))
         return py_trees.common.Status.RUNNING
 
     def _measure_surface(self):
@@ -2302,6 +2364,15 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             return True
         return waiting
 
+    def _scan_alt_for_banner(self):
+        """Altitude that puts the lidar's plane through the hung banner's
+        middle, from the GCS's dimensions; None when they did not say."""
+        if self.banner_bottom_m is None:
+            return None
+        aim = (self.banner_bottom_m + 0.5 * self.banner_h_m
+               - self.lidar_above_body_m)
+        return max(aim, self.alt_floor_m)
+
     def _no_surface(self, fit):
         """The lidar could not measure. The aircraft does not advance.
 
@@ -2344,17 +2415,31 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if not fit.get("points"):
             step = max(step, min(2.0 * self.descend_step_m,
                                  az - self.alt_floor_m))
+        # NEVER A STEP TALLER THAN THE BANNER. The ladder was written for the
+        # 1.15 m board; a banner a foot tall hung from the 10 ft rod is a
+        # 0.3 m band, and the 1 m steps went 5 -> 4 -> 3 -> 2.4 m straight
+        # over it (headless smoke run, clarified arena).
+        step = min(step, 0.8 * self.banner_h_m)
+        room_below = az - step >= self.alt_floor_m - 1e-6
+        target = az - step
+        # And when the GCS gave the hung banner's height, go straight to it:
+        # the scan plane through the banner's middle.
+        aim = self._scan_alt_for_banner()
+        if aim is not None and self.search_camera_pose != "GROUND" \
+                and abs(az - aim) > 0.5 * self.banner_h_m:
+            target, room_below = aim, True
         if not seen_before and self._descents < self.max_descents \
                 and room_below:
             self._descents += 1
-            self._anchor = (ax, ay, az - step)
+            self._anchor = (ax, ay, target)
             self._sq_phase = self.MOVING
             self._align_t0 = self.clock()
             self._lower_camera()
             self.mav.log(
                 f"AlignToBanner: the lidar sees no surface from {az:.1f} m "
-                f"({fit['reason']}); descending to "
-                f"{az - step:.1f} m to bring the banner into "
+                f"({fit['reason']}); "
+                f"{'descending' if target < az else 'climbing'} to "
+                f"{target:.2f} m to bring the banner into "
                 f"the scan plane")
             return py_trees.common.Status.RUNNING
 
@@ -3014,7 +3099,8 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                  sector_half_width_rad=math.radians(35.0),
                  hfov_rad=1.0472, clock=None, max_steps=12,
                  crossing_margin_m=0.6, obstacle_margin_m=0.4,
-                 board_memory_s=30.0, recentre_m=0.25, max_recentres=4):
+                 board_memory_s=30.0, recentre_m=0.25, max_recentres=4,
+                 probe_up_m=0.9, banner_bottom_m=None):
         # The margins must fit the gap between the posts and the first
         # obstacle behind them. On the shipped arena the return lane's first
         # slalom block stands 1.2 m past the return gate; 1.0 + 0.75 m could
@@ -3038,6 +3124,14 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self.board_memory_s = float(board_memory_s)
         self.recentre_m = float(recentre_m)
         self.max_recentres = int(max_recentres)
+        # LOOK UP BEFORE REFUSING. Aligned on a banner laid on the ground, the
+        # aircraft stands below a hung one it never scanned: "both", 0.3 m
+        # banner, return gate -- open at 2.4 m, refused as never seen. Climb
+        # at most this far (or just past the lower edge the GCS gave) to find
+        # it; nothing there means nothing hung low enough to hit.
+        self.probe_up_m = float(probe_up_m)
+        self.banner_bottom_m = (None if banner_bottom_m is None
+                                else float(banner_bottom_m))
         self.clock = clock or time.monotonic
         self._reset()
 
@@ -3052,6 +3146,7 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self._advance_m = None
         self._heading = None
         self._recentres = 0
+        self._probe_from = None       # altitude the upward look started at
 
     def initialise(self):
         self._reset()
@@ -3090,6 +3185,20 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
     def _hold(self, z):
         x, y, _ = self._anchor
         self.mav.goto(x, y, z, self._heading)
+
+    def _nothing_hung(self, here):
+        """No hung banner within the upward look: cross from where it began.
+
+        The confirming look below runs at that altitude, so the crossing is
+        still only made with the way measured open there."""
+        start = self._probe_from
+        self._edge_alt = here
+        self._target_alt = start
+        self._t0 = self.clock()
+        self.mav.log(
+            f"DuckUnderBoard: no hung banner between {start:.1f} and "
+            f"{here:.1f} m; back down to {start:.1f} m to cross")
+        return py_trees.common.Status.RUNNING
 
     def _give_up(self, why):
         tried = "; ".join(f"{a:.1f} m: {r}" for a, r in self._tried)
@@ -3195,6 +3304,12 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self._tried.append((here, opening["reason"][:60] or
                             f"open, {opening['gap_m']:.1f} m gap"))
 
+        if not opening["open"] and self._probe_from is not None \
+                and not opening.get("clusters"):
+            # Looking up, the scan plane cleared the structure without ever
+            # meeting a face: no hung banner within reach. Go back down.
+            return self._nothing_hung(here)
+
         if not opening["open"]:
             if opening["clusters"] == 1:
                 self._saw_board = True
@@ -3214,6 +3329,22 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
 
         # THE TRANSITION. One face became a hole; this height is the edge.
         if not self._saw_board:
+            if self._probe_from is None:
+                self._probe_from = here
+            top = self._probe_from + self.probe_up_m
+            if self.banner_bottom_m is not None:
+                top = min(top, max(self._probe_from, self.banner_bottom_m + 0.2))
+            if here + self.step_m <= top + 1e-6 and self._steps < self.max_steps:
+                self._steps += 1
+                self._target_alt = here + self.step_m
+                self._t0 = self.clock()
+                self.mav.log(
+                    f"DuckUnderBoard: open at {here:.1f} m with no board seen; "
+                    f"climbing to {self._target_alt:.1f} m to look for a hung "
+                    f"banner above")
+                return py_trees.common.Status.RUNNING
+            if self._probe_from < here - 1e-6:
+                return self._nothing_hung(here)
             return self._give_up(
                 f"a way through was already open at {here:.1f} m without the "
                 f"board ever being seen above it, so nothing here has been "
@@ -4680,7 +4811,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                  orbit_step_rad=math.radians(45.0), orbit_vantages=7,
                  orbit_min_radius_m=5.0, fence_margin_m=2.0,
                  orbit_alt_m=3.0, zone_side_m=3.0, transit_alt=10.0,
-                 look_pose="FORWARD", camera_timeout_s=6.0):
+                 look_pose="FORWARD", camera_timeout_s=6.0,
+                 corridor_length_m=None):
         super().__init__("FindReturnBanner")
         self.mav = mav
         self.alt = float(alt)
@@ -4723,6 +4855,14 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         # lane, stood off there and squared up facing the wrong way. Orbit
         # points, and the stand-off a sighting leads to, stay on the zone side.
         self.zone_side_m = float(zone_side_m)
+        # ...or BEYOND THE CORRIDORS' FAR END along the outbound gate's axis.
+        # The corridors lie side by side, the return entrance level with the
+        # outbound exit, but how far the delivery zone starts beyond them is
+        # the venue's: a zone 9 m off refused every correct stand-off as "the
+        # back of the gate" and the search ran the battery down (clarified
+        # arena, headless). Length from the GCS.
+        self.corridor_length_m = (None if corridor_length_m is None
+                                  else float(corridor_length_m))
         self.phase = None
 
     # ---- plan ---------------------------------------------------------------
@@ -4923,14 +5063,41 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             k += 1
         return out[:self.max_vantages]
 
+    GROUND_STANDOFF_M = 7.5
+
+    def _standoff(self):
+        """How far in front of the return banner to stand.
+
+        A hung board is aligned on from 5 m. A sheet laid on the ground is
+        looked at with the camera 35 deg down, whose frame covers the ground
+        from ~0.9 to ~2.6 x the altitude ahead: from 5 m in front at 5 m up
+        the sheet was under the frame and every sweep came back empty
+        (clarified arena, ground-only). When the gates are known to be
+        ground-mounted -- learnt at the outbound gate, or entered at the GCS
+        -- stand where the sheet is mid-frame."""
+        if getattr(self.mav, "banner_placement_learned", None) == "ground":
+            return max(self.standoff_m, self.GROUND_STANDOFF_M)
+        return self.standoff_m
+
     def _zone_side(self, x, y):
         """On the delivery zone's side of the return gate (see __init__)."""
+        if self._beyond_corridors(x, y):
+            return True
         get = getattr(self.mav, "delivery_search_zone", None)
         zone = get(-self.zone_side_m) if callable(get) else None
         if not zone:
             return True
         x0, x1, y0, y1 = zone
         return x0 <= x <= x1 and y0 <= y <= y1
+
+    def _beyond_corridors(self, x, y, margin_m=1.0):
+        """Past the corridors' far end along the outbound gate's axis."""
+        h = getattr(self.mav, "gate_heading", None)
+        b = getattr(self.mav, "outbound_banner_xy", None)
+        if self.corridor_length_m is None or h is None or b is None:
+            return False
+        along = (x - b[0]) * math.cos(h) + (y - b[1]) * math.sin(h)
+        return along >= self.corridor_length_m + margin_m
 
     def _next_orbit_vantage(self):
         """Aim the transit at the next orbit vantage; False if none left."""
@@ -5324,14 +5491,14 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         x, y = self.mav.pos()[:2]
         normal = self._inward_normal(bx, by)
         if normal is not None:
-            ax = bx + self.standoff_m * normal[0]
-            ay = by + self.standoff_m * normal[1]
+            ax = bx + self._standoff() * normal[0]
+            ay = by + self._standoff() * normal[1]
             th = math.atan2(-normal[1], -normal[0])
-        elif rng <= self.standoff_m + 1.0:
+        elif rng <= self._standoff() + 1.0:
             ax, ay = x, y
         else:
-            ax = bx - self.standoff_m * math.cos(th)
-            ay = by - self.standoff_m * math.sin(th)
+            ax = bx - self._standoff() * math.cos(th)
+            ay = by - self._standoff() * math.sin(th)
         if not self._zone_side(ax, ay):
             self._behind += 1
             if self._behind in (1, 10, 100):
@@ -5803,8 +5970,16 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
         # descent was being asked to hold a lock the camera could not provide.
         # Runs 12 and 14 both oscillated between 3.4 m and 4.1 m until the
         # stage timed out -- chasing a floor the geometry forbids.
+        #
+        # AND AT ANY ROTATION. The floor assumed the marker square to the
+        # image. Nothing turns the aircraft to the start QR's heading, and a
+        # 1 m start QR 25 deg off square spans 1.33 m of the frame: the
+        # clarified-arena smoke run lost it at 2.53 m against a 2.25 m commit
+        # and see-sawed there until the 600-tick timeout. Its diagonal fits
+        # at every rotation.
         self.track_floor = (
-            min_track_altitude(marker_m, hfov_rad, image_w_px, image_h_px)
+            min_track_altitude(marker_m * math.sqrt(2.0), hfov_rad,
+                               image_w_px, image_h_px)
             if marker_m else 0.0)
         self.commit_alt = max(commit_alt, self.track_floor)
         # ROOM TO LOCK. The descent tracks down to commit_alt, and commit_alt
@@ -6197,6 +6372,7 @@ def align_to_every_banner(mav, clock, p, label, **extra):
             min_standoff_m=p.get('min_standoff_m', 3.3),
             banner_w_m=p.get('banner_w_m', 3.7),
             banner_h_m=p.get('banner_h_m', 1.15),
+            banner_bottom_m=p.get('banner_bottom_m'),
             **{**extra, **view})
 
     # A laid sheet is only visible looking down: the ground pass searches,
@@ -6297,12 +6473,20 @@ def build_root(mav, node, p):
                              # No outward expansion inside a supplied boundary.
                              search_budget_m=0.0)
     gate_advance_m = p.get('gate_advance_m', 10.0)
-    outbound_duck = DuckUnderBoard(mav, need_clear_m=gate_advance_m, clock=clock)
-    return_duck = DuckUnderBoard(mav, need_clear_m=gate_advance_m, clock=clock)
+    # The crossing runs from the stand-off, up to half the lidar's range
+    # out, through the gate: capped at the corridor length alone, a 5 m
+    # corridor refused a crossing measured at 5.6 m (clarified arena).
+    crossing_cap_m = gate_advance_m + 0.5 * p.get('lidar_range_m', 12.0)
+    outbound_duck = DuckUnderBoard(mav, need_clear_m=crossing_cap_m, clock=clock,
+                                   banner_bottom_m=p.get('banner_bottom_m'))
+    return_duck = DuckUnderBoard(mav, need_clear_m=crossing_cap_m, clock=clock,
+                                 banner_bottom_m=p.get('banner_bottom_m'))
     landing = PrecisionDescent(
         mav, start_alt=p['takeoff_alt'],
         commit_alt=p.get('land_commit_alt', 1.5),
-        marker_m=p.get('target_marker_m', 2.2),
+        # The HOME marker is the start QR, not a delivery pad: its own size,
+        # from the GCS when the operator gave it.
+        marker_m=p.get('start_marker_m', p.get('target_marker_m', 2.2)),
         hfov_rad=p.get('camera_hfov', 1.0472),
         image_w_px=p.get('image_width_px', 1280),
         image_h_px=p.get('image_height_px', 720))
@@ -6470,7 +6654,8 @@ def build_root(mav, node, p):
                          clearance_m=p.get('redzone_clearance', 1.5),
                          banner_w_m=p.get('banner_w_m', 3.7),
                          banner_h_m=p.get('banner_h_m', 1.15),
-                         orbit_alt_m=p['corridor_alt']),
+                         orbit_alt_m=p['corridor_alt'],
+                         corridor_length_m=p.get('gate_advance_m')),
         # Search can bracket the camera at a distant vantage, then approach
         # the gate. Restore the alignment view and wait for measured joint
         # settlement before reusing the near-view detector. AlignToBanner

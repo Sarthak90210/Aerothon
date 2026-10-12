@@ -106,6 +106,13 @@ BANNER_PLACEMENTS = ("suspended", "ground", "both")
 # a rendered arena and the detectors agree on what was supplied; empty means
 # the simulator's own printed green.
 BANNER_COLOUR_NAMES = ("green", "orange", "red")
+# The board the simulator has always flown: 3.7 x 1.15 m on two posts. The
+# organisers' banner is the corridor's width, of unconfirmed height, hung from
+# "a horizontal rod connecting the two corridor walls" -- `mount: rod`, with
+# its top at the wall top -- and every corridor opening carries one: green
+# where the aircraft must go, orange where it must not (`orange: true`).
+BOARD_SIZE_M = (3.7, 1.15)
+BANNER_MOUNTS = ("posts", "rod")
 
 HOME_FENCE_CLEARANCE_M = 2.0           # readiness: home >= 2 m inside the fence
 BANNER_NEAR_RANGE_M = 9.6              # AlignToBanner: 0.8 x the 12 m lidar range
@@ -144,7 +151,9 @@ def default_spec():
         "qr": {"start_m": 2.2, "target_m": 3.0},
         "banner": {"board_bottom_m": BOARD_BOTTOM_M,
                    "placement": "suspended", "lettered": False,
-                   "colours": {}},
+                   "colours": {}, "width_m": BOARD_SIZE_M[0],
+                   "height_m": BOARD_SIZE_M[1], "mount": "posts",
+                   "orange": False},
         "conditions": {"preset": "calm"},
     }
 
@@ -691,6 +700,23 @@ def validate(spec):
     if not BOARD_BOTTOM_RANGE_M[0] <= bottom <= BOARD_BOTTOM_RANGE_M[1]:
         errs.append(f"banner board bottom {bottom:g} m is outside "
                     f"{BOARD_BOTTOM_RANGE_M[0]:g}-{BOARD_BOTTOM_RANGE_M[1]:g} m")
+    b = spec["banner"]
+    bw, bh = float(b.get("width_m", BOARD_SIZE_M[0])), float(b.get("height_m", BOARD_SIZE_M[1]))
+    if not (0.5 <= bw <= 6.0 and 0.1 <= bh <= 3.0):
+        errs.append(f"banner {bw:g} x {bh:g} m is outside 0.5-6 x 0.1-3 m")
+    mount = b.get("mount", "posts")
+    if mount not in BANNER_MOUNTS:
+        errs.append(f"banner mount {mount!r} must be one of " + ", ".join(BANNER_MOUNTS))
+    elif mount == "rod":
+        # Hung from a rod between the walls: inside the lane, under its top.
+        for key in ("corridor", "return_corridor"):
+            lane = spec[key]
+            if bottom + bh > float(lane["wall_height"]) + 1e-6:
+                errs.append(f"a rod-hung banner reaches {bottom + bh:.2f} m, above "
+                            f"the {key.replace('_', ' ')}'s {float(lane['wall_height']):g} m walls")
+            if bw > float(lane["width"]) + 1e-6:
+                errs.append(f"a rod-hung banner {bw:g} m wide does not fit the "
+                            f"{key.replace('_', ' ')}'s {float(lane['width']):g} m width")
     placement = spec["banner"].get("placement", "suspended")
     if placement not in BANNER_PLACEMENTS:
         errs.append(f"banner placement {placement!r} must be one of "

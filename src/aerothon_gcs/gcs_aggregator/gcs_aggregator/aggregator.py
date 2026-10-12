@@ -48,7 +48,9 @@ def _euler_deg(q):
     return math.degrees(roll), math.degrees(pitch), (math.degrees(yaw) + 360) % 360
 
 SCHEMA_VERSION = 1
-WS_HOST, WS_PORT = "0.0.0.0", 8765
+# Several headless simulations run side by side, each with its own GCS;
+# the GCS app and the field keep 8765.
+WS_HOST, WS_PORT = "0.0.0.0", int(os.environ.get("AEROTHON_GCS_WS_PORT", "8765"))
 TELEM_HZ = 10.0
 
 # The mode the aircraft flies itself in. See the note in _dispatch: every
