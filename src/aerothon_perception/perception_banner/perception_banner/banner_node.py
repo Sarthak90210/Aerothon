@@ -500,6 +500,126 @@ class BannerNode(Node):
         return best[1]
 
     def _identify_bordered(self, frame, bbox):
+        """The box test, then -- for a panel it refuses -- the outline test."""
+        ok, reason, info, board = self._identify_box(frame, bbox)
+        if ok:
+            return ok, reason, info, board
+        quad = self._identify_outline(frame, bbox)
+        if quad is None:
+            return ok, reason, info, board
+        qok, qreason, qinfo = quad
+        info.update(qinfo)
+        if qok:
+            info["bordered"] = True
+            info["identity_path"] = "border-outline"
+            return True, "", info, board
+        return False, f"{reason}; along its outline: {qreason}", info, board
+
+    def _identify_outline(self, frame, bbox):
+        """(ok, reason, info) for the border followed along the panel's own
+        four edges, or None when there is no panel to outline.
+
+        WHY THE BOX TEST IS NOT ENOUGH. It reads the border along the four
+        sides of the panel's upright bounding box. A sheet laid in front of
+        the mouth, seen from off the corridor's axis -- how every approach
+        starts -- is a slanted quadrilateral in the image: the box round it is
+        mostly floor, so it was refused as "not solid colour" or "no white
+        border" on every frame of a rendered run in which the camera had a
+        clean, fully framed view of it. Turning the image does not help: under
+        perspective the long and short edges run at different angles.
+
+        So each edge of the panel's outline is sampled just outside itself,
+        along its outward normal, to the depth the 3-inch border has at this
+        size (from the banner's dimensions at the GCS). The rules are the box
+        test's: enough white on every observed side, at least two sides, and
+        not two adjacent sides alone -- a patch run into a frame corner. A
+        side whose samples fall outside the frame is unobserved.
+        """
+        x, y, bw, bh = bbox
+        roi = frame[y:y + bh, x:x + bw]
+        if roi.size == 0:
+            return None
+        _, colour, _, v_min, s_max, _ = self._board_reference(roi)
+        # The OUTLINE takes the panel's hue at any brightness: a post's shadow
+        # across the sheet otherwise cut the outline through the panel, and
+        # the samples "outside" that edge fell on shadowed green, not border.
+        bands = self.colour_ranges()
+        if bands:
+            relaxed = [(np.array([lo[0], lo[1], min(int(lo[2]), 25)], np.uint8), hi)
+                       for lo, hi in bands]
+            colour = cv2.morphologyEx(
+                colours.mask(cv2.cvtColor(roi, cv2.COLOR_BGR2HSV), relaxed),
+                cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        cnts, _ = cv2.findContours(colour, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not cnts:
+            return None
+        cnt = max(cnts, key=cv2.contourArea) + np.array([[x, y]])
+        hull = cv2.convexHull(cnt)
+        H, W = frame.shape[:2]
+        area = float(cv2.contourArea(hull))
+        info = {"outline_area_px": int(area)}
+        if area < self.min_area_px(W, H):
+            return False, f"outline {area:.0f} px below the minimum", info
+        approx = cv2.approxPolyDP(hull, 0.04 * cv2.arcLength(hull, True), True)
+        quad = (approx.reshape(-1, 2).astype(float) if len(approx) == 4
+                else cv2.boxPoints(cv2.minAreaRect(hull)).astype(float))
+        # Solid colour INSIDE the outline, not inside its box.
+        inside = np.zeros((H, W), np.uint8)
+        cv2.fillConvexPoly(inside, hull, 255)
+        col = np.zeros((H, W), np.uint8)
+        col[y:y + bh, x:x + bw] = colour
+        frac = float(np.count_nonzero(col & inside)) / max(1.0, float(np.count_nonzero(inside)))
+        info["outline_colour_frac"] = round(frac, 3)
+        if frac < float(self._g('min_board_green_frac')):
+            return False, f"outline is not solid colour ({frac:.2f})", info
+        edges = [(quad[i], quad[(i + 1) % 4]) for i in range(4)]
+        lengths = [float(np.hypot(*(b - a))) for a, b in edges]
+        short = min(lengths)
+        # The border's depth in pixels: 3 inches on the banner's short side.
+        height_m = max(0.1, float(self._g('banner_height_m')))
+        border_m = float(getattr(self, "border_m", 3 * 0.0254))
+        depth = max(3.0, short * border_m / height_m)
+        offsets = np.linspace(1.5, max(2.0, 0.8 * depth), 3)
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        white = (hsv[:, :, 2] >= v_min) & (hsv[:, :, 1] <= s_max)
+        centre = quad.mean(axis=0)
+        floor = float(self._g('min_border_frac'))
+        observed, failed = {}, []
+        for i, (a, b) in enumerate(edges):
+            d = b - a
+            n = np.array([d[1], -d[0]]) / max(1e-6, np.hypot(*d))
+            if np.dot((a + b) / 2.0 - centre, n) < 0:
+                n = -n                                   # outward
+            pts = [a + t * d + n * o for t in np.linspace(0.12, 0.88, 24) for o in offsets]
+            seen = hits = 0
+            for px, py in pts:
+                ix, iy = int(round(px)), int(round(py))
+                if 2 <= ix < W - 2 and 2 <= iy < H - 2:
+                    seen += 1
+                    hits += bool(white[iy, ix])
+            if seen < 0.5 * len(pts):
+                continue
+            observed[i] = round(hits / float(seen), 3)
+            if observed[i] < floor:
+                failed.append(f"edge {i} {observed[i]:.2f}")
+        info["outline_sides"] = {str(k): v for k, v in observed.items()}
+        info["outline_border_px"] = round(depth, 1)
+        if len(observed) < int(self._g('min_border_sides')):
+            return False, f"only {len(observed)} edge(s) in frame", info
+        # ONE EDGE IN SHADOW. A post's shadow across a laid sheet darkens its
+        # border below the white the lit panel sets; in the rendered run it
+        # was always one edge, with the other three clearly framed. Three
+        # framed edges are not a patch in a corner, so one may be dark.
+        if len(failed) == 1 and len(observed) - 1 >= 3:
+            info["outline_shadowed_edge"] = failed[0]
+            failed = []
+        if failed:
+            return False, f"no white border ({', '.join(failed)})", info
+        if len(observed) == 2 and set(observed) not in ({0, 2}, {1, 3}):
+            return False, "framed only on two adjacent edges; a patch in a frame corner", info
+        return True, "", info
+
+    def _identify_box(self, frame, bbox):
         """(is_banner, reason, stats, board) for a banner that carries no text.
 
         WHAT STANDS IN FOR THE LETTERING

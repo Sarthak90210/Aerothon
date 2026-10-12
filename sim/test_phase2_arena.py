@@ -532,3 +532,58 @@ def test_a_gate_floor_under_the_takeoff_guard_moves_the_guard_down():
     mav2.airborne_floor = 1.0
     AlignToBanner(mav2, clock=lambda: 0.0, alt_floor_m=2.4).initialise()
     mav2.set_airborne_floor.assert_not_called()
+
+
+# ---- a laid sheet seen at a slant is identified along its outline ------- #
+
+def _detector(height_m=1.15):
+    import rclpy
+    from std_msgs.msg import String
+    if not rclpy.ok():
+        rclpy.init()
+    node = BannerNode()
+    node._on_banner_colours(String(data=json.dumps({"colours": SUPPLIED})))
+    node._on_arena_dimensions(String(data=json.dumps(
+        {"applied": True, "dimensions": {"banner": {"width_m": 3.5, "height_m": height_m}}})))
+    node.gate = types.SimpleNamespace(requested="GROUND")
+    return node
+
+
+def _slanted_sheet(shadow=False, corner=False):
+    """A green panel in a 7 px white border, as a slanted quadrilateral on
+    grey floor -- a laid sheet seen from off the corridor's axis."""
+    img = np.full((720, 1280, 3), (160, 165, 165), np.uint8)
+    outer = np.array([[440, 355], [560, 430], [915, 232], [795, 182]], np.int32)
+    inner = np.array([[460, 357], [563, 421], [897, 230], [797, 191]], np.int32)
+    if corner:
+        outer, inner = outer + [700, -200], inner + [700, -200]
+    green = tuple(int(c) for c in colours.parse_hex(SUPPLIED["green"])[::-1])
+    cv2.fillConvexPoly(img, outer, (245, 245, 245))
+    cv2.fillConvexPoly(img, inner, green)
+    if shadow:   # a post's shadow over the far short edge, border included
+        cv2.fillConvexPoly(img, np.array([[880, 215], [930, 240], [900, 270], [850, 245]], np.int32),
+                           (80, 82, 82))
+        cv2.fillConvexPoly(img, np.array([[860, 222], [890, 236], [880, 250], [850, 236]], np.int32),
+                           (20, 70, 30))
+    return img
+
+
+def _bbox(node, img):
+    cnts, _ = cv2.findContours(node.colour_mask(img), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return cv2.boundingRect(max(cnts, key=cv2.contourArea))
+
+
+@pytest.mark.parametrize("shadow", [False, True])
+def test_a_slanted_framed_sheet_is_identified_along_its_outline(shadow):
+    node = _detector()
+    img = _slanted_sheet(shadow=shadow)
+    ok, reason, info, _ = node._identify_bordered(img, _bbox(node, img))
+    assert ok, reason
+    assert info["identity_path"] == "border-outline"
+
+
+def test_a_sheet_run_into_a_frame_corner_is_not_identified():
+    node = _detector()
+    img = _slanted_sheet(corner=True)
+    ok, reason, _, _ = node._identify_bordered(img, _bbox(node, img))
+    assert not ok
