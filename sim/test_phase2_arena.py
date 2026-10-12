@@ -343,3 +343,30 @@ def test_a_far_laid_sheet_is_closed_in_on_while_descending_to_square_up():
     target = 0.5 * (leaf.min_standoff + leaf.max_standoff)
     assert 23.2 - ax == pytest.approx(7.5 - target)
     assert az == pytest.approx(2.4384)
+
+
+# ---- a laid square-up measures past the mouth, widest face first -------- #
+
+def test_past_the_mouth_the_widest_face_wins_over_a_stub_of_wall_end():
+    import math
+    from mission_bt.scan_geometry import fit_surface
+    inc = math.radians(1.0)
+    n = 360
+    ranges = [float("inf")] * n
+    a0 = -math.pi
+
+    def put(deg, r):
+        ranges[int(round((math.radians(deg) - a0) / inc)) % n] = r
+
+    # A stub of wall end, 0.4 m of it, at 5.6 m on the left...
+    for k, deg in enumerate(range(-26, -22)):
+        put(deg, 5.6 + 0.1 * k)
+    # ...and a 1.6 m obstacle face square across the lane at 6.2 m.
+    for deg in range(-1, 15):
+        put(deg, 6.2 / math.cos(math.radians(deg)))
+    near = fit_surface(a0, inc, ranges, 0.0, math.radians(35))
+    assert not near["ok"]
+    far = fit_surface(a0, inc, ranges, 0.0, math.radians(35),
+                      min_range_m=5.0, widest_first=True)
+    assert far["ok"] and far["range_m"] == pytest.approx(6.2, abs=0.05)
+    assert abs(far["angle_rad"]) < math.radians(2.0)

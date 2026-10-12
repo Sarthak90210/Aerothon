@@ -1759,6 +1759,18 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             laid = self._laid_axis_fit()
             if laid is not None:
                 return laid
+            # Past the sheet: the corridor's contents. Nearest-first took a
+            # 0.47 m stub of wall end at 5.6 m and refused it, with the first
+            # obstacle's 1.6 m face square across the lane at 6.2 m right
+            # behind it (clarified arena, return gate). `_laid_face` squares
+            # on a face beyond the mouth with the sheet's range.
+            sheet = self.ground_range()
+            if sheet is not None:
+                beyond = self.mav.surface_ahead(
+                    self._sector_bearing, self.sector_half_width,
+                    min_range_m=sheet + 0.3, widest_first=True)
+                if beyond.get("ok"):
+                    return beyond
         return fit
 
     def _laid_face(self, fit):
