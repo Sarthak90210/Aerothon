@@ -195,12 +195,24 @@ What the worst campaign found and fixed is in the git history under
    MAVLink-targeted mount and the PWM winch. Without it, the stack's mount
    and winch commands are accepted and do nothing. Its servo output
    numbers are a guess at the wiring, so edit them first.
-3. **Lidar mount.** Launch with `use_sim:=false`, then run
-   `python3 scripts/check_sensors.py lidar`. It asks for a box ahead of the
-   nose and then one to port, and prints `lidar_yaw_deg:=… lidar_mirrored:=…`.
-   Put those in the launch command. Every scan consumer reads bearings off
+3. **Lidar mount.** Launch with `use_sim:=false` and open the GCS's **LIDAR**
+   panel (disarmed, props off, nothing within 2 m):
+   1. Hold a box about 1 m straight ahead of the nose and press
+      **Capture ahead**.
+   2. Move it about 1 m to port and press **Capture port**.
+   3. The panel shows the measured mount yaw and scan direction. It refuses
+      captures more than 20° from square.
+   4. Press **APPLY TO AIRCRAFT**. `scan_mount` applies it at once and saves
+      it on the aircraft (`~/.aerothon/lidar_mount.json`); a saved mount wins
+      over the launch arguments.
+   5. Check the corrected readout: the box ahead reads about 0° and the box
+      to port about +90°.
+
+   `python3 scripts/check_sensors.py lidar` does the same from a terminal and
+   prints launch arguments instead. Every scan consumer reads bearings off
    the nose. A lidar mounted 90° off would have the navigator steer into the
-   walls it is avoiding. `sim/test_scan_mount.py` pins the correction.
+   walls it is avoiding. `sim/test_scan_mount.py` and
+   `sim/test_lidar_calibration_gcs.py` pin the correction.
 4. **Camera.** Run `python3 scripts/check_sensors.py camera`. You need
    1280×720 at 15 Hz or more with manual exposure. The launch default is
    `camera_exposure:=100`, which is 10 ms. Auto exposure on a C270 runs to

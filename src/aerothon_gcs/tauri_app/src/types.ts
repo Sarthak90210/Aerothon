@@ -65,6 +65,18 @@ export interface Telemetry {
     sent: Dimensions | null; applied: Dimensions | null;
     params?: Record<string, unknown> | null; ok?: boolean; reason: string;
   } | null;
+  // Lidar calibration mode (gcs_aggregator/lidar_calibration.py): bearings
+  // in degrees CCW from the nose (corrected) or the lidar's own 0 (raw).
+  lidar_cal?: {
+    raw_fresh: boolean;
+    raw_nearest: [number, number] | null;
+    body_nearest: [number, number] | null;
+    captures: { ahead: [number, number] | null; port: [number, number] | null };
+    result: { yaw_deg: number; mirrored: boolean; error_deg: number;
+              ok: boolean; reason: string } | null;
+    applied: { yaw_deg: number; mirrored: boolean; source: string;
+               reason: string } | null;
+  };
 }
 
 // group -> field -> value. Lengths in metres; the two choice fields are strings.

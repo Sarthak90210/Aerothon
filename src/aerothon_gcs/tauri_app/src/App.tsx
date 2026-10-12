@@ -7,6 +7,7 @@ import { drawHUD, drawMap, drawSlam, type OccGrid } from "./render";
 import type { Telemetry, Envelope } from "./types";
 import "./gcs.css";
 import ArenaDimensions from "./ArenaDimensions";
+import LidarCalibration from "./LidarCalibration";
 
 const CL: [string, string][] = [
   ["takeoff", "Auto Takeoff (5m)"], ["start_qr", "Scan & Decode Start QR"],
@@ -39,6 +40,7 @@ export default function App() {
   const [connectionNonce, setConnectionNonce] = useState(0);
   const [view, setView] = useState<"map" | "cam" | "slam">("map");
   const [dimsOpen, setDimsOpen] = useState(false);
+  const [lidarOpen, setLidarOpen] = useState(false);
   // The composite overlay is the default: the live camera with whatever is
   // currently detected drawn on it. The per-detector streams are kept
   // selectable because they are what proved the banner lettering bug.
@@ -310,6 +312,8 @@ export default function App() {
           <button className={`view-btn ${view === "slam" ? "active" : ""}`} onClick={() => setView("slam")}>SLAM</button>
           <button className={`view-btn ${dimsOpen ? "active" : ""}`} onClick={() => setDimsOpen(true)}
                   title="Corridor, hall, banner, QR, red-zone and payload dimensions">ARENA</button>
+          <button className={`view-btn ${lidarOpen ? "active" : ""}`} onClick={() => setLidarOpen(true)}
+                  title="Measure where the lidar is mounted (two boxes: ahead, to port)">LIDAR</button>
         </div>
         <div className="spacer" />
         <div className="stat"><span className="k">GPS</span><span className="v mono">{(S as any)?.gps?.fix || "—"} · {S?.gps?.sats || 0}</span></div>
@@ -500,6 +504,7 @@ export default function App() {
       </main>
 
       {dimsOpen && <ArenaDimensions S={S} send={send} onClose={() => setDimsOpen(false)} />}
+      {lidarOpen && <LidarCalibration S={S} send={send} onClose={() => setLidarOpen(false)} />}
 
       <footer>
         <div className="btns">

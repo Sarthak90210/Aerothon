@@ -34,6 +34,8 @@ from std_msgs.msg import String, Bool, Float64, UInt32
 
 import websockets
 
+from gcs_aggregator import lidar_calibration
+
 
 def _euler_deg(q):
     """Quaternion -> (roll, pitch, yaw) in degrees."""
@@ -152,6 +154,17 @@ class Aggregator(Node):
             String, "/mission/arena_dimensions", zone_qos)
         self.create_subscription(String, "/mission/arena_dimensions/applied",
                                  self._on_dimensions_applied, zone_qos)
+        # LIDAR CALIBRATION. The driver's raw scan (only on the aircraft:
+        # the simulator publishes /scan in the body frame and has no
+        # /scan_raw), the mount the GCS measures from it, and what
+        # scan_mount reports it is applying.
+        self._scan_raw = None          # (LaserScan, monotonic time)
+        self._scan_body = None
+        self.create_subscription(LaserScan, "/scan_raw", self._on_scan_raw, qos_sensor)
+        self.pub_lidar_mount = self.create_publisher(
+            String, "/mission/lidar_mount", zone_qos)
+        self.create_subscription(String, "/mission/lidar_mount/applied",
+                                 self._on_lidar_mount_applied, zone_qos)
         self.declare_parameter("dimension_presets_file", os.path.expanduser(
             "~/.aerothon/dimension_presets.json"))
         self._presets_path = self.get_parameter("dimension_presets_file").value
@@ -214,6 +227,13 @@ class Aggregator(Node):
                           ("takeoff", "start_qr", "banner", "corridor",
                            "target_id", "drop", "return", "land")},
             "scan": {"yaw_deg": 0, "ranges": []},
+            # The GCS's lidar calibration mode: live nearest return in the
+            # raw and the corrected scan, the two captures, the solved mount
+            # and the mount scan_mount says is in force.
+            "lidar_cal": {"raw_fresh": False, "raw_nearest": None,
+                          "body_nearest": None,
+                          "captures": {"ahead": None, "port": None},
+                          "result": None, "applied": None},
             # Everything scanned, decoded, identified or refused, in the order
             # it first happened. The operator asked for "a list of everything
             # that has been detected/decoded", with matches tagged; rejections
@@ -431,7 +451,36 @@ class Aggregator(Node):
     def _on_vel(self, m):
         self.state["flight"]["gs"] = round(math.hypot(m.twist.linear.x, m.twist.linear.y), 2)
 
+    def _on_scan_raw(self, m):
+        self._scan_raw = (m, time.monotonic())
+
+    def _on_lidar_mount_applied(self, m):
+        try:
+            self.state["lidar_cal"]["applied"] = json.loads(m.data)
+        except ValueError:
+            pass
+
+    RAW_STALE_S = 1.0
+
+    def _fresh_raw(self):
+        if self._scan_raw is None:
+            return None
+        scan, t = self._scan_raw
+        return scan if time.monotonic() - t <= self.RAW_STALE_S else None
+
+    def _lidar_cal_refresh(self):
+        """Live readouts for the calibration panel, from the latest scans."""
+        cal = self.state["lidar_cal"]
+        raw = self._fresh_raw()
+        cal["raw_fresh"] = raw is not None
+        near = lidar_calibration.nearest_bearing(raw) if raw is not None else None
+        cal["raw_nearest"] = None if near is None else [round(near[0], 1), round(near[1], 2)]
+        body = self._scan_body
+        near = lidar_calibration.nearest_bearing(body) if body is not None else None
+        cal["body_nearest"] = None if near is None else [round(near[0], 1), round(near[1], 2)]
+
     def _on_scan(self, m):
+        self._scan_body = m
         n = len(m.ranges)
         if not n:
             return
@@ -556,6 +605,7 @@ class Aggregator(Node):
         # Refresh staleness on every snapshot so a field that stops updating
         # is visibly stale rather than frozen at its last confident value.
         self.state["safety"]["stale"] = self._staleness()
+        self._lidar_cal_refresh()
         self._broadcast(self._env("telemetry", self.state))
 
     def _broadcast(self, payload):
@@ -681,6 +731,8 @@ class Aggregator(Node):
                 payload = json.dumps({"colours": colours}, separators=(",", ":"))
                 self.pub_banner_colours.publish(String(data=payload))
                 self.state["banner_colours"] = colours
+            elif cmd in ("lidar_cal_capture", "lidar_cal_reset", "lidar_cal_apply"):
+                return self._lidar_cal_command(cmd, args)
             elif cmd == "set_arena_dimensions":
                 # Refused in the air here AND in mission_bt: the leaves take
                 # their dimensions when the tree is built, on the ground.
@@ -740,6 +792,46 @@ class Aggregator(Node):
             return "accepted", ""
         except Exception as e:  # noqa: BLE001
             return "rejected", str(e)
+
+    # ---- lidar calibration ---------------------------------------------------
+    def _lidar_cal_command(self, cmd, args):
+        """Capture a box ahead / to port, start again, or apply the mount.
+
+        On the ground only: the mount turns every beam the corridor
+        navigator, the square-up and the keep-out read, and changing it under
+        an aircraft in the air would turn the walls it is avoiding."""
+        if self.state["mission"].get("armed"):
+            return "rejected", "the lidar can only be calibrated while disarmed"
+        cal = self.state["lidar_cal"]
+        if cmd == "lidar_cal_reset":
+            cal["captures"] = {"ahead": None, "port": None}
+            cal["result"] = None
+            return "accepted", ""
+        if cmd == "lidar_cal_capture":
+            where = str(args.get("where", ""))
+            if where not in ("ahead", "port"):
+                return "rejected", "capture 'ahead' or 'port'"
+            raw = self._fresh_raw()
+            if raw is None:
+                return "rejected", ("no fresh raw lidar scan (/scan_raw); is the "
+                                    "LD06 driver running on the aircraft?")
+            near = lidar_calibration.nearest_bearing(raw)
+            if near is None:
+                return "rejected", ("no return beyond 0.3 m: the box is too close "
+                                    "or the lidar is blocked")
+            cal["captures"][where] = [round(near[0], 2), round(near[1], 3)]
+            cal["result"] = lidar_calibration.result(cal["captures"])
+            return "accepted", ""
+        # lidar_cal_apply
+        res = cal.get("result")
+        if not res:
+            return "rejected", "capture the box ahead and to port first"
+        if not res.get("ok"):
+            return "rejected", res.get("reason") or "the captures do not agree"
+        self.pub_lidar_mount.publish(String(data=json.dumps(
+            {"yaw_deg": res["yaw_deg"], "mirrored": res["mirrored"]},
+            separators=(",", ":"))))
+        return "accepted", ""
 
     # ---- arena-dimension presets ------------------------------------------
     def _operator_presets(self):

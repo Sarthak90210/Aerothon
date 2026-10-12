@@ -250,3 +250,24 @@ body {
 .dims-unit { opacity: .7; text-align: center; }
 .dims-actions { display: flex; gap: 12px; align-items: center; padding: 10px 12px; }
 .dims-note { flex: 1; opacity: .75; font-size: 12px; }
+
+/* Lidar calibration panel */
+.card.dims.lidar { width: min(900px, 100%); }
+.lidar-body { display: grid; grid-template-columns: 1fr 230px; gap: 12px; padding: 10px 12px; }
+.lidar-steps { margin: 0; padding-left: 20px; line-height: 1.5; }
+.lidar-steps li { margin-bottom: 10px; }
+.lidar-step-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
+.lidar-cap { opacity: .8; font-variant-numeric: tabular-nums; }
+.lidar-side { display: flex; flex-direction: column; gap: 6px; align-items: center; font-size: 12px; }
+.lidar-view { width: 200px; height: 200px; }
+.lidar-ring { fill: none; stroke: rgba(255,255,255,.15); }
+.lidar-axis { stroke: rgba(255,255,255,.25); stroke-dasharray: 3 3; }
+.lidar-lbl { fill: rgba(255,255,255,.55); font-size: 10px; }
+.lidar-craft { fill: #9aa4b1; }
+.lidar-raw { fill: rgba(255,255,255,.35); }
+.lidar-body { }
+circle.lidar-body { fill: #3ddc84; }
+.lidar-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 8px; vertical-align: middle; }
+.lidar-legend .sw.body { background: #3ddc84; }
+.lidar-legend .sw.raw { background: rgba(255,255,255,.35); }
+@media (max-width: 640px) { .lidar-body { grid-template-columns: 1fr; } }

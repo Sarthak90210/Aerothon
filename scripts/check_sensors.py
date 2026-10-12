@@ -28,27 +28,9 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, LaserScan
 
-SELF_M = 0.3          # nearer than this is the airframe or the bracket
-
-
-def nearest_bearing(scan):
-    """Raw-frame bearing (deg) and range of the nearest return."""
-    r = np.asarray(scan.ranges, dtype=float)
-    r[~np.isfinite(r) | (r < max(SELF_M, scan.range_min))] = np.inf
-    i = int(np.argmin(r))
-    if not np.isfinite(r[i]):
-        return None
-    a = scan.angle_min + i * scan.angle_increment
-    return math.degrees(math.atan2(math.sin(a), math.cos(a))), float(r[i])
-
-
-def solve_mount(front_deg, port_deg):
-    """(lidar_yaw_deg, mirrored) that put `front` on the nose and `port` at
-    +90: body = raw + yaw, or -raw + yaw when the driver runs clockwise."""
-    turn = (port_deg - front_deg + 180.0) % 360.0 - 180.0
-    mirrored = turn < 0.0
-    yaw = front_deg if mirrored else -front_deg
-    return (yaw + 180.0) % 360.0 - 180.0, mirrored, abs(abs(turn) - 90.0)
+# The mount arithmetic is shared with the GCS's calibration mode.
+from gcs_aggregator.lidar_calibration import (  # noqa: E402,F401
+    SELF_M, nearest_bearing, solve_mount)
 
 
 class Probe(Node):
