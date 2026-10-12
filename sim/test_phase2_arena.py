@@ -694,3 +694,38 @@ def test_a_clipped_box_takes_the_sheets_bearing_not_the_boxs():
     mav.banner_clipped = True
     mav.banner_bearing.return_value = 0.4            # the cut box's centre
     assert abs(leaf._bearing_now()) < 0.01
+
+
+# ---- a ground-only arena's return sheet is looked for on the ground ------ #
+
+def test_on_a_ground_only_arena_the_return_search_looks_down_from_look_height():
+    import math
+    f = _finder()
+    f.mav.pos.return_value = (30.0, 0.0, 5.0)
+    f.mav.yaw.return_value = math.pi
+    f.initialise()
+    assert f._look == f.look_pose == "FORWARD", "a hung arena: unchanged"
+    f.mav.banner_placement_learned = "ground"
+    f.initialise()
+    assert f._look == "GROUND" and f._second_look == "BANNER"
+
+
+def test_a_laid_return_sheet_is_ranged_where_it_meets_the_ground():
+    import math
+    f = _finder()
+    f.mav.banner_placement_learned = "ground"
+    f.mav.pos.return_value = (30.0, 0.0, 5.0)
+    f.mav.alt.return_value = 5.0
+    f.mav.yaw.return_value = math.pi
+    f.mav.banner_identified.return_value = True
+    f.mav.banner_clipped = False
+    f.mav.banner_board_area = 900.0                 # foreshortened: reads ~50 m by area
+    f.mav.banner_bearing.return_value = 0.0
+    f.mav.banner_observation = None
+    f.mav.camera_state = {"requested_rad": math.radians(-35.0)}
+    f.mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=1.0)
+    f.mav.outbound_banner_xy = None
+    f.initialise()
+    bx, by, th, rng = f._sighting()
+    assert rng == pytest.approx(5.0 / math.tan(math.radians(35.0)))
+    assert bx == pytest.approx(30.0 - rng)

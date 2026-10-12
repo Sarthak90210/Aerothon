@@ -5155,8 +5155,9 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self._entry_speed = getattr(self.mav, "speed_cmd", None) or 10.0
         self._leg_speed = self._entry_speed
         self._cur_alt = self.alt
-        self._look = self.look_pose  # the tilt this vantage is swept at
-        self._second_look = 'BANNER' if self.look_pose == 'FORWARD' else 'FORWARD'
+        self._look = self._first_look()  # the tilt this vantage is swept at
+        self._second_look = ('BANNER' if self._look in ('FORWARD', 'GROUND')
+                             else 'FORWARD')
         self._second_look_done = False
         self._high = False           # this leg flown at transit_alt, nadir
         self._then = "sweep"         # what the lowering at its end leads to
@@ -5326,6 +5327,36 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
 
     GROUND_STANDOFF_M = 7.5
 
+    def _ground(self):
+        return getattr(self.mav, "banner_placement_learned", None) == "ground"
+
+    def _first_look(self):
+        """The tilt a vantage is swept at. A sheet laid on the ground is
+        looked for with the camera down at it, as the outbound ground pass
+        does: level and at -20 deg, rendered, a ground-only arena's laid
+        return sheet was never read from the stand-off or an orbit round it,
+        and the flight ran past its 900 s budget."""
+        return "GROUND" if self._ground() else self.look_pose
+
+    def _ground_range(self):
+        """Horizontal range to an identified sheet LAID ON THE GROUND: where
+        the ray to the sheet's centre meets the ground (AlignToBanner's
+        ground_range). The area model is an upright board's, and a flat
+        sheet's foreshortened area reads it far beyond the gate."""
+        st = getattr(self.mav, "camera_state", None) or {}
+        banner = getattr(self.mav, "banner", None)
+        try:
+            pitch = float(st["requested_rad"])
+            below = float(banner.y)
+            alt = float(self.mav.alt())
+        except (KeyError, TypeError, ValueError, AttributeError):
+            return None
+        depression = -pitch + math.atan(below * 0.5 * 720.0 / self.focal_px)
+        if not (math.isfinite(depression) and math.isfinite(alt)) \
+                or depression <= math.radians(3.0) or alt <= 0.3:
+            return None
+        return alt / math.tan(depression)
+
     def _standoff(self):
         """How far in front of the return banner to stand.
 
@@ -5372,10 +5403,11 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                                  list(getattr(self.mav, "exclusions", None) or [])))
             ok = lambda x, y: fence(x, y) and self._zone_side(x, y)  # noqa: E731
             # Corridor altitude, camera level: see AlignToBanner's orbit.
-            self._cur_alt = self.orbit_alt_m
+            # A laid sheet is read from above, not edge-on: look altitude.
+            self._cur_alt = self.alt if self._ground() else self.orbit_alt_m
             fn = getattr(self.mav, "set_camera_pose", None)
             if callable(fn):
-                fn("FORWARD")
+                fn(self._first_look())
             self._orbit = orbit_plan((g["x"], g["y"]), self.mav.pos()[:2],
                                      radius, ok, step_rad=self.orbit_step_rad,
                                      n=self.orbit_vantages)
@@ -5389,7 +5421,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         v = self._orbit.pop(0)
         # A previous vantage may have exhausted its down-tilted retry.
         # Each new orbit view starts level with its own second look.
-        self._look = 'FORWARD'
+        self._look = self._first_look()
         self._second_look = 'BANNER'
         self._second_look_done = False
         self._camera(self._look)
@@ -5419,7 +5451,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             return False
         vx, vy, out = self.vantages[self.vi]
         self.target = (vx, vy, out)
-        self._look = self.look_pose
+        self._look = self._first_look()
         self._second_look_done = False
         # Outward half only: the return entrance is at or beyond the edge.
         fan = [0, 1, -1, 2, -2, 3, -3]
@@ -5458,6 +5490,10 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         area = float(getattr(self.mav, "banner_board_area", 0.0) or 0.0)
         rng = (self.focal_px * math.sqrt(self.banner_area_m2 / area)
                if area > 0 else self.standoff_m)
+        if self._ground() and self._look == "GROUND":
+            laid = self._ground_range()
+            if laid is not None:
+                rng = laid
         if rng > self.ident_range_m:
             return None
         observe = getattr(self.mav, 'banner_observation', None)
