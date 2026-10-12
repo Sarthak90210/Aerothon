@@ -27,7 +27,8 @@ from std_msgs.msg import String
 
 from mission_bt.mav_commander import Mav
 from mission_bt.banner_captures import BannerCaptures
-from mission_bt.banner_orbit import (better_green, fence_ok, green_fix,
+from mission_bt.banner_orbit import (_now as _ros_now,
+                                     better_green, fence_ok, green_fix,
                                      lidar_refutes,
                                      leg_clear, orbit_plan,
                                      outbound_structure)
@@ -615,6 +616,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         except (TypeError, ValueError, AttributeError):
             self._entry_xy = None
         self._mouth_moves = 0
+        self._sheet_xy = None
         self._reset_recovery()
         self._enter_square_state()
 
@@ -838,7 +840,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         banner = getattr(self.mav, "banner", None)
         try:
             if float(banner.z) < 0.99:
-                return None
+                return self._carried_range()
             pitch = float(st["requested_rad"])
             below = float(banner.y)
             alt = float(self.mav.alt())
@@ -851,7 +853,91 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             return None
         rng = alt / math.tan(depression)
         self._laid_seen = (rng, self.mav.pos()[:2])
+        self._note_sheet(rng)
         return rng
+
+    # ---- a laid sheet, carried by where it is ---- #
+    CARRY_MARGIN = 0.1        # of the image width, round the green's span
+
+    def _note_sheet(self, rng):
+        """Where the identified laid sheet IS, on the ground: from an
+        unclipped sighting of the gate in front (a clipped box's centre row
+        moves, and a far one is the other gate)."""
+        if rng > self.near_range_m or getattr(self.mav, "banner_clipped", False) is True:
+            return
+        try:
+            x, y = (float(v) for v in self.mav.pos()[:2])
+            h = float(self.mav.yaw()) + bearing_to_angle(
+                float(self.mav.banner_bearing()), self.hfov)
+        except (TypeError, ValueError, AttributeError):
+            return
+        self._sheet_xy = (x + rng * math.cos(h), y + rng * math.sin(h))
+
+    def _carried_bearing(self):
+        """The laid sheet's camera bearing at gate height, or None.
+
+        WHY. From 5 m up the sheet is identified on every frame. At the
+        2.4 m gate height the walls need, it is not: on the corridor's axis
+        4 m out it overflows the frame, and backed off to 7 m its 3-inch
+        border is a few foreshortened pixels -- rendered, ground-only, the
+        aircraft stood square in the mouth, refused it (40/75, then 0/44),
+        and spent every vantage point hunting for it elsewhere. Identity is a
+        property of the sheet, not of the frame: once identified from above,
+        green where the sheet lies IS the sheet. So at gate height, with the
+        sheet in the camera's field of view and a green region spanning the
+        column it should be at, its bearing comes from where it lies.
+        """
+        if self.search_camera_pose != "GROUND" or getattr(self, "_sheet_xy", None) is None:
+            return None
+        try:
+            x, y, z = (float(v) for v in self.mav.pos())
+            yaw = float(self.mav.yaw())
+        except (TypeError, ValueError, AttributeError):
+            return None
+        if z > self.wall_top_m + 0.2:
+            return None                   # above the walls the camera reads it
+        sx, sy = self._sheet_xy
+        ang = self._wrap(math.atan2(sy - y, sx - x) - yaw)
+        half = 0.5 * self.hfov
+        if abs(ang) >= half:
+            return None
+        bearing = -math.tan(ang) / math.tan(half)
+        g = getattr(self.mav, "banner_green", None)
+        if not isinstance(g, dict):
+            return None
+        now = _ros_now(self.mav)
+        if now is not None and now - float(g.get("t", now)) > 1.0:
+            return None
+        W = float((g.get("wh") or [1280, 720])[0])
+        col = 0.5 * W * (1.0 + bearing)
+        margin = self.CARRY_MARGIN * W
+        regions = g.get("regions") or [{"px": g.get("px")}]
+        for r in regions:
+            px = r.get("px")
+            if px and px[0] - margin <= col <= px[0] + px[2] + margin:
+                return bearing
+        return None
+
+    def _carried_range(self):
+        if self._carried_bearing() is None:
+            return None
+        x, y = (float(v) for v in self.mav.pos()[:2])
+        return math.hypot(self._sheet_xy[0] - x, self._sheet_xy[1] - y)
+
+    def _ident(self):
+        """The banner identified, or a laid sheet carried by where it is."""
+        return bool(self.mav.banner_identified()) or self._carried_bearing() is not None
+
+    def _bearing_now(self):
+        """The camera's bearing, or the carried sheet's when the camera's box
+        is cut off (its centre moves) or not identified."""
+        identified = bool(self.mav.banner_identified())
+        if identified and getattr(self.mav, "banner_clipped", False) is not True:
+            return self.mav.banner_bearing()
+        carried = self._carried_bearing()
+        if carried is not None:
+            return carried
+        return self.mav.banner_bearing() if identified else 0.0
 
     def _laid_range_now(self):
         """The sheet's ground range: measured now, or the last one corrected
@@ -1475,7 +1561,10 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                     or box[0]+box[2] >= iw-1 or box[1]+box[3] >= ih-1)
                 area = float(observation.get('board_area_px') or 0.0)
             if not seen:
-                continue
+                carried = self._carried_bearing()
+                if carried is None:
+                    continue
+                seen, b, clipped, area = True, carried, False, 0.0
             seen_any = True
             self._hits += 1
             self._clipped += clipped
@@ -1703,7 +1792,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         """
         psi = self.mav.yaw()
 
-        if not self.mav.banner_identified():
+        if not self._ident():
             # Hold the ALIGNMENT target, not the dwell heading.
             self._hold(self._align_target)
             gone = self.clock() - self._last_seen
@@ -1717,7 +1806,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.RUNNING
 
         self._last_seen = self.clock()
-        bearing = self.mav.banner_bearing()
+        bearing = self._bearing_now()
         self._last_good_bearing = bearing
         self._remember_vantage()
         self._hold(self._align_target)
@@ -1869,8 +1958,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         instead of the gate, and it is why the camera keeps a job here at all:
         it says WHERE to look, the lidar says what is there.
         """
-        if self.mav.banner_identified():
-            self._last_good_bearing = self.mav.banner_bearing()
+        if self._ident():
+            self._last_good_bearing = self._bearing_now()
         self._sector_bearing = bearing_to_angle(self._last_good_bearing,
                                                 self.hfov)
         fit = self.mav.surface_ahead(self._sector_bearing,
@@ -1955,9 +2044,9 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         only with the sheet identified and centred: the camera says this is
         the mouth, the walls say which way the corridor runs.
         """
-        if not self.mav.banner_identified():
+        if not self._ident():
             return None
-        if abs(float(self.mav.banner_bearing())) > 0.25:
+        if abs(float(self._bearing_now())) > 0.25:
             return None
         laid = self.ground_range()
         if laid is None:
@@ -2217,7 +2306,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             # So with the detector blind there is no point spending a step:
             # hold station, keep measuring, and let the lost-banner timeout
             # decide when this has stopped being a dropped frame.
-            if not self.mav.banner_identified():
+            if not self._ident():
                 gone = self.clock() - self._last_seen
                 if gone > self.settle_timeout_s:
                     return self._relocate(
@@ -2280,7 +2369,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 return self._square_failure(
                     "AlignToBanner: banner remains off-centre after lateral "
                     f"corrections; {self._measured()}")
-            bearing = self.mav.banner_bearing()
+            bearing = self._bearing_now()
             lateral = standoff * math.tan(bearing_to_angle(bearing, self.hfov))
             lateral = max(-self.strafe_step_m, min(self.strafe_step_m, lateral))
             ax, ay, az = self._anchor
@@ -2365,8 +2454,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.RUNNING
 
     def _recentre_needed(self):
-        return (self.mav.banner_identified()
-                and abs(self.mav.banner_bearing()) > self.tol)
+        return (self._ident()
+                and abs(self._bearing_now()) > self.tol)
 
     def _recentre(self):
         """Put the bounding box midpoint back on the frame midpoint. Yaw only.
@@ -2381,7 +2470,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         is dead the aircraft still faces the banner; it simply never gets the
         confirmation that lets it advance through the gate.
         """
-        bearing = self.mav.banner_bearing()
+        bearing = self._bearing_now()
         self._last_good_bearing = bearing
         self._last_seen = self.clock()
         self._remember_vantage()

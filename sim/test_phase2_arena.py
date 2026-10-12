@@ -604,3 +604,93 @@ def test_a_dropped_frame_does_not_let_a_far_face_through_as_the_standoff():
     out = leaf._laid_face({"ok": True, "angle_rad": 0.05, "range_m": 7.2,
                            "points": 20, "reason": ""})
     assert out["range_m"] == pytest.approx(sheet), "the sheet's range, not the far face's"
+
+
+# ---- a laid sheet identified from above is carried at gate height ------- #
+
+def _carry_mav():
+    import math
+    mav = MagicMock()
+    mav.pos.return_value = (-0.8, 2.0, 5.0)
+    mav.alt.return_value = 5.0
+    mav.yaw.return_value = math.radians(-50.0)
+    mav.camera_state = {"requested_rad": math.radians(-35.0)}
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=1.0)
+    mav.banner_identified.return_value = True
+    mav.banner_bearing.return_value = 0.0
+    mav.banner_clipped = False
+    mav.node = None                                  # no clock: freshness not checked
+    return mav
+
+
+def _sheet_leaf(mav):
+    from mission_bt.mission_tree import AlignToBanner
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, search_camera_pose="GROUND",
+                         alt_floor_m=2.4384)
+    leaf.ground_range()                              # identified from 5 m up
+    assert leaf._sheet_xy is not None
+    return leaf
+
+
+def _on_axis(mav, leaf, green_cols):
+    """On the corridor axis at gate height, facing the sheet; detector says green
+    (not identified) over the image columns `green_cols`."""
+    import math
+    sx, sy = leaf._sheet_xy
+    mav.pos.return_value = (sx - 4.2, sy, 2.44)
+    mav.alt.return_value = 2.44
+    mav.yaw.return_value = 0.0
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=0.5)
+    mav.banner_identified.return_value = False
+    mav.banner_green = {"px": [green_cols[0], 300, green_cols[1] - green_cols[0], 200],
+                        "wh": [1280, 720], "t": 0.0, "regions": []}
+
+
+def test_a_laid_sheet_identified_from_above_is_held_at_gate_height():
+    # Rendered, ground-only: identified 100/100 from 5 m, refused at 2.4 m on the
+    # axis (overflowing, then too foreshortened), and the stage ran out of places.
+    mav = _carry_mav()
+    leaf = _sheet_leaf(mav)
+    _on_axis(mav, leaf, (0, 1280))                   # overflowing the frame
+    assert leaf._ident()
+    assert abs(leaf._bearing_now()) < 0.01
+    assert leaf.ground_range() == pytest.approx(4.2, abs=0.01)
+
+
+def test_green_away_from_where_the_sheet_lies_is_not_carried():
+    mav = _carry_mav()
+    leaf = _sheet_leaf(mav)
+    _on_axis(mav, leaf, (1000, 1280))                # green off to the right only
+    assert not leaf._ident()
+    assert leaf.ground_range() is None
+
+
+def test_above_the_walls_the_camera_must_read_the_sheet_itself():
+    mav = _carry_mav()
+    leaf = _sheet_leaf(mav)
+    _on_axis(mav, leaf, (0, 1280))
+    sx, sy = leaf._sheet_xy
+    mav.pos.return_value = (sx - 4.2, sy, 5.0)
+    assert not leaf._ident()
+
+
+def test_a_hung_pass_carries_nothing():
+    from mission_bt.mission_tree import AlignToBanner
+    mav = _carry_mav()
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, alt_floor_m=2.4384)
+    leaf._sheet_xy = (3.0, 0.0)
+    mav.banner_identified.return_value = False
+    mav.banner_green = {"px": [0, 300, 1280, 200], "wh": [1280, 720], "t": 0.0}
+    mav.pos.return_value = (0.0, 0.0, 2.44)
+    mav.yaw.return_value = 0.0
+    assert not leaf._ident()
+
+
+def test_a_clipped_box_takes_the_sheets_bearing_not_the_boxs():
+    mav = _carry_mav()
+    leaf = _sheet_leaf(mav)
+    _on_axis(mav, leaf, (0, 1280))
+    mav.banner_identified.return_value = True
+    mav.banner_clipped = True
+    mav.banner_bearing.return_value = 0.4            # the cut box's centre
+    assert abs(leaf._bearing_now()) < 0.01
