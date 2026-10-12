@@ -487,3 +487,32 @@ def test_a_route_down_where_it_is_clear_is_not_cut_short_by_a_sighting():
     leaf._restart_sweep_at(21.7, -6.8, 2.44, 3.14)
     assert leaf._mouth_leg, "the sighting interrupt is off for the route"
     assert leaf._anchor[:2] == (21.1, -2.6)
+
+
+# ---- gate-height work stays under a hung banner ------------------------- #
+
+def _align_floors(extra):
+    import math
+    from mission_bt.mission_tree import AlignToBanner, build_root
+    from test_fail_closed_stages import FakeMav
+    params = {'takeoff_alt': 5.0, 'search_alt': 10.0, 'drop_alt': 5.0,
+              'image_width_px': 1280, 'camera_hfov': 1.0472, 'target_marker_m': 1.0,
+              'px_per_module_floor': 5.3, 'lane_overlap': 0.30,
+              'zone_boundary_clearance': 1.0, 'corridor_alt': 2.4384,
+              'scan_floor_alt': 2.0, 'land_commit_alt': 1.5,
+              'banner_sweep_limit': math.pi, **extra}
+    root = build_root(FakeMav(), MagicMock(), params)
+    return {leaf.alt_floor_m for leaf in root.iterate() if isinstance(leaf, AlignToBanner)}
+
+
+def test_with_a_foot_tall_hung_banner_the_gate_work_stays_half_a_metre_under_it():
+    floors = _align_floors({'banner_bottom_m': 3.048 - 0.3048})
+    assert floors and all(f == pytest.approx(3.048 - 0.3048 - 0.5) for f in floors)
+
+
+def test_without_the_banner_edge_the_gate_work_is_at_the_navigation_height():
+    assert all(f == pytest.approx(2.4384) for f in _align_floors({}))
+    assert all(f == pytest.approx(1.5) for f in _align_floors({'banner_bottom_m': 1.898}))
+    # Laid on the ground, nothing hangs: the edge the GCS records steers nothing.
+    assert all(f == pytest.approx(2.4384) for f in _align_floors(
+        {'banner_bottom_m': 2.7432, 'banner_placement': 'ground'}))

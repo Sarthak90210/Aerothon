@@ -6638,6 +6638,16 @@ def build_root(mav, node, p):
                              # No outward expansion inside a supplied boundary.
                              search_budget_m=0.0)
     gate_advance_m = p.get('gate_advance_m', 10.0)
+    # THE GATE-HEIGHT WORK STAYS UNDER A HUNG BANNER. The search, orbits and
+    # relocations at a gate fly at this height, where the lidar sees the
+    # walls and posts -- but not a banner above its plane. At the 8 ft
+    # navigation height a foot-tall banner hung from the 10 ft rod leaves
+    # centimetres over the airframe's top: rendered, a leg at 2.44 m clipped
+    # the orange banner's 2.74 m edge and the aircraft came down in the
+    # return lane. With the lower edge from the GCS, keep half a metre under.
+    gate_alt = p['corridor_alt']
+    if p.get('banner_bottom_m') and p.get('banner_placement') != 'ground':
+        gate_alt = max(1.5, min(gate_alt, float(p['banner_bottom_m']) - 0.5))
     # The crossing runs from the stand-off, up to half the lidar's range
     # out, through the gate: capped at the corridor length alone, a 5 m
     # corridor refused a crossing measured at 5.6 m (clarified arena).
@@ -6705,7 +6715,7 @@ def build_root(mav, node, p):
         # One alignment pass per banner view: a hung board, then one
         # lying on the ground. See align_to_every_banner.
         *align_to_every_banner(mav, clock, p, "Outbound",
-                               alt_floor_m=p['corridor_alt']),
+                               alt_floor_m=gate_alt),
         # LOWER ONLY ONCE SQUARED UP. Descending while still off to one side
         # of the gate put the aircraft low and pointed at the board, and it
         # drove into it. AlignToBanner now finishes with the aircraft in front
@@ -6826,7 +6836,7 @@ def build_root(mav, node, p):
         # settlement before reusing the near-view detector. AlignToBanner
         # retains its bounded level-camera retry for low gate-height views.
         *align_to_every_banner(mav, clock, p, "Return",
-                               alt_floor_m=p['corridor_alt']),
+                               alt_floor_m=gate_alt),
         ClimbInPlace("DescendToReturnCorridor", mav, p['corridor_alt']),
         SetCameraPose("CameraForwardForReturn", mav, "FORWARD"),
         return_duck,
