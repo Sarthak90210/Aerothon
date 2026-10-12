@@ -787,7 +787,27 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if not (math.isfinite(depression) and math.isfinite(alt)) \
                 or depression <= math.radians(3.0) or alt <= 0.3:
             return None
-        return alt / math.tan(depression)
+        rng = alt / math.tan(depression)
+        self._laid_seen = (rng, self.mav.pos()[:2])
+        return rng
+
+    def _laid_range_now(self):
+        """The sheet's ground range: measured now, or the last one corrected
+        for how far the aircraft has moved since. At gate height the
+        detector's hold on a laid sheet flickers, and a tick without it is
+        not a reason to forget where the sheet is."""
+        rng = self.ground_range()
+        if rng is not None:
+            return rng
+        seen = getattr(self, "_laid_seen", None)
+        if seen is None:
+            return None
+        r0, (x0, y0) = seen
+        try:
+            x, y = self.mav.pos()[:2]
+        except (TypeError, ValueError):
+            return None
+        return max(0.5, r0 - math.hypot(x - x0, y - y0))
 
     def _sighting_range(self):
         return self.range_from_area(getattr(self.mav, "banner_board_area", 0.0))
@@ -1764,7 +1784,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             # obstacle's 1.6 m face square across the lane at 6.2 m right
             # behind it (clarified arena, return gate). `_laid_face` squares
             # on a face beyond the mouth with the sheet's range.
-            sheet = self.ground_range()
+            sheet = self._laid_range_now()
             if sheet is not None:
                 beyond = self.mav.surface_ahead(
                     self._sector_bearing, self.sector_half_width,

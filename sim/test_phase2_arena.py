@@ -370,3 +370,19 @@ def test_past_the_mouth_the_widest_face_wins_over_a_stub_of_wall_end():
                       min_range_m=5.0, widest_first=True)
     assert far["ok"] and far["range_m"] == pytest.approx(6.2, abs=0.05)
     assert abs(far["angle_rad"]) < math.radians(2.0)
+
+
+def test_a_flickering_identification_does_not_forget_where_the_sheet_is():
+    import math
+    from mission_bt.mission_tree import AlignToBanner
+    mav = MagicMock()
+    mav.pos.return_value = (20.0, -6.8, 2.4)
+    mav.alt.return_value = 2.4
+    mav.camera_state = {"requested_rad": math.radians(-35.0)}
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=1.0)
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, search_camera_pose="GROUND")
+    seen = leaf._laid_range_now()
+    assert seen == pytest.approx(2.4 / math.tan(math.radians(35.0)))
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=0.5)     # dropped a frame
+    mav.pos.return_value = (19.5, -6.8, 2.4)                    # and moved 0.5 m in
+    assert leaf._laid_range_now() == pytest.approx(seen - 0.5)
