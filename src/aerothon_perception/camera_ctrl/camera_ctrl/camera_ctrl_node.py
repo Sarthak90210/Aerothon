@@ -14,6 +14,7 @@ WHY THIS EXISTS
 NAMED POSES
     FORWARD   0 deg    corridor navigation
     BANNER  -20 deg    banner detection from above corridor altitude
+    GROUND  -35 deg    a banner laid flat in front of the corridor
     NADIR   -90 deg    start-QR scan, lawnmower search, winch drop, landing
     ALIGN   -45 deg    intermediate, target centring during descent
 
@@ -88,6 +89,12 @@ NAMED_POSES_DEG = {
     # altitude, so the rulebook order can be followed rather than worked
     # around by descending first.
     "BANNER": -20.0,
+    # A banner laid flat in front of the corridor (organiser clarification).
+    # The frame spans +-18 deg about this: from gate height (3 m) it covers
+    # 2.3-10 m of ground ahead, from the 5 m return-search height 3.8-16 m,
+    # so the sheet is in frame both squared up and on the return approach.
+    # -30 put it on the bottom edge from 5 m up, 5 m out.
+    "GROUND": -35.0,
 }
 
 

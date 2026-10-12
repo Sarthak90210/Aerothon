@@ -35,6 +35,10 @@ from sensor_msgs.msg import BatteryState, LaserScan, NavSatFix
 from std_msgs.msg import Bool, String, UInt32
 
 from gcs_aggregator.readiness import blocking_reasons, evaluate, is_ready
+# One definition of a valid colour, shared with the detectors that use it:
+# a panel saying "loaded" for a payload perception refuses is worse than
+# no panel at all.
+from perception_banner.colours import validate as validate_colours
 from mission_bt.delivery_zone import (parse_boundary, boundary_to_local_zone,
                                       parse_polygon, point_inside_with_margin,
                                       polygon_to_local)
@@ -146,6 +150,8 @@ class Readiness(Node):
         self.fence_parse_reason = "arena geofence boundary is missing"
         self.create_subscription(String, "/mission/geofence",
                                  self._on_geofence, boundary_qos)
+        self.create_subscription(String, "/mission/banner_colours",
+                                 self._on_banner_colours, boundary_qos)
 
         self.pub = self.create_publisher(Bool, "/mission_ready", 10)
         self.pub_detail = self.create_publisher(String, "/mission_ready/detail", 10)
@@ -265,6 +271,31 @@ class Readiness(Node):
         self.fence_vertices, self.fence_parse_reason = parse_polygon(
             m.data, what="geofence")
         self._resolve_geofence()
+
+    def _on_banner_colours(self, m):
+        """The organisers' HEX shades, validated exactly as the detectors do.
+
+        Reported here by the same rules perception applies, so the panel
+        cannot say "loaded" for a payload the detectors will refuse.
+        """
+        try:
+            supplied = validate_colours(json.loads(m.data).get("colours"))
+        except (ValueError, TypeError, AttributeError, json.JSONDecodeError) as error:
+            self.obs["banner_colours_valid"] = False
+            self.obs["banner_colours_reason"] = str(error) or "banner colours are invalid"
+            self.obs["banner_colours_value"] = "invalid"
+            return
+        missing = sorted({"green", "orange"} - set(supplied))
+        if missing:
+            self.obs["banner_colours_valid"] = False
+            self.obs["banner_colours_reason"] = (
+                f"no shade supplied for the {', '.join(missing)} banner")
+            self.obs["banner_colours_value"] = "incomplete"
+            return
+        self.obs["banner_colours_valid"] = True
+        self.obs["banner_colours_reason"] = ""
+        self.obs["banner_colours_value"] = " ".join(
+            f"{name}={supplied[name]}" for name in sorted(supplied))
 
     def _resolve_geofence(self):
         """Same acceptance as the mission's UploadArenaFence pre-check."""

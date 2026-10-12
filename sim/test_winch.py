@@ -102,9 +102,9 @@ class WinchTests(unittest.TestCase):
         self.advance(2.0)
         self.assertGreater(self.node.payout, before)
 
-    def test_lowering_reaches_ground_state(self):
+    def test_estimated_ground_travel_does_not_claim_ground_contact(self):
         self.lower_to_ground(4.0)
-        self.assertIn(self.node.state, ("AT_GROUND",))
+        self.assertEqual(self.node.state, "LOWERING")
         self.assertTrue(self.node.at_ground() or self.node.at_limit())
 
     def test_payout_never_exceeds_spool(self):

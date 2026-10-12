@@ -16,8 +16,10 @@ Exit 0 only if every run completed AND passed its grade.
 
 import argparse
 import json
+import math
 import os
 import signal
+from sensor_cadence import CAMERA_CAPTURE_HZ, LIDAR_SCAN_HZ
 import subprocess
 import sys
 import time
@@ -29,6 +31,7 @@ sys.path.insert(0, str(ROOT / "sim"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import world_spec as W                                      # noqa: E402
+from campaign_record import navigation_grade, source_manifest
 from headless_world import organiser_inputs                 # noqa: E402
 
 PKGS = [("aerothon_mission", "mission_bt"), ("aerothon_avoidance", "avoidance"),
@@ -57,11 +60,24 @@ def node_cmd(module, params):
     return [sys.executable, "-c", f"from {module} import main; main()"] + args
 
 
-def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain):
+def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigation_only=False,
+        injected_command_delay_s=.4):
+    if not math.isfinite(injected_command_delay_s) or injected_command_delay_s<0:
+        raise ValueError('Injected command delay must be finite and nonnegative')
     spec = W.load(spec_path)
     name = f"{spec_path.stem}_{conditions or 'spec'}_s{seed}"
     out = out_root / name
-    out.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=False)
+    (out/'world_spec.json').write_bytes(spec_path.read_bytes())
+    (out/'configuration.json').write_text(json.dumps(dict(world=str(spec_path),seed=seed,
+        conditions=conditions,rtf=rtf,max_sim_s=max_sim_s,ros_domain=domain,
+        fidelity='object-level navigation; no rendered images or motor telemetry',
+        navigation_only=navigation_only,delivery_exercised=not navigation_only,
+        vel_command_delay_s=injected_command_delay_s,vel_response_s=0.6,
+        injected_command_delay_s=injected_command_delay_s,
+        artificial_transport_delay_injected=injected_command_delay_s>0,
+        camera_capture_hz=CAMERA_CAPTURE_HZ,lidar_scan_hz=LIDAR_SCAN_HZ),indent=2))
+    (out/'source_manifest.json').write_text(json.dumps(source_manifest(ROOT),indent=2))
     zone, fence = organiser_inputs(spec)
     env = dict(os.environ, ROS_DOMAIN_ID=str(domain), ROS_LOCALHOST_ONLY="1",
                AEROTHON_DELIVERY_ZONE=zone, AEROTHON_GEOFENCE=fence,
@@ -70,14 +86,17 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain):
                    + [os.environ.get("PYTHONPATH", "")]))
     world = [sys.executable, str(ROOT / "sim/headless_world.py"), str(spec_path),
              "--seed", str(seed), "--out", str(out), "--rtf", str(rtf),
-             "--max-sim-s", str(max_sim_s)]
+             "--max-sim-s", str(max_sim_s), "--vel-command-delay-s", str(injected_command_delay_s)]
     if conditions:
         world += ["--conditions", conditions]
     stack = [
-        node_cmd("mission_bt.mission_tree", {
+        [sys.executable,str(ROOT/'sim/record_delivery.py'),'--out',str(out),
+         '--timeout',str(max_sim_s/max(.2,rtf)*3+120)],
+        node_cmd("sim.navigation_mission" if navigation_only else "mission_bt.mission_tree", {
             "camera_hfov": 0.851919,
             "target_marker_m": float(spec["qr"]["target_m"])}),
-        node_cmd("avoidance.velocity_controller", {"scan_topic": "/scan"}),
+        node_cmd("avoidance.velocity_controller", {"scan_topic": "/scan",
+                                                  "vel_command_delay_s": float(injected_command_delay_s)}),
         node_cmd("camera_ctrl.camera_ctrl_node", {"backend": "sim"}),
         node_cmd("winch_ctrl.winch_node", {"backend": "gazebo"}),
         [sys.executable, str(ROOT / "scripts/publish_delivery_zone.py")],
@@ -106,6 +125,15 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain):
     log.close()
 
     run = json.loads((out / "run.json").read_text()) if (out / "run.json").exists() else {}
+    nav={}
+    if (out/'track.csv').exists() and (out/'layout.json').exists():
+        from check_track import load_track
+        # The world trajectory is simulator truth, kept separate from onboard.jsonl.
+        (out/'evaluation_truth_track.csv').write_bytes((out/'track.csv').read_bytes())
+        nav=navigation_grade(load_track(str(out/'track.csv')),
+            json.loads((out/'layout.json').read_text()),run.get('start_target','a'),
+            independent_contacts=run.get('contacts'))
+        (out/'navigation_grade.json').write_text(json.dumps(nav,indent=2))
     grade = subprocess.run(
         [sys.executable, str(ROOT / "sim/check_track.py"), "--track", str(out / "track.csv"),
          "--layout", str(out / "layout.json"), "--target", run.get("start_target", "a")],
@@ -114,6 +142,10 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain):
     result = (run.get("result") or {}).get("state", "NO_OUTCOME")
     fails = [line.strip()[7:] for line in grade.stdout.splitlines() if "[FAIL]" in line]
     return {"run": name, "result": result, "grade": "PASS" if grade.returncode == 0 else "FAIL",
+            "navigation_pass":result in ('COMPLETED','DELIVERY_UNCONFIRMED') and nav.get('pass_navigation',False),
+            "delivery_exercised":not navigation_only,
+            "navigation_failures":[k for k,v in nav.get('checks',{}).items() if not v],
+            "rendered_perception_qualified":False,"motor_delivery_qualified":False,
             "fails": fails, "contacts": len(run.get("contacts", [])),
             "fence": run.get("fence_breaches", 0), "sim_s": run.get("sim_s"),
             "wall_s": round(time.monotonic() - t0), "reason":
@@ -137,6 +169,7 @@ def main():
     ap.add_argument("--seed", dest="seeds")
     ap.add_argument("-j", "--jobs", type=int, default=1)
     ap.add_argument("--rtf", type=float, default=2.0)
+    ap.add_argument('--navigation-only',action='store_true',help='omit unqualified delivery in object fixture; never qualifies a full mission')
     ap.add_argument("--max-sim-s", type=float, default=1200.0)
     ap.add_argument("--domain-base", type=int, default=100,
                     help="first ROS domain; give concurrent campaigns disjoint "
@@ -158,7 +191,7 @@ def main():
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(
             lambda iv: fly(iv[1][0], args.conditions, iv[1][1], args.out, args.rtf,
-                           args.max_sim_s, args.domain_base + iv[0] % 100),
+                           args.max_sim_s, args.domain_base + iv[0] % 100,args.navigation_only),
             enumerate(runs)))
     ok = 0
     print(f"\n{'run':44s} {'result':10s} {'grade':5s} {'hits':>4s} {'fence':>5s} "

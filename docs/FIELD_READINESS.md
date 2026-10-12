@@ -1,5 +1,135 @@
 # Field readiness: from simulation to the first real flight
 
+## Current qualification status, 2026-10-07
+
+The latest full offline suite passes 1376 tests with 3 skipped. Syntax,
+configuration and frontend checks also pass. The decision-producing source
+still matches the archived standard calm seeds, both of which pass all 22
+checks. Headless observation/receipt/terminal recording and runtime-capture
+output scope have been repaired; their focused regressions pass.
+
+Broader qualification remains failed. The archived-source matrix closed 200
+requested combinations with 160 executed, zero navigation passes and 40
+classified without flight. A fresh corrected headless calm my_world seed 1
+trial still fails return recovery and 0.70 m clearance. Coupled gust/control
+qualification remains open. Fresh full rendered shipped, rotated and split
+courses are active after the repaired runtime capture. Evidence and current
+coordination are in logs/reliability_observation_and_capture_qualification_20261007.
+Hardware and staged flights remain deferred and unqualified.
+
+## Archived standard pair qualification, 2026-10-06
+
+Both current-source full standard calm seeds now pass all 22 checks. Seed
+20261003 takes 865.0 s with 0.7258271521 m corridor clearance; seed 1001 takes
+880.0 s with 0.7130100272 m. Their restricted-zone clearances are 1.5967184497 m
+and 1.6248532894 m. Motor confirmation, input isolation, camera through fresh
+connected disarm and verified exact source/runtime evidence pass. The latest
+complete offline suite passes 1367 tests with 3 skipped; all syntax,
+configuration and frontend checks pass. Changing gusts with delayed control,
+broader campaigns and additional rendered courses remain under qualification.
+Hardware and staged flights remain deferred and unqualified.
+
+## Earlier archived tests
+
+The latest bannerfix repeat failed the return corridor at 0.684245767 m
+independent clearance. It entered RTL; recording stopped at 929.515 s while
+still armed, before landing/disarm. Six checks fail. Its partial video and
+exact 752-file archive are preserved. It is not a full acceptance pass.
+
+Parallel diagnosis fixed a verified FCU sample-time mismatch. Three archived
+regressions fail; 31 current related checks pass. The mismatch explains only
+part of the recorded response error. Current production/tests are frozen for
+the full offline suite before a focused rendered repeat from this failure's
+FCU entry. No clearance/reserve change was made. The task-scoped background
+launcher is tested with harmless processes; it has not yet qualified a full
+recording. Hardware qualification and flights remain deferred.
+
+The most recent full standard run completed and disarmed, passing 21/22
+checks. Its sole failure was 965.0 s flight against the unchanged 900 s limit;
+corridor clearance was 0.723653986 m and restricted-zone clearance
+1.635075236 m. Fresh motor-qualified delivery and input isolation passed.
+The complete video and exact source are preserved. This is not full acceptance.
+
+The return-banner search rejected an actual oblique camera view at board
+aspect 0.82. A captured-frame regression fails before the measured aspect
+floor change from 0.9 to 0.8. All 209 banner regressions now pass and the
+package rebuilt; lidar alignment and clearance gates remain unchanged. A fresh
+full calm seed 20261003 bannerfix run is running on frozen source. Both
+current-source standard seeds and a renewed full suite remain required before
+broader qualification. The 1336-test suite below predates this banner change.
+
+Earlier results below are chronological evidence for their archived source.
+
+The latest focused rendered return passed all six checks at 0.739236132 m
+minimum clearance, completed the full corridor below the walls and disarmed.
+All 170 recorded navigation decisions used fresh actual FCU EKF velocity;
+maximum recorded age 0.069 s. The complete video and exact 752-file source
+archive verify. This qualifies the focused return only. The full offline suite
+and both full standard seeds must pass on this source before campaigns.
+
+The full current offline suite now passes 1336 tests, with 3 skips, in
+680.27 s. Syntax, XML/YAML and frontend checks also pass. The full calm standard
+seed 20261003 recording is running; full-mission qualification remains pending.
+
+Current-source full acceptance is not qualified. The fresh calm seed 20261003
+run failed on return, reporting STUCK and independent clearance 0.680769329 m.
+It returned by RTL and disarmed. Delivery motor qualification passed, with
+inconclusive visual ground support. Issue 16 tracks the recorded return
+failure. Its full video, separate native truth and verified 750-file source
+archive are preserved. The broader campaign gate remains closed.
+
+Before the latest yaw/receipt changes, the offline suite passed 1323 tests,
+with 3 skips. That whole-suite result needs a fresh run. The focused 117
+geometry/stress/delay checks pass. Coupled delay/gust probes still fail under
+issue 15. Offline passes do not override the rendered clearance failure.
+
+The yaw/receipt controller passed 61 corridor regressions and rebuilt. The
+physical fixtures now queue yaw with velocity and convert body velocity once
+at receipt, matching the installed ArduPilot handler. Headless frame tests
+passed 7/7. A repeat rendered return is required; no rendered fix is claimed.
+
+The two passing standard runs described below qualify older archived source.
+
+Work is simulation only. Full rendered standard `my_world.json`, calm seed
+20261003, passed all 22 acceptance checks in 864.1 s, with 0.74146 m corridor
+clearance and 1.56742 m restricted-zone clearance. Seed 1001 also passed all
+22 checks in 888.0 s, with 0.76247 m corridor and 1.63821 m restricted-zone
+clearance, using the same drone source and frozen motor profile. Both landed
+at home and disarmed. Those records satisfied the gate for their archived source.
+
+Those passes qualify their archived source. Subsequent gust regression work
+changed avoidance motion certification to include the measured disturbance
+trend. The minimized dirty and late-scan failures now pass at 0.77850 m and
+0.75809 m respectively. Broad checks and fresh rendered qualification of
+that controller change must pass before the next campaign. Its first fresh
+full run failed, as recorded above.
+
+The 117-check broad selection now passes, including the original gust
+regressions. Two additional probes coupling gusts with physical 0.4 s command
+transport still contact obstacles. Those are failures on feasible geometry,
+not infeasibility classifications. They remain open under simulation issue 15.
+No combined delayed-gust or current worst-condition qualification is claimed.
+Older worst-condition findings below are historical. Two subsequent gust
+regressions remain unresolved. Headless physical command timing now matches
+its controller's 0.4 s delay, with 100 related checks passing. Full offline
+and broader fixture/weather runs are in progress. No current
+whole-suite or worst-condition qualification is claimed.
+
+Headless navigation does not qualify rendered perception or motor-based
+delivery. Delivery now uses calibrated FCU motor outputs first, with onboard
+camera evidence recorded separately. An inconclusive camera view must not
+be reported as dual-channel agreement. After three unsuccessful attempts,
+the drone fully retracts the hook according to commanded travel estimates,
+then continues with delivery marked unconfirmed. Estimated travel is not
+measured hook position.
+
+Hardware and flights remain deferred. The wiring and settings described
+below are proposals until measured and reviewed. Do not load guessed output
+assignments. Record connected-hardware evidence using
+[HARDWARE_QUALIFICATION_RECORD.md](HARDWARE_QUALIFICATION_RECORD.md), beginning
+with props-off checks. Actual loaded/unloaded hover trials are required to
+qualify the load signal; props-off bench data cannot establish it.
+
 The simulator can show that the software survives conditions. It cannot
 show what the real aircraft is. This page lists what has been proven in
 simulation, then everything that must be measured or set on the real
@@ -17,7 +147,7 @@ fidelity, where each rung is cheap enough to run many times.
 | Rung | What it runs | What it proves | Command |
 |---|---|---|---|
 | Unit / stage | each detector, stage and rail against fakes and synthetic scans | logic, fail-closed rails, every corruption severity the detectors are held to | `python3 -m pytest sim/ tests/` |
-| Headless closed loop | the real mission tree, navigator, camera and winch nodes against `sim/headless_world.py` (kinematic airframe, ray-cast LD06, object-level detectors calibrated to the real ones, wind, GPS/baro/IMU error, glitches) | the whole mission under any `conditions`, many seeds, in minutes | `python3 sim/fly_headless.py sim/worlds/*.json --conditions worst --seeds 1-5 -j 3` |
+| Headless closed loop | navigation nodes against a kinematic airframe, ray-cast lidar, object-level detections and sensor corruption | navigation within the declared model; no rendered perception or motor-delivery qualification | `python3 sim/run_navigation_campaign.py --help` for the gated campaign |
 | Gazebo + SITL | ArduPilot's own EKF and controllers, rendered camera through `degrade_node`, the LD06 plugin | the real flight-controller behaviour: EKF glitch rejection, failsafes, mount and winch commands | `scripts/run_custom_world.sh NAME --conditions worst --seed 3` |
 | Bench (this page, §2) | the real Pi 5, sensors and Pixhawk, props off | wiring, drivers, frames, parameters | `scripts/check_sensors.py` |
 | Build-up flights (§4) | the real aircraft, one capability at a time | the numbers simulation assumed | — |
@@ -89,13 +219,18 @@ What the worst campaign found and fixed is in the git history under
    integrates it from `payout_rate_mps` and `stow_rate_mps`. Time a known
    length each way and set both in
    `src/aerothon_mission/mission_bringup/config/venue.yaml`. If the winch
-   is slower than the setting, the payload is declared down while it still
-   hangs, the gravity hook never opens, and it is reeled back up.
-   The drop only counts once the nadir camera sees the payload on the
-   ground. It looks for saturated yellow. Paint or wrap the payload yellow,
-   or set `hsv_lo` / `hsv_hi` in `venue.yaml` to its colour. Check it with
-   the payload on the ground under the hovering aircraft:
-   `ros2 topic echo /percep/payload` must show `visible: true`.
+   is slower than the setting, commanded travel can overestimate deployment
+   or full stow. Those estimates do not establish touchdown or detachment.
+   The delivery observer establishes loaded hover, lowers, assesses load
+   reduction, commands a short retraction probe, and requires qualified
+   unloaded telemetry after full estimated stow. Load returning or observed
+   payload rise causes another lowering attempt. Three failed attempts lead
+   to full estimated stow and unconfirmed mission continuation.
+   The onboard payload finder uses colour and apparent size. Check its
+   actual acquisition, tracking and range estimates with the real payload
+   before selecting camera settings. `visible: true` alone does not qualify
+   ground support or release. Freeze motor/load thresholds from separate
+   actual loaded and unloaded hover trials before acceptance flights.
 7. **CPU budget.** Run `python3 scripts/bench_perception.py` on the Pi 5
    with the stack stopped. On a 2.1 GHz Xeon core, the NADIR set (QR on
    bare grass, the red-zone mask and the payload finder) came to 47 ms
@@ -172,8 +307,10 @@ Stop and investigate on any of these:
 
 ## 5. Go / no-go on the day
 
-- **Wind.** Mean wind at or below 8 m/s and gusts at or below 12 m/s, the
-  worst preset's envelope. Above that, nothing here has been tested.
+- **Wind.** A flight wind/gust envelope is still unqualified. The 8 m/s mean
+  and 12 m/s peak preset values describe test inputs. Current coupled
+  delay/gust diagnostics breach clearance (issue 15). Set flight go/no-go
+  limits only after reviewed simulation and measured hardware response trials.
 - **Battery.** Pack at or above 15.0 V at rest (the readiness interlock
   refuses below that).
 - **GPS.** 12 satellites or more.

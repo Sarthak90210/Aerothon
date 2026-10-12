@@ -6,6 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { drawHUD, drawMap, drawSlam, type OccGrid } from "./render";
 import type { Telemetry, Envelope } from "./types";
 import "./gcs.css";
+import ArenaDimensions from "./ArenaDimensions";
 
 const CL: [string, string][] = [
   ["takeoff", "Auto Takeoff (5m)"], ["start_qr", "Scan & Decode Start QR"],
@@ -18,14 +19,26 @@ const STEP: Record<string, number> = {
   WINCH_DROP: 5, RETURN: 6, RETURN_CORRIDOR: 6, LAND: 7,
 };
 
+// The full mission, and each part it can be cut down to for a test run.
+const TEST_PARTS = ["mission", "start_qr", "corridor_out", "search",
+                    "delivery", "return_corridor"];
+
 export default function App() {
   const [S, setS] = useState<Telemetry | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [linked, setLinked] = useState(false);
+  const [testPart, setTestPart] = useState("mission");
+  // The organisers publish the banner shades as HEX before the competition.
+  // The banners carry no text, so this is what tells the aircraft which
+  // corridor it may use.
+  const [bannerGreen, setBannerGreen] = useState("#07A03D");
+  const [bannerOrange, setBannerOrange] = useState("#EB5A0A");
+  const [bannerRed, setBannerRed] = useState("#C4161C");
   const [endpoint, setEndpoint] = useState("ws://127.0.0.1:8765");
   const [activeEndpoint, setActiveEndpoint] = useState("ws://127.0.0.1:8765");
   const [connectionNonce, setConnectionNonce] = useState(0);
   const [view, setView] = useState<"map" | "cam" | "slam">("map");
+  const [dimsOpen, setDimsOpen] = useState(false);
   // The composite overlay is the default: the live camera with whatever is
   // currently detected drawn on it. The per-detector streams are kept
   // selectable because they are what proved the banner lettering bug.
@@ -247,6 +260,16 @@ export default function App() {
   })();
 
   const f = S?.flight, m = S?.mission, p = S?.percep, sa = S?.safety;
+  // Nothing autonomous starts unless the interlock is satisfied AND the FCU
+  // is in GUIDED: the stack flies by streaming external setpoints, which
+  // ArduCopter acts on in GUIDED and ignores in AUTO. The aggregator enforces
+  // this; the button says WHY rather than being silently dead.
+  const flightMode = m?.mode ?? "";
+  const inGuided = flightMode === "GUIDED";
+  const canStart = Boolean(sa?.ready) && inGuided;
+  const startBlocked = !sa?.ready
+    ? "mission interlock not ready"
+    : (inGuided ? "" : `flight mode is ${flightMode || "unknown"}; GUIDED required to start`);
   const scans = S?.scans ?? [];
   const cur = STEP[m?.state ?? ""] ?? -1;
   const pill = (g: boolean | undefined, a: string, b: string, inv = false) =>
@@ -285,6 +308,8 @@ export default function App() {
           <button className={`view-btn ${view === "map" ? "active" : ""}`} onClick={() => setView("map")}>Flight Map</button>
           <button className={`view-btn ${view === "cam" ? "active" : ""}`} onClick={() => setView("cam")}>Video</button>
           <button className={`view-btn ${view === "slam" ? "active" : ""}`} onClick={() => setView("slam")}>SLAM</button>
+          <button className={`view-btn ${dimsOpen ? "active" : ""}`} onClick={() => setDimsOpen(true)}
+                  title="Corridor, hall, banner, QR, red-zone and payload dimensions">ARENA</button>
         </div>
         <div className="spacer" />
         <div className="stat"><span className="k">GPS</span><span className="v mono">{(S as any)?.gps?.fix || "—"} · {S?.gps?.sats || 0}</span></div>
@@ -415,6 +440,22 @@ export default function App() {
                   <button onClick={() => send("gimbal_pitch", { degrees: -45 })}>45° DOWN</button>
                   <button onClick={() => send("gimbal_pitch", { degrees: -90 })}>DOWN</button>
                 </div>
+                {/* BANNER COLOURS — the organisers give these as HEX before
+                    the competition. The banners carry no text, so colour is
+                    what tells the aircraft which corridor it may use, and
+                    the interlock holds until they are supplied. */}
+                <div className="gimbal-control">
+                  <span>BANNER COLOURS · {String(sa?.ready_items?.find((i) => i.key === "banner_colours")?.value ?? "not supplied")}</span>
+                  <input aria-label="Green banner colour" type="color" value={bannerGreen}
+                         onChange={(e) => setBannerGreen(e.target.value)} />
+                  <input aria-label="Orange banner colour" type="color" value={bannerOrange}
+                         onChange={(e) => setBannerOrange(e.target.value)} />
+                  <input aria-label="Restricted zone colour" type="color" value={bannerRed}
+                         onChange={(e) => setBannerRed(e.target.value)} />
+                  <button onClick={() => send("set_banner_colours", {
+                    colours: { green: bannerGreen, orange: bannerOrange, red: bannerRed },
+                  })}>SUPPLY</button>
+                </div>
               </div>
             )}
           </div>
@@ -458,12 +499,19 @@ export default function App() {
         </aside>
       </main>
 
+      {dimsOpen && <ArenaDimensions S={S} send={send} onClose={() => setDimsOpen(false)} />}
+
       <footer>
         <div className="btns">
           <button className="primary" onClick={() => send("set_mode", { mode: "GUIDED" })}>GUIDED</button>
-          <button disabled={!sa?.ready} onClick={() => send("arm", {}, true)}>ARM</button>
-          <button disabled={!sa?.ready} onClick={() => send("takeoff", { alt: 5.0 })}>TAKEOFF</button>
-          <button disabled={!sa?.ready} className="primary" onClick={() => send("start_mission", {}, true)}>START M2</button>
+          <button disabled={!canStart} title={startBlocked} onClick={() => send("arm", {}, true)}>ARM</button>
+          <button disabled={!canStart} title={startBlocked} onClick={() => send("takeoff", { alt: 5.0 })}>TAKEOFF</button>
+          <button disabled={!canStart} title={startBlocked} className="primary" onClick={() => send("start_mission", {}, true)}>START M2</button>
+          <select aria-label="Test part" value={testPart} onChange={(e) => setTestPart(e.target.value)}>
+            {TEST_PARTS.map((part) => <option key={part} value={part}>{part}</option>)}
+          </select>
+          <button disabled={!canStart || testPart === "mission"} title={startBlocked}
+                  onClick={() => send("start_test", { part: testPart }, true)}>START PART</button>
           <button onClick={() => send("disarm", {}, true)}>DISARM</button>
           <button className="warn" onClick={() => send("land", {})}>LAND</button>
           <button className="warn" onClick={() => send("set_mode", { mode: "RTL" }, true)}>RTL</button>

@@ -18,6 +18,11 @@ import numpy as np
 
 import rclpy
 from rclpy.node import Node
+# One definition of a valid colour, shared with the detectors.
+from perception_banner.colours import validate as validate_colours
+# ...and of the arena's dimensions, shared with mission_bt.
+from mission_bt import arena_dimensions
+import os
 from rclpy.qos import (qos_profile_sensor_data, QoSProfile,
                        QoSDurabilityPolicy, QoSHistoryPolicy)
 from mavros_msgs.msg import State, EstimatorStatus, WaypointList
@@ -45,6 +50,18 @@ def _euler_deg(q):
 SCHEMA_VERSION = 1
 WS_HOST, WS_PORT = "0.0.0.0", 8765
 TELEM_HZ = 10.0
+
+# The mode the aircraft flies itself in. See the note in _dispatch: every
+# autonomous command the stack issues is an external setpoint, which
+# ArduCopter acts on in GUIDED and ignores in AUTO.
+REQUIRED_FLIGHT_MODE = "GUIDED"
+# The full mission and each test part it can be cut down to. A part runs the
+# same production nodes; it just stops the mission short of the rest.
+TEST_PARTS = ("mission", "start_qr", "corridor_out", "search",
+              "delivery", "return_corridor")
+# Commands that hand control to the autonomy. These need the interlock AND
+# the flight mode; everything else, recovery included, does not.
+STARTS_FLIGHT = frozenset({"arm", "takeoff", "start_mission", "start_test"})
 
 
 def max_pool_grid(data, w, h, step):
@@ -121,6 +138,26 @@ class Aggregator(Node):
                               durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         self.pub_delivery_zone = self.create_publisher(
             String, "/mission/delivery_zone", zone_qos)
+        # Latched like the boundary: a detector that starts later still gets
+        # the shades the operator typed before it came up.
+        self.pub_banner_colours = self.create_publisher(
+            String, "/mission/banner_colours", zone_qos)
+        self.pub_test_part = self.create_publisher(
+            String, "/mission/test_part", zone_qos)
+        # Every dimension the algorithms use, entered here instead of fixed at
+        # launch; mission_bt rebuilds with them on the ground and says so.
+        self.pub_arena_dimensions = self.create_publisher(
+            String, "/mission/arena_dimensions", zone_qos)
+        self.create_subscription(String, "/mission/arena_dimensions/applied",
+                                 self._on_dimensions_applied, zone_qos)
+        self.declare_parameter("dimension_presets_file", os.path.expanduser(
+            "~/.aerothon/dimension_presets.json"))
+        self._presets_path = self.get_parameter("dimension_presets_file").value
+        self.state["dimension_presets"] = self._load_presets()
+        self.state["dimension_fields"] = [
+            dict(group=g, key=k, label=label, default=default, min=lo, max=hi,
+                 used_by=used) for g, k, label, default, lo, hi, used
+            in arena_dimensions.FIELDS]
 
         self.cli_arm = self.create_client(CommandBool, "/mavros/cmd/arming")
         self.cli_mode = self.create_client(SetMode, "/mavros/set_mode")
@@ -133,7 +170,7 @@ class Aggregator(Node):
     @staticmethod
     def _blank_state():
         return {
-            "mission": {"selected": None, "state": "idle", "armed": False,
+            "mission": {"selected": None, "part": "mission", "state": "idle", "armed": False,
                         "mode": "", "elapsed": 0.0,
                         # 15 rulebook marks. Measured at release from the QR
                         # offset and the altitude; None until it happens.
@@ -182,6 +219,9 @@ class Aggregator(Node):
             # operator most needs to see and the thing a log hides best.
             "scans": [],
             "gimbal": {"pitch_deg": 0.0},
+            # None until an operator supplies them; the mission flies the
+            # launch values meanwhile, and the panel says so.
+            "arena_dimensions": None,
         }
 
     STALE_AFTER_S = 5.0
@@ -555,8 +595,27 @@ class Aggregator(Node):
         try:
             # Flight-changing commands must never bypass the readiness
             # interlock. Abort / land / RTL remain available when unhealthy.
-            if cmd in {"arm", "takeoff", "start_mission"} and not self.state["safety"]["ready"]:
+            if cmd in STARTS_FLIGHT and not self.state["safety"]["ready"]:
                 return "rejected", "mission interlock not ready"
+            # Nothing autonomous starts unless the FCU is actually in GUIDED.
+            #
+            # The whole stack flies by streaming external setpoints
+            # (/mavros/setpoint_position/local from mav_commander,
+            # /mavros/setpoint_raw/local from the avoidance controller).
+            # ArduCopter honours those in GUIDED; in AUTO it runs an uploaded
+            # waypoint mission and ignores them, so a mission "started" in any
+            # other mode would publish setpoints nothing acts on while the
+            # operator believes the aircraft is flying itself.
+            #
+            # Recovery is deliberately NOT gated: abort, land, RTL, disarm and
+            # the component commands stay available in any mode. An interlock
+            # that blocks ABORT is worse than no interlock.
+            if cmd in STARTS_FLIGHT:
+                mode = str(self.state["mission"].get("mode") or "")
+                if mode != REQUIRED_FLIGHT_MODE:
+                    return "rejected", (
+                        f"flight mode is {mode or 'unknown'}; "
+                        f"{REQUIRED_FLIGHT_MODE} required to start")
             if cmd == "arm":
                 self.cli_arm.call_async(CommandBool.Request(value=True))
             elif cmd == "disarm":
@@ -581,8 +640,16 @@ class Aggregator(Node):
                 self.state["gimbal"]["pitch_deg"] = round(pitch_deg, 1)
             elif cmd == "abort":
                 self.pub_abort.publish(Bool(data=True))
-            elif cmd == "start_mission":
-                self.state["mission"]["selected"] = "M2"
+            elif cmd in ("start_mission", "start_test"):
+                part = "mission"
+                if cmd == "start_test":
+                    part = str(args.get("part", ""))
+                    if part not in TEST_PARTS:
+                        return "rejected", (
+                            f"unknown test part {part!r}; "
+                            f"expected one of {', '.join(TEST_PARTS)}")
+                self.state["mission"]["selected"] = "M2" if part == "mission" else part
+                self.state["mission"]["part"] = part
                 self.state["mission"]["state"] = "STARTING"
                 # A new run gets a clean ledger. Carrying the previous run's
                 # observations forward would put two flights' markers in one
@@ -590,7 +657,63 @@ class Aggregator(Node):
                 # reads this panel to find out what THIS flight saw.
                 self.state["scans"] = []
                 self._scan_seq = 0
+                # The part goes out BEFORE the start, so the mission reads
+                # which part it is running rather than starting the full
+                # mission and being told afterwards.
+                self.pub_test_part.publish(String(data=part))
                 self.pub_start.publish(Bool(data=True))
+            elif cmd == "set_banner_colours":
+                # The organisers give each banner's shade as a HEX code. The
+                # banners carry no text, so this is the evidence that tells
+                # the aircraft which corridor it may use -- it is validated
+                # here by the same rule the detectors apply, and refused with
+                # a reason rather than silently dropped.
+                try:
+                    colours = validate_colours(args.get("colours", args))
+                except (ValueError, TypeError, AttributeError) as error:
+                    return "rejected", str(error)
+                missing = sorted({"green", "orange"} - set(colours))
+                if missing:
+                    return "rejected", (
+                        f"no shade supplied for the {', '.join(missing)} banner")
+                payload = json.dumps({"colours": colours}, separators=(",", ":"))
+                self.pub_banner_colours.publish(String(data=payload))
+                self.state["banner_colours"] = colours
+            elif cmd == "set_arena_dimensions":
+                # Refused in the air here AND in mission_bt: the leaves take
+                # their dimensions when the tree is built, on the ground.
+                if self.state["mission"].get("armed"):
+                    return "rejected", "dimensions can only change while disarmed"
+                try:
+                    dims = arena_dimensions.validate(args.get("dimensions", args))
+                except (ValueError, TypeError, AttributeError) as error:
+                    return "rejected", str(error)
+                self.pub_arena_dimensions.publish(String(data=json.dumps(
+                    {"dimensions": dims}, separators=(",", ":"))))
+                self.state["arena_dimensions"] = {"sent": dims, "applied": None,
+                                                  "reason": "awaiting mission_bt"}
+            elif cmd == "save_dimension_preset":
+                name = str(args.get("name", "")).strip()
+                if not name or len(name) > 60:
+                    return "rejected", "a preset needs a name of 1-60 characters"
+                if name in arena_dimensions.BUILTIN_PRESETS:
+                    return "rejected", f"{name!r} is a built-in preset; choose another name"
+                try:
+                    dims = arena_dimensions.validate(args.get("dimensions", {}))
+                except (ValueError, TypeError, AttributeError) as error:
+                    return "rejected", str(error)
+                presets = self._operator_presets()
+                presets[name] = dims
+                self._write_presets(presets)
+            elif cmd == "delete_dimension_preset":
+                name = str(args.get("name", ""))
+                if name in arena_dimensions.BUILTIN_PRESETS:
+                    return "rejected", "built-in presets cannot be deleted"
+                presets = self._operator_presets()
+                if name not in presets:
+                    return "rejected", f"no preset named {name!r}"
+                del presets[name]
+                self._write_presets(presets)
             elif cmd == "set_target":
                 self.pub_target.publish(String(data=args.get("target", "")))
             elif cmd == "set_delivery_zone":
@@ -615,6 +738,51 @@ class Aggregator(Node):
             return "accepted", ""
         except Exception as e:  # noqa: BLE001
             return "rejected", str(e)
+
+    # ---- arena-dimension presets ------------------------------------------
+    def _operator_presets(self):
+        """Saved presets, each re-validated; one that no longer loads is skipped
+        with a warning rather than taking the others down with it."""
+        try:
+            with open(self._presets_path, encoding="utf-8") as f:
+                raw = json.load(f)
+        except FileNotFoundError:
+            return {}
+        except (OSError, ValueError) as error:
+            self.get_logger().warning(f"dimension presets unreadable: {error}")
+            return {}
+        out = {}
+        for name, dims in (raw.items() if isinstance(raw, dict) else ()):
+            try:
+                out[str(name)] = arena_dimensions.validate(dims)
+            except (ValueError, TypeError, AttributeError) as error:
+                self.get_logger().warning(f"preset {name!r} skipped: {error}")
+        return out
+
+    def _load_presets(self):
+        return {"builtin": {k: arena_dimensions.validate(v) for k, v
+                            in arena_dimensions.BUILTIN_PRESETS.items()},
+                "saved": self._operator_presets()}
+
+    def _write_presets(self, presets):
+        os.makedirs(os.path.dirname(self._presets_path) or ".", exist_ok=True)
+        tmp = self._presets_path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(presets, f, indent=2, sort_keys=True)
+        os.replace(tmp, self._presets_path)   # never a half-written file
+        self.state["dimension_presets"] = self._load_presets()
+
+    def _on_dimensions_applied(self, m):
+        try:
+            d = json.loads(m.data)
+        except ValueError:
+            return
+        current = self.state.get("arena_dimensions") or {}
+        self.state["arena_dimensions"] = {
+            "sent": current.get("sent"),
+            "applied": d.get("dimensions") if d.get("applied") else current.get("applied"),
+            "params": d.get("params"), "ok": bool(d.get("applied")),
+            "reason": d.get("reason", "")}
 
     def start_ws(self):
         def run():

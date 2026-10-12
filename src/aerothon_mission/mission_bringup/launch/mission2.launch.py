@@ -260,7 +260,8 @@ def generate_launch_description():
         package='mission_bt', executable='mission_tree', output='screen',
         parameters=[params_file,
                     {'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
-                     'target_marker_m': target_marker_m}],
+                     'target_marker_m': target_marker_m,
+                     'delivery_load_calibration': os.environ.get('AEROTHON_DELIVERY_CALIBRATION', '')}],
     )
 
     # 6. GCS Aggregator WebSocket Server (port 8765)

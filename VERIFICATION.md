@@ -3169,3 +3169,1041 @@ until disarm and saved the tail. `*_full_track.csv` contains the original
 `*_grade.txt` lacks the landing and must not be read as full-flight evidence.
 Configuration, outcome, video metadata and checks are captured in
 `logs/custom/my_world_offaxis_calm_s1_manifest.json`.
+
+
+## 2026-10-05: independent drone delivery observation
+
+Implemented drone-controlled lowering/retraction and camera plus calibrated
+FCU motor-output effort confirmation. Gazebo contact detach has no ROS output
+and simulator pose is absent from winch/observer inputs. Loaded/unloaded hover
+calibration produced disjoint three-sigma bands, frozen before acceptance.
+
+Full offline checks: 1225 passed, 3 skipped, Python/shell/XML/YAML passed.
+Latest focused checks: 218 passed; observer checks after preserving terminal
+evidence: 15 passed. Five changed ROS packages built successfully.
+
+Rendered trial logs/delivery_trial_hold_20261005 reached DONE at sim 139.227 s
+on attempt 3, completed estimated stow and landed/disarmed. Separate truth
+confirmed constant payload position during probe, full retraction and final
+check, on the raised takeoff pad. The first trial failed due to continued
+payout into ground contact; it is retained as a failure trace.
+
+This flight tested the provisional touchdown pause. Later dropout-timer,
+terminal evidence retention and recorder changes have offline verification
+only. Effort is motor-output command data, not measured current. Hook travel
+is estimated. Fault scenarios passed observer tests but remain to be run as
+rendered trials. Full mission continuation and real bench/hardware validation
+remain unverified. Detailed evidence and limits: .scratch/drone-delivery/status.md.
+
+
+## 2026-10-05: seed 1001 full rendered mission with updated delivery observer
+
+Ran the randomized seed-1001 CAD aircraft mission, with the frozen loaded/unloaded
+profile and latest observer code. Target A was read from the onboard start QR.
+The normal mission tree completed outbound gate/corridor navigation, searched,
+found A, centred and lowered the payload. The simulator-only contact component
+detached it. Independent evaluation measured 0.12 m payload error.
+
+Outcome FAILED at sim 721.4 s after three attempts: touchdown not corroborated.
+The landed detector bbox yielded ~10.85 m range at ~5.5 m onboard altitude, so
+visual ground inference failed. No touchdown or detachment success was emitted.
+Root cause of the bbox/range discrepancy is not established by this run.
+
+RTL returned to home and the aircraft disarmed, 0.06 m from home, after 713.9 s
+airborne. The winch was still estimated at 6 m payout. Full track GRADE_FAIL:
+one search red-zone entry, RTL altitude 15.12 m, missed return corridor/flight
+over it and a 36.8-degree tilt during descent. This is not a safe-return or full
+mission acceptance pass despite landing/disarm.
+
+Evidence folder logs/mission_seed1001_delivery_20261005 has camera MP4, onboard
+JSONL, winch commands, a separate simulator truth trace, exact source hashes,
+materialized world/vehicle, mission log and grade.txt. full_track.csv extends
+the original runner track from 727.15 to 770.347 s using passive onboard poses
+and independently recorded truth; it includes the RTL landing the short runner
+tail missed. The simulator stack was stopped after disarm.
+
+
+## 2026-10-05: motor-priority delivery and exhausted-attempt hook recovery
+
+User changed the policy: calibrated motor-output effort is primary, and three
+unsuccessful attempts must fully retract the hook before continuing the normal
+mission. The camera no longer vetoes sustained unloading or retraction because
+of missing/wrong range evidence. Return of load during probe/hold/stow/final
+checks triggers another attempt. The final mission result identifies the motor
+confirmation basis and does not claim camera proof.
+
+Exhaustion now enters RECOVER_STOW, then RECOVERED only when estimated payout
+reaches zero. Winch faults, stale status or a 45-second recovery timeout cannot
+certify stow or continue extended. Fallback continuation keeps delivery false;
+normal navigation resumes and final landing reports DELIVERY_UNCONFIRMED.
+No encoder or stow switch was added: full hook retraction is still estimated.
+
+Seed-1001 recorded telemetry supports unloading: stable effort mean 0.40451
+from 540-620 sim seconds and 0.40507 from 650-720, versus loaded calibration
+0.42375 and unloaded calibration 0.40709. All 399 and 349 stable samples in
+those windows were below the frozen threshold 0.41564. The old visual veto
+prevented confirmation. This analysis used only the onboard trace.
+
+New rendered hover/drop check: logs/delivery_motor_priority_20261005. DONE on
+attempt 1, inferred touchdown/probe at 111.504 sim seconds, probe hold at
+112.305, full stow at 114.308, final check at 124.125, confirmation at 126.128.
+Final load_reduction_inferred=true, visual_ground_support_inferred=false, and
+final_armed=false. Independent evaluation found the payload stationary on the
+raised pad throughout retraction and final check. MP4 decoded without errors.
+The final confirmation log wording received a later text-only correction; the
+rendered run exercised the motor-priority and fallback logic at its saved hashes.
+
+Focused recovery/priority suite passed 222 tests before the final two added
+recovery-status/reporting checks. Full system-Python suite: 1234 passed, 3 skipped, with Python, shell, XML
+and YAML checks passed. Evidence: logs/delivery_motor_priority_systemtests_20261005.log. An initial full-suite
+invocation was interrupted because the shell selected the ArduPilot venv's
+NumPy 2 runtime; no dependency changes were made. The corrected run uses the
+ROS system Python. Full seed-1001 mission has not yet been rerun with this policy.
+
+## Full seed 1001 with motor priority, 2026-10-05
+
+Evidence: `logs/mission_seed1001_motor_priority_retry_20261005/`.
+Rendered full mission completed, delivery independently inferred from calibrated motor effort after full hook retraction on attempt 2 at t=541.201 s, normal return corridor flown, landed and disarmed. Simulator-only contact detach was logged separately. Independent payload placement error 0.19 m; home landing error 0.25 m; flight 563.9 s; max altitude 10.15 m; max tilt 16.8 deg. Track grade FAIL solely due to SEARCH_QR red-zone entry at t=372.37 s, local (58.8,1.6,10). The delivery change does not close the search-planner red-zone issue.
+Onboard MP4 decoded without errors, 1280x720, 1435 frames, 287 s nominal playback; variable capture rate makes playback accelerated relative to simulated time. Full trace, commands, observer transitions, frozen calibration, source hashes, exact world/vehicle and separate truth are preserved. The earlier new attempt in `logs/mission_seed1001_motor_priority_20261005/` is invalid due to MAVROS SIGSEGV before delivery. Exhaustion fallback was not reached in the completed run.
+
+## Simulation reliability qualification, 2026-10-05
+
+Connected lidar/pose planning and recovery enforce 0.70 m throughout, reject
+stale observations and unknown reverse space, and use signed corridor progress.
+Strict rotated/gust regressions: 21 passed. Focused reliability checks: 409
+passed. The full Python suite before the subsequent camera-reporting fix passed
+1,267 tests with 3 skipped; project XML/YAML and native Linux TypeScript/Vite
+checks passed separately. Evidence is in `logs/reliability_full_final.log`,
+`logs/reliability_remaining_offline.log` and `logs/corridor_strict_stress_pass_20261005.log`.
+
+The preserved off-axis course is infeasible at 0.70 m. Expanded polygons connect
+both walls; grid bottlenecks remain 0.45/0.4375 m at 5/2.5 cm. Its raw SHA256 is
+`bd842c00f4918857094f6d669910142143903cf5c1385b686c98c011bc2b3537`.
+See `logs/offaxis_clearance_audit_20261005.json`. No traversal pass is claimed.
+
+Rendered standard-world seed 20261003, calm, retry 1 reached target B and motor
+confirmation on attempt 1 at t=769.0 s, but the mission node crashed on missing
+optional camera coordinates. Simulator recovery LAND disarmed at the delivery
+site. This is a failed acceptance run; no return traversal or home landing pass.
+Independent minima were 1.5670 m red clearance and 0.9487 m outbound clearance.
+QR/red delivered rates were 17.8327/17.8782 Hz in simulated time. Native contact,
+aircraft/payload truth and onboard evidence are separate. Full evidence and
+failure explanation: `logs/reliability_render_my_world_s20261003_retry1_20261005/`.
+
+The optional camera-reporting path now guards invisible, incomplete and
+non-finite payload detections; 191 focused tests pass after that fix. Host-time
+delivery-rate metrics pass 3 checks. The targeted rerun, seed 1001, broader
+campaign and remaining rendered fixtures have not yet passed. Hardware and
+staged flights remain deferred and unqualified; bench records are prepared in
+`docs/HARDWARE_QUALIFICATION_RECORD.md`.
+
+## Simulation reliability continuation, 2026-10-06
+
+Claim: mounted lidar registration and compensated holds preserve clearance.
+Method: replay the saved return failure, apply onboard mounting TF and full
+capture attitude, then run original geometry, registration and stress checks.
+Raw output: logs/reliability_mount_complete_contract_final.log, 75 passed;
+logs/reliability_occupied_footprint_after_fix.log, 77 passed. The first focused
+rendered return trial failed without traversal, navigation clearance 1.03826 m.
+Its setup descent also contacted the banner and remains a failed artifact.
+logs/reliability_mount_stress_20261006.log, 3 failed, 83 passed. The subsequent
+certified-current-wind fallback ran 86 passing checks with one noisy-gust
+split-corridor failure, logs/reliability_wind_hold_after_fix.log.
+Verdict: PARTIAL. Mounted sensor registration and occupied-link regressions pass.
+Rendered return qualification and noisy-gust recovery remain open.
+
+Claim: delivery retries do not reuse expired observation timers; provisional
+motor unloading cannot falsely confirm an unstable or stale hover.
+Method: minimized observer regressions, red before each fix, followed by the
+full focused delivery selection. Frozen calibration is unchanged.
+Raw output: logs/reliability_retry_windows_before_fix.log, 2 failed;
+logs/reliability_provisional_probe_before_fix.log, 3 failed, 1 passed;
+logs/reliability_delivery_probe_complete_20261006.log, 197 passed in 3.26 s.
+Verdict: PARTIAL. Observer checks pass. The new provisional probe still needs
+rendered evidence with real simulated FCU outputs and the current payload.
+Full mission qualification, broader campaigns and physical qualification
+remain separate and incomplete.
+
+Claim: delayed FCU command response is represented in disturbance assessment
+and the complete braking prediction, using onboard command history only.
+Method: identify approximate response from the preserved calm failed trial;
+minimise the erroneous wind correction and the omitted pending-command stop.
+Both regressions fail before the fix. Preserve commands in transit when a
+stale scan commands a hold. Model physical transport in a closed-loop slalom.
+Raw output: logs/reliability_command_delay_before_fix_20261006.log, 2 failed,
+88 passed; logs/reliability_command_delay_after_fix_20261006.log, 90 passed;
+logs/reliability_delayed_actuator_focus_20261006.log, 92 passed in 18.13 s.
+The final four-package ROS build passed in 38.9 s. The broader intermediate
+selection passed 113 checks and failed two gust cases; all failures remain
+in logs/reliability_delayed_actuator_regression_20261006.log. Its incidental
+exponential model integration was reverted to the existing per-tick model
+before the final focused run. No current complete-suite pass is claimed.
+Verdict: PARTIAL. Final focused checks pass. New rendered qualification is
+running in logs/reliability_render_return_delay_20261006. The fixed 0.4 s
+simulation delay is not a measured hardware parameter. Hardware remains
+unqualified. Initial and navigation-time input audits are now automatic.
+
+Claim: the delay-aware navigator completes the unchanged standard return lane
+in the focused calm rendered trial without reducing required clearance.
+Method: seed 20261003, recorded FCU entry fixture, actual mounted lidar and
+FCU observations; every native aircraft sample independently graded using
+timestamped operator phases. No world geometry enters flight decisions.
+Raw output: logs/reliability_render_return_delay_20261006/focused_summary.json,
+trial_result.json, decision_inputs_navigation.json and video_timeline.json.
+Verdict: PASS for this focused trial. Full below-wall traversal, minimum
+0.717000770 m clearance, far-end completion at 134.814 s, landed/disarmed.
+Both input audits pass. Complete video is 132.801 s and full decode passes.
+Full mission, search, delivery, other seeds/weather and hardware remain
+unqualified by this result. The two broader gust failures remain open.
+
+Claim: rendered delivery confirms unloading after a release probe and full
+estimated stow, independently of simulator truth.
+Method: current loaded CAD payload/camera, calm seed 20261003, unchanged frozen
+profile; compare native support only during independent offline evaluation.
+Raw output: logs/reliability_render_delivery_probe_20261006/focused_summary.json,
+driver/result.json, decision_inputs_delivery.json and video_timeline.json.
+Verdict: PASS for this focused trial. Attempt 2 confirmed, final stable effort
+0.4068905 below the frozen 0.4156364893 ceiling. Onboard camera support was true.
+Native payload movement was zero, maximum height 0.105 m. Both input audits
+passed. Landed/disarmed; verified 173.901 s video decodes fully.
+The unstable provisional branch was not used. An early transient caused an
+unnecessary retry. Its regression fails before a candidate-clear fix; 199
+focused delivery checks pass after it. That refinement needs the next full
+rendered trial. Full mission, search, weather and hardware remain unqualified.
+# 2026-10-06 standard mission timing failure
+
+Full rendered `my_world.json`, calm seed 20261003 retry 3 completed and
+disarmed, but failed acceptance at 927.0 s against the unchanged 900 s limit.
+All other checks passed, including independent restricted clearance
+1.724529614 m, corridor clearance 0.722613183 m, actual fresh FCU motor
+confirmation after estimated stow, both input audits, source/runtime
+preservation and complete 976.901 s decoded video. Payload error was 0.14 m.
+Motor-priority confirmation was used; final camera support was inconclusive,
+so this is not evidence of dual-channel confirmation. Provisional probing
+was used on attempt 1 before stable unloaded qualification.
+
+Return search spent 105.983 s, with repeated cross-field yaw movements.
+The actual-stage empty scan test failed before the ordering fix, with 89
+checks passing. Sequential heading order retains all views and thresholds;
+213 focused checks pass after the fix. Full rendered timing qualification
+remains required. Evidence and the failure report remain under
+`logs/reliability_render_my_world_s20261003_retry3_20261006/`.
+# 2026-10-06 first full targeted rendered acceptance pass
+
+`logs/reliability_render_my_world_s20261003_retry4_20261006/`: standard
+`my_world.json`, calm seed 20261003, PASSED all 22 acceptance checks.
+Completed and disarmed at home; independent duration 864.1 s, corridor
+clearance 0.741457867 m, restricted clearance 1.567421444 m, payload error
+0.15 m, landing error 0.28 m. Fresh actual FCU motor outputs qualified
+delivery on attempt 1 after full estimated hook stow. Provisional probing
+was used. Final camera support was inconclusive, so no dual-channel claim.
+Separate native ground contact was at 661.055 s, confirmation 682.2 s, and
+payload movement through probe/stow was zero across 190 samples.
+
+QR/red rates 17.55376/17.62021 simulated Hz, 4.11733/4.13291 host Hz,
+latency p95 0.239/0.235 s, no invalid capture timestamps. Initial plus
+navigation-time input audits passed. Runtime/source/helper hashes retained.
+Full 914.051 s VFR video decoded through disarm. Seed 1001, broader weather
+and fixture campaigns, other rendered courses and hardware remain pending
+or deferred. No current full offline-suite pass is claimed.
+## Standard seed 1001 passed, 2026-10-06
+
+Both requested standard calm seeds now pass all 22 checks. Seed 1001 evidence
+is in `logs/reliability_render_my_world_s1001_20261006/`: flight 888.0 s,
+corridor minimum 0.762468206 m, restricted minimum 1.638205369 m, payload
+error 0.12 m, home error 0.17 m, final disarmed. Fresh raw FCU motor outputs
+qualify delivery on attempt 2 after estimated hook stow. Camera support is
+inconclusive; no dual-channel or measured winch-position claim is made.
+Native truth is separate and shows zero movement between first probe and DONE.
+
+QR/red rates are 17.72078/17.78025 per simulated second and 4.14475/4.15866
+per host second, latency p95 0.238/0.233 s, invalid captures zero. Both input
+audits pass. Video timeline 938.101 s decodes through disarm, preserving 3149
+original frames. All 747 source/helper files and 53 runtime assets are verified
+in the exact source archive. Source manifests match the passing seed 20261003.
+
+Headless transport now models the same 0.4 s command delay. The reproducer
+failed twice before and passes after; 100 related checks pass in 6.14 s.
+This is a test-model change. Full offline suite and broader campaigns remain
+in progress. Known gust regressions and deferred hardware are not qualified.
+
+## 2026-10-06 current-source standard failure and focused reproduction
+
+Before the yaw-certificate change, the complete offline suite passed 1323
+tests, with 3 skips, in 689.73 s. Syntax, XML/YAML and frontend checks passed.
+Report: logs/reliability_full_changing_wind_20261006.log. This is pre-yaw-change
+evidence, not a current whole-suite claim.
+
+The subsequent full standard calm seed 20261003 failed in ReturnCorridor at
+892.2 s. Independent clearance 0.680769329 m failed the 0.70 m requirement.
+Return traversal, corridor altitude and expected flight mode also failed;
+RTL returned home and disarmed, home error 0.08 m. The record is
+logs/reliability_render_my_world_s20261003_gustfix_20261006. Full capture-time
+video 932.101 s decodes through disarm, 750 source/helper files and 53 runtime
+assets verified in recorded_source.zip.
+
+Delivery qualified with fresh actual FCU outputs, motor effort 0.4068905,
+attempt 1, DONE 683.8 s after estimated full stow. Visual ground support was
+inconclusive. Separate truth shows ground at 661.424 s, probe at 663.520 s,
+zero motion over 204 samples through confirmation, payload error 0.11 m.
+QR/red delivered rates 17.678673/17.764060 per simulated second,
+4.118638/4.138527 per wall second; p95 latency 0.238/0.234 s. Restricted-zone
+clearance 1.641411843 m. Both decision-input audits pass. No mission pass or
+dual-channel delivery claim is made.
+
+Focused rendered reproduction logs/reliability_render_return_fresh_repro_20261006
+also failed, recovery exhausted at 126.854 s, clearance 0.648668474 m. It
+landed/disarmed, input audit passed, 125.701 s video decoded, 750-file source
+archive and 53 runtime assets verified. This is the shorter rendered feedback
+loop. Idealized noisy/delayed/mounted closed-loop fixtures still pass; they do
+not substitute for that reproduction.
+
+The actual publication regression sim/test_yaw_motion_certification.py failed
+before the fix in 1.76 s and passes after in 2.07 s. The certificate now includes
+the transmitted yaw in the translation forecast. Broader and rendered checks
+remain pending. Coupled delayed-gust probes still contact under issue 15.
+
+## 2026-10-06 receipt-model failure, then FCU-velocity focused pass
+
+The receipt-model focused repeat failed at 0.687308717 m clearance and recovery
+exhausted at 123.537 s. It disarmed; full video 123.601 s and exact 751-file
+source archive verified. Record: logs/reliability_render_return_receipt_model_20261006.
+The independent yaw regressions did not by themselves resolve the rendered
+failure. Both earlier reproductions remain preserved.
+
+Three real ROS velocity-topic regressions failed before prioritizing actual
+EKF velocity, 3.33 s; then passed in 2.06 s. Six expanded guards pass in
+2.71 s. They cover velocity priority, updates with held pose header, stale
+data, invalid data, repeated stamps and handover motion. Related transport
+selection passed 34 tests, 9 deselected, in 60.17 s; avoidance rebuilt.
+
+logs/reliability_render_return_fcu_velocity_20261006 passes all six focused
+rendered checks. Far exit at 132.467 s, full corridor below walls, native
+minimum clearance 0.739236132 m, final disarmed. Navigation input audit passes.
+All 170 recorded navigation decisions used fresh actual FCU EKF velocity,
+maximum age 0.069 s, no recorded navigation sensor faults. Full capture-time
+video 131.551 s decodes through disarm, 509 original frames plus final hold.
+All 752 source/helper files and 53 runtime assets verify. Exact archive SHA256
+5d4abf13de1d94afe0c9c421baa2a1eba1ed2bd83535ea9097494d9080e368f5.
+
+This qualifies the focused return only. Current full offline suite and both
+source-matched full standard missions remain pending. Hardware and staged
+flights remain deferred. Coupled delayed-gust failures remain open separately.
+
+## 2026-10-06 full current offline suite passed
+
+All 1336 tests pass, with 3 skips, in 680.27 s. Python/shell syntax, XML/YAML,
+frontend type-check and production build pass. Existing frontend bundle-size
+warning remains. Report: logs/reliability_full_fcu_velocity_20261006.log.
+The full calm standard seed 20261003 receipt-model recording has started on
+this source. Both full standard seeds remain required before campaigns.
+
+## 2026-10-06 full receipt-model standard run: 21/22 checks pass
+
+logs/reliability_render_my_world_s20261003_receipt_model_20261006 completed
+and disarmed. Sole failure: 965.0 s flight against 900 s. Independent corridor
+minimum 0.723653986 m and restricted-zone minimum 1.635075236 m pass. Motor
+delivery qualifies on attempt 1; visual ground support remains inconclusive.
+Separate native truth confirms contact 676.423 s, probe 680.173 s and zero
+movement through confirmation 696.6 s over 167 samples. All 267 navigation
+decisions used fresh actual FCU velocity, maximum age 0.079 s. Input isolation
+passes. Full 1014.851 s video decodes through disarm; 752 source/helper files
+and 53 runtime assets verify. Archive SHA256:
+797e68a560739bfdff78830fe42b43b00cf965a7a31ff08f84fce9c0d7ad0b67.
+
+## 2026-10-06 oblique return-banner captured-frame regression
+
+Actual early orbit frame rejected with board aspect 0.82 outside 0.9-8.0.
+The new regression fails in 2.47 s before the floor change to measured 0.8.
+All 209 banner identity/text/sweep/orbit regressions pass in 16.55 s and
+perception_banner rebuilt in 18.5 s. OCR is inconclusive on this oblique
+frame; structural identity is accepted before unchanged lidar square-up.
+The fresh full calm standard seed 20261003 bannerfix recording has started.
+Full acceptance is pending; broad campaigns remain gated. The previous
+1336-test whole-suite pass predates this change and will be repeated.
+
+## 2026-10-06 bannerfix full run: return and recording failure
+
+The return banner was identified earlier, but the mission failed at 896.0 s
+with navigator STUCK x=13.19. Native clearance first breached 0.70 m at
+885.083 s and reached 0.684245767 m at 887.514 s. This is an actual violation.
+Recording stopped at 929.515 s with the aircraft still armed in RTL, before
+landing/disarm. No wrapper/export process remained when inspected; the exact
+interruption cause is unverified. Existing data were manually exported and
+graded. Six checks fail, including return, clearance and complete video.
+The 919.951 s video decodes through the recorded cut only. Source archive
+752 files and 53 runtime assets verify, SHA256:
+3c7ce74100b3b7b9c90733fbb9fdef28414cdd5195e325bd01017e49e8e5a236.
+
+Motor confirmation on attempt 1 at 692.8 s remains independently qualified;
+visual ground support is inconclusive. Separate native truth records contact
+674.013 s, probe 676.678 s and zero payload movement through confirmation
+over 163 samples. Restricted-zone minimum 1.626468466 m passes. The 870.9 s
+armed interval is partial and cannot establish completed flight time.
+
+## 2026-10-06 parallel diagnosis: observer timing and fixture limits
+
+The observer compared a current-time response with an older FCU velocity
+sample. Three regressions fail against exact archived methods in 0.89 s;
+31 related checks pass in 4.94 s after measurement-time alignment. Avoidance
+rebuilt in 29.3 s. The mismatch explains only part of the recorded residual;
+rendered return success is still unqualified. Full current suite is running
+in a detached, task-scoped owned job. No clearance or reserve was reduced.
+
+Independent fixture review found a three-second position hold before focused
+navigation. First active speed in its passing trial was 0.032 m/s versus
+0.315 m/s in the failed full run. It qualifies a stationary-entry regression,
+not an exact moving-handover reproduction. A moving test is being prepared
+using the production gate handover and measured FCU motion, without injecting
+sensor values. Detached-launcher client-exit/scoped-stop tests passed with
+harmless processes; forced WSL shutdown survival remains unverified.
+
+Latest physical offline coupled-gust probes still fail under current source:
+dirty seed 0 breaches at 5.20 s and contacts at 6.05 s; late seed 1 breaches
+at 6.05 s and contacts at 7.85 s. Source hashes and receipt physics are saved.
+These have zero-age FCU observations, so timestamp correction does not affect
+them. Feasible geometry failures remain open. Headless results cannot qualify
+rendered perception or motor delivery. Hardware and staged flights are deferred.
+
+## 2026-10-06 full measurement-time suite passed
+
+Full frozen-source suite: 1340 passed, 3 skipped in 869.56 s. Python/shell
+syntax, XML/YAML, frontend type-check and Vite build pass; owned job exit 0.
+The existing frontend bundle warning remains. All 755 independently snapshotted
+source/test/fixture entries remain unchanged. Skips are real-camera corpus
+tests without supplied photographs. Full log and verified report:
+logs/reliability_full_measurement_time_20261006.log and
+logs/reliability_full_measurement_time_report_20261006.json.
+
+The moving focused-driver addition is being applied after this whole-suite
+snapshot and will receive separate handover, related-leaf and syntax checks.
+Controller/planner source remains unchanged. Focused and full rendered
+qualification remain pending.
+
+## 2026-10-06 moving trial and landing evidence regressions
+
+The actual focused-driver loop and focused grader reproduce nine false passes
+for disconnected/stale disarm and incomplete recordings. Red: nine failed,
+two passed in 2.29 s. Fixed driver/recording qualification and moving-handover
+checks: 27 passed in 2.41 s, route/stage checks 214 passed in 2.43 s, and
+recording/campaign checks seven passed in 1.97 s. Logs:
+logs/reliability_disarm_evidence_red_20261006.log and
+logs/reliability_moving_handover_final_checks_20261006.log.
+
+The passive recorder and full grader now use the same recorded fresh connected
+FCU disarm requirement. The camera's last real capture must reach disarm;
+exported playback hold is excluded as evidence. The moving driver uses the
+production GateAdvance leaf and hands over on its arrival tick. It records
+actual pose and velocity and never injects the recorded fixture velocity.
+Controller/planner/perception source remains unchanged. Full current-source
+rendered acceptance and simulation campaigns are still pending.
+
+## 2026-10-06 moving return failure and unknown prior response
+
+Moving return logs/reliability_render_return_measurement_time_moving_20261006
+fails three of seven focused checks, with native clearance 0.6715945852 m and
+recovery exhaustion at 130.213 s. Input isolation, fresh connected disarm and
+camera through disarm pass. Actual entry speed 0.7913 m/s exceeds the original
+full failure's 0.3149 m/s; no exact reproduction claim is made. Export duration
+129.701 s, 491 original frames plus one hold frame, last capture 137.75 s after
+FCU disarm 136.933 s. Archive verifies 756 source/helper entries and 53 assets.
+Cleanup GIL/shutdown diagnostics remain recorded in the failure report.
+
+New current-controller regressions reproduce an unknown prior position target
+treated as zero and shortened stopping prediction before the first own packet
+arrives. Related controller checks pass 34 in 5.10 s after correcting those
+assumptions. Disturbance diagnostics are explicitly unavailable during the
+unknown interval. Clearance, reserve, response time and declared transport
+delay are unchanged. A built, closed moving rendered repeat is required.
+
+## 2026-10-06 patched moving return passed
+
+logs/reliability_render_return_handover_guard_moving_20261006 passes seven of
+seven focused checks, with minimum native clearance 0.7093870740 m, far exit
+136.994 s, fresh connected disarm 143.644 s and final camera capture 144.3 s.
+Actual moving entry is 0.7591 m/s. Source archive verifies 756 entries and
+53 runtime assets; owned job exit 0. Video duration 136.301 s, 525 original
+frames plus one playback hold. Full mission, rendered search and motor delivery
+are not qualified by this focused run. Original failed runs stay preserved.
+
+The full current-source standard calm seed 20261003 is starting in
+logs/reliability_render_my_world_s20261003_handover_guard_20261006. Seed 1001
+and broader campaigns remain gated. All 22 checks, including 900-second mission
+time, recording through disarm and fresh raw motor confirmation, remain
+mandatory. No clearance requirement, fixture geometry or calibration threshold
+was relaxed.
+
+## 2026-10-06 current-source full standard seed 20261003 passed
+
+logs/reliability_render_my_world_s20261003_handover_guard_20261006 closed with
+GRADE_PASS, 22 of 22 checks and owned-job exit 0. Flight time is 865.0 s;
+measured corridor clearance 0.7258271521 m and restricted-zone clearance
+1.5967184497 m exceed unchanged 0.70 m and 1.50 m requirements. Payload
+error is 0.11 m and home landing error 0.18 m. Fresh motor confirmation,
+camera through connected FCU disarm, input isolation and source/runtime
+preservation pass. Search QR/red delivered rates are 17.9192/17.9508 Hz in
+simulated time, or 4.4000/4.4077 Hz against host monotonic time; p95 simulated
+latency is 0.237/0.233 s. These are detector rates, not recording frame rates.
+
+The owned continuation verified acceptance and source/archive hashes before
+starting seed 1001. That run is still searching at its latest onboard record,
+480.016 simulated seconds; it has no final grade. The latest-source complete
+offline suite remains queued after successful second acceptance. Changing-gust
+qualification, broader campaigns, hardware qualification and flights remain
+pending. The off-axis fixture remains a preserved infeasibility regression.
+
+## 2026-10-06 current-source full standard seed 1001 passed
+
+logs/reliability_render_my_world_s1001_handover_guard_20261006 closes with
+GRADE_PASS, all 22 checks and 880.0 s flight against the unchanged 900 s limit.
+Native corridor clearance is 0.7130100272 m and red-zone clearance
+1.6248532894 m. Payload error 0.09 m, home error 0.17 m. Motor delivery
+inference completes on attempt 1 after full estimated hook retraction; no
+visual ground-support confirmation is claimed. Fresh motor outputs and the
+connected FCU disarm record qualify the inference and landing evidence.
+
+The decoded variable-frame-rate export has 3096 original frames plus one
+playback hold, duration 929.801 s, final original capture 939.05 s. Camera
+through disarm passes. Search QR/red rates are 17.6648/17.6954 Hz in simulated
+time, or 4.2865/4.2939 Hz against host monotonic time; p95 simulated latency
+is 0.236/0.232 s. These rates describe detector events, not exported frames.
+The archive verifies 756 source/helper entries and 53 runtime assets, SHA-256
+3b7c310ae51758f59a47f7fe445a5105aba7d85b1c601191fd42c5ea4df190f3.
+
+The continuation validates both matching-source acceptances and archives,
+then starts logs/reliability_full_handover_guard_20261006.log. That full suite
+is still active. The owned completion coordinator waits for its successful
+closure before repeating the changing-gust/physical-delay cases and broader
+qualification. Its failed-job, unqualified-report and changed-source gates
+pass three isolated checks without launching any flight or test batch.
+
+## 2026-10-06 full current-source offline suite passed; coupled stress still fails
+
+logs/reliability_full_handover_guard_20261006.log records 1367 passed, 3 skipped
+in 692.63 s, with Python/shell syntax, XML/YAML and frontend checks passing.
+The existing frontend chunk-size warning remains recorded. The source-matched
+standard pair continuation closes successfully and verifies source unchanged
+in logs/reliability_standard_pair_handover_guard_20261006.json. These results
+qualify this archived source; producer changes need renewed evidence.
+
+The completion coordinator repeats all 12 dirty/late gust cases on seeds 0-5
+with 0.4 s physical command transport. All fail, so it closes with exit 1
+without starting the matrix or additional rendered qualification. The failure
+report is logs/reliability_remaining_qualification_20261006/report.json.
+Dirty seed 0 contacts at 6.1 s and late seed 1 at 19.0 s. Slower travel and
+disturbance-speed experiments contact at 12.6/13.0 s. The distance-tracking
+cap does not change the existing proportional-speed command. A scratch-only
+early position hold/release contacts at 75.9 s after 11 holds. Its observed-rate
+reserve is explicitly an unqualified future-wind assumption. No experiment
+is treated as a repair, safe-hold qualification or traversal pass.
+
+## 2026-10-07 corrected simulation observations and latest full suite
+
+**Claim:** The headless FCU observation includes completed wind-induced ground
+motion, prior position control persists until raw-command receipt, and terminal
+recording preserves actual disarm. Owned runtime capture recognizes absolute
+output paths while retaining exact process/output scope.
+
+**Method:** Reproduced each defect against the original source, then exercised
+the physical step, actual callbacks, observation publication and terminal loop.
+The runtime-selector tests execute the actual helper functions on process argv
+and cwd. The complete offline suite uses the same frozen decision source as the
+passing rendered standard pair. Source comparison passes after the suite.
+
+**Raw output:** The final related headless selection passes 25 tests in 1.98 s.
+The runtime selector passes all eight positive/negative scope checks. The full
+suite records 1376 passed, 3 skipped in 813.17 s, followed by passing Python and
+shell syntax, XML/YAML and frontend checks. The existing frontend chunk-size
+warning remains. Evidence is logs/reliability_full_observation_and_capture_20261007.log
+and logs/reliability_observation_and_capture_qualification_20261007/report.json.
+
+**Verdict:** `VERIFIED` for these observation, receipt and offline contracts.
+Fresh rendered runtime verification remains pending. This does not qualify
+coupled changing gusts or the broader campaign.
+
+## 2026-10-07 broader baseline and corrected headless focus failed
+
+**Claim:** The requested baseline matrix closes every combination with an
+explicit outcome and preserves failures separately from non-flight classes.
+
+**Method:** Run the exact archived decision source across ten fixtures, seeds
+1-5 and calm/field/worst/random conditions. Preserve actual onboard observations,
+commands, source/configuration hashes and separate evaluation truth. Independently
+recheck both source ZIPs, all snapshot bytes, imports and material assets.
+
+**Raw output:** 200 requested, 160 executed, zero navigation passes. Twenty
+editor-test combinations are invalid; twenty unchanged off-axis combinations
+are geometrically blocked at 0.70 m. Thirty-eight flights have simulator
+contacts. All 160 fail return traversal. Exact failure counts are in
+logs/reliability_navigation_baseline_matrix_assets_20261006/aggregate_review_20261007.json.
+Source and import/asset byte verification passes. Three additional rendered
+launches stop before mission start because of the absolute-output capture bug;
+their setup evidence remains in logs/reliability_baseline_rendered_courses_20261006.
+
+After the observation repairs, a fresh calm my_world seed 1 headless navigation
+trial still fails. Return recovery becomes STUCK at x=15.54, independent minimum
+corridor clearance is 0.5028028772 m, and subsequent RTL fails altitude/mode
+checks. Outbound traversal and physical home landing/disarm pass; there are no
+contacts. The first native breach at 833.7 s precedes the earliest possible
+receipt of the first return velocity command, supporting a GateAdvance incoming
+braking/handover defect. Exact world callback timing was not recorded. The
+verified 833-file source ZIP and unchanged failed grade are preserved in
+logs/reliability_corrected_headless_focus_20261007. Object-generated headless
+detections do not qualify rendered perception or motor delivery.
+
+**Verdict:** `FAILED` for campaign/navigation qualification. The baseline
+characterization is complete, but corrected-source campaign qualification,
+coupled control repair and the three fresh rendered courses remain required.
+Hardware qualification and staged flights remain deferred.
+
+## 2026-10-07 fresh shipped rendered acceptance passed
+
+**Claim:** The shipped calm seed 20261003 full mission completes on the frozen
+decision source and passes the unchanged independent acceptance checks.
+
+**Method:** Run the complete rendered camera/Gazebo/ArduPilot mission, retain
+fresh onboard observations and commanded motion, grade independent aircraft
+and payload truth, decode the camera export through actual connected disarm,
+then archive and read back exact source/runtime bytes.
+
+**Raw output:** All 22 checks pass. Flight time is 668.0 s, minimum corridor
+clearance 0.7988818316 m, restricted-zone clearance 1.5758952454 m, payload error
+0.16 m and home error 0.15 m. Delivery is inferred from fresh calibrated motor
+output after full estimated hook retraction. Visual ground support is not
+claimed. Search QR/red detector rates are 17.6968/17.7589 Hz in simulated time
+and 4.5440/4.5600 Hz against host monotonic time. Their p95 simulated latency
+is 0.239/0.235 s, and p95 processing time is 0.02687/0.01350 s against host time.
+The decoded camera export contains 2354 original frames plus one playback
+hold, lasts 728.101 s and has a final real capture at 737.35 s.
+
+Evidence: logs/reliability_render_shipped_s20261003_observation_repairs_20261007.
+The exact archive verifies 757 source/helper entries and 53 runtime assets,
+SHA-256 11f1f2ce60115a5df22fcd6fe0c376667d36dbf3b51d27618a26e25e775ea9e7.
+Actual material assets are captured separately with their own manifest.
+Absolute-output runtime capture succeeds. The rotated course is now running;
+split_corridors follows sequentially under the same source freeze.
+
+**Verdict:** `VERIFIED` for this complete shipped acceptance. Coupled gust
+control, corrected broader qualification and hardware remain unqualified.
+
+## 2026-10-07 gate braking component separates two fixes
+
+**Claim:** Waiting for slow arrival alone does not remove the entrance
+overshoot; an acknowledged lower position-control speed must act earlier.
+
+**Method:** Exercise the actual GateAdvance, LegRouter, commander keep-out
+methods and unchanged headless position/airframe methods at the captured gate
+approach. Grade every 10 ms physical step against unchanged obstacle geometry.
+The leaf sees only generated onboard lidar, pose and velocity. This is a
+deterministic component case, not an exact DDS/noisy-estimator replay.
+
+**Raw output:** Distance-only baseline fails at 0.4024375709 m. Slow-arrival
+gating alone fails at 0.5280540305 m. A 0.35 m/s cap acknowledged before advance
+and actual low-speed arrival passes with 0.8628330180 m minimum clearance,
+handover at 13.7 s and actual speed 0.07303 m/s. A 0.50 m/s calibration cap also
+passes, minimum 0.8294490974 m, handover at 10.2 s and actual speed 0.05989 m/s.
+Both explicitly model a 0.4 s speed-service delay and retain 0.4 s raw transport,
+0.6 s response and existing exclusion routing. Reports are
+logs/reliability_gate_advance_component_{baseline_retry1,arrival_only,early_speed035,early_speed050}_20261007.
+
+**Verdict:** `PARTIAL`. These component passes support early speed admission.
+They do not qualify full missions, native FCU response, stale measurements,
+acknowledgement failures or speed restoration. A reusable scratch candidate is
+under review; frozen production source remains unchanged during rendered runs.
+
+### Gate braking candidate and gust rejection closure — 7 October 2026
+
+PARTIAL: the scratch GateAdvance candidate acknowledges an early speed cap,
+requires distinct timestamped FCU velocity samples before handover, restores
+the previous commanded cap through an acknowledged command, and stops at the
+latest fresh measured pose if lidar or velocity becomes stale. All ten interface
+and fault checks pass. The physical component uses the unchanged headless motion
+methods, queued 0.40 s velocity transport, 0.60 s response and onboard lidar.
+The candidate passes at 0.50 m/s with minimum clearance 0.8294466941 m and at
+0.80 m/s with 0.7899010987 m. This is not a full mission or native qualification.
+Candidate source SHA-256: 0ed4bf0359b52bc1a7dd52cbb5dd3a8dbfc5a39dc5bf6245c62b049e51dfb890.
+Evidence: logs/reliability_gate_braking_fault_checks_20261007.json,
+logs/reliability_gate_advance_braked_leaf050_fault_guard_20261007.json and
+logs/reliability_gate_advance_braked_leaf080_fault_guard_20261007.json.
+
+The full navigation-only candidate runs in an isolated, source-verified snapshot,
+with its simulation entry point included in import-origin checks. The first trial
+was stopped during START_QR because child cwd could resolve the original entry
+point; its evidence remains under logs/reliability_braked_navigation_candidate_20261007.
+The corrected trial is separate: logs/reliability_braked_navigation_candidate_scoped_20261007.
+Production decision source remains frozen for the active rendered courses.
+
+FAIL: the fourth delayed-control prototype, with corrected actuator prediction
+and queued terminal position hold, violates 0.70 m clearance at 11.6 s and
+contacts an obstacle at 19.05 s. Minimum physical clearance is 0.3945426220 m.
+Its empirical prediction error is not a future disturbance bound. No held-out
+trials or production adoption follow this rejected calibration case. Exact source
+and result archive verifies under logs/reliability_terminal_replacement_rejection_20261007:
+SHA-256 918606ab0faae640b9983106129f21550884481e5a143f2e9db0b6ce59f78c88.
+
+### Full rotated acceptance and rejected braking mission — 7 October 2026
+
+FAIL: the full rb_rotated calm seed 20261003 run completes delivery and actual
+disarm, with 20 of 22 checks passing. Flight time is 1149.9 s against the unchanged
+900 s requirement. Restricted-zone clearance is 1.1590944096 m against 1.50 m;
+corridor clearance passes at 0.8402189031 m. Payload error is 0.16 m and home error
+0.27 m. The complete VFR recording has 3564 real frames plus one hold, duration
+1199.201 s, last capture 1209.15 s, and passes decoding through actual disarm.
+QR/red detector rates are 17.3302771/17.3719657 Hz in simulation and
+4.1715571/4.1816036 Hz on host time; p95 simulation latency is 0.2388/0.235 s.
+The source/runtime archive verifies 757 source files and 53 assets, SHA-256
+bc1bd15bd1dbf65a9b8603b10fdd4cd3be42c900a91298d942fb59feb32d2df5.
+Evidence: logs/reliability_render_rb_rotated_s20261003_observation_repairs_20261007.
+
+Independent timing review isolates 618.205 s in RETURN_GATE_SEARCH. The first
+red-margin violation is SEARCH_QR at t=205.810; its minimum is at t=206.640.
+The first raw RED detail arrives at 205.387; confirmed exclusions arrive at
+205.634. Fresh delivered rates alone do not establish usable observation distance:
+the red filter suppresses features narrower than 0.50 m on the ground. A saved
+sighting component retains a measured zone-side camera vantage for subsequent
+lidar alignment instead of rejecting an uncertain area-derived stand-off. It
+continues rejecting clipped/outbound boards and outside-zone-side vantages.
+This component has no full rendered qualification.
+
+FAIL: the full isolated braking candidate with explicit first-gate restore
+configuration passes outbound and search but contacts a return wall at 771.21 s.
+Ground speed at return handover is about 0.055 m/s. Clearance first drops below
+0.70 m at 770.7 s, reaches 0.4044297556 m, then recovery reports STUCK. Physical
+final disarm is recorded at 854.80 s. The 754-source archive verifies, SHA-256
+7af7971b3fb891c0d8b1abe3b141ede995369d2b9e348dbdea8064476fe48980.
+Evidence: logs/reliability_braked_navigation_candidate_restore_config_20261007.
+The candidate is not adopted. All twelve command/freshness interface checks pass;
+that does not qualify its full flight.
+
+PARTIAL: compiled graph search with batched original 5 cm shortcut samples passes
+all 13 existing planner regressions. Across 39 captured-scan cases, median host
+planning time falls from 0.1728094 s to 0.0511032 s; maximum from 0.2294628 s to
+0.1043158 s. Every returned segment retains the full clearance certificate, and
+observed-space connectivity agrees with the original. A separate full isolated
+navigation trial is active, with actual fixture command callbacks recorded
+separately for evaluation. Production decision source remains unchanged.
+# Direct controller timing review — 7 October 2026
+
+The isolated compiled-planner full navigation run failed return traversal:
+minimum corridor clearance 0.4865810224 m, no simulator contacts, exhausted
+recovery and subsequent RTL altitude/mode failures. Source archive readback
+verifies 755 files, SHA256
+`5b904f81b5241864f5bb091770ea12f6ce9ed4fa971f477f8f4981bb3e395c99`.
+Evidence: `logs/reliability_fast_planner_navigation_candidate_20261007`.
+
+Actual headless callback timing, recorded separately from controller inputs,
+measures 0.030 s median, 0.270 s p95 and 0.400 s maximum header-to-callback
+delay in the return leg, before the unchanged 0.400 s physical delay. A live
+ROS clock integration separately passes: during a 0.300 s blocked callback
+the default executor reports zero sample age, while a dedicated clock executor
+reports 1.120 s. This establishes a timing defect, not navigation acceptance.
+Evidence: `logs/reliability_independent_ros_clock_candidate_20261007.json`.
+
+The first clock flight prototype stopped on an initialization exception.
+Its rejected 756-source archive is verified, SHA256
+`2f2733fd53fc09ea08d2bbed51c6d5e2e4b3ff8594ecf08e18980417c91f9139`.
+The subsequent existing-controller regression run reports 4 failures / 25
+passes: an unintended EKF-only freshness requirement disabled the supported
+pose-derived fallback. Rejected source and the complete regression log are in
+`logs/reliability_live_clock_regression_rejection_20261007`. A scratch correction
+retains that fallback while rejecting stale or invalid observed EKF samples.
+Retesting is required before flight. No production controller adoption, rendered
+qualification, coupled-gust qualification or hardware qualification is claimed.
+
+# Observation continuity and isolated scan pairing, 7 October 2026
+
+The timestamped-banner full suite closed with 1381 passed, 3 failed and 3
+skipped in 677.76 s. No rendered run started after that failure. Missing capture
+stamps in corruption and clipped-board fixtures were corrected. Independent
+fresh OCR trials then exposed the positive-exposure severity-5 green clipping
+case. Clipped-color recovery now requires a word read, with the original green
+requirement retained for structural identity. A previous word is invalidated
+when the current image has no lettering band at that region. Targeted checks
+and a fresh complete suite are required before claiming qualification.
+
+The isolated paired-scan candidate completes calm my_world seed 5 with all 13
+navigation checks passing, 0.7407902342 m corridor clearance, 2.2050712636 m
+restricted-zone clearance and 883.9 s airborne time, no contacts and final
+disarm. Delivery is deliberately omitted and unconfirmed. The source archive
+has 758 verified files, SHA256
+02ddb7f7e54ec4aae4a4f7ba56605a32c9ca258bec78378055db8abb98b951e4.
+Evidence: logs/reliability_paired_scan_navigation_s5_assets_20261007.
+The initial missing-QR-assets setup failure is preserved separately; it was
+not a flight. The expanded ten-case calm/field batch uses that exact source
+archive and bounded ROS domains 180-189, with original physical response and
+delay. No production adoption, rendered qualification or motor qualification
+is inferred from this navigation-only fixture.
+
+The earlier independent-clock batch closes ten actual flights with four
+navigation passes and six failures. Its six original unsupported-domain setup
+errors are separately retained. The instrumented calm seed 3 repetition passes
+navigation but does not erase the earlier seed 3 clearance/recovery failure.
+Coupled gust/delay fixtures remain failed, including physical contacts.
+
+The final camera targeted run closes with 209 passed in 53.81 s. Its corruption
+trials explicitly reset OCR state so every condition is judged from its own
+image. Cold-start clipping recovery, absent-frame rejection, blank-panel
+replacement rejection and clipped-color decoys pass. The complete offline suite
+is now running on a frozen 835-file archive, SHA256
+0553a195d3b18359a4d55e5dd1f6ac0dfa907be44d89e576692b3cec03a99e9d.
+Evidence: logs/reliability_banner_clipped_and_fresh_reads_checks_20261007.log
+and logs/reliability_banner_capture_qualification_continuity_20261007.
+Native split rendering is conditional on that suite passing.
+
+The first expanded paired-scan harness omitted the mandatory forecast recorder
+output variable. Its controller crashed. It is stopped, marked invalid and
+preserved separately, including a PID-reuse-safe scoped cleanup review for
+escaped child groups. The corrected batch uses unique per-flight process-local
+recorder paths and the exact qualified seed 5 source/assets. It is active under
+logs/reliability_focused_paired_scan_navigation_verified_20261007.
+The paired-scan coupled fixtures still fail with physical contact. An isolated
+separate actuator/disturbance forecast prototype also fails both physical
+cases and remains rejected. No simulation-wide qualification is claimed.
+
+The latest complete offline suite passes: 1387 passed, 3 skipped in 944.93 s,
+with syntax, shell, XML/YAML and frontend checks passing. The existing frontend
+chunk-size warning remains informational. Coordinator source comparison confirms
+all 835 frozen hashes unchanged. Evidence:
+logs/reliability_full_banner_capture_continuity_20261007.log and
+logs/reliability_banner_capture_qualification_continuity_20261007/report.json.
+The native split rerun is proceeding on that source; no final rendered grade yet.
+
+Exact source archives for both earlier new-banner suites were recovered without
+modifying production, and every byte was checked against the original frozen
+manifest. The interrupted suite remains unqualified; its first partial packaging
+attempt is retained. The completed failed suite remains failed. Their verified
+archives have 835 files each, SHA256 c2fc810281195d69b395df565aef772d15544be8fbf67acd7d5a42ed0afbeed7
+and 35c6c1a13f6c1106054f992cc229af692e2ccf573187c41ca4c292aaec66960a.
+
+The corrected paired-scan batch closes calm seeds 1 and 2 with all 13 navigation
+checks, no contacts and final disarm. Measured corridor clearances are
+0.7358605386 and 0.7420698642 m; airborne times 880.1 and 881.9 s.
+Actual forecast recordings close and decision source matches the archived
+candidate. Eight further trials remain pending. Delivery was not exercised.
+# 7 October, 10:55 India: scan registration qualification update
+
+## 11:30 update
+
+Buffered calm seed 3 passes all 13 navigation checks, through disarm, with
+0.7254285863 m corridor clearance, 2.2520712636 m exclusion clearance and
+803.4 s flight. Source and evidence are verified. Buffered field seed 2 fails
+return-banner alignment and never traverses the return corridor, so its
+sampled clearance cannot qualify the preserved return-clearance failure.
+Gate-only field seed 5 traverses both corridors at 0.7333189262 m clearance
+but fails the time limit at 917.2 s. Combined observation field seeds 4/5
+exhaust return recovery at 0.6401312614 / 0.6778281715 m and fail the time limit.
+The combined calm seed 5 trial remains active. No controller adoption.
+
+The detector's word reader receives display-modified pixels in a saved
+rendered fixture: 8,835 changed channels in its OCR crop. The isolated
+separate-overlay repair restores exact camera pixels. It passes 279 related
+checks and the new pixel-input regression with 10 capture checks. The
+production source remains frozen for the active native split recording.
+Guarded integration is queued after verified recording/source closure and
+actual disarm, then the complete suite and a fresh rendered split trial.
+This does not establish broad simulation, rendered delivery or hardware
+qualification. Every failed trial remains recorded.
+
+The frozen paired-scan ten-case calm/field batch has closed. Six trials pass
+the 13 navigation checks and four fail: calm seed 3 return recovery, field
+seed 2 minimum clearance 0.6895136986 m, field seed 4 airborne time 927.7 s,
+and field seed 5 capture freshness at GateAdvance. All ten actually disarm.
+The unchanged source archive and closed evidence hashes are verified in
+`logs/reliability_focused_paired_scan_navigation_verified_20261007/closed_batch_review.json`.
+Calm seed 5 also loses the additional sampling reserve at 0.7234276155 m;
+passing the hard 0.70 m grader does not qualify that reserve.
+
+The isolated buffered scan-pose candidate passes seven subscription callback
+checks and 29 stamped-observation controller regressions. Original unstamped
+regression failures and exact source remain archived. Physical fixture
+parameters and assertions are unchanged. Combined changing-gust/delayed
+control still contacts in both preserved cases. A full calm seed 3 buffered
+navigation trial is active, with unique forecast recording and frozen source.
+This is not rendered perception, motor-delivery or hardware qualification.
+
+Production remains frozen for the fresh rendered split-corridor course after
+its complete 1387-pass, three-skip offline suite. No final rendered grade yet.
+
+
+# Current progress
+
+Current state as of 07 October 2026, 13:02 India. This section supersedes historical job descriptions below.
+
+- The pristine-camera complete suite passed 1388 tests, 3 skipped, and all
+  other offline checks. The latest production source subsequently received
+  seven reviewed perception/search files; its fresh full suite is running.
+- The pristine rendered split trial closed FAILED, 19/22. Motor-priority
+  delivery qualified, payload error 0.11 m, flight 773.1 s, home error 0.09 m
+  and actual final disarm. Return traversal, unexpected mode and zone ceiling
+  failed. Exact source, video through disarm and runtime assets are archived.
+- Installed repairs retain pristine image pixels, treat clipped banner
+  identity as a bearing before range, expose provisional camera red edges,
+  and brake unsafe search segments before replanning from measured position.
+  Selected checks pass 139 banner, 130 search/routing and 94 perception tests.
+  The real callback rejects all 432 labelled red-QR fixtures. Full rendered
+  acceptance remains pending. No simulator truth is supplied to decisions.
+- Qualification is running under
+  logs/reliability_early_red_clipped_bearing_qualification_20261007. It freezes
+  839 source files, runs the full suite, then records split and rotated courses.
+  Standard seeds 20261003/1001 and shipped need final-source repeats afterward.
+- The isolated lidar-fault observer repair passed 5 new and 29 existing checks,
+  but its three physical trials are only two navigation passes and one failure.
+  Field 4 completed at 791.9 s, clearance 0.716679 m; calm 5 at 872.3 s,
+  0.723122 m. Both lose the 0.725 m planning reserve. Field 5 fails recovery,
+  913.8 s, 0.664405 m. All source/assets/evidence verified through disarm.
+  The production controller is unchanged; this is not full qualification.
+- An additional 0.05 m steering-reserve candidate failed 3 of 29 existing
+  checks and both preserved strong gust/delay cases. Rejected, source archived.
+- Recorded certificate-to-publication delay reaches 0.18 s. An isolated
+  computation-deadline candidate passes 4 new checks and 29 physical fixture
+  checks with their actual zero-computation clock. Live independent-clock
+  field 4/5 and calm 5 trials retain a 0.20 s budget and are running under
+  logs/reliability_command_deadline_navigation_20261007. Physical delay remains
+  0.4 s and response 0.6 s. Strong gust/delay qualification remains open.
+- The corrected 200-case campaign remains pending targeted qualification.
+  Prior failed baseline campaigns are preserved, not promoted to passes.
+- Corridor clearance stays 0.70 m plus 0.025 m planning reserve, exclusion
+  clearance 1.50 m, flight ceiling 900 s. Off-axis geometry/hash stay preserved
+  as infeasibility regression. Motor priority and three-attempt full hook
+  retract-and-continue policy remain unchanged. Hardware/flights are deferred.
+
+
+
+# Current progress
+
+Current state as of 07 October 2026, 13:24 India. This section supersedes historical descriptions below.
+
+- The complete 839-file offline run closed with 1402 passed, 2 failed,
+  3 skipped. Syntax, configuration and frontend checks passed. Both failed
+  search fixtures omitted timestamped motion captures, which correctly kept
+  the new braking gate stopped. Correcting only those teleport-fixture inputs
+  passes their unchanged assertions and all 184 related checks.
+- The complete suite is now rerunning on newly frozen source under
+  logs/reliability_early_red_clipped_bearing_fixture_clock_qualification_20261007.
+  Split and rotated rendered recordings start only after it passes. The first
+  launcher reused an existing output path and ran no tests; retry 1 is active.
+- The isolated deadline controller completed all three focused physical
+  navigation trials. Field 4: 793.6 s, 0.753576 m corridor, 2.185071 m exclusion.
+  Field 5: 811.3 s, 0.726896 m corridor, 2.224071 m exclusion. Calm 5: 867.7 s,
+  0.745085 m corridor, 2.202071 m exclusion. Both corridors were traversed,
+  all 13 navigation checks passed, no contacts, actual final disarm. Frozen
+  source, assets and complete evidence hashes are verified. These headless
+  runs do not qualify rendered perception or delivery.
+- The seven remaining calm/field seeds are running with the same frozen
+  candidate, physical 0.4 s delay, 0.6 s response and 0.20 s computation budget
+  under logs/reliability_command_deadline_extended_navigation_20261007.
+  The production controller remains unchanged during perception qualification.
+- Seven perception/search files are installed. Pristine analysis pixels,
+  clipped-banner bearing before area-derived range, provisional camera red
+  boundaries and braking before replanning are covered by focused tests.
+  Fresh rendered acceptance on these changes is still pending.
+- The last pristine split recording closed 19/22 FAILED, with motor delivery
+  qualified, payload error 0.11 m, 773.1 s airborne and final disarm. Return
+  traversal, unexpected mode and zone ceiling failed. Its complete video,
+  source and runtime assets remain archived. Older standard/shipped passes
+  are historical evidence and do not qualify the current source.
+- Strong changing gusts with command delay remain unqualified. The deadline
+  candidate still fails the two preserved dirty/late narrow-corridor cases.
+  Extra steering reserve and two batched certificate optimizations were
+  rejected. No clearance, physics or acceptance assertion was relaxed.
+- Final-code standard seeds 20261003/1001, shipped/rotated/split rendered
+  acceptance, the corrected 200-case matrix and the final report remain open.
+  Source hashes, onboard commands/telemetry and separate truth are retained.
+- Requirements stay 0.70 m corridor clearance plus 0.025 m planning reserve,
+  1.50 m exclusion clearance, 900 s airborne and 22 rendered acceptance checks.
+  Off-axis geometry/hash stay preserved. Delivery remains motor priority with
+  three attempts, full hook retraction, then continue unconfirmed. Hardware
+  qualification and staged flights remain deferred.
+
+
+
+# Current progress
+
+Current state as of 07 October 2026, 14:03 India. This section supersedes historical descriptions below.
+
+- The latest complete offline suite PASSES: 1404 tests passed, 3 skipped,
+  plus syntax, configuration and frontend checks. Frozen source is unchanged,
+  839 files, archive verified. Five installed decision modules resolve to
+  those exact frozen source files. The two earlier fixture failures were
+  fixed by adding clock and motion captures to teleport tests, with all
+  original assertions and production freshness checks retained.
+- The fresh rendered split seed 20261003 trial passed readiness, took off
+  and is searching for the target QR. It is recording through disarm under
+  logs/reliability_render_split_corridors_s20261003_early_red_clipped_bearing_fixture_clock_20261007.
+  Rotated acceptance follows automatically. No rendered outcome is available
+  yet. Seven installed perception/search repairs have full offline coverage.
+- The deadline controller closes seven navigation passes and three failures
+  across all ten calm/field seeds. Every calm seed and field seeds 4/5 pass
+  with the 0.725 m planning reserve. Field 1 fails at 0.625300 m clearance;
+  field 2 exceeds time at 981.0 s; field 3 fails at 0.681424 m clearance.
+  Exact source, assets, commands, forecasts and independent truth through
+  actual disarm are verified for all ten. Production adoption is withheld.
+- An actual ROS scheduling diagnostic reproduces old capture delivery during
+  a slow control callback: median pose age 92 ms. A separate capture inbox
+  reduces it to 10 ms and applies observations only between control ticks.
+  An isolated 760-file candidate is repeating failed field seed 1 with
+  unchanged geometry, physics and clearance under
+  logs/reliability_capture_inbox_field1_navigation_20261007. No result yet.
+- A staged normal-startup repair makes diagnostic recording optional and
+  passes two startup/cleanup checks after reproducing the original KeyError.
+  Normal gate integration remains pending. No root controller was changed
+  during the ongoing frozen perception qualification.
+- The wider lidar median filter is rejected: both coupled gust/delay cases
+  still contact, and it loses thin obstacles in seven of 36 controlled cases.
+  Strong gust/delay qualification remains open. Failed baseline, steering
+  margin and certificate-batching alternatives are retained as failures.
+- Final-code standard seeds 20261003/1001, shipped/rotated/split rendered
+  acceptance with motor confirmation and measured detector rates, the
+  corrected 200-case matrix and final evidence report remain unfinished.
+  Older standard/shipped passes do not qualify these changed decision files.
+- Corridor clearance stays 0.70 m plus 0.025 m planning reserve, exclusions
+  1.50 m, airborne limit 900 s, and rendered acceptance 22 checks. Off-axis
+  world/hash stay preserved. Motor priority and three-attempt full hook
+  retract-and-continue remain unchanged. Hardware and flights remain deferred.
+
+
+
+# Current progress
+
+Verified 07 October 2026, 14:55 India. This section supersedes historical snapshots below.
+
+- Complete offline checks pass on the current 839-file production source:
+  1404 tests passed, 3 skipped; syntax, configuration and frontend pass.
+- Fresh split seed 20261003 closes 17/22 FAILED, after landing and disarm.
+  Return alignment now succeeds and the corridor is attempted, but recovery
+  exhausts. Corridor clearance is 0.686971 m, below 0.70 m. Return traversal,
+  corridor altitude, unexpected mode and zone ceiling also fail. Exclusion
+  clearance passes at 3.186835 m. Motor delivery qualifies after full hook
+  retraction on attempt one; independent payload error 0.10 m. Flight 456.1 s,
+  home error 0.12 m. Full videos, source archive and runtime assets verified.
+- Search detector capture rates on that recording are QR 18.0608 Hz and
+  red 17.9786 Hz in simulated time; host delivered rates 4.6854 and 4.6640 Hz.
+  Both p95 capture-to-processing latencies are about 0.24 simulated seconds.
+  Whole-recording camera and search rates have different sampling windows.
+- Rotated seed 20261003 is running on the same frozen production source.
+  It has found the target and reached centring. Final result remains pending.
+- The original isolated deadline controller closes seven passes and three
+  failures across ten calm/field navigation runs. It was not adopted.
+- A separate capture inbox reduces actual ROS scheduling-probe median pose
+  age from 92 to 10 ms. Its frozen 760-file physical repeats pass field 1
+  with 0.747428 m clearance, 884.1 s airborne, and field 3 with 0.734799 m,
+  845.9 s. Both complete both corridors and disarm. Field 1 has no stale
+  observation faults across 530 recorded decisions. These are navigation
+  only; no rendered perception or delivery qualification is inherited.
+- New inbox field 2 fails QR search, with 0.760675 m clearance and 542.3 s
+  airborne. Its source, assets and failed recording through disarm are
+  verified too. Remaining-seven expansion is withheld. The first closure
+  watcher started before report creation and exited; the direct retry verifies
+  both completed results. No physical result was discarded or changed.
+- Normal gate-braking integration and final controller adoption remain pending.
+  A staged optional-recorder startup fix passes two startup/cleanup checks.
+  Strong gust/delay failures remain unresolved. A wider lidar filter was
+  rejected for losing thin obstacles and retaining coupled contact failures.
+- Still open: return recovery and clearance, field-2 search, strong gust/delay,
+  final-source standard 20261003/1001 and shipped/rotated/split acceptance,
+  corrected 200-case campaign and final report. Older passes remain historical.
+- Requirements remain 0.70 m corridor plus 0.025 m planning reserve, 1.50 m
+  exclusions, 900 s airborne and all 22 rendered checks. Off-axis fixture/hash
+  are preserved. Motor priority and three-attempt full-hook-retract-and-continue
+  remain intact. Hardware qualification and staged flights remain deferred.
+

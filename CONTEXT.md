@@ -49,12 +49,47 @@ boundary.
 
 **Detect** — something of the right kind is present in frame.
 
-**Identify** — that thing is confirmed to be *the* banner, by structure and
-optionally by reading its lettering. Stronger than detect.
+**Identify** — that thing is confirmed to be *the* banner, by its colour and
+by structure. Stronger than detect. The organisers confirmed the banners carry
+no text, so the structure is the **banner border**: a solid colour field inside
+a thin white frame. A plain coloured sheet has the colour and can have the
+size; it is not framed. Reading lettering is retained as a confirming path for
+an arena that happens to have some, never as the requirement.
 
 **Align** — the aircraft has yawed to face an identified banner. The rulebook
 scores "detect ... and autonomously align" as one task. Align says where the
 nose points, nothing about where the aircraft is.
+
+**Supplied colour** — a banner's shade as the organisers give it, a HEX code
+latched on `/mission/banner_colours` and reported by the readiness interlock.
+It is a *nominal* colour: wear, shade and exposure move a printed panel, so it
+becomes a hue band with a tolerance, never an equality. Without it the
+aircraft would be identifying a corridor by a guess, so it is an interlock
+item and not a convenience.
+
+**Banner placement** — where a banner is mounted: **suspended** from a rod
+between the corridor walls, or **ground** — laid flat in front of the mouth
+with its colour facing the sky — or both. A ground banner has no vertical
+face, so nothing can square up on it with the lidar, and it is seen by
+tilting the camera down rather than looking ahead.
+
+**Alignment pass** — one attempt to align to one banner view. A gate is
+approached with one pass per view, the hung board then the ground sheet, so
+both banners are used in turn rather than whichever is seen first. At least
+one pass is required. The hung view goes first; after it, the ground view is
+only **glanced** at (a few seconds at the heading just found), and the second
+pass runs only when that glance identified a banner, so a gate with nothing
+on the ground is not charged a full sweep. If the hung view identifies
+nothing within its budget, the aircraft returns to where that view started
+and the ground pass becomes the required one. A gate that only the ground
+pass could align to makes the next gate try the ground view first; the hung
+view is still the last resort.
+
+**Arena dimensions** — every length the algorithms depend on (corridor,
+hall, banner, QR, red zone, payload), entered at the GCS in metres, feet or
+inches and applied by rebuilding the mission on the ground. A field no
+algorithm reads is still recorded, and marked so. Named sets of them are
+**presets**; the built-in ones cannot be overwritten.
 
 **Square on** — the aircraft is perpendicular to the banner's face, within
 tolerance, at a measured standoff. Stronger than align, and measured by the
@@ -66,8 +101,19 @@ well off to one side; only a square-on aircraft may advance through the gate.
 **Decode** — recover the payload string from a scanned marker. A scan may
 fail to decode.
 
-**Match** — a decoded payload equals the delivery target named by the start
-QR. Decoding is not matching.
+**Match** — the marker in frame is the one the start QR named. Two kinds of
+evidence can establish it, in this order:
+
+**Appearance match** — the marker's own printed pattern, rectified off its
+four corners and compared cell by cell, is the pattern the start marker
+showed. This is the primary evidence, because it is unsettled whether the
+competition codes encode anything at all, and a code that encodes nothing
+still looks like itself.
+
+**Payload match** — a decoded payload names the same place the start QR did
+(`qr_match.identifiers`). Confirming, not required. Decoding is not matching,
+and neither is a decode the aircraft never got: what identified a marker is
+published alongside the match so nothing can claim evidence it lacks.
 
 **NOT_VISIBLE** — the red-zone detector has no usable ground view, so it
 reports nothing about the ground. Distinct from CLEAR, which asserts the
@@ -134,10 +180,22 @@ Logitech C270 (48.8 deg HFOV) on a tilt servo, LD06 lidar on the raised
 front mount, gravity-hook winch. `AEROTHON_AIRFRAME=iris` flies the older
 ArduPilot Iris variant.
 
-**Gravity hook** — the team's drop mechanism: a motor lowers the payload on
-a hook that lets go by itself once the payload rests and the line goes slack.
-The winch pays out past touchdown for that slack; "release" sends nothing on
-the aircraft (in Gazebo the winch node detaches on slack).
+**Gravity hook** — the team's payload support, lowered and retracted by the
+winch. Its physical retention and release behaviour requires bench qualification.
+
+**Contact release** — the simulation fixture's detachment of the payload
+when it contacts the ground. This is distinct from the aircraft's inferred
+touchdown and detachment.
+
+**Commanded winch travel** — the estimated payout or retraction accumulated
+from motor commands. It is distinct from measured hook position.
+
+**Inferred touchdown** — the aircraft's assessment that the payload has
+reached the ground from its onboard observations. It is distinct from
+simulator contact truth.
+
+**Inferred detachment** — the aircraft's assessment that the payload remains
+behind while the hook retracts. It is distinct from an accepted winch command.
 
 **Edge-on orbit** — what both banner searches do when a full turn reads no
 banner but did see green: the board is being seen from the side or behind,
@@ -150,12 +208,14 @@ ends once it can no longer reach the dwell's hit floor, and the lettering can
 be read mid-leg. With no green seen anywhere, a ring of vantage points round
 the search's start is the last resort. `banner_orbit.py`.
 
-**Confirmed delivery** — a drop the nadir camera has seen: after the release
-and after the winch has wound back up, the payload is in frame on the ground,
-at the pixel size its edge length has from that altitude. Distinct from the
-winch's *released* flag, which only says the command was accepted. An
-unconfirmed drop still flies home, but the outcome is DELIVERY_UNCONFIRMED,
-not COMPLETED.
+**Confirmed delivery** — a delivery inferred from qualified, sustained
+unloaded motor effort after a retraction probe and complete hook retraction.
+Onboard camera observations provide separate payload tracking and visual
+ground-support evidence.
+
+**Unconfirmed delivery** — a delivery for which the aircraft lacks sufficient
+onboard confirmation. The mission continues after full hook retraction, but
+its final outcome remains DELIVERY_UNCONFIRMED.
 ## Search and navigation
 
 **Routed leg** — a transit between two points, checked against the exclusion
@@ -166,6 +226,17 @@ enters an exclusion. Every leg is routed; only sweep lanes are clipped.
 **Blocked leg** — a leg with no route within the detour budget, or whose
 destination lies inside an exclusion. A blocked leg is an abort with a reason,
 never a straight line flown anyway.
+
+**Connected free-space path** — a sequence of segments through observed
+free space with the required aircraft clearance. A visible straight gap
+alone is not evidence of a connected path.
+
+**Corridor progress** — signed displacement along the corridor axis from its
+entrance. Returning through the entrance is distinct from reaching its far end.
+
+**Infeasible corridor** — a corridor whose obstacle and wall clearance bands
+block every through path at the required clearance. It is distinct from a
+feasible corridor that the current planner fails to traverse.
 
 ## Perception, continued
 
@@ -195,3 +266,17 @@ the state under investigation. An ungated probe of the red-zone detector caught
 the aircraft on the pad and produced a confident wrong answer; the gate is what
 makes a recording evidence about a stage rather than about whenever the probe
 happened to look.
+
+**Declared land-in-place** — a landing spot a focused trial records from its
+own onboard pose at the moment it commands LAND, before touching down. The
+independent contact grader accepts the skids settling within a radius of it,
+given a gentle level touchdown and the FCU reporting LAND; everything else
+stays an unexpected contact. A full mission lands at home, declares nothing
+and keeps the home rule alone. Where the aircraft landed remains the mission
+grader's own check, not an exemption in the contact evidence.
+
+**Parked cargo** — where an unloaded fixture leaves the payload: on the pad,
+clear of the airframe. An unloaded airframe is built without the detachable
+joint that carries the payload, so cargo left at the spawn drops onto the pad
+against a landing skid and records thousands of aircraft contacts before the
+flight even arms.

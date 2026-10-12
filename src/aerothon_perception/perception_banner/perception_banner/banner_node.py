@@ -50,16 +50,29 @@ import math
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
 import cv2
 import numpy as np
 
 from camera_ctrl.gate import CameraGate
+from perception_banner import colours
 from perception_banner.photometry import normalise
 from perception_banner.word_reader import reads_banner
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
+
+# camera_ctrl poses the detector runs in; closed in NADIR/ALIGN, where the
+# delivery search and QR stages look and no banner is ever sought.
+CAMERA_POSES = ("FORWARD", "BANNER", "GROUND")
+# In the GROUND pose a laid banner must be seen across, not along; see the
+# aspect gate in on_image. Measured on the headless sheet: from beside the
+# corridor (90 deg off-axis) 0.63-0.93, at 45 deg 1.69-3.7, head-on 4.8-10.
+GROUND_MIN_ASPECT = 1.5
+GROUND_MAX_ASPECT = 16.0
+# camera_ctrl NAMED_POSES_DEG["GROUND"], as a depression.
+GROUND_POSE_DEPRESSION_DEG = 35.0
 
 
 class BannerNode(Node):
@@ -107,7 +120,15 @@ class BannerNode(Node):
         # including adding no false positives, because the board-area floor
         # and the reading now carry that discrimination. The aspect gate was
         # doing a job it no longer has to do.
-        p('min_aspect', 0.9); p('max_aspect', 8.0)
+        # The recorded 20261003 return view derives a 0.82-aspect board:
+        # its lettering, area and colour pass, but a 0.9 floor discards it
+        # and adds an orbit that exceeds the mission's flight-time limit.
+        # Admit this observed oblique view; lidar must still square up the
+        # aircraft before entry. Blank-green and narrow-board tests guard
+        # the existing identity checks. Real-camera calibration is pending.
+        p('min_aspect', 0.8); p('max_aspect', 8.0)
+        p('ground_min_aspect', GROUND_MIN_ASPECT)
+        p('ground_max_aspect', GROUND_MAX_ASPECT)
         # ---- identity ----
         p('require_identity', True)
         # Lettering is detected RELATIVE to the board it sits on, not against
@@ -143,6 +164,28 @@ class BannerNode(Node):
         p('min_letter_components', 3)  # separate white blobs in a band
         p('min_component_frac', 0.0015)
         p('min_board_green_frac', 0.25)
+        # ---- the white border, which is what identifies a text-free banner #
+        # ON by default: the organisers confirmed no banner carries text, so
+        # the border is the structure. Turned off, identification falls back
+        # to the lettering paths, which is how their own controls still
+        # measure them.
+        p('border_identity', True)
+        # 3 inches on a corridor-width banner is about 2% of its width. The
+        # ring sampled is a little wider so blur and resampling cannot erase
+        # it, but not so wide that a real border becomes a minority of it.
+        p('border_frac', 0.03)
+        # How much of a side's ring has to read white. Half allows for a
+        # corner occluded by a post or the far wall.
+        p('min_border_frac', 0.45)
+        # A banner at the frame edge shows fewer sides; two is enough to tell
+        # a framed panel from an unframed one, PROVIDED they are opposite
+        # (see _identify_bordered): a board wider than the frame shows only
+        # top and bottom, a green patch run into a frame CORNER shows two
+        # adjacent sides -- the rendered corridor floor between its walls,
+        # which the aircraft locked onto ~19 m away. Three sides, tried first,
+        # refused the return board seen from 3 m, where it overflows both
+        # sides of the frame.
+        p('min_border_sides', 2)
         # How often the OCR confirmation runs. Structure runs every frame.
         p('ocr_interval_s', 1.0)
         # How many candidate boards one read may try before giving up.
@@ -176,8 +219,15 @@ class BannerNode(Node):
         self.bridge = CvBridge()
 
         self.create_subscription(Image, image_topic, self.on_image, 5)
-        # The banner is looked for with the camera level or 20 deg down.
-        self.gate = CameraGate(self, ("FORWARD", "BANNER"))
+        self._colours = {}
+        # Latched, so a detector that comes up after the operator typed the
+        # shades still receives them.
+        self.create_subscription(
+            String, '/mission/banner_colours', self._on_banner_colours,
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        # The banner is looked for with the camera level, 20 deg down for a
+        # hung board, or 30 deg down for one laid on the ground.
+        self.gate = CameraGate(self, CAMERA_POSES)
         self.pub = self.create_publisher(Vector3, '/percep/banner', 10)
         self.pub_detail = self.create_publisher(String, '/percep/banner/detail', 10)
         self.pub_annot = self.create_publisher(Image, '/percep/banner/annotated', 5)
@@ -224,17 +274,109 @@ class BannerNode(Node):
         px_per_m = w / gw
         area = (float(self._g('banner_width_m')) * px_per_m) * \
                (float(self._g('banner_height_m')) * px_per_m)
+        # A banner LAID on the ground is seen foreshortened by the sine of
+        # the look-down angle -- about 0.57 at the GROUND pose's 35 deg. The
+        # face-on floor refused the rendered sheet at 12,400-13,000 px
+        # against 13,816 from 6 m out, where it is plainly the banner.
+        if getattr(getattr(self, "gate", None), "requested", None) == "GROUND":
+            area *= math.sin(math.radians(GROUND_POSE_DEPRESSION_DEG))
         return area * float(self._g('area_safety'))
 
     # ------------------------------------------------------------------ #
-    def green_mask(self, frame):
+    @staticmethod
+    def _regions_overlap(previous, current):
+        if previous is None:
+            return False
+        x,y,w,h = previous
+        cx,cy,cw,ch = current
+        overlap = (max(0, min(x+w,cx+cw)-max(x,cx))
+                   * max(0, min(y+h,cy+ch)-max(y,cy)))
+        return overlap >= .5 * max(w*h,cw*ch)
+
+    def colour_mask(self, frame, allow_clipped=True, name=None):
+        """Pixels of a banner colour: the operator's shade, or every shade.
+
+        The organisers supply each banner's colour as a HEX code before the
+        flight, latched on /mission/banner_colours. With `name` this matches
+        one of them; without, it matches any, because the sweep is looking
+        for whichever banner is there and only then asks which one it found.
+
+        Until a colour has been supplied this falls back to the hue window
+        the node has always used, so nothing changes for a stack that has not
+        been told the shades yet.
+        """
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        lo = np.array([self._g('h_lo'), self._g('s_lo'), self._g('v_lo')])
-        hi = np.array([self._g('h_hi'), self._g('s_hi'), self._g('v_hi')])
-        mask = cv2.inRange(hsv, lo, hi)
+        bands = self.colour_ranges(name)
+        if bands:
+            mask = colours.mask(hsv, bands)
+        else:
+            lo = np.array([self._g('h_lo'), self._g('s_lo'), self._g('v_lo')])
+            hi = np.array([self._g('h_hi'), self._g('s_hi'), self._g('v_hi')])
+            mask = cv2.inRange(hsv, lo, hi)
+        if allow_clipped:
+            # Clipping green shifts a green board toward cyan.
+            # Keep these pixels available to the word reader. They cannot
+            # satisfy the structural board-color check below.
+            clipped = ((frame[:, :, 1] == 255)
+                       & (hsv[:, :, 0] > self._g('h_hi'))
+                       & (hsv[:, :, 0] <= 90)
+                       & (hsv[:, :, 1] >= self._g('s_lo')))
+            mask[clipped] = 255
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
         return mask
+
+    # The mask was green-only when the banner was known to be green. Kept so
+    # anything already calling it by that name keeps working.
+    green_mask = colour_mask
+
+    def colour_ranges(self, name=None):
+        """HSV acceptance ranges for one supplied colour, or all of them."""
+        supplied = getattr(self, '_colours', None) or {}
+        # Every band stops short of the other supplied shades, the red zone's
+        # included: orange and red are 12 hue steps apart.
+        if name is not None:
+            value = supplied.get(name)
+            return colours.separated_ranges(name, supplied) if value else []
+        out = []
+        for key in ('green', 'orange'):
+            if supplied.get(key):
+                out.extend(colours.separated_ranges(key, supplied))
+        return out
+
+    def dominant_colour(self, panel):
+        """Which supplied banner colour this panel mostly is, if any.
+
+        The green banner means "use this corridor" and the orange one means
+        "not this one", so which colour was identified is the whole point of
+        identifying it. Reported rather than inferred downstream.
+        """
+        supplied = getattr(self, '_colours', None) or {}
+        if panel.size == 0 or not supplied:
+            return "", 0.0
+        hsv = cv2.cvtColor(panel, cv2.COLOR_BGR2HSV)
+        best, best_frac = "", 0.0
+        for name in ('green', 'orange'):
+            bands = self.colour_ranges(name)
+            if not bands:
+                continue
+            frac = (float(np.count_nonzero(colours.mask(hsv, bands)))
+                    / float(panel.shape[0] * panel.shape[1]))
+            if frac > best_frac:
+                best, best_frac = name, frac
+        return best, round(best_frac, 4)
+
+    def _on_banner_colours(self, msg):
+        """The organisers' shades, as the operator entered them."""
+        try:
+            supplied = colours.validate(json.loads(msg.data).get('colours'))
+        except (ValueError, TypeError, AttributeError, json.JSONDecodeError) as error:
+            self.get_logger().warn(f"banner colours refused: {error}")
+            return
+        self._colours = supplied
+        self.get_logger().info(
+            "banner colours set -> "
+            + ", ".join(f"{k}={v}" for k, v in sorted(supplied.items())))
 
     def identity(self, frame, bbox):
         """(is_banner, reason, stats, board_bbox) for the green region at `bbox`.
@@ -290,6 +432,21 @@ class BannerNode(Node):
         # frame-edge speck and the 0.75 aspect rejection. Reverted rather than
         # tuned; the single scale below is the configuration that measures
         # clean on the captured frames.
+        # THE TEXT-FREE PATH FIRST.
+        #
+        # The organisers confirmed the banners carry no written text at all:
+        # each is a plain solid colour panel with a 3-inch white border, its
+        # width the width of the corridor it marks. Lettering is therefore no
+        # longer available as the thing that separates the banner from any
+        # other coloured object, and the border is. The lettering paths below
+        # are kept behind it: they cost two threshold passes, they still
+        # identify an arena that does have text, and every existing control
+        # over them keeps measuring what it measured before.
+        if bool(self._g('border_identity')):
+            bordered = self._identify_bordered(frame, bbox)
+            if bordered[0]:
+                return bordered
+
         # Both sides judge against the same board: measure it once.
         ref = self._board_reference(roi)
         attempts = [(name, self.lettering_mask(roi, dark=dark, ref=ref))
@@ -306,6 +463,103 @@ class BannerNode(Node):
             if best is None or cand > best[0]:
                 best = (cand, (ok, reason, info, board))
         return best[1]
+
+    def _identify_bordered(self, frame, bbox):
+        """(is_banner, reason, stats, board) for a banner that carries no text.
+
+        WHAT STANDS IN FOR THE LETTERING
+
+            A plain colour panel with a 3-inch white border is what the
+            organisers will hang. Colour, area and proportions are all things
+            a tarpaulin, a painted floor patch or a green vehicle roof can
+            have. None of them is FRAMED. So the structure asked for here is
+            the border: a thin bright, low-saturation band immediately
+            outside the colour panel, present on every side that is actually
+            in frame.
+
+            It is measured against the panel it surrounds -- brighter and
+            less saturated than that -- for exactly the reason the lettering
+            test was: an absolute brightness is a hidden assumption about the
+            light, and the real corpus is overcast, shade and direct sun.
+
+            A side that runs off the edge of the image is recorded as
+            UNOBSERVED rather than failed. A banner hard against the frame
+            edge is a normal view during a sweep, and calling its missing
+            border a missing border would reject the real thing; what is not
+            allowed is identifying one on a single visible edge.
+        """
+        x, y, bw, bh = bbox
+        roi = frame[y:y + bh, x:x + bw]
+        info = {"identity_path": "border"}
+        if roi.size == 0:
+            return False, "empty roi", info, bbox
+        _, colour, _, v_min, s_max, _ = self._board_reference(roi)
+        if np.count_nonzero(colour) == 0:
+            return False, "no banner colour in the region", info, bbox
+
+        # The panel is the largest solid run of the supplied colour. The
+        # region the mask handed over can also hold other coloured things
+        # touching it, which is why the board is derived rather than assumed.
+        cnts, _ = cv2.findContours(colour, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not cnts:
+            return False, "no banner colour in the region", info, bbox
+        px, py, pw, ph = max((cv2.boundingRect(c) for c in cnts),
+                             key=lambda r: r[2] * r[3])
+        board = (x + px, y + py, max(1, pw), max(1, ph))
+        info["board_area_px"] = int(board[2] * board[3])
+        bh_frame, bw_frame = frame.shape[:2]
+        if info["board_area_px"] < self.min_area_px(bw_frame, bh_frame):
+            return (False,
+                    f"panel {info['board_area_px']} px below the "
+                    f"{self.min_area_px(bw_frame, bh_frame):.0f} px minimum "
+                    f"for a banner worth aligning to", info, board)
+
+        panel = frame[board[1]:board[1] + board[3], board[0]:board[0] + board[2]]
+        inside = self.colour_mask(panel, allow_clipped=False)
+        colour_frac = (float(np.count_nonzero(inside)) / float(inside.size)
+                       if inside.size else 0.0)
+        info["board_colour_frac"] = round(colour_frac, 4)
+        if colour_frac < float(self._g('min_board_green_frac')):
+            return (False, f"panel is not solid colour ({colour_frac:.3f})",
+                    info, board)
+
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        sat, val = hsv[:, :, 1], hsv[:, :, 2]
+        white = (val >= v_min) & (sat <= s_max)
+        ring = max(2, int(round(float(self._g('border_frac'))
+                                * max(board[2], board[3]))))
+        bx, by, bwd, bhd = board
+        sides = {
+            "top": white[max(0, by - ring):by, bx:bx + bwd],
+            "bottom": white[by + bhd:by + bhd + ring, bx:bx + bwd],
+            "left": white[by:by + bhd, max(0, bx - ring):bx],
+            "right": white[by:by + bhd, bx + bwd:bx + bwd + ring],
+        }
+        floor = float(self._g('min_border_frac'))
+        observed, failed = {}, []
+        for name, band in sides.items():
+            if band.size == 0:
+                continue
+            frac = float(np.count_nonzero(band)) / float(band.size)
+            observed[name] = round(frac, 3)
+            if frac < floor:
+                failed.append(f"{name} {frac:.2f}")
+        info["border_ring_px"] = ring
+        info["border_sides"] = observed
+        if len(observed) < int(self._g('min_border_sides')):
+            return (False,
+                    f"only {len(observed)} border side(s) in frame, need "
+                    f"{int(self._g('min_border_sides'))}", info, board)
+        if failed:
+            return (False, f"no white border on the panel ({', '.join(failed)})",
+                    info, board)
+        if len(observed) == 2 and set(observed) not in ({"top", "bottom"},
+                                                        {"left", "right"}):
+            return (False,
+                    f"framed only on two adjacent sides ({' and '.join(sorted(observed))}); "
+                    f"a patch run into a frame corner, not a banner", info, board)
+        info["bordered"] = True
+        return True, "", info, board
 
     @staticmethod
     def _rank(ok, info, expected_letters=8):
@@ -408,7 +662,8 @@ class BannerNode(Node):
 
         # The board must actually be green, not a white sign on a green fence.
         green = self.green_mask(frame[board[1]:board[1] + board[3],
-                                      board[0]:board[0] + board[2]])
+                                      board[0]:board[0] + board[2]],
+                                allow_clipped=False)
         green_frac = (float(np.count_nonzero(green)) / float(green.size)
                       if green.size else 0.0)
         info["board_green_frac"] = round(green_frac, 4)
@@ -615,13 +870,24 @@ class BannerNode(Node):
 
     # ------------------------------------------------------------------ #
     def on_image(self, msg: Image):
+        started = time.monotonic()
+        capture = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+        if capture <= 0 or capture <= getattr(self, '_last_capture', -1):
+            return
+        self._last_capture = capture
         if not self.gate.open():
+            self._ocr_cache = {"text": "", "text_letters": 0,
+                               "text_confirmed": False, "text_reader": ""}
+            self._ocr_box = None
+            self._ocr_t0 = 0.0
             # Say so, rather than fall silent: the mission keeps the last
             # message, and a stale "identified" would outlive the view.
             self.pub.publish(Vector3())
             self.pub_detail.publish(String(data=json.dumps(
                 {"identified": False, "reason": "camera not pointed ahead",
-                 "candidates": 0})))
+                 "candidates": 0, "capture_stamp": capture,
+                 "processed_stamp": self.get_clock().now().nanoseconds * 1e-9,
+                 "processing_wall_s": time.monotonic()-started})))
             return
         try:
             frame = normalise(self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8'))
@@ -629,11 +895,13 @@ class BannerNode(Node):
             self.get_logger().warn(f"cv_bridge: {e}")
             return
 
+        overlay = frame.copy()
         h, w = frame.shape[:2]
         out = Vector3(x=0.0, y=0.0, z=0.0)
         detail = {"identified": False, "reason": "", "candidates": 0}
         # Per FRAME, not per node: the regions worth reading move.
         self._read_candidates = []
+        lettered_candidates = []
 
         mask = self.green_mask(frame)
         cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -687,11 +955,24 @@ class BannerNode(Node):
 
             if ok:
                 board_aspect = board[2] / max(1, board[3])
-                if not (self._g('min_aspect') <= board_aspect
-                        <= self._g('max_aspect')):
+                lo = float(self._g('min_aspect'))
+                # Looking down at a banner LAID on the ground: seen across the
+                # mouth it is a wide strip (aspect ~3-9); seen along its long
+                # axis, from beside the corridor, it is nearly square (~0.9).
+                # Accepting the second squared the aircraft up on the side
+                # wall. Refused here it is green-not-identified, and the
+                # search orbits round to the face-on view instead.
+                hi = float(self._g('max_aspect'))
+                if getattr(getattr(self, "gate", None), "requested", None) == "GROUND":
+                    lo = max(lo, float(self._g('ground_min_aspect')))
+                    # ...and a laid sheet seen from close in and low is a long
+                    # strip: rendered from 4.9 m out at 3.1 m up, 949 x 80 px
+                    # (aspect 11.9), refused by the board-shaped limit of 8.
+                    hi = max(hi, float(self._g('ground_max_aspect')))
+                if not (lo <= board_aspect <= hi):
                     ok = False
                     reason = (f"board aspect {board_aspect:.2f} outside "
-                              f"{self._g('min_aspect')}-{self._g('max_aspect')}")
+                              f"{lo}-{hi}")
                 info["board_aspect"] = round(board_aspect, 2)
 
             # TEXT RESCUE -- confirming only, never a veto.
@@ -723,10 +1004,10 @@ class BannerNode(Node):
                  "label": label, "ok": bool(ok)})
 
             colour = (0, 255, 0) if ok else (0, 0, 255)
-            cv2.rectangle(frame, (x, y), (x + bw, y + bh), (120, 120, 120), 1)
-            cv2.rectangle(frame, (board[0], board[1]),
+            cv2.rectangle(overlay, (x, y), (x + bw, y + bh), (120, 120, 120), 1)
+            cv2.rectangle(overlay, (board[0], board[1]),
                           (board[0] + board[2], board[1] + board[3]), colour, 2)
-            cv2.putText(frame, "BANNER" if ok else "GREEN, NOT BANNER",
+            cv2.putText(overlay, "BANNER" if ok else "GREEN, NOT BANNER",
                         (board[0], max(0, board[1] - 8)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, colour, 2)
 
@@ -738,6 +1019,21 @@ class BannerNode(Node):
             # reason -- the gate blob's board is the larger of the two.
             self._read_candidates.append(
                 (int(board[0]), int(board[1]), int(board[2]), int(board[3])))
+            if info.get("board_area_px") is not None:
+                # A derived board requires a current lettering band. A blank
+                # panel at the previous word's box cannot preserve that word.
+                lettered_candidates.append(tuple(map(int, board)))
+
+            # WHICH banner this is. The green one marks the corridor the
+            # aircraft must use for its current direction of travel and the
+            # orange one marks the corridor it must not, so identifying the
+            # panel without saying which colour it is answers half a question.
+            if ok:
+                name, frac = self.dominant_colour(
+                    frame[board[1]:board[1] + board[3],
+                          board[0]:board[0] + board[2]])
+                info["banner_colour"] = name
+                info["banner_colour_frac"] = frac
 
             if ok and best is None:
                 # NOTE: first-accepted wins, in whatever order contours come
@@ -776,6 +1072,18 @@ class BannerNode(Node):
             read_boxes = sorted(plausible, key=lambda b: -(b[2] * b[3]))
         read_boxes = read_boxes[:int(self._g('ocr_max_regions'))]
         read_box = read_boxes[0] if read_boxes else None
+        if (self._ocr_cache.get("text_confirmed")
+                and not any(self._regions_overlap(self._ocr_box, box)
+                            for box in lettered_candidates)):
+            self._ocr_cache = {"text": "", "text_letters": 0,
+                               "text_confirmed": False, "text_reader": ""}
+            self._ocr_box = None
+        if read_box is None:
+            # An earlier word read is not evidence in a frame with no board.
+            self._ocr_cache = {"text": "", "text_letters": 0,
+                               "text_confirmed": False, "text_reader": ""}
+            self._ocr_box = None
+            self._ocr_t0 = 0.0
 
         # A cached reading describes the region it came from. When the
         # aircraft yaws to the next sweep heading that region jumps, and
@@ -832,7 +1140,7 @@ class BannerNode(Node):
             out.y = float((cy - h / 2) / (h / 2))
             out.z = 1.0
             detail.update({"identified": True, "reason": "", **info,
-                           "bearing": round(out.x, 3),
+                           "bearing": out.x,
                            # What was actually tracked, so a bearing that does
                            # not respond to yaw can be told apart from one that
                            # is tracking the wrong object.
@@ -849,13 +1157,19 @@ class BannerNode(Node):
         # correctly every frame and its answer never reached the topic.
         detail.update(self._ocr_cache)
 
+        detail.update(capture_stamp=capture,
+                      processed_stamp=self.get_clock().now().nanoseconds * 1e-9,
+                      processing_wall_s=time.monotonic()-started)
+
         self.pub.publish(out)
         self.pub_detail.publish(String(data=json.dumps(detail)))
-        # The boxes above are drawn regardless -- the OCR reads from this same
-        # frame -- but the 2.7 MB conversion is only for a GCS that watches.
+        # Display boxes are separate from the image used by analysis and OCR.
+        # Convert the overlay only when the GCS is watching.
         if self.pub_annot.get_subscription_count():
             try:
-                self.pub_annot.publish(self.bridge.cv2_to_imgmsg(frame, encoding='bgr8'))
+                annotated = self.bridge.cv2_to_imgmsg(overlay, encoding='bgr8')
+                annotated.header = msg.header
+                self.pub_annot.publish(annotated)
             except Exception:  # noqa: BLE001
                 pass
 

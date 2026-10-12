@@ -48,6 +48,7 @@ DESIRED = {
     2:    4.0,   # SYSTEM_TIME
     27:  10.0,   # RAW_IMU
     65:   5.0,   # RC_CHANNELS         - RC / failsafe state
+    36: 20.0,    # SERVO_OUTPUT_RAW for delivery load assessment
     193:  2.0,   # EKF_STATUS_REPORT   - EKF health (Q27 interlock)
 }
 

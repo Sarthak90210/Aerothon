@@ -160,11 +160,16 @@ def _region_fix(mav, r, W, H, hfov_rad, board_h_m, lidar_half_rad):
     bearing = r.get("bearing")
     if bearing is None:
         bearing = ((x0 + w / 2.0) - W / 2.0) / (W / 2.0)
-    heading = _wrap(mav.yaw() + bearing_to_angle(float(bearing), hfov_rad))
+    capture_pose = getattr(mav, 'banner_capture_pose', None)
+    observed = capture_pose() if callable(capture_pose) else None
+    if callable(capture_pose) and observed is None:
+        return None
+    observer_yaw = observed['yaw'] if observed else mav.yaw()
+    heading = _wrap(observer_yaw + bearing_to_angle(float(bearing), hfov_rad))
 
     cam = getattr(mav, "camera_state", None) or {}
     pitch = cam.get("actual_rad")
-    alt = mav.alt()
+    alt = observed['xyz'][2] if observed else mav.alt()
     bottom = y0 + h
     cut = bottom >= H - 2
     source = "lidar"
@@ -182,7 +187,7 @@ def _region_fix(mav, r, W, H, hfov_rad, board_h_m, lidar_half_rad):
         # (the grassed zone, on the way back), with no range and no centre.
         return None
 
-    px, py = mav.pos()[:2]
+    px, py = observed['xyz'][:2] if observed else mav.pos()[:2]
     return {"x": px + rng * math.cos(heading), "y": py + rng * math.sin(heading),
             "range": rng, "area": float(r.get("area", 0.0)),
             "heading": heading, "source": source,

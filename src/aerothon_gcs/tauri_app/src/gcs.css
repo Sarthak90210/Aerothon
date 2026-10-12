@@ -230,3 +230,23 @@ body {
 @media (max-width: 1120px) {
   .gcs .scanrail { display: none; }
 }
+
+/* Arena dimensions panel */
+.dims-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50;
+  display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; overflow: auto; }
+.card.dims { width: min(1100px, 100%); }
+.dims .hd { display: flex; align-items: center; gap: 10px; }
+.dims .tag.ok { color: #3ddc84; }
+.dims-close { margin-left: auto; }
+.dims-presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; align-items: center; }
+.dims-presets select, .dims-presets input { min-width: 200px; }
+.dims-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px; padding: 0 12px 10px; }
+.dims-grid fieldset { border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: 8px 10px; }
+.dims-grid legend { padding: 0 6px; font-weight: 600; }
+.dims-row { display: grid; grid-template-columns: 1fr 96px 58px; gap: 6px; align-items: center; margin: 4px 0; }
+.dims-row input { width: 100%; }
+.dims-rec { opacity: .55; font-size: 11px; }
+.dims-unit { opacity: .7; text-align: center; }
+.dims-actions { display: flex; gap: 12px; align-items: center; padding: 10px 12px; }
+.dims-note { flex: 1; opacity: .75; font-size: 12px; }

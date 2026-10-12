@@ -1115,6 +1115,18 @@ class PrecisionDescentTests(unittest.TestCase):
 
 
 # --------------------------------------------------------------------------- #
+def gate_stage_names(mission):
+    """Mission stage names, each gate's alignment counted as AlignToBanner.
+
+    Since the organisers allowed ground-mounted banners, a gate is aligned by
+    one selector over the hung, ground and fallback passes
+    (mission_tree.align_to_every_banner). Every pass in it is an
+    AlignToBanner, so for the rulebook ordering the gate IS that stage.
+    """
+    return ["AlignToBanner" if c.name.endswith("BannerAlignment") else c.name
+            for c in mission.children]
+
+
 class RulebookAltitudeTests(unittest.TestCase):
     """The rulebook prescribes an ORDER and a set of altitudes, not just a
     set of tasks (AeroTHON 2026 Track 1, Mission 2 - SkyScan).
@@ -1143,7 +1155,7 @@ class RulebookAltitudeTests(unittest.TestCase):
         }
         root = build_root(FakeMav(), MagicMock(), params)
         mission = [c for c in root.children if c.name == "Mission"][0]
-        return [c.name for c in mission.children]
+        return gate_stage_names(mission)
 
     def test_the_banner_is_identified_BEFORE_descending_to_the_corridor(self):
         """RULEBOOK: "identify the ... Green Banner ... and align itself
@@ -1341,6 +1353,8 @@ class FrontierSearchTests(unittest.TestCase):
                 x, y, z = self.mav.gotos[-1][:3]
                 self.mav._pos = (x, y, z)
                 self.mav._alt = z
+                if len(self.mav.gotos[-1])>3:
+                    self.mav._yaw = self.mav.gotos[-1][3]
                 if (target_xy is not None
                         and self._dist_to_leg(target_xy, prev, (x, y)) <= swath_m):
                     self.mav.qr_matched = True
@@ -1547,9 +1561,11 @@ class FrontierSearchTests(unittest.TestCase):
 
     def _clip_not_drop(self, replan_min_ticks, min_replans=6):
         # An arena-sized field: enough lanes to outlast the old cap of five.
+        now = [0.0]
         leaf = self.LawnmowerSearch(
             self.mav, (16.5, 54.5, -20.0, 36.0), 10.0,
-            exclusions=lambda: self.mav.exclusions, search_budget_m=0.0)
+            exclusions=lambda: self.mav.exclusions, search_budget_m=0.0,
+            clock=lambda: now[0])
         leaf.initialise()
         leaf.replan_min_ticks = replan_min_ticks
         n_lanes = leaf.plan["n_lanes"]
@@ -1558,10 +1574,20 @@ class FrontierSearchTests(unittest.TestCase):
         # ends up swallowing the far (east) end of every lane.
         along_lane = set()          # lanes a leg actually ran ALONG
         for tick in range(4000):
+            # This fixture teleports to each command below. Report a fresh
+            # stationary FCU capture at that measured pose on the next tick,
+            # including during braking; absent captures must keep it stopped.
+            now[0] = (tick + 1) * 0.1
+            self.mav.delivery_inputs = dict(
+                pose_stamp=now[0], velocity_stamp=now[0], speed=0.0)
             # The one source both the planner and the router read, as live.
             self.mav.exclusions = [
                 (zx1 - 3.0 - 0.1 * i, zx1 + 1.0, zy0 - 1.0, zy1 + 1.0)
-                for i in range(min(tick + 1, 40))]
+                # Let successive observations span distinct settled-motion
+                # captures. The six-replan/zero-skip/coverage assertions below
+                # still guard the old cap while braking and escape consume
+                # updates independently of the synthetic command teleport.
+                for i in range(min(tick // 2 + 1, 40))]
             prev = self.mav._pos[:2]
             leaf.tick_once()
             if leaf.status != py_trees.common.Status.RUNNING:
@@ -1912,17 +1938,15 @@ class DeliveryAccuracyTests(unittest.TestCase):
         leaf._record_delivery_offset()
         self.assertIsNone(mav.delivery_offset_m)
 
-    def test_the_measurement_is_taken_AT_RELEASE(self):
-        """Not at arrival over the pad, and not after the climb-out: the
-        number has to describe the moment the payload actually left."""
-        import inspect
-        from mission_bt.mission_tree import WinchDrop
-        src = inspect.getsource(WinchDrop.update)
-        before = src.index('_record_delivery_offset')
-        released = src.index('w.get("released")')
-        self.assertLess(released, before,
-                        "the offset is recorded somewhere other than at the "
-                        "release gate")
+    def test_commanded_release_does_not_create_a_delivery_measurement(self):
+        leaf, mav = self.build(0.5, 0.0)
+        mav.winch = lambda command: None
+        leaf.initialise()
+        leaf.phase = 1
+        mav.winch_status = {"released": True, "ground": True}
+        leaf.update()
+        self.assertIsNone(mav.delivery_offset_m)
+        self.assertFalse(mav.delivery_confirmed)
 
     def test_the_delivery_number_reaches_the_MISSION_RESULT(self):
         """A measurement nobody reads is not a measurement.
@@ -1972,7 +1996,7 @@ class ReturnIdentificationAltitudeTests(unittest.TestCase):
         }
         root = build_root(FakeMav(), MagicMock(), params)
         mission = [c for c in root.children if c.name == "Mission"][0]
-        return [c.name for c in mission.children]
+        return gate_stage_names(mission)
 
     def test_the_return_lap_descends_BEFORE_re_identifying(self):
         names = self._stage_names()
@@ -2475,7 +2499,8 @@ class BuiltTreeCarriesTheNewBehaviourTests(unittest.TestCase):
         matching through-gate leg."""
         stages = self._stages()
         ducks = [s for s in stages if type(s).__name__ == "DuckUnderBoard"]
-        advances = [s for s in stages if type(s).__name__ == "GateAdvance"]
+        from mission_bt.gate_braking import BrakedGateAdvance
+        advances = [s for s in stages if isinstance(s, BrakedGateAdvance)]
         self.assertEqual(len(ducks), 2)
         self.assertEqual(len(advances), 2)
 

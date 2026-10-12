@@ -19,7 +19,14 @@ ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$ROOT" || exit 1
 
 QUICK=0
-[[ "${1:-}" == "--quick" ]] && QUICK=1
+REDUCED_SCOPE=0
+for arg in "$@"; do
+    case "$arg" in
+        --quick) QUICK=1 ;;
+        --reduced-scope) REDUCED_SCOPE=1 ;;
+        *) echo "Unknown option: $arg" >&2; exit 2 ;;
+    esac
+done
 
 set +u
 [[ -f /opt/ros/jazzy/setup.bash ]] && source /opt/ros/jazzy/setup.bash
@@ -33,7 +40,14 @@ section() { printf '\n=== %s ===\n' "$1"; }
 record()  { if [[ "$1" -ne 0 ]]; then FAILED=1; printf '  -> FAILED\n'; else printf '  -> ok\n'; fi; }
 
 section "Python unit tests"
-python3 -m pytest sim/ tests/ -q
+pytest_args=()
+if [[ "$REDUCED_SCOPE" -eq 1 ]]; then
+    export PYTHONPATH="$ROOT/sim:$PYTHONPATH"
+    pytest_args=(-rs -p qualification_offline_scope --reduced-qualification
+                 --qualification-scope-evidence "${AEROTHON_OFFLINE_SCOPE_EVIDENCE:-logs/offline_reduced_scope.json}")
+    echo "Reduced scope: deferred strong-gust flight tests are explicitly skipped and recorded."
+fi
+python3 -m pytest sim/ tests/ -q "${pytest_args[@]}"
 record $?
 
 section "Python syntax (all mission/perception/GCS/sim sources)"
@@ -68,7 +82,9 @@ record $?
 if [[ "$QUICK" -eq 0 ]]; then
     section "GCS frontend build"
     if [[ -d src/aerothon_gcs/tauri_app/node_modules ]]; then
-        (cd src/aerothon_gcs/tauri_app && npx tsc --noEmit && npx vite build >/dev/null)
+        # A shared Windows/WSL checkout can contain Windows .bin launchers.
+        # Execute the installed JavaScript entry points with this host's Node.
+        (cd src/aerothon_gcs/tauri_app && node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite.js build >/dev/null)
         record $?
     else
         echo "  -> SKIPPED (node_modules absent; run npm install)"
@@ -77,7 +93,11 @@ fi
 
 printf '\n======================================================================\n'
 if [[ "$FAILED" -eq 0 ]]; then
-    echo " ALL OFFLINE CHECKS PASSED"
+    if [[ "$REDUCED_SCOPE" -eq 1 ]]; then
+        echo " ALL IN-SCOPE OFFLINE CHECKS PASSED (deferred cases excluded; see scope ledger)"
+    else
+        echo " ALL OFFLINE CHECKS PASSED"
+    fi
 else
     echo " OFFLINE CHECKS FAILED — see above"
 fi

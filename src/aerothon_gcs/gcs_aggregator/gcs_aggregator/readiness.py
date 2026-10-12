@@ -45,6 +45,7 @@ ITEMS = (
     ("rc_failsafe", "RC failsafe"),
     ("delivery_zone", "Delivery-zone boundary"),
     ("geofence", "Arena geofence"),
+    ("banner_colours", "Banner colours"),
 )
 
 DEFAULT_LIMITS = {
@@ -213,6 +214,20 @@ def evaluate(obs, limits=None):
         item("geofence", "Arena geofence", ok, "loaded" if ok else "invalid",
              "" if ok else (obs.get("geofence_reason") or
                             "arena geofence is invalid"))
+
+    # ---- organiser-supplied banner colours (HEX, given before the flight) #
+    # The banners carry no text, so colour is what tells the aircraft which
+    # corridor it is allowed to use. Flying without the supplied shades means
+    # identifying a corridor by a guess, so this is an interlock item and not
+    # a convenience: unknown is not the same as fine.
+    if "banner_colours_valid" not in obs:
+        out.append(_unknown("banner_colours", "Banner colours"))
+    else:
+        ok = bool(obs["banner_colours_valid"])
+        item("banner_colours", "Banner colours", ok,
+             obs.get("banner_colours_value") or ("loaded" if ok else "invalid"),
+             "" if ok else (obs.get("banner_colours_reason") or
+                            "banner colours are invalid"))
 
     return out
 

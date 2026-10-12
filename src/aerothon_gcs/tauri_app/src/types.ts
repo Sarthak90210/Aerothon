@@ -57,6 +57,24 @@ export interface Telemetry {
   scan?: { yaw_deg: number; ranges: (number | null)[] };
   scans?: ScanRow[];
   gimbal?: { pitch_deg: number };
+  // Arena dimensions (mission_bt/arena_dimensions.py): the field list, the
+  // presets, and what mission_bt reports it actually applied.
+  dimension_fields?: DimensionField[];
+  dimension_presets?: { builtin: Record<string, Dimensions>; saved: Record<string, Dimensions> };
+  arena_dimensions?: {
+    sent: Dimensions | null; applied: Dimensions | null;
+    params?: Record<string, unknown> | null; ok?: boolean; reason: string;
+  } | null;
+}
+
+// group -> field -> value. Lengths in metres; the two choice fields are strings.
+export type Dimensions = Record<string, Record<string, number | string>>;
+
+export interface DimensionField {
+  group: string; key: string; label: string;
+  default: number; min: number; max: number;
+  // What the algorithms do with it; null means recorded only.
+  used_by: string | null;
 }
 
 // One observation the aircraft made: a marker it decoded, a banner it read, or

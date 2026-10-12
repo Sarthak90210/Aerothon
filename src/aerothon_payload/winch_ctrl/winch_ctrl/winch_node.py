@@ -1,52 +1,18 @@
 #!/usr/bin/env python3
-"""Winch state machine with feedback and gated payload release.
+"""Winch command adapter with estimated travel and release-request interlocks.
 
-WHY THIS EXISTS
-    /winch/cmd had two publishers (the behaviour tree and the GCS) and ZERO
-    subscribers. Payload delivery — the thing Mission 2 actually scores — was
-    a string published into the void, and WinchDrop "succeeded" after a fixed
-    20-tick delay whether or not anything had moved.
+The drone commands lower, stop and stow. Travel is integrated from commanded
+motor rate; no encoder or contact/attachment sensor is present. The Gazebo
+backend sends commanded payout only. Simulator contact release is a separate
+component, and this node has no simulator-truth subscription.
 
-WHAT IS AND IS NOT MODELLED
-    This node is the real controller: the command interface, the state machine,
-    the payout integration, the ground-contact trigger and the release
-    interlocks are all genuine, and the same node runs against hardware with
-    `backend:=mavlink` driving MAV_CMD_DO_WINCH.
+Hardware uses MAV_CMD_DO_WINCH. Repeated motion intents are idempotent;
+stop sends rate-control zero, not another full-length movement.
 
-    backend:=sim      payout integrated from the commanded rate, nothing moves.
-                      Proves the SEQUENCE and the INTERLOCKS only.
-    backend:=gazebo   the same integration, plus the payout is sent to the
-                      Iris's winch joint (/winch/gz/payout, bridged) so a real
-                      100 g payload goes down on the hook, and a release sends
-                      /winch/gz/detach so it physically leaves it. Whether it
-                      actually did is for the CAMERA to say (WinchDrop's
-                      confirmation), not for this node's own flag.
-    backend:=mavlink  MAV_CMD_DO_WINCH on the aircraft.
-
-    Ground contact is still inferred from the aircraft's altitude in every
-    backend; the line is a rigid vertical rod in Gazebo, with no swing.
-
-INTERFACE
-    sub  /winch/cmd      std_msgs/String   "lower" | "release" | "stow" | "stop"
-    pub  /winch/status   std_msgs/String   JSON, 5 Hz
-
-    status fields:
-        state        IDLE | LOWERING | AT_GROUND | RELEASED | STOWING | FAULT
-        payout_m     metres of line paid out
-        at_limit     payout has reached max_payout_m
-        ground       ground contact inferred
-        released     payload has left the hook
-        fault        reason string, empty when healthy
-        release_ok   whether a release command would currently be accepted
-        blockers     list of unmet release preconditions
-
-RELEASE INTERLOCKS (all must hold)
-    * payload is at the ground, or payout is at the commanded limit
-    * aircraft altitude within [min_release_alt, max_release_alt]
-    * hover stable: horizontal speed below a threshold for N samples
-    * no fault
-    Releasing a 100 g payload from the wrong height or while drifting is how
-    you miss the delivery zone, so this refuses rather than guesses.
+/winch/status reports payout_estimate_m and payout_basis. Legacy payout_m
+is the same estimate. ground, released and hook_open are unknown. The
+release_requested field records command acceptance, never physical release.
+Delivery confirmation belongs to the onboard camera/load observer.
 """
 
 import json
@@ -55,7 +21,7 @@ import math
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from geometry_msgs.msg import Pose, PoseStamped, TwistStamped
+from geometry_msgs.msg import PoseStamped, TwistStamped
 from std_msgs.msg import Empty, Float64, String
 
 try:
@@ -65,7 +31,7 @@ except ImportError:
     _HAVE_MAVROS = False
 
 MAV_CMD_DO_WINCH = 42600
-WINCH_RELAXED, WINCH_RELATIVE_LENGTH_CONTROL = 0, 1
+WINCH_RELAXED, WINCH_RELATIVE_LENGTH_CONTROL, WINCH_RATE_CONTROL = 0, 1, 2
 
 VALID_COMMANDS = ("lower", "release", "stow", "stop")
 
@@ -91,15 +57,7 @@ class WinchNode(Node):
         #            nothing is sent to open anything.
         #   command  an actuated release: "release" opens the hook.
         p("hook", "gravity")
-        # Gazebo backend, gravity hook: the payload counts as resting when its
-        # centre is within this of its resting height (half its 0.08 m).
-        p("payload_rest_z_m", 0.06)
-        # A gravity hook needs SLACK to let go: the payload on the ground and
-        # the line still paying out. "Down" is therefore line out to the
-        # altitude PLUS this -- not minus ground_clearance_m, which stopped the
-        # payload 0.19 m up, hanging, and flew it home (first flight on the
-        # team airframe). The payload touches ~0.16 m before the hook reaches
-        # the ground, so this leaves about a quarter metre of slack.
+        # Legacy release-request travel interlock, never touchdown evidence.
         p("gravity_slack_m", 0.10)
 
         self.backend = self.get_parameter("backend").value
@@ -124,11 +82,8 @@ class WinchNode(Node):
         self.cli_cmd = None
         if self.backend == "mavlink" and _HAVE_MAVROS:
             self.cli_cmd = self.create_client(CommandLong, "/mavros/cmd/command")
-        self.pub_gz_payout = self.pub_gz_detach = None
-        self._detach_sends = 0
-        self._payload_z = None
-        self._slack_hist = []        # (payout, payload z) per tick while lowering
-        self.hook_open = False       # the payload has physically left the hook
+        self.pub_gz_payout = None
+        self.hook_open = False       # no physical release sensor fitted
         if self.backend == "gazebo":
             self._enable_gazebo()
 
@@ -137,48 +92,9 @@ class WinchNode(Node):
         self.get_logger().info(f"winch_ctrl up; backend={self.backend}")
 
     def _enable_gazebo(self):
-        """The Iris winch joint's payout and the payload's detach (bridged)."""
+        """Publish commanded travel to the simulated winch joint."""
         self.backend = "gazebo"
         self.pub_gz_payout = self.create_publisher(Float64, "/winch/gz/payout", 10)
-        self.pub_gz_detach = self.create_publisher(Empty, "/winch/gz/detach", 10)
-        # The simulator's stand-in for the hook's own mechanics: it can only
-        # know the payload is resting from where the payload is.
-        self.create_subscription(Pose, "/sim/payload_pose", self._on_payload_pose,
-                                 qos_profile_sensor_data)
-
-    def _on_payload_pose(self, m):
-        self._payload_z = float(m.position.z)
-
-    def _gravity_hook(self):
-        """Gazebo only: let the payload go once the line goes slack.
-
-        SLACK, not "on the ground": the first fix tested the payload's height
-        against the bare ground, and the payload landed on the target pad,
-        8 cm up, where that never fired. What a gravity-assisted hook
-        responds to is the line paying out while the payload no longer
-        follows it: whatever it rests on, pad or grass. The height test stays
-        as a second way to see it.
-
-        And it matters in Gazebo more than in the air: the simulated line is
-        a rigid joint, so a hook still latched to a resting payload is driven
-        down against it and shoves the aircraft UP -- 1.3 m, watched.
-        """
-        if self.hook_open or self._payload_z is None or self.payout < 0.3:
-            self._slack_hist = []
-            return
-        self._slack_hist = (self._slack_hist + [(self.payout, self._payload_z)])[-4:]
-        (p0, z0), (p1, z1) = self._slack_hist[0], self._slack_hist[-1]
-        slack = (len(self._slack_hist) >= 3 and p1 - p0 >= 0.10
-                 and z0 - z1 < 0.25 * (p1 - p0))
-        resting = self._payload_z <= float(self.get_parameter("payload_rest_z_m").value)
-        if not (slack or resting):
-            return
-        self.hook_open = True
-        self._detach_sends = 5
-        self.get_logger().info(
-            f"gravity hook: {'line slack' if slack else 'payload on the ground'} "
-            f"(payload z {self._payload_z:.2f} m, {self.payout:.2f} m of line "
-            f"out) -- the hook lets go")
 
     # ------------------------------------------------------------------ #
     def _now(self):
@@ -205,10 +121,15 @@ class WinchNode(Node):
             return
 
         if cmd == "stop":
+            if self.state == "IDLE" or self.state == "RELEASED":
+                return
+            self._send_backend("stop")
             self.state = "IDLE" if not self.released else "RELEASED"
             return
 
         if cmd == "lower":
+            if self.state in ("LOWERING", "AT_LIMIT"):
+                return
             if self.released:
                 self._set_fault("cannot lower: payload already released")
                 return
@@ -237,6 +158,8 @@ class WinchNode(Node):
                 f"payout={self.payout:.2f} m")
 
         elif cmd == "stow":
+            if self.state == "STOWING":
+                return
             self.state = "STOWING"
             self._send_backend("stow")
 
@@ -247,10 +170,6 @@ class WinchNode(Node):
 
     def _send_backend(self, action):
         if self.backend == "gazebo":
-            if action == "release" and self.get_parameter("hook").value == "command":
-                # A bridged Empty can be lost on a busy host; re-send for a
-                # few ticks (detaching an already-detached joint is a no-op).
-                self._detach_sends = 5
             return
         if self.backend != "mavlink" or self.cli_cmd is None:
             return
@@ -261,20 +180,22 @@ class WinchNode(Node):
         req.param1 = 1.0                                   # instance
         if action == "lower":
             req.param2 = float(WINCH_RELATIVE_LENGTH_CONTROL)
-            req.param3 = float(self.get_parameter("max_payout_m").value)
+            req.param3 = max(0.0, float(self.get_parameter("max_payout_m").value) - self.payout)
             req.param4 = float(self.get_parameter("payout_rate_mps").value)
         elif action == "stow":
             req.param2 = float(WINCH_RELATIVE_LENGTH_CONTROL)
-            req.param3 = -float(self.get_parameter("max_payout_m").value)
+            req.param3 = -float(self.payout)
             req.param4 = float(self.get_parameter("stow_rate_mps").value)
+        elif action == "stop":
+            req.param2 = float(WINCH_RATE_CONTROL)
+            req.param4 = 0.0
         else:
             req.param2 = float(WINCH_RELAXED)
         self.cli_cmd.call_async(req)
 
     # ------------------------------------------------------------------ #
     def at_ground(self):
-        """Payload is down: line paid out to within a clearance of the alt,
-        or -- for a gravity hook -- past it, far enough for slack."""
+        """Legacy travel estimate for command interlocks, NOT contact evidence."""
         if self._alt is None:
             return False
         if self.get_parameter("hook").value == "gravity":
@@ -341,12 +262,7 @@ class WinchNode(Node):
         self._last_tick = now
         self.integrate(dt)
         if self.pub_gz_payout is not None:
-            if self.get_parameter("hook").value == "gravity":
-                self._gravity_hook()
             self.pub_gz_payout.publish(Float64(data=float(self.payout)))
-            if self._detach_sends > 0:
-                self.pub_gz_detach.publish(Empty())
-                self._detach_sends -= 1
         self.publish_status()
 
     def integrate(self, dt):
@@ -369,8 +285,8 @@ class WinchNode(Node):
             self.payout = min(
                 float(self.get_parameter("max_payout_m").value),
                 self.payout + float(self.get_parameter("payout_rate_mps").value) * dt)
-            if self.at_ground() or self.at_limit():
-                self.state = "AT_GROUND"
+            if self.at_limit():
+                self.state = "AT_LIMIT"
         elif self.state == "STOWING":
             self.payout = max(
                 0.0,
@@ -385,10 +301,13 @@ class WinchNode(Node):
             "state": self.state,
             "payout_m": round(self.payout, 3),
             "at_limit": self.at_limit(),
-            "ground": self.at_ground(),
-            "released": self.released,
+            "ground": None,  # no contact sensor; travel cannot establish touchdown
+            "payout_estimate_m": round(self.payout, 3),
+            "payout_basis": "integrated commanded motor rate; no encoder",
+            "released": None,
+            "release_requested": self.released,
             "hook": self.get_parameter("hook").value,
-            "hook_open": self.hook_open,
+            "hook_open": None,
             "fault": self.fault,
             "release_ok": ok,
             "blockers": blockers,

@@ -63,7 +63,9 @@ class CameraGateTests(unittest.TestCase):
         self.banner.destroy_node()
 
     def feed(self):
-        self.banner.on_image(self.bridge.cv2_to_imgmsg(BANNER, "bgr8"))
+        message = self.bridge.cv2_to_imgmsg(BANNER, "bgr8")
+        message.header.stamp = self.banner.get_clock().now().to_msg()
+        self.banner.on_image(message)
         return json.loads(self.detail[-1].data)
 
     def test_with_no_camera_state_the_detector_runs(self):

@@ -228,7 +228,16 @@ class BannerEnvelopeTests(_RosCase):
 
     def identified(self, img):
         self.detail.clear()
-        self.node.on_image(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+        # Each corruption is an independent readability trial. Do not let a
+        # previous condition's word read qualify this image. Rate limiting and
+        # consecutive-frame continuity are exercised in their own tests.
+        self.node._ocr_t0 = 0.0
+        self.node._ocr_box = None
+        self.node._ocr_cache = dict(text="", text_letters=0,
+                                   text_confirmed=False, text_reader="")
+        message = self.bridge.cv2_to_imgmsg(img, "bgr8")
+        message.header.stamp = self.node.get_clock().now().to_msg()
+        self.node.on_image(message)
         return json.loads(self.detail[-1].data)["identified"]
 
     def test_every_corruption_at_every_severity(self):
