@@ -587,3 +587,20 @@ def test_a_sheet_run_into_a_frame_corner_is_not_identified():
     img = _slanted_sheet(corner=True)
     ok, reason, _, _ = node._identify_bordered(img, _bbox(node, img))
     assert not ok
+
+
+def test_a_dropped_frame_does_not_let_a_far_face_through_as_the_standoff():
+    import math
+    from mission_bt.mission_tree import AlignToBanner
+    mav = MagicMock()
+    mav.pos.return_value = (0.3, -3.3, 2.4)
+    mav.alt.return_value = 2.4
+    mav.camera_state = {"requested_rad": math.radians(-35.0)}
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=1.0)
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, search_camera_pose="GROUND")
+    sheet = leaf._laid_range_now()
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=0.5)       # dropped
+    leaf._laid_axis_fit = lambda: None
+    out = leaf._laid_face({"ok": True, "angle_rad": 0.05, "range_m": 7.2,
+                           "points": 20, "reason": ""})
+    assert out["range_m"] == pytest.approx(sheet), "the sheet's range, not the far face's"

@@ -1923,7 +1923,11 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         lidar has them; otherwise the face beyond does, and the sheet gives
         the range. A hung-board pass is untouched.
         """
-        laid = (self.ground_range() if self.search_camera_pose == "GROUND"
+        # The remembered range, not only this frame's: on a frame the detector
+        # dropped the sheet, a far face's raw 7.2 m went through as the
+        # standoff, the step closed 2.2 m on it, and from 2.3 m the sheet was
+        # under the frame and lost (rendered, clarified arena).
+        laid = (self._laid_range_now() if self.search_camera_pose == "GROUND"
                 else None)
         if laid is None:
             return fit
