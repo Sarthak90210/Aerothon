@@ -3329,8 +3329,11 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         # just under this stage's own hard floor before commanding the descent.
         # The guard still catches a sink toward the ground; it no longer treats
         # the measured gate-opening maneuver as a fault.
-        self.mav.set_airborne_floor(max(0.5,
-                                        self.floor_m - self.arrive_tol_m))
+        # Half a metre under the floor, not the arrival tolerance: at the
+        # 1.2 m floor in field conditions (0.2 m baro noise, 4 m/s gusting 2)
+        # the 1.0 m guard tripped in the return corridor of a run that was
+        # otherwise flying it cleanly.
+        self.mav.set_airborne_floor(max(0.5, self.floor_m - 0.5))
 
     @property
     def alt(self):
