@@ -506,13 +506,15 @@ def _align_floors(extra):
 
 
 def test_with_a_foot_tall_hung_banner_the_gate_work_stays_half_a_metre_under_it():
-    floors = _align_floors({'banner_bottom_m': 3.048 - 0.3048})
+    floors = _align_floors({'banner_bottom_m': 3.048 - 0.3048, 'banner_h_m': 0.3048})
     assert floors and all(f == pytest.approx(3.048 - 0.3048 - 0.5) for f in floors)
 
 
 def test_without_the_banner_edge_the_gate_work_is_at_the_navigation_height():
     assert all(f == pytest.approx(2.4384) for f in _align_floors({}))
-    assert all(f == pytest.approx(1.5) for f in _align_floors({'banner_bottom_m': 1.898}))
+    # The 1.15 m banner spans the scan plane at 2.44 m: the lidar sees it.
+    assert all(f == pytest.approx(2.4384) for f in _align_floors(
+        {'banner_bottom_m': 1.898, 'banner_h_m': 1.15}))
     # Laid on the ground, nothing hangs: the edge the GCS records steers nothing.
     assert all(f == pytest.approx(2.4384) for f in _align_floors(
         {'banner_bottom_m': 2.7432, 'banner_placement': 'ground'}))

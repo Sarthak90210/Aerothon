@@ -6655,9 +6655,19 @@ def build_root(mav, node, p):
     # centimetres over the airframe's top: rendered, a leg at 2.44 m clipped
     # the orange banner's 2.74 m edge and the aircraft came down in the
     # return lane. With the lower edge from the GCS, keep half a metre under.
+    # Only the band just UNDER the edge is the hazard: with the scan plane
+    # through the banner (the 1.15 m banner's 1.90-3.05 m at the 2.44 m
+    # navigation height) the lidar sees it as the obstacle it is, and the
+    # 1.5 m this first chose let the aircraft slip under the green banner
+    # into the corridor and stall under the orange one at its far end.
     gate_alt = p['corridor_alt']
-    if p.get('banner_bottom_m') and p.get('banner_placement') != 'ground':
-        gate_alt = max(1.5, min(gate_alt, float(p['banner_bottom_m']) - 0.5))
+    bottom = p.get('banner_bottom_m')
+    if bottom and p.get('banner_placement') != 'ground':
+        bottom = float(bottom)
+        top = bottom + float(p.get('banner_h_m', 1.15))
+        plane = gate_alt + 0.0815                  # the LD06 above the body
+        if not bottom <= plane <= top and gate_alt > bottom - 0.5:
+            gate_alt = max(1.5, bottom - 0.5)
     # The crossing runs from the stand-off, up to half the lidar's range
     # out, through the gate: capped at the corridor length alone, a 5 m
     # corridor refused a crossing measured at 5.6 m (clarified arena).
