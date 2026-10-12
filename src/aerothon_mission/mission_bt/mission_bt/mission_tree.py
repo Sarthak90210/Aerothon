@@ -1788,8 +1788,18 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             if sheet is not None:
                 beyond = self.mav.surface_ahead(
                     self._sector_bearing, self.sector_half_width,
-                    min_range_m=sheet + 0.3, widest_first=True)
+                    min_range_m=sheet + 0.3, widest_first=True,
+                    max_obliquity_rad=math.radians(100.0))
                 if beyond.get("ok"):
+                    # The widest run past the mouth is as often the lane's
+                    # inner wall, edge-on (-85 deg, logged live), as an
+                    # obstacle face across it. Edge-on, it IS the corridor's
+                    # direction -- as in _laid_axis_fit -- and the sheet
+                    # gives the stand-off.
+                    a = beyond["angle_rad"]
+                    if abs(a) >= math.radians(60.0):
+                        return dict(beyond, range_m=sheet, laid_axis=True,
+                                    angle_rad=a - math.copysign(math.pi / 2, a))
                     return beyond
             if not getattr(self, "_beyond_logged", False):
                 self._beyond_logged = True

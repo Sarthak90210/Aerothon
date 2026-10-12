@@ -399,3 +399,30 @@ def test_a_square_up_step_into_the_next_corridor_is_refused():
     assert leaf._square() == "relocated"
     x, y, _ = leaf._anchor
     assert (x, y) == (0.0, 0.0), "held where it was"
+
+
+def test_past_the_mouth_an_edge_on_wall_gives_the_corridor_direction():
+    import math
+    from mission_bt.mission_tree import AlignToBanner
+    mav = MagicMock()
+    mav.pos.return_value = (21.6, -6.8, 2.4)
+    mav.alt.return_value = 2.4
+    mav.camera_state = {"requested_rad": math.radians(-35.0)}
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=1.0)
+    mav.banner_identified.return_value = True
+    mav.banner_bearing.return_value = 0.0
+
+    def surface_ahead(bearing, half, expected_range_m=None, **kw):
+        if kw.get("min_range_m") is not None:          # the past-the-sheet retry
+            return {"ok": True, "angle_rad": math.radians(-85.0), "range_m": 1.9,
+                    "points": 40, "reason": ""}
+        return {"ok": False, "angle_rad": None, "range_m": None, "points": 4,
+                "reason": "the returns span only 0.47 m"}
+    mav.surface_ahead.side_effect = surface_ahead
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, search_camera_pose="GROUND")
+    leaf._last_good_bearing = 0.0
+    leaf._laid_axis_fit = lambda: None
+    fit = leaf._measure_surface()
+    assert fit["ok"] and fit["laid_axis"]
+    assert math.degrees(fit["angle_rad"]) == pytest.approx(5.0)
+    assert fit["range_m"] == pytest.approx(leaf.ground_range())
