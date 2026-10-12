@@ -536,11 +536,21 @@ def test_a_gate_floor_under_the_takeoff_guard_moves_the_guard_down():
 
 # ---- a laid sheet seen at a slant is identified along its outline ------- #
 
-def _detector(height_m=1.15):
+@pytest.fixture
+def detector():
+    """A BannerNode in its own rclpy context, shut down afterwards: a context
+    left open broke a later file's rclpy.init() in the full suite."""
     import rclpy
+    rclpy.init()
+    made = []
+    yield lambda **kw: made.append(_detector(**kw)) or made[-1]
+    for node in made:
+        node.destroy_node()
+    rclpy.shutdown()
+
+
+def _detector(height_m=1.15):
     from std_msgs.msg import String
-    if not rclpy.ok():
-        rclpy.init()
     node = BannerNode()
     node._on_banner_colours(String(data=json.dumps({"colours": SUPPLIED})))
     node._on_arena_dimensions(String(data=json.dumps(
@@ -574,16 +584,16 @@ def _bbox(node, img):
 
 
 @pytest.mark.parametrize("shadow", [False, True])
-def test_a_slanted_framed_sheet_is_identified_along_its_outline(shadow):
-    node = _detector()
+def test_a_slanted_framed_sheet_is_identified_along_its_outline(shadow, detector):
+    node = detector()
     img = _slanted_sheet(shadow=shadow)
     ok, reason, info, _ = node._identify_bordered(img, _bbox(node, img))
     assert ok, reason
     assert info["identity_path"] == "border-outline"
 
 
-def test_a_sheet_run_into_a_frame_corner_is_not_identified():
-    node = _detector()
+def test_a_sheet_run_into_a_frame_corner_is_not_identified(detector):
+    node = detector()
     img = _slanted_sheet(corner=True)
     ok, reason, _, _ = node._identify_bordered(img, _bbox(node, img))
     assert not ok
