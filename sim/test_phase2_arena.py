@@ -386,3 +386,16 @@ def test_a_flickering_identification_does_not_forget_where_the_sheet_is():
     mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=0.5)     # dropped a frame
     mav.pos.return_value = (19.5, -6.8, 2.4)                    # and moved 0.5 m in
     assert leaf._laid_range_now() == pytest.approx(seen - 0.5)
+
+
+def test_a_square_up_step_into_the_next_corridor_is_refused():
+    import math
+    from mission_bt.mission_tree import AlignToBanner
+    mav = _scan_mav({88: 0.72, 90: 0.7, 92: 0.72})    # a wall closing in on the left
+    leaf = AlignToBanner(mav, clock=lambda: 0.0)
+    leaf._sq_phase = leaf.MOVING
+    leaf._anchor = (0.0, 2.2, 3.0)                      # a step 2.2 m to port
+    leaf._relocate = MagicMock(return_value="relocated")
+    assert leaf._square() == "relocated"
+    x, y, _ = leaf._anchor
+    assert (x, y) == (0.0, 0.0), "held where it was"
