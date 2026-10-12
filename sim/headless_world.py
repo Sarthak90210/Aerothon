@@ -1302,12 +1302,13 @@ class HeadlessWorld(Node):
             ok = False
         if ok and not self.dims_applied:
             self._event("arena dimensions applied from the GCS")
-        self.dims_applied = self.dims_applied or ok
+        self.dims_applied = getattr(self, "dims_applied", False) or ok
 
     def _start_and_stop(self):
         # Once a second until the tree takes it: every START resets it. With
         # the operator's path, START waits for the dimensions, as on the day.
-        ready = self.dims_applied or not self.args.start_after_dimensions
+        ready = (getattr(self, "dims_applied", False)
+                 or not getattr(self.args, "start_after_dimensions", False))
         if not self.started and ready and self.t >= self.args.start_after_s:
             if self.mission_state not in ("", "WAITING", "PREFLIGHT"):
                 self.started = True

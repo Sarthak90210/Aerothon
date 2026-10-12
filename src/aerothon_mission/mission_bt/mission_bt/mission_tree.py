@@ -6017,6 +6017,8 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
         handing over to LAND.
     """
 
+    NEAR_FLOOR = 1.15
+
     def __init__(self, mav, start_alt=5.0, commit_alt=1.5, step_m=0.4,
                  tol=0.10, gain=0.9, max_step=0.8, reacquire_climb=0.5,
                  timeout_ticks=600, lost_grace=10,
@@ -6031,16 +6033,8 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
         # descent was being asked to hold a lock the camera could not provide.
         # Runs 12 and 14 both oscillated between 3.4 m and 4.1 m until the
         # stage timed out -- chasing a floor the geometry forbids.
-        #
-        # AND AT ANY ROTATION. The floor assumed the marker square to the
-        # image. Nothing turns the aircraft to the start QR's heading, and a
-        # 1 m start QR 25 deg off square spans 1.33 m of the frame: the
-        # clarified-arena smoke run lost it at 2.53 m against a 2.25 m commit
-        # and see-sawed there until the 600-tick timeout. Its diagonal fits
-        # at every rotation.
         self.track_floor = (
-            min_track_altitude(marker_m * math.sqrt(2.0), hfov_rad,
-                               image_w_px, image_h_px)
+            min_track_altitude(marker_m, hfov_rad, image_w_px, image_h_px)
             if marker_m else 0.0)
         self.commit_alt = max(commit_alt, self.track_floor)
         # ROOM TO LOCK. The descent tracks down to commit_alt, and commit_alt
@@ -6121,6 +6115,21 @@ class PrecisionDescent(py_trees.behaviour.Behaviour):
             if self._visual_target_xy is not None and self._lost <= self.lost_grace:
                 self.mav.goto(*self._visual_target_xy, z, psi)
                 self.feedback_message = f"lock lost at {z:.2f} m; holding visual correction"
+                return py_trees.common.Status.RUNNING
+            # LOST JUST ABOVE THE COMMIT HEIGHT, AFTER CENTRING: the marker
+            # left the frame because the aircraft is close, not because it is
+            # lost. The floor assumes the marker square to the image, and a
+            # 1 m start QR 25 deg off square spans 1.33 m of it: the clarified
+            # arena's smoke run lost it at 2.53 m against a 2.25 m commit and
+            # climbed and sank there until the 600-tick timeout.
+            if (self._lost > self.lost_grace and self._centred_xy is not None
+                    and z <= self.NEAR_FLOOR * self.commit_alt):
+                self.mav.log(f"PrecisionDescent: marker left the frame at "
+                             f"{z:.2f} m, within {100 * (self.NEAR_FLOOR - 1):.0f}% "
+                             f"of the {self.commit_alt:.2f} m commit, after "
+                             f"centring; committing here")
+                self.commit_alt = z + 0.01
+                self.mav.goto(x, y, z, psi)
                 return py_trees.common.Status.RUNNING
             # WHERE THE PAD IS, not where the aircraft is. GPS puts it over
             # home; the pad was read and centred on at the start, 1 m from
@@ -6859,6 +6868,9 @@ def declare_mission_params(node):
     # --- camera + marker: inputs to the derived search geometry --------- #
     d('image_width_px', 1280)
     d('camera_hfov', 1.0472)
+    # From the GCS's arena dimensions; 0 = not given (see arena_dimensions).
+    d('start_marker_m', 0.0)       # the start QR, for the precision landing
+    d('banner_bottom_m', 0.0)      # the hung banner's lower edge
     d('target_marker_m', 2.2)      # competition size UNCONFIRMED; see
                                    # docs/QR_DECODE_ENVELOPE.md
     d('px_per_module_floor', 5.3)  # MEASURED in Phase 1
@@ -6945,6 +6957,9 @@ def declare_mission_params(node):
         'image_height_px': int(g('image_height_px')),
         'camera_hfov': float(g('camera_hfov')),
         'target_marker_m': float(g('target_marker_m')),
+        'start_marker_m': (float(g('start_marker_m'))
+                           or float(g('target_marker_m'))),
+        'banner_bottom_m': float(g('banner_bottom_m')) or None,
         'px_per_module_floor': float(g('px_per_module_floor')),
         'lane_overlap': float(g('lane_overlap')),
         'payload_size_m': float(g('payload_size_m')),

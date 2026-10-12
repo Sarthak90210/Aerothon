@@ -205,17 +205,36 @@ def test_with_the_banner_height_from_the_gcs_it_goes_straight_to_it():
 
 # ---- the precision landing on a 1 m start QR ---------------------------- #
 
-def test_the_landing_commits_where_a_turned_start_qr_still_fits_the_frame():
-    import math
+def test_the_landing_commits_when_a_turned_start_qr_leaves_the_frame_near_the_floor():
+    # Smoke run: a 1 m start QR 25 deg off square lost at 2.53 m, 2.25 m commit.
+    from types import SimpleNamespace as NS
+    import py_trees
     from mission_bt.mission_tree import PrecisionDescent
-    from mission_bt.search_planner import vfov
-    leaf = PrecisionDescent(MagicMock(), commit_alt=1.5, marker_m=1.0,
-                            hfov_rad=0.851919, image_w_px=1280, image_h_px=720)
-    # The smoke run's 25 deg turn: the marker spans 1.0 x (cos + sin) of frame.
-    short_side = 2 * leaf.commit_alt * math.tan(vfov(0.851919, 1280, 720) / 2)
-    turned = 1.0 * (math.cos(math.radians(25)) + math.sin(math.radians(25)))
-    assert turned < short_side
-    assert 1.0 * math.sqrt(2) <= short_side + 1e-9, "fits at any rotation"
+
+    class Mav:
+        def __init__(self):
+            self.at = (0.0, 0.0, 2.53)
+            self.home_marker_xy = (0.0, 0.0)
+            self.qr_offset = NS(x=0.0, y=0.0, z=1.0)
+            self.gotos, self.logs = [], []
+        def pos(self): return self.at
+        def yaw(self): return 0.0
+        def home_local_xy(self): return (0.0, 0.0)
+        def qr_visible(self): return self.qr_offset.z > 0.0
+        def goto(self, *a): self.gotos.append(a)
+        def log(self, *a, **k): self.logs.append(a)
+
+    mav = Mav()
+    leaf = PrecisionDescent(mav, commit_alt=1.5, marker_m=1.0, hfov_rad=0.851919,
+                            lost_grace=3)
+    leaf.initialise()
+    leaf.update()                                   # centred
+    mav.qr_offset = NS(x=0.0, y=0.0, z=0.0)         # the turned marker left the frame
+    for _ in range(4):
+        leaf.update()
+    assert all(g[2] <= 2.53 + 1e-9 for g in mav.gotos), "never climbs back"
+    assert leaf.update() is py_trees.common.Status.SUCCESS
+    assert str(mav.landing_precision).startswith("PRECISE")
 
 
 def test_the_landing_uses_the_start_qr_size_from_the_gcs():
