@@ -769,3 +769,22 @@ def test_a_clipped_sighting_notes_the_sheet_only_when_nothing_better_is_known():
     mav.pos.return_value = (0.0, 0.0, 5.0)
     leaf.ground_range()
     assert leaf._sheet_xy == first, "a later clipped sighting does not move it"
+
+
+# ---- the slalom steers at a waypoint it can move toward ----------------- #
+
+def test_a_short_first_waypoint_does_not_steer_straight_at_the_obstacle():
+    # Rendered p2r10: first waypoint 0.1 m dead ahead, the turn after it.
+    import math
+    from avoidance.velocity_controller import steer_point
+    path = [(0.0, 0.0), (0.1, 0.0), (0.15, -0.8), (0.95, -1.15)]
+    x, y = steer_point(path, lambda a, b: True, 0.3)
+    assert (x, y) == (0.15, -0.8)
+    assert math.degrees(math.atan2(y, x)) < -45.0
+
+
+def test_an_unclear_short_cut_keeps_the_planners_first_waypoint():
+    from avoidance.velocity_controller import steer_point
+    path = [(0.0, 0.0), (0.1, 0.0), (0.15, -0.8)]
+    assert steer_point(path, lambda a, b: False, 0.3) == (0.1, 0.0)
+    assert steer_point([(0.0, 0.0), (0.9, 0.2), (1.5, 1.0)], lambda a, b: True, 0.3) == (0.9, 0.2), "an ordinary first step is kept"

@@ -107,6 +107,7 @@ class VelocityController(Node):
         p('corridor_enter_ticks', 10)     # sustained ENCLOSED before "inside"
         p('progress_window_s', 12.0)      # look-back for forward progress
         p('min_progress_m', 0.8)          # less than this over the window = stalled
+        p('steer_min_step_m', 0.3)        # a first waypoint nearer than this is a stub (steer_point)
         # ---- altitude hold ----
         # `velocity.z = 0.0` is a command for zero vertical RATE, not for a
         # held altitude: any thrust bias or disturbance integrates into a sink.
@@ -1156,7 +1157,8 @@ class VelocityController(Node):
         path = self._local_path(axis_bearing)
         gap = None
         if len(path)>1:
-            x,y = path[1]
+            x,y = steer_point(path, self._planner.segment_clear,
+                              float(self._g('steer_min_step_m')))
             gap = (math.atan2(y,x),0.0,math.hypot(x,y)+float(self._g('stop_dist')))
 
         is_open, left_m, right_m = self.corridor_open(bearings, ranges)
@@ -1287,6 +1289,24 @@ class VelocityController(Node):
     @property
     def last_detail(self):
         return self._last_detail
+
+
+def steer_point(path, segment_clear, min_step_m):
+    """The body-frame waypoint to steer at: path[1], unless it is a stub
+    nearer than `min_step_m`, then path[2] when the straight leg to it is
+    clear. Only the stub is skipped: steering past ordinary waypoints cut
+    corners into the walls under gusts (corridor stress tests).
+
+    Steering at path[1] alone stalled the clarified arena's return slalom
+    (rendered, p2r10): the planner's first waypoint was 0.1 m straight ahead
+    of a half-width obstacle with the turn after it, so the commanded bearing
+    was 0 deg and the speed, from 0.1 m of reach, 0.05 m/s -- straight at the
+    obstacle -- until "no ground covered" exhausted recovery (STUCK). Braking
+    certification still applies to whatever is commanded."""
+    first = path[1]
+    if len(path) < 3 or math.hypot(*first) >= min_step_m:
+        return first
+    return path[2] if segment_clear((0.0, 0.0), path[2]) else first
 
 
 def main():
