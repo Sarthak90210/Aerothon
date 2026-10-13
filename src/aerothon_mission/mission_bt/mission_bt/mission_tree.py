@@ -862,8 +862,13 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
     def _note_sheet(self, rng):
         """Where the identified laid sheet IS, on the ground: from an
         unclipped sighting of the gate in front (a clipped box's centre row
-        moves, and a far one is the other gate)."""
-        if rng > self.near_range_m or getattr(self.mav, "banner_clipped", False) is True:
+        moves, and a far one is the other gate). A clipped sighting is kept
+        only while there is nothing better: its bearing is still the sheet's,
+        and the carried test matches by image column, not by range."""
+        if rng > self.near_range_m:
+            return
+        if (getattr(self.mav, "banner_clipped", False) is True
+                and getattr(self, "_sheet_xy", None) is not None):
             return
         try:
             x, y = (float(v) for v in self.mav.pos()[:2])
@@ -872,6 +877,17 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         except (TypeError, ValueError, AttributeError):
             return
         self._sheet_xy = (x + rng * math.cos(h), y + rng * math.sin(h))
+
+    def _sheet_where(self):
+        """This pass's own note of the sheet, else where the return search
+        ranged it on the ground (FindReturnBanner sets `laid_sheet_xy`):
+        rendered, the return square-up at gate height read the sheet on
+        49/82 frames, under the 0.6 needed, with nothing noted to carry it,
+        and four full sweeps took the flight past 900 s."""
+        own = getattr(self, "_sheet_xy", None)
+        if own is not None:
+            return own
+        return getattr(self.mav, "laid_sheet_xy", None)
 
     def _carried_bearing(self):
         """The laid sheet's camera bearing at gate height, or None.
@@ -887,7 +903,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         sheet in the camera's field of view and a green region spanning the
         column it should be at, its bearing comes from where it lies.
         """
-        if self.search_camera_pose != "GROUND" or getattr(self, "_sheet_xy", None) is None:
+        where = self._sheet_where()
+        if self.search_camera_pose != "GROUND" or not isinstance(where, tuple):
             return None
         try:
             x, y, z = (float(v) for v in self.mav.pos())
@@ -896,7 +913,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             return None
         if z > self.wall_top_m + 0.2:
             return None                   # above the walls the camera reads it
-        sx, sy = self._sheet_xy
+        sx, sy = where
         ang = self._wrap(math.atan2(sy - y, sx - x) - yaw)
         half = 0.5 * self.hfov
         if abs(ang) >= half:
@@ -922,7 +939,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if self._carried_bearing() is None:
             return None
         x, y = (float(v) for v in self.mav.pos()[:2])
-        return math.hypot(self._sheet_xy[0] - x, self._sheet_xy[1] - y)
+        sx, sy = self._sheet_where()
+        return math.hypot(sx - x, sy - y)
 
     def _ident(self):
         """The banner identified, or a laid sheet carried by where it is."""
@@ -5806,6 +5824,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                     f"entered from; searching on", warn=True)
             return None
         self.target = (ax, ay, th)
+        if self._ground() and self._look == "GROUND":
+            self.mav.laid_sheet_xy = (float(bx), float(by))
         self.phase = "approach"
         self.headings = [th]
         # A stand-off more than a few metres off is over ground the camera

@@ -647,6 +647,8 @@ class Mav:
             self.mission_complete = False
             self._attitude_violations = 0
             self.clear_airborne_floor()
+            # The return gate's laid sheet, as ranged this mission only.
+            self.laid_sheet_xy = None
             # This mission's corridor, not the last one's.
             self.corridor_exit_pose = None
             self.gate_heading = None

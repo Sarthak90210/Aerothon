@@ -739,3 +739,33 @@ def test_a_laid_return_sheet_is_ranged_where_it_meets_the_ground():
     bx, by, th, rng = f._sighting()
     assert rng == pytest.approx(5.0 / math.tan(math.radians(35.0)))
     assert bx == pytest.approx(30.0 - rng)
+
+
+def test_the_return_square_up_carries_the_sheet_the_return_search_ranged():
+    # Rendered p2r9, ground-only: the return square-up read the sheet on 49/82
+    # frames with nothing noted to carry it; four sweeps passed 900 s.
+    import math
+    from mission_bt.mission_tree import AlignToBanner
+    mav = _carry_mav()
+    mav.laid_sheet_xy = (17.9, -6.4)                  # FindReturnBanner's ground range
+    leaf = AlignToBanner(mav, clock=lambda: 0.0, search_camera_pose="GROUND",
+                         alt_floor_m=2.4384)
+    assert leaf._sheet_xy is None
+    mav.pos.return_value = (22.1, -6.4, 2.44)
+    mav.alt.return_value = 2.44
+    mav.yaw.return_value = math.pi
+    mav.banner = types.SimpleNamespace(x=0.0, y=0.0, z=0.5)
+    mav.banner_identified.return_value = False
+    mav.banner_green = {"px": [500, 300, 300, 200], "wh": [1280, 720], "t": 0.0}
+    assert leaf._ident()
+    assert leaf.ground_range() == pytest.approx(4.2)
+
+
+def test_a_clipped_sighting_notes_the_sheet_only_when_nothing_better_is_known():
+    mav = _carry_mav()
+    mav.banner_clipped = True
+    leaf = _sheet_leaf(mav)                            # first sighting, clipped: kept
+    first = leaf._sheet_xy
+    mav.pos.return_value = (0.0, 0.0, 5.0)
+    leaf.ground_range()
+    assert leaf._sheet_xy == first, "a later clipped sighting does not move it"
