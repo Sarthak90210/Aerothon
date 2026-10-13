@@ -51,10 +51,15 @@ tools=[Path('.scratch/simulation-reliability')/name for name in (
     {str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in tools},indent=2))
 (out/'world_spec.json').write_bytes(spec.read_bytes())
 (out/'frozen_calibration.json').write_bytes(profile.read_bytes())
-(out/'configuration.json').write_text(json.dumps(dict(seed=int(sys.argv[4]),conditions='calm',
+(out/'configuration.json').write_text(json.dumps(dict(seed=int(sys.argv[4]),conditions=os.environ.get('AEROTHON_RENDER_CONDITIONS','calm'),
     airframe='cad',payload_fixture='loaded',world=str(spec),ros_domain=int(os.environ['ROS_DOMAIN_ID'])),indent=2))
 PY
-export AEROTHON_WORLD_SPEC="$spec" AEROTHON_CONDITIONS=calm AEROTHON_CONDITIONS_SEED="$seed"
+# Calm unless asked: AEROTHON_RENDER_CONDITIONS=field flies the moderate
+# field envelope (wind, sensor degradation) rendered, as headless does.
+render_conditions="${AEROTHON_RENDER_CONDITIONS:-calm}"
+case "$render_conditions" in calm|field) ;; *) echo 'Unknown rendered conditions'; exit 2 ;; esac
+export AEROTHON_RENDER_CONDITIONS="$render_conditions"
+export AEROTHON_WORLD_SPEC="$spec" AEROTHON_CONDITIONS="$render_conditions" AEROTHON_CONDITIONS_SEED="$seed"
 export AEROTHON_SEED="$seed"
 export AEROTHON_HEADLESS=1 AEROTHON_OPEN_GCS=0 AEROTHON_NO_REAP=1
 export AEROTHON_AIRFRAME=cad AEROTHON_PAYLOAD_FIXTURE=loaded AEROTHON_DELIVERY_CALIBRATION="$profile"
