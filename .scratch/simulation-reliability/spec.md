@@ -22,3 +22,24 @@ return corridor until battery-critical RTL.
 
 Implementation and evidence are in [status.md](status.md) and the numbered
 [issues](issues/) directory.
+
+## Current scope, 2026-10-05
+
+The requested clearance is 0.70 m throughout planning and recovery. The
+unchanged off-axis world is an infeasibility regression if its inflated
+obstacles block the lane. A traversal pass cannot be claimed for it.
+
+Search decisions must use fresh onboard camera detections. Measure distinct
+capture times, processing latency and delivered QR/red rates; bound speed
+by the slower detector and braking distance. Revalidate active segments
+when exclusions change, stop unsafe commands and replan from measured pose.
+
+Rendered targeted acceptance is `my_world.json`, calm, seed 20261003 then
+1001. After both pass, run seeds 1-5 across all world fixtures in calm,
+field, worst and random conditions, and rendered standard, shipped, rotated
+and split-corridor trials. Record through disarm and retain separate truth.
+Headless navigation cannot qualify rendered perception or motor delivery.
+
+Hardware and flight work remain deferred. Preserve motor-priority delivery,
+three unsuccessful attempts followed by complete stow and unconfirmed
+mission continuation, and the existing physical claw.
