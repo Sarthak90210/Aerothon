@@ -26,7 +26,10 @@ def main():
                 device = p.get('device', os.environ.get('AEROTHON_FCU_DEVICE','/dev/ttyAMA0'))
                 baud = int(p.get('baud',os.environ.get('AEROTHON_FCU_BAUD','115200')))
                 valid = serial and device.startswith('/dev/') and '..' not in device and Path(device).exists() and stat.S_ISCHR(Path(device).stat().st_mode)
-                wanted = (device, baud) if valid else None
+                gcs_host = str(p.get('gcs_host') or '').strip()
+                if gcs_host and not all(c.isalnum() or c in '.:-' for c in gcs_host):
+                    gcs_host = ''
+                wanted = (device, baud, gcs_host) if valid else None
             except (OSError, ValueError, TypeError):
                 wanted = None
             if signature != wanted or (proc and proc.poll() is not None):
@@ -36,9 +39,15 @@ def main():
                 proc = None
                 signature = wanted
                 if wanted:
-                    proc = subprocess.Popen(['/usr/bin/python3','/home/pi5/aerothon_ws/scripts/mav_router.py',
-                        '--fcu-serial',wanted[0],'--fcu-baud',str(wanted[1]),'--mavros-port','14555','--gcs-port','14550'])
-                    print(f'UART owner started: {wanted[0]} at {wanted[1]}', flush=True)
+                    # MAVROS on the Pi and a GCS port (14550) for the laptop;
+                    # with gcs_host the FC's MAVLink is also pushed to it.
+                    cmd = ['/usr/bin/python3','/home/pi5/aerothon_ws/scripts/mav_router.py',
+                        '--fcu-serial',wanted[0],'--fcu-baud',str(wanted[1]),'--mavros-port','14555','--gcs-port','14550']
+                    if wanted[2]:
+                        cmd += ['--gcs-host', wanted[2], '--gcs-out-port', '14550']
+                    proc = subprocess.Popen(cmd)
+                    print(f'UART owner started: {wanted[0]} at {wanted[1]}'
+                          + (f', MAVLink to {wanted[2]}:14550' if wanted[2] else ''), flush=True)
             time.sleep(.5)
     finally:
         if proc and proc.poll() is None:

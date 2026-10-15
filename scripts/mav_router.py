@@ -34,8 +34,12 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
 
     # Use UDP for SITL, or open the Pixhawk telemetry device directly on the Pi.
     if fcu_serial:
+        # Reads stay non-blocking; WRITES block briefly. With write_timeout=0
+        # a full UART buffer (115200 baud carrying Mission Planner and MAVROS)
+        # raised on write and the rest of the packet was silently dropped:
+        # MAVROS's requests never reached the FC (16 October, real drone).
         fcu_link = serial.Serial(
-            fcu_serial, baudrate=fcu_baud, timeout=0, write_timeout=0)
+            fcu_serial, baudrate=fcu_baud, timeout=0, write_timeout=0.5)
         fcu_sock = None
     else:
         fcu_link = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -82,6 +86,16 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
         logger.info(f"  Mission Planner output: UDP {host}:{port}")
     logger.info("=========================================================")
 
+    dropped = [0]
+
+    def write_fcu(data):
+        # Whole datagram or nothing: a partial MAVLink frame corrupts the next.
+        try:
+            fcu_link.write(data)
+            fcu_link.flush()
+        except serial.SerialTimeoutException:
+            dropped[0] += 1
+
     sockets = [fcu_link, gcs_sock, mavros_sock]
     packet_count = 0
     t_last_stat = time.time()
@@ -125,7 +139,7 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                     active_gcs_senders.add(addr)
                     try:
                         if fcu_serial:
-                            fcu_link.write(data)
+                            write_fcu(data)
                         else:
                             for f_addr in active_fcu_senders:
                                 fcu_sock.sendto(data, f_addr)
@@ -137,7 +151,7 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                     active_mavros_senders.add(addr)
                     try:
                         if fcu_serial:
-                            fcu_link.write(data)
+                            write_fcu(data)
                         else:
                             for f_addr in active_fcu_senders:
                                 fcu_sock.sendto(data, f_addr)
@@ -148,7 +162,8 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                 logger.info(f"Router status: {packet_count} pkts routed | "
                             f"{len(active_fcu_senders)} FCU, "
                             f"{len(active_mavros_senders)} MAVROS, "
-                            f"{len(active_gcs_senders)} GCS endpoints active.")
+                            f"{len(active_gcs_senders)} GCS endpoints active, "
+                            f"{dropped[0]} FC writes timed out.")
                 t_last_stat = time.time()
 
     except KeyboardInterrupt:

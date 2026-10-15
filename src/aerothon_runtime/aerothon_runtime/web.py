@@ -48,8 +48,8 @@ class Host:
         self.proc = None
         self.profile_id = None
         self.owner_path = self.state_dir / 'runtime-owner.json'
-        if self.owner_path.exists():
-            owner = json.loads(self.owner_path.read_text())
+        owner = self.read_owner()
+        if owner is not None:
             self.controlled = owner.get('controlled',True)
             self.profile_id = owner.get('profile_id')
             if owner.get('identity') and process_identity(owner['pid']) == owner['identity']:
@@ -74,6 +74,38 @@ class Host:
 
     def fresh(self):
         return self.telemetry is not None and time.monotonic() - self.received < 3
+
+    def read_owner(self):
+        """The recorded runtime owner, or None.
+
+        A power cut on the drone (the Pi browned out on its BEC, 16 October)
+        left this file empty, and the web host crash-looped on it at every
+        start, so the GCS never came back. An unreadable record is kept aside
+        and treated as no adopted runtime: after a reboot none survives."""
+        if not self.owner_path.exists():
+            return None
+        try:
+            owner = json.loads(self.owner_path.read_text())
+            if not isinstance(owner, dict):
+                raise ValueError('owner record is not an object')
+            return owner
+        except (OSError, ValueError) as exc:
+            aside = self.owner_path.with_name(f'runtime-owner.unreadable-{int(time.time())}.json')
+            try:
+                self.owner_path.replace(aside)
+            except OSError:
+                pass
+            print(f'runtime owner record unreadable ({exc}); kept as {aside.name}, no runtime adopted', flush=True)
+            return None
+
+    def write_owner(self, owner):
+        # Written whole or not at all: a temporary file, synced, then renamed.
+        tmp = self.owner_path.with_suffix('.tmp')
+        with open(tmp, 'w') as f:
+            f.write(json.dumps(owner))
+            f.flush()
+            os.fsync(f.fileno())
+        tmp.replace(self.owner_path)
 
     def disarmed(self):
         return self.fresh() and self.telemetry.get('safety',{}).get('fcu_connected') is True and self.telemetry.get('mission', {}).get('armed') is False and self.telemetry.get('sample_age_s',{}).get('state',999)<3
@@ -106,13 +138,17 @@ class Host:
                 'managed:=true', 'rviz:=false', f"slam:={str(p.get('slam',False)).lower()}",
                 f"use_sim:={'true' if p['gateway'] else 'false'}",
                 'camera_backend:=mavlink', f"winch_backend:={p.get('winch_backend', 'mavlink')}",
-                f"remote_gateway:={p['gateway']}", f"fcu_url:={link}",
+                f"fcu_url:={link}",
                 f"target_system_id:={p['system_id']}", f"target_component_id:={p['component_id']}",
                 f"camera_hfov:={p['camera_hfov']}", f"target_marker_m:={p['marker_m']}",
                 'image_topic:=/image_raw', f"camera_device:={p['camera_device']}",
                 f"lidar_port:={p['lidar_port']}", f"lidar_yaw_deg:={p['lidar_yaw_deg']}",
                 f"lidar_mirrored:={str(p['lidar_mirrored']).lower()}",
                 f"rc_config:={json.dumps(p['rc_config'], separators=(',', ':'))}"]
+        if p['gateway']:
+            # ros2 launch rejects an empty 'name:=' argument; a real drone has
+            # no sensor gateway and the launch file defaults it to ''.
+            args.append(f"remote_gateway:={p['gateway']}")
         if p['venue_file']:
             args.append(f"params_file:={p['venue_file']}")
         env = dict(os.environ, ROS_LOCALHOST_ONLY='1', ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST')
@@ -231,10 +267,10 @@ class Host:
                 raise ValueError('active execution owns flight commands; stop or use the transmitter')
             if cmd in {'arm','takeoff','set_mode'} or (cmd=='start' and TASKS[execution(data.get('args') or {})['task']][1]):
                 self.controlled = True
-                if self.owner_path.exists():
-                    owner = json.loads(self.owner_path.read_text())
+                owner = self.read_owner()
+                if owner is not None:
                     owner['controlled'] = True
-                    self.owner_path.write_text(json.dumps(owner))
+                    self.write_owner(owner)
             result = {'command_id': cid, 'state': 'Submitted', 'reason': ''}
             self.db.execute('INSERT INTO commands VALUES (?,?,?)', (cid, canonical, json.dumps(result)))
             self.db.commit()  # durable before any side effect
@@ -314,7 +350,7 @@ def application(host):
             pid = getattr(host.proc,'pid',None)
             identity = process_identity(pid) if pid else None
             if identity:
-                host.owner_path.write_text(json.dumps({'pid':pid,'identity':identity,'profile_id':ident,'controlled':host.controlled}))
+                host.write_owner({'pid':pid,'identity':identity,'profile_id':ident,'controlled':host.controlled})
             return web.json_response(host.state())
 
     async def disconnect(request):

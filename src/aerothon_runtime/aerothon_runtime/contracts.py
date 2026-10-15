@@ -63,6 +63,12 @@ def profile(value, *, require_gateway=True):
         if u.scheme not in {'http', 'https'} or not u.hostname or not re.fullmatch(r'[a-zA-Z0-9.:-]+', u.hostname) or u.username or u.password or u.query or u.fragment or u.path not in {'', '/'}:
             raise ValueError('gateway must be an HTTP origin without credentials or a path')
     p['gateway'] = gateway
+    # Laptop that also receives the FC's MAVLink from the Pi router over UDP
+    # (Mission Planner / QGC on --gcs-port); empty means listen-only.
+    gcs_host = str(p.get('gcs_host', '') or '').strip()
+    if gcs_host and not re.fullmatch(r'[a-zA-Z0-9.:-]+', gcs_host):
+        raise ValueError('GCS host must be an IP address or hostname')
+    p['gcs_host'] = gcs_host
     # WHAT is on the other end: the laptop's Gazebo + SITL over the intranet,
     # or the real aircraft. Older profiles say it through transport/gateway.
     vehicle = p.get('vehicle') or ('drone' if p['transport'] == 'serial' else 'simulation')
