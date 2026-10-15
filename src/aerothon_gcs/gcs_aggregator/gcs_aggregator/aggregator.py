@@ -13,21 +13,24 @@ import json
 import math
 import time
 import threading
+from numbers import Real
 
 import numpy as np
 
 import rclpy
 from rclpy.node import Node
+from rclpy.clock import Clock, ClockType
 # One definition of a valid colour, shared with the detectors.
 from perception_banner.colours import validate as validate_colours
 # ...and of the arena's dimensions, shared with mission_bt.
 from mission_bt import arena_dimensions
+from mission_bt.delivery_zone import parse_polygon
 import os
 from rclpy.qos import (qos_profile_sensor_data, QoSProfile,
                        QoSDurabilityPolicy, QoSHistoryPolicy)
-from mavros_msgs.msg import State, EstimatorStatus, WaypointList
+from mavros_msgs.msg import State, EstimatorStatus, WaypointList, Vibration, ExtendedState
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
-from sensor_msgs.msg import BatteryState, NavSatFix, LaserScan
+from sensor_msgs.msg import BatteryState, NavSatFix, LaserScan, MagneticField, Image
 from geometry_msgs.msg import PoseStamped, Vector3, TwistStamped
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import String, Bool, Float64, UInt32
@@ -35,6 +38,7 @@ from std_msgs.msg import String, Bool, Float64, UInt32
 import websockets
 
 from gcs_aggregator import lidar_calibration
+from gcs_aggregator.sensor_metrics import SensorMetric
 
 
 def _euler_deg(q):
@@ -48,6 +52,13 @@ def _euler_deg(q):
     cosy = 1 - 2 * (q.y * q.y + q.z * q.z)
     yaw = math.atan2(siny, cosy)
     return math.degrees(roll), math.degrees(pitch), (math.degrees(yaw) + 360) % 360
+
+def _finite_number(value, nonnegative=False):
+    if not isinstance(value, Real) or not math.isfinite(value):
+        return None
+    if nonnegative and value < 0:
+        return None
+    return float(value)
 
 SCHEMA_VERSION = 1
 # Several headless simulations run side by side, each with its own GCS;
@@ -91,9 +102,22 @@ class Aggregator(Node):
         self.state = self._blank_state()
 
         self._arm_t = None
+        self._detector_stamps = {}
+        self._steady_seen = {}
+        self._command_receipts = {}
+        self._sensor_metrics = {key: SensorMetric() for key in ("camera", "lidar")}
+        self.managed = self.declare_parameter('managed', False).value is True
+        self.ws_host = self.declare_parameter('ws_host', WS_HOST).value
+        self._device_status = None
+        self._runtime_seen = None
         q = 10
         qos_sensor = qos_profile_sensor_data
+        self.declare_parameter("image_topic", "/image_raw")
+        self.create_subscription(Image, self.get_parameter("image_topic").value, self._on_image, qos_sensor)
         self.create_subscription(State, "/mavros/state", self._on_state, qos_sensor)
+        self.create_subscription(Vibration, "/mavros/vibration/raw/vibration", self._on_vibration, qos_sensor)
+        self.create_subscription(MagneticField, "/mavros/imu/mag", self._on_magnetic, qos_sensor)
+        self.create_subscription(ExtendedState, "/mavros/extended_state", self._on_extended_state, qos_sensor)
         self.create_subscription(BatteryState, "/mavros/battery", self._on_batt, qos_sensor)
         self.create_subscription(PoseStamped, "/mavros/local_position/pose", self._on_pose, qos_sensor)
         self.create_subscription(TwistStamped, "/mavros/local_position/velocity_local", self._on_vel, qos_sensor)
@@ -101,6 +125,8 @@ class Aggregator(Node):
         self.create_subscription(NavSatFix, "/mavros/global_position/global", self._on_gps, qos_sensor)
         self.create_subscription(String, "/percep/qr/decoded", self._on_qr, q)
         self.create_subscription(Bool, "/percep/qr/matched", self._on_match, q)
+        self.create_subscription(String, "/mission/target",
+                                 lambda m: self.state["percep"].update(mission_target=m.data), q)
         self.create_subscription(Vector3, "/percep/banner", self._on_banner, q)
         self.create_subscription(String, "/percep/qr/detail",
                                  self._on_qr_detail, q)
@@ -134,14 +160,24 @@ class Aggregator(Node):
         self._seen = {}
 
         self.pub_abort = self.create_publisher(Bool, "/mission/abort", q)
+        self.pub_runtime = self.create_publisher(String, '/runtime/request', q)
+        self.pub_camera_pose = self.create_publisher(String, '/camera/set_pose', q)
+        self.create_subscription(String, '/runtime/status', self._on_execution, q)
+        self.create_subscription(String, '/runtime/receipt', self._on_receipt, q)
+        self.create_subscription(String, '/runtime/health', self._on_runtime_health, q)
+        self.create_subscription(String, '/devices/status', self._on_devices, q)
         self.pub_start = self.create_publisher(Bool, "/mission/start", q)
         self.pub_target = self.create_publisher(String, "/mission/target", q)
         self.pub_winch = self.create_publisher(String, "/winch/cmd", q)
         self.pub_gimbal_pitch = self.create_publisher(Float64, "/gimbal/cmd_pitch", q)
         zone_qos = QoSProfile(depth=1, history=QoSHistoryPolicy.KEEP_LAST,
                               durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
+        self.pub_geofence = self.create_publisher(String, "/mission/geofence", zone_qos)
         self.pub_delivery_zone = self.create_publisher(
             String, "/mission/delivery_zone", zone_qos)
+        # The fence in force, whoever supplied it, for the map's polygon.
+        self.create_subscription(String, "/mission/geofence",
+                                 self._on_geofence_supplied, zone_qos)
         # Latched like the boundary: a detector that starts later still gets
         # the shades the operator typed before it came up.
         self.pub_banner_colours = self.create_publisher(
@@ -179,7 +215,8 @@ class Aggregator(Node):
         self.cli_takeoff = self.create_client(CommandTOL, "/mavros/cmd/takeoff")
         self.cli_land = self.create_client(CommandTOL, "/mavros/cmd/land")
 
-        self.create_timer(1.0 / TELEM_HZ, self._publish_snapshot)
+        self.create_timer(1.0 / TELEM_HZ, self._publish_snapshot,
+                          clock=Clock(clock_type=ClockType.STEADY_TIME))
         self.get_logger().info(f"aggregator up; ws://{WS_HOST}:{WS_PORT}")
 
     @staticmethod
@@ -196,11 +233,18 @@ class Aggregator(Node):
             # sats is None until a real count arrives; the GCS must render
             # "UNKNOWN", not a confident zero.
             "gps": {"lat": 0, "lon": 0, "sats": None, "fix": "NO"},
-            "power": {"volt": 0, "pct": 0},
+            "power": {"volt": None, "pct": None, "current_a": None},
+            "sensor_diagnostics": {"vibration_mps2": None, "clipping": None,
+                "magnetic_ut": None, "magnetic_strength_ut": None, "magnetic_units_basis": None,
+                "magnetic_frame": None, "magnetic_capture_stamp": None},
             "nav": {"front_m": 0, "centering_err": 0, "cmd_vx": 0},
             # redzone_status starts UNKNOWN rather than CLEAR: "no detection
             # yet" and "looked and saw clear ground" are not the same claim.
             "percep": {"start_qr": "", "target_match": False, "banner": False,
+                       # What the mission is delivering to, and how the pad
+                       # is being identified (pattern, payload or both).
+                       "mission_target": "", "qr_reference": False,
+                       "qr_match_basis": [], "qr_appearance_score": None,
                        "redzone_visible": False, "redzone_status": "UNKNOWN",
                        "redzone_reason": "", "redzone_exclusions": [],
                        "redzone_area_m2": 0.0,
@@ -315,11 +359,41 @@ class Aggregator(Node):
     def _uptime(self):
         return float(self.state["mission"].get("elapsed", 0.0) or 0.0)
 
+    def _detector_rate(self, key, d):
+        stamp = d.get('capture_stamp')
+        if not isinstance(stamp,(int,float)) or not math.isfinite(stamp):
+            return
+        samples = self._detector_stamps.setdefault(key, [])
+        if samples and stamp <= samples[-1]:
+            if stamp < samples[-1]:
+                samples.clear()
+            else:
+                return
+        samples.append(stamp)
+        samples[:] = samples[-50:]
+        hz = (len(samples)-1)/(samples[-1]-samples[0]) if len(samples)>1 else None
+        self.state.setdefault('detector_rates',{})[key] = {'hz':hz,'capture_stamp':stamp,
+            'processed_stamp':d.get('processed_stamp'),'received':time.time()}
+
+    def _on_geofence_supplied(self, m):
+        vertices, _why = parse_polygon(m.data, what="geofence")
+        if vertices is not None:
+            self.state["geofence_vertices"] = [[lat, lon] for lat, lon in vertices]
+
     def _on_qr_detail(self, m):
         try:
             d = json.loads(m.data)
         except (ValueError, TypeError):
             return
+        if not isinstance(d, dict):
+            return
+        self._detector_rate("qr", d)
+        percep = self.state["percep"]
+        percep["qr_reference"] = d.get("reference_captured") is True
+        percep["qr_match_basis"] = [str(b) for b in (d.get("match_basis") or [])][:2]
+        score = d.get("appearance_score")
+        percep["qr_appearance_score"] = (round(float(score), 3)
+                                         if isinstance(score, (int, float)) else None)
         accepted = str(d.get("accepted") or "")
         if accepted:
             self._record_scan("qr", payload=accepted,
@@ -330,6 +404,7 @@ class Aggregator(Node):
                 self._record_scan("qr", reason=str(reason))
 
     def _on_square_on(self, m):
+        self._mark("square")
         """How square the aircraft is to the banner, while it converges.
 
         The operator watching a live flight could see the aircraft moving and
@@ -351,6 +426,9 @@ class Aggregator(Node):
             d = json.loads(m.data)
         except (ValueError, TypeError):
             return
+        if not isinstance(d, dict):
+            return
+        self._detector_rate("banner", d)
         if d.get("identified"):
             # The glyph classifier writes '?' for anything it cannot name, and
             # the identity gate passes on STRUCTURE -- so a legitimately
@@ -382,6 +460,7 @@ class Aggregator(Node):
     # ---- subscription callbacks ---- #
     def _mark(self, key):
         self._seen[key] = time.time()
+        self._steady_seen[key] = time.monotonic()
 
     def _on_estimator(self, m):
         """Real EKF health from MAVROS, replacing a hardcoded True.
@@ -426,6 +505,7 @@ class Aggregator(Node):
             pass
         self._mark("winch")
     def _on_state(self, m):
+        self._mark("state")
         self.state["safety"]["fcu_connected"] = bool(m.connected)
         if m.armed and self._arm_t is None:
             self._arm_t = time.time()
@@ -436,11 +516,45 @@ class Aggregator(Node):
         self.state["mission"]["elapsed"] = round(time.time() - self._arm_t, 1) if self._arm_t else 0.0
 
     def _on_batt(self, m):
-        self.state["power"]["volt"] = round(m.voltage, 2)
-        self.state["power"]["pct"] = round(m.percentage * 100) if m.percentage <= 1.0 else round(m.percentage)
+        self._mark("power")
+        voltage = _finite_number(m.voltage, True)
+        pct = _finite_number(m.percentage, True)
+        self.state["power"]["volt"] = None if voltage is None else round(voltage, 2)
+        self.state["power"]["pct"] = None if pct is None else round(pct * 100 if pct <= 1 else pct)
+        self.state["power"]["current_a"] = _finite_number(m.current)
         self.state["safety"]["battery_ok"] = not (0.0 < m.voltage < 10.5 or 0.0 < m.percentage < 0.15)
 
+    def _on_vibration(self, m):
+        self._mark("vibration")
+        diag = self.state["sensor_diagnostics"]
+        diag["vibration_mps2"] = [_finite_number(v, True) for v in
+                                  (m.vibration.x, m.vibration.y, m.vibration.z)]
+        diag["clipping"] = [_finite_number(v, True) for v in m.clipping]
+
+    def _on_magnetic(self, m):
+        self._mark("magnetic")
+        diag = self.state["sensor_diagnostics"]
+        field = [_finite_number(v) for v in (m.magnetic_field.x, m.magnetic_field.y, m.magnetic_field.z)]
+        # MAVROS fills this from ArduPilot's RAW_IMU/SCALED_IMU milligauss
+        # multiplied by its MILLIT_TO_TESLA constant (1000), not by 1e-7, so
+        # Earth's ~0.5 gauss arrives as ~5e5 "tesla". No FC magnetometer reads
+        # 0.01 T; above that the value is that encoding: uT = mG * 0.1.
+        raw = [v for v in field if v is not None]
+        scaled = bool(raw) and max(abs(v) for v in raw) > 0.01
+        factor = 1e-4 if scaled else 1e6
+        field = [None if v is None else _finite_number(v * factor) for v in field]
+        diag["magnetic_units_basis"] = "mavros_milligauss_x1000" if scaled else "tesla"
+        diag["magnetic_ut"] = field
+        diag["magnetic_strength_ut"] = _finite_number(math.hypot(*field)) if all(v is not None for v in field) else None
+        diag["magnetic_frame"] = str(m.header.frame_id)
+        diag["magnetic_capture_stamp"] = m.header.stamp.sec + m.header.stamp.nanosec / 1e9
+
+    def _on_extended_state(self, m):
+        self._mark("extended_state")
+        self.state["safety"]["on_ground"] = m.landed_state == ExtendedState.LANDED_STATE_ON_GROUND
+
     def _on_pose(self, m):
+        self._mark("pose")
         p = m.pose.position
         roll, pitch, yaw = _euler_deg(m.pose.orientation)
         fl = self.state["flight"]
@@ -449,6 +563,7 @@ class Aggregator(Node):
         self.state["scan"]["yaw_deg"] = round(yaw, 1)
 
     def _on_vel(self, m):
+        self._mark("velocity")
         self.state["flight"]["gs"] = round(math.hypot(m.twist.linear.x, m.twist.linear.y), 2)
 
     def _on_scan_raw(self, m):
@@ -480,7 +595,9 @@ class Aggregator(Node):
         cal["body_nearest"] = None if near is None else [round(near[0], 1), round(near[1], 2)]
 
     def _on_scan(self, m):
+        self._sensor_metrics["lidar"].observe(m.header)
         self._scan_body = m
+        self._mark("lidar")
         n = len(m.ranges)
         if not n:
             return
@@ -491,7 +608,11 @@ class Aggregator(Node):
             out.append(round(r, 2) if (math.isfinite(r) and m.range_min < r < m.range_max) else None)
         self.state["scan"]["ranges"] = out
 
+    def _on_image(self, m):
+        self._sensor_metrics["camera"].observe(m.header)
+
     def _on_gps(self, m):
+        self._mark("gps")
         self.state["gps"]["lat"] = m.latitude
         self.state["gps"]["lon"] = m.longitude
         self.state["gps"]["fix"] = "3D" if m.status.status >= 0 else "NO"
@@ -526,6 +647,9 @@ class Aggregator(Node):
             d = json.loads(m.data)
         except (ValueError, TypeError):
             return
+        if not isinstance(d, dict):
+            return
+        self._detector_rate("red", d)
         p = self.state["percep"]
         p["redzone_status"] = d.get("status", "UNKNOWN")
         p["redzone_reason"] = d.get("reason", "")
@@ -533,10 +657,12 @@ class Aggregator(Node):
         p["redzone_area_m2"] = round(float(d.get("confirmed_area_m2", 0.0)), 1)
 
     def _on_avoid(self, m):
+        self._mark("avoidance")
         self.state["nav"] = {"front_m": round(m.x, 2),
                              "centering_err": round(m.y, 2), "cmd_vx": round(m.z, 2)}
 
     def _on_ready(self, m):
+        self._mark("readiness")
         self.state["safety"]["ready"] = m.data
 
     def _on_ready_detail(self, m):
@@ -549,6 +675,9 @@ class Aggregator(Node):
             d = json.loads(m.data)
         except (ValueError, TypeError):
             return
+        if not isinstance(d, dict):
+            return
+        self._mark("readiness")
         s = self.state["safety"]
         s["ready"] = bool(d.get("ready", False))
         s["ready_items"] = d.get("items", [])
@@ -567,6 +696,7 @@ class Aggregator(Node):
         mis["landing_precision"] = d.get("landing_precision")
 
     def _on_mission_state(self, m):
+        self._mark("mission")
         self.state["mission"]["state"] = m.data
         if m.data == "TAKEOFF":
             self.state["checklist"]["takeoff"] = True
@@ -592,12 +722,30 @@ class Aggregator(Node):
         ow, oh, out = max_pool_grid(data, w, h, step)
         grid = {"res": round(m.info.resolution * step, 3), "w": ow, "h": oh,
                 "ox": round(m.info.origin.position.x, 3),
-                "oy": round(m.info.origin.position.y, 3), "data": out}
+                "oy": round(m.info.origin.position.y, 3),
+                "yaw": math.radians(_euler_deg(m.info.origin.orientation)[2]),
+                "frame": m.header.frame_id,
+                "stamp": m.header.stamp.sec + m.header.stamp.nanosec / 1e9, "data": out}
         self._broadcast(self._env("map", grid))
 
     # ---- outbound ---- #
     def _env(self, kind, data):
         return json.dumps({"v": SCHEMA_VERSION, "kind": kind, "t": time.time(), "data": data})
+
+    def _on_execution(self, msg):
+        data = json.loads(msg.data)
+        self.state['execution'] = data
+        self._broadcast(self._env('execution', data))
+
+    def _on_receipt(self, msg):
+        self._broadcast(self._env('receipt', json.loads(msg.data)))
+
+    def _on_runtime_health(self, msg):
+        self._runtime_seen = time.monotonic()
+        self.state['runtime_health'] = json.loads(msg.data)
+
+    def _on_devices(self, msg):
+        self._device_status = (json.loads(msg.data), time.monotonic())
 
     def _publish_snapshot(self):
         if not self._ws_clients:
@@ -606,6 +754,17 @@ class Aggregator(Node):
         # is visibly stale rather than frozen at its last confident value.
         self.state["safety"]["stale"] = self._staleness()
         self._lidar_cal_refresh()
+        now = time.monotonic()
+        self.state["sample_age_s"] = {k: round(max(0.0, now - stamp), 3) for k, stamp in self._steady_seen.items()}
+        nanos = _finite_number(self.get_clock().now().nanoseconds)
+        clock = None if nanos is None else nanos / 1e9
+        self.state["devices"] = {key: metric.snapshot(clock, now) for key, metric in self._sensor_metrics.items()}
+        if self._device_status:
+            devices, received = self._device_status
+            self.state['devices'] = {k: dict(v, ok=v.get('ok') is True and now-received < 1)
+                                     for k, v in devices.items() if isinstance(v, dict)}
+        self.state.setdefault('runtime_health', {})['fresh'] = self._runtime_seen is not None and now-self._runtime_seen < 1
+        self.state["sample_age_s"]["devices"] = 0.0
         self._broadcast(self._env("telemetry", self.state))
 
     def _broadcast(self, payload):
@@ -635,16 +794,46 @@ class Aggregator(Node):
             msg = json.loads(raw)
         except json.JSONDecodeError:
             return
-        if msg.get("kind") != "command":
+        if not isinstance(msg, dict) or msg.get("kind") != "command":
             return
         d = msg.get("data", {})
+        if not isinstance(d, dict):
+            return
         cmd, cid = d.get("cmd"), d.get("cmd_id")
-        result, reason = self._dispatch(cmd, d.get("args", {}))
+        args = d.get("args", {})
+        signature = json.dumps([cmd, args], sort_keys=True)
+        previous = self._command_receipts.get(cid) if isinstance(cid, str) else None
+        if previous:
+            result, reason = previous[1:] if previous[0] == signature else ("rejected", "command ID reused for a different request")
+        elif not isinstance(cid, str) or not cid or len(cid) > 128 or not isinstance(args, dict):
+            result, reason = "rejected", "command needs a unique ID and an arguments object"
+        else:
+            result, reason = self._dispatch(cmd, args, cid)
+            # Keep receipts for the lifetime of this runtime. Fail closed when
+            # full rather than evicting an ID that could repeat a release.
+            self._command_receipts[cid] = (signature, result, reason)
         await ws.send(self._env("ack", {"cmd_id": cid, "cmd": cmd,
                                         "result": result, "reason": reason}))
 
-    def _dispatch(self, cmd, args):
+    def _dispatch(self, cmd, args, cid=None):
         try:
+            if cmd in {'runtime_start', 'runtime_stop'}:
+                if not self.managed or not cid:
+                    return 'rejected', 'managed production supervisor required'
+                if cmd == 'runtime_start' and (self._runtime_seen is None or time.monotonic()-self._runtime_seen > 1):
+                    return 'rejected', 'execution supervisor is stale'
+                self.pub_runtime.publish(String(data=json.dumps({'command_id': cid,
+                    'cmd': 'start' if cmd == 'runtime_start' else 'stop', 'args': args})))
+                return 'accepted', 'submitted to production supervisor'
+            if self.managed and cmd in {'start_mission', 'start_test', 'winch'}:
+                return 'rejected', 'select a registered execution through the Pi supervisor'
+            active = self.state.get('execution') or {}
+            if self.managed and active.get('state') in {'Submitted', 'Accepted', 'Running'} and cmd in {'arm', 'takeoff', 'set_mode', 'gimbal_pitch'} and args.get('mode') not in {'RTL', 'LAND'}:
+                return 'rejected', 'active execution owns the flight controls'
+            if len(self._command_receipts) >= 10000 and cmd not in {"abort", "land", "disarm", "set_mode"}:
+                return "rejected", "command receipt capacity reached; recover before restarting the runtime"
+            if cmd in {"start_mission", "start_test"} and str(self.state["mission"]["state"]).upper() not in {"IDLE", "WAITING", "COMPLETED", "FAILED", "RESET"}:
+                return "rejected", "a production execution already owns movement"
             # Flight-changing commands must never bypass the readiness
             # interlock. Abort / land / RTL remain available when unhealthy.
             if cmd in STARTS_FLIGHT and not self.state["safety"]["ready"]:
@@ -688,7 +877,10 @@ class Aggregator(Node):
                 self.pub_winch.publish(String(data=action))
             elif cmd == "gimbal_pitch":
                 pitch_deg = max(-90.0, min(30.0, float(args.get("degrees", 0.0))))
-                self.pub_gimbal_pitch.publish(Float64(data=math.radians(pitch_deg)))
+                if self.managed:
+                    self.pub_camera_pose.publish(String(data=str(pitch_deg)))
+                else:
+                    self.pub_gimbal_pitch.publish(Float64(data=math.radians(pitch_deg)))
                 self.state["gimbal"]["pitch_deg"] = round(pitch_deg, 1)
             elif cmd == "abort":
                 self.pub_abort.publish(Bool(data=True))
@@ -724,7 +916,9 @@ class Aggregator(Node):
                     colours = validate_colours(args.get("colours", args))
                 except (ValueError, TypeError, AttributeError) as error:
                     return "rejected", str(error)
-                missing = sorted({"green", "orange"} - set(colours))
+                if self.state['mission'].get('armed'):
+                    return 'rejected', 'banner colours can only change while disarmed'
+                missing = sorted({"green", "orange", "red"} - set(colours))
                 if missing:
                     return "rejected", (
                         f"no shade supplied for the {', '.join(missing)} banner")
@@ -770,6 +964,15 @@ class Aggregator(Node):
                 self._write_presets(presets)
             elif cmd == "set_target":
                 self.pub_target.publish(String(data=args.get("target", "")))
+            elif cmd == "set_geofence":
+                if self.state["mission"]["armed"]:
+                    return "rejected", "arena fence can only change while disarmed"
+                payload = json.dumps({"vertices": args.get("vertices")})
+                vertices, why = parse_polygon(payload, what="geofence")
+                if vertices is None:
+                    return "rejected", why
+                self.pub_geofence.publish(String(data=payload))
+                self.state["geofence_vertices"] = [[lat, lon] for lat, lon in vertices]
             elif cmd == "set_delivery_zone":
                 vertices = args.get("vertices")
                 if not isinstance(vertices, list) or len(vertices) != 4:
@@ -882,7 +1085,7 @@ class Aggregator(Node):
         def run():
             self._loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self._loop)
-            self._loop.run_until_complete(websockets.serve(self._handler, WS_HOST, WS_PORT))
+            self._loop.run_until_complete(websockets.serve(self._handler, self.ws_host, WS_PORT))
             self._loop.run_forever()
         threading.Thread(target=run, daemon=True).start()
 

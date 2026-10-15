@@ -51,10 +51,15 @@ tools=[Path('.scratch/simulation-reliability')/name for name in (
     {str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in tools},indent=2))
 (out/'world_spec.json').write_bytes(spec.read_bytes())
 (out/'frozen_calibration.json').write_bytes(profile.read_bytes())
-(out/'configuration.json').write_text(json.dumps(dict(seed=int(sys.argv[4]),conditions='calm',
+(out/'configuration.json').write_text(json.dumps(dict(seed=int(sys.argv[4]),conditions=os.environ.get('AEROTHON_RENDER_CONDITIONS','calm'),
     airframe='cad',payload_fixture='loaded',world=str(spec),ros_domain=int(os.environ['ROS_DOMAIN_ID'])),indent=2))
 PY
-export AEROTHON_WORLD_SPEC="$spec" AEROTHON_CONDITIONS=calm AEROTHON_CONDITIONS_SEED="$seed"
+# Calm unless asked: AEROTHON_RENDER_CONDITIONS=field flies the moderate
+# field envelope (wind, sensor degradation) rendered, as headless does.
+render_conditions="${AEROTHON_RENDER_CONDITIONS:-calm}"
+case "$render_conditions" in calm|field) ;; *) echo 'Unknown rendered conditions'; exit 2 ;; esac
+export AEROTHON_RENDER_CONDITIONS="$render_conditions"
+export AEROTHON_WORLD_SPEC="$spec" AEROTHON_CONDITIONS="$render_conditions" AEROTHON_CONDITIONS_SEED="$seed"
 export AEROTHON_SEED="$seed"
 export AEROTHON_HEADLESS=1 AEROTHON_OPEN_GCS=0 AEROTHON_NO_REAP=1
 export AEROTHON_AIRFRAME=cad AEROTHON_PAYLOAD_FIXTURE=loaded AEROTHON_DELIVERY_CALIBRATION="$profile"
@@ -89,9 +94,17 @@ if [[ -z "${AEROTHON_GCS_PRESET:-}" ]]; then
 else
  unset AEROTHON_TARGET_QR_M
 fi
-unset AEROTHON_RANDOM_ARENA AEROTHON_START_TARGET AEROTHON_DELIVERY_ZONE AEROTHON_GEOFENCE
-stack_pid='' recorder_pid='' truth_pid='' contact_pid='' vehicle_contact_pid='' audit_pid=''
+unset AEROTHON_RANDOM_ARENA AEROTHON_START_TARGET AEROTHON_DELIVERY_ZONE AEROTHON_GEOFENCE AEROTHON_FENCE_ONLY
+# The judges' points only, local ENU "x,y;x,y;...": the aircraft gets this one
+# polygon and no delivery-zone corners, as at the competition. Grading keeps
+# the world's own layout.
+if [[ -n "${AEROTHON_JUDGES_GEOFENCE_LOCAL:-}" ]]; then
+ export AEROTHON_GEOFENCE="$AEROTHON_JUDGES_GEOFENCE_LOCAL" AEROTHON_FENCE_ONLY=1
+ printf '%s\n' "$AEROTHON_GEOFENCE" > "$out/judges_geofence_local.txt"
+fi
+stack_pid='' recorder_pid='' truth_pid='' contact_pid='' vehicle_contact_pid='' audit_pid='' overview_pid=''
 cleanup() {
+ [[ -z "$overview_pid" ]] || kill -INT "$overview_pid" 2>/dev/null || true
  [[ -z "$audit_pid" ]] || kill -TERM "$audit_pid" 2>/dev/null || true
  [[ -z "$recorder_pid" ]] || kill -INT "$recorder_pid" 2>/dev/null || true
  [[ -z "$truth_pid" ]] || kill -INT "$truth_pid" 2>/dev/null || true
@@ -111,6 +124,9 @@ cp /tmp/aerothon_mission2_runtime.sdf "$out/flight_world.sdf"
 cp /tmp/aerothon_vehicle_models/aerothon_iris_c1_webcam/model.sdf "$out/flight_vehicle.sdf"
 python3 sim/record_vehicle_contacts.py --model "$out/flight_vehicle.sdf" --out "$out/evaluation_vehicle_contacts.jsonl" --ready "$out/vehicle_contact_ready.json" --until-file "$out/recorded_result.json" > "$out/vehicle_contact_recorder.log" 2>&1 & vehicle_contact_pid=$!
 cp /tmp/aerothon_arena_layout.json "$out/layout.json"
+if [[ "${AEROTHON_RECORD_OVERVIEW:-0}" == 1 ]]; then
+ python3 sim/record_overview.py --mission "$out" > "$out/overview.log" 2>&1 & overview_pid=$!
+fi
 cp /tmp/aerothon_conditions.json "$out/flight_conditions.json"
 cp /tmp/aerothon_conditions.parm "$out/flight_conditions.parm"
 cp -r /tmp/aerothon_vehicle_models/aerothon_iris_c1_webcam/meshes "$out/vehicle_meshes"
@@ -121,6 +137,9 @@ import json,re,sys,time
 from pathlib import Path
 out=Path(sys.argv[1])
 required=['camera_capture_events.jsonl','evaluation_truth.jsonl','evaluation_vehicle_truth.jsonl','vehicle_contact_ready.json','evaluation_vehicle_contacts.jsonl']
+import os
+if os.environ.get('AEROTHON_RECORD_OVERVIEW') == '1':
+    required.append('overview/ready.json')
 until=time.monotonic()+60
 while time.monotonic()<until:
     if all((out/name).exists() and (out/name).stat().st_size>0 for name in required):break
@@ -177,6 +196,12 @@ wait "$contact_pid" || true
 kill -INT "$vehicle_contact_pid" 2>/dev/null || true
 wait "$vehicle_contact_pid" || true
 vehicle_contact_pid=''
+if [[ -n "$overview_pid" ]]; then
+ for _ in $(seq 1 20); do kill -0 "$overview_pid" 2>/dev/null || break; sleep 1; done
+ kill -INT "$overview_pid" 2>/dev/null || true
+ wait "$overview_pid" || true
+ overview_pid=''
+fi
 # All evidence has closed. Stop only this run's process group before exports.
 kill -TERM -- "-$stack_pid" 2>/dev/null || true
 wait "$stack_pid" || true

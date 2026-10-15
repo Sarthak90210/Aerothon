@@ -113,6 +113,11 @@ def generate_launch_description():
     # the Iris baseline. Same space-free copy as the other two, for the same
     # reason.
     airframe_params = []
+    remote_params = []
+    if os.environ.get('AEROTHON_LAPTOP_SERVICES_ONLY') == '1':
+        remote_file = os.path.join(tempfile.gettempdir(), 'aerothon_remote_devices.parm')
+        shutil.copyfile(os.path.join(pkg_sim, 'config', 'remote_devices.parm'), remote_file)
+        remote_params = [remote_file]
     if os.environ.get('AEROTHON_AIRFRAME', 'cad') == 'cad':
         quad = os.path.join(tempfile.gettempdir(), 'aerothon_quad.parm')
         shutil.copyfile(os.path.join(pkg_sim, 'config', 'aerothon_quad.parm'), quad)
@@ -122,6 +127,7 @@ def generate_launch_description():
         os.path.join(pkg_ardupilot_sitl, 'config', 'default_params', 'copter.parm'),
         os.path.join(pkg_ardupilot_gazebo, 'config', 'gazebo-iris-gimbal.parm'),
         *airframe_params,
+        *remote_params,
         # Last wins: competition-representative battery and GPS, so the Q27
         # interlock sees what the real aircraft presents.
         sitl_params,
@@ -164,6 +170,7 @@ def generate_launch_description():
         DeclareLaunchArgument('start_gz_server', default_value='true', description='Launch Gazebo server (disable when master shell owns it)'),
         DeclareLaunchArgument('rviz', default_value='true', description='Launch RViz 2 visualizer'),
         DeclareLaunchArgument('slam', default_value='true', description='Launch slam_toolbox 2D SLAM'),
+        DeclareLaunchArgument('mission_stack', default_value='true', description='Run production controller locally; false for Pi-hosted runtime'),
         DeclareLaunchArgument('spawn_vehicle', default_value='true', description='Spawn official ArduPilot Gazebo vehicle'),
         # Declare this in the outer launch scope. The upstream vehicle launch
         # evaluates it from a deferred OnProcessStart callback after spawning.
@@ -248,6 +255,7 @@ def generate_launch_description():
     mission_stack = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             FindPackageShare('mission_bringup'), 'launch', 'mission2.launch.py'])),
+        condition=IfCondition(LaunchConfiguration('mission_stack')),
         launch_arguments={
             'use_sim': 'true',
             # RViz is launched explicitly below; keeping it out of the nested

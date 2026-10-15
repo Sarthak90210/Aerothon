@@ -308,26 +308,21 @@ class BannerNode(Node):
         one of them; without, it matches any, because the sweep is looking
         for whichever banner is there and only then asks which one it found.
 
-        Until a colour has been supplied this falls back to the hue window
-        the node has always used, so nothing changes for a stack that has not
-        been told the shades yet.
+        No supplied shade means no colour observation. Readiness separately
+        requires the complete green/orange/red configuration.
         """
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         bands = self.colour_ranges(name)
-        if bands:
-            mask = colours.mask(hsv, bands)
-        else:
-            lo = np.array([self._g('h_lo'), self._g('s_lo'), self._g('v_lo')])
-            hi = np.array([self._g('h_hi'), self._g('s_hi'), self._g('v_hi')])
-            mask = cv2.inRange(hsv, lo, hi)
-        if allow_clipped:
+        mask = colours.mask(hsv, bands)
+        supplied = getattr(self, '_colours', None) or {}
+        if allow_clipped and supplied.get(name or 'green'):
             # Clipping green shifts a green board toward cyan.
             # Keep these pixels available to the word reader. They cannot
             # satisfy the structural board-color check below.
-            clipped = ((frame[:, :, 1] == 255)
-                       & (hsv[:, :, 0] > self._g('h_hi'))
-                       & (hsv[:, :, 0] <= 90)
-                       & (hsv[:, :, 1] >= self._g('s_lo')))
+            selected = name or 'green'
+            channel = 2-int(np.argmax(colours.parse_hex(supplied[selected])))
+            expanded = colours.mask(hsv, colours.separated_ranges(selected, supplied))
+            clipped = (frame[:, :, channel] == 255) & (expanded > 0)
             mask[clipped] = 255
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))

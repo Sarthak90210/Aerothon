@@ -92,6 +92,11 @@ def healthy():
         "banner_colours_valid": True,
         "banner_colours_value": "green=#07A03D orange=#EB5A0A",
         "banner_colours_reason": "",
+        # The organisers' arena as typed at the GCS, confirmed applied by the
+        # mission. Until then it flies launch defaults (a 2.2 m QR).
+        "arena_dimensions_applied": True,
+        "arena_dimensions_value": "QR 1.00 m, corridor 10.0 m at 2.44 m",
+        "arena_dimensions_reason": "",
     }
 
 
@@ -251,6 +256,7 @@ class UnknownIsNotOkTests(unittest.TestCase):
             "delivery_zone_valid": "delivery_zone",
             "geofence_valid": "geofence",
             "banner_colours_valid": "banner_colours",
+            "arena_dimensions_applied": "arena_dimensions",
         }
         for obs_key, item_key in mapping.items():
             obs = healthy()
@@ -260,6 +266,22 @@ class UnknownIsNotOkTests(unittest.TestCase):
             self.assertEqual(failing, [item_key],
                              f"dropping {obs_key} did not block {item_key}")
             self.assertIn("no data", item(items, item_key)["reason"])
+
+
+class ArenaDimensionsTests(unittest.TestCase):
+
+    def test_dimensions_the_mission_refused_block_with_its_reason(self):
+        obs = healthy()
+        obs["arena_dimensions_applied"] = False
+        obs["arena_dimensions_reason"] = "not applied in flight (state CORRIDOR, armed); land first"
+        items = evaluate(obs)
+        self.assertFalse(is_ready(items))
+        self.assertIn("land first", item(items, "arena_dimensions")["reason"])
+
+    def test_applied_dimensions_report_what_was_applied(self):
+        got = item(evaluate(healthy()), "arena_dimensions")
+        self.assertTrue(got["ok"])
+        self.assertIn("QR 1.00 m", got["value"])
 
 
 class ReasonReportingTests(unittest.TestCase):

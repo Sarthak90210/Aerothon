@@ -6,8 +6,11 @@ motor rate; no encoder or contact/attachment sensor is present. The Gazebo
 backend sends commanded payout only. Simulator contact release is a separate
 component, and this node has no simulator-truth subscription.
 
-Hardware uses MAV_CMD_DO_WINCH. Repeated motion intents are idempotent;
-stop sends rate-control zero, not another full-length movement.
+Hardware uses MAV_CMD_DO_WINCH, or with backend:=gpio the Pi drives the
+BTS7960 directly and MEASURES travel from the N20 quadrature encoder
+(gpio_winch.py); payout is then measured line movement, not an estimate.
+Repeated motion intents are idempotent; stop sends rate-control zero, not
+another full-length movement.
 
 /winch/status reports payout_estimate_m and payout_basis. Legacy payout_m
 is the same estimate. ground, released and hook_open are unknown. The
@@ -22,7 +25,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from geometry_msgs.msg import PoseStamped, TwistStamped
-from std_msgs.msg import Empty, Float64, String
+from std_msgs.msg import Float64, String
 
 try:
     from mavros_msgs.srv import CommandLong
@@ -40,7 +43,7 @@ class WinchNode(Node):
     def __init__(self, **kwargs):
         super().__init__("winch_ctrl", **kwargs)
         p = self.declare_parameter
-        p("backend", "sim")                  # sim | gazebo | mavlink
+        p("backend", "sim")                  # sim | gazebo | mavlink | gpio
         p("payout_rate_mps", 0.30)           # line speed
         p("max_payout_m", 6.0)               # spool capacity
         p("ground_clearance_m", 0.25)        # payload considered down within this
@@ -57,10 +60,33 @@ class WinchNode(Node):
         #            nothing is sent to open anything.
         #   command  an actuated release: "release" opens the hook.
         p("hook", "gravity")
+        p("external_joint_feedback", False)
         # Legacy release-request travel interlock, never touchdown evidence.
         p("gravity_slack_m", 0.10)
+        # backend:=gpio -- BCM pins from hardware_wiring.yaml; the encoder
+        # resolution, spool radius and lowering direction are MEASURED values
+        # (0 = not measured, and the backend then refuses to start).
+        p("gpio_chip", 0)
+        p("gpio_rpwm", 18)
+        p("gpio_lpwm", 19)
+        p("gpio_r_en", 22)
+        p("gpio_l_en", 23)
+        p("gpio_encoder_a", 17)
+        p("gpio_encoder_b", 27)
+        p("pwm_hz", 1000.0)
+        p("drive_duty_pct", 60.0)
+        p("encoder_counts_per_output_rev", 0.0)
+        p("spool_radius_m", 0.0)
+        p("encoder_lower_sign", 1)
+        p("stall_timeout_s", 0.6)
+        p("stow_window_m", 0.15)
 
         self.backend = self.get_parameter("backend").value
+        self.measured_payout = None
+        self._measurement_t = None
+        if self.get_parameter("external_joint_feedback").value is True:
+            from sensor_msgs.msg import JointState
+            self.create_subscription(JointState, '/joint_states', self._on_measured_payout, qos_profile_sensor_data)
 
         self.state = "IDLE"
         self.payout = 0.0
@@ -86,6 +112,9 @@ class WinchNode(Node):
         self.hook_open = False       # no physical release sensor fitted
         if self.backend == "gazebo":
             self._enable_gazebo()
+        self.gpio = None
+        if self.backend == "gpio":
+            self._enable_gpio()
 
         self.create_timer(1.0 / float(self.get_parameter("publish_rate_hz").value),
                           self._tick)
@@ -96,12 +125,44 @@ class WinchNode(Node):
         self.backend = "gazebo"
         self.pub_gz_payout = self.create_publisher(Float64, "/winch/gz/payout", 10)
 
+    def _enable_gpio(self, driver=None, clock=None):
+        """Start the measured GPIO winch, or fault closed with the reason."""
+        from winch_ctrl.gpio_winch import EncoderWinch, LgpioDriver
+        g = lambda name: self.get_parameter(name).value
+        try:
+            if driver is None:
+                driver = LgpioDriver(g("gpio_chip"), g("gpio_rpwm"), g("gpio_lpwm"),
+                                     g("gpio_r_en"), g("gpio_l_en"),
+                                     g("gpio_encoder_a"), g("gpio_encoder_b"),
+                                     g("pwm_hz"))
+            self.gpio = EncoderWinch(
+                driver, g("encoder_counts_per_output_rev"), g("spool_radius_m"),
+                lower_sign=g("encoder_lower_sign"), drive_duty_pct=g("drive_duty_pct"),
+                stall_timeout_s=g("stall_timeout_s"), stow_window_m=g("stow_window_m"),
+                **({"clock": clock} if clock else {}))
+        except (ImportError, OSError, RuntimeError, ValueError) as error:
+            self.gpio = None
+            self._set_fault(f"gpio winch unavailable: {error}")
+
+    def destroy_node(self):
+        if getattr(self, "gpio", None) is not None:
+            self.gpio.close()
+        super().destroy_node()
+
     # ------------------------------------------------------------------ #
     def _now(self):
         return self.get_clock().now().nanoseconds / 1e9
 
     def _on_pose(self, m):
         self._alt = m.pose.position.z
+
+    def _on_measured_payout(self, msg):
+        if 'winch_payout' not in msg.name:
+            return
+        index = list(msg.name).index('winch_payout')
+        if index < len(msg.position) and math.isfinite(msg.position[index]) and msg.position[index] >= 0:
+            self.measured_payout = float(msg.position[index])
+            self._measurement_t = self._now()
 
     def _on_vel(self, m):
         v = m.twist.linear
@@ -169,6 +230,16 @@ class WinchNode(Node):
         self.get_logger().error(f"winch fault: {reason}")
 
     def _send_backend(self, action):
+        if self.backend == "gpio":
+            if self.gpio is None:
+                if action != "stop":
+                    self._set_fault(self.fault or "gpio winch unavailable")
+                return
+            if action in ("lower", "stow", "stop"):
+                if not self.gpio.command(action):
+                    self._set_fault(self.gpio.fault)
+            # A gravity hook has no release actuator; "release" is bookkeeping.
+            return
         if self.backend == "gazebo":
             return
         if self.backend != "mavlink" or self.cli_cmd is None:
@@ -281,6 +352,9 @@ class WinchNode(Node):
                 if self.state == "FAULT":
                     self.state = "AT_GROUND" if self.at_ground() else "IDLE"
 
+        if self.backend == "gpio":
+            self._integrate_measured()
+            return
         if self.state == "LOWERING":
             self.payout = min(
                 float(self.get_parameter("max_payout_m").value),
@@ -295,6 +369,25 @@ class WinchNode(Node):
                 self.payout = 0.0
                 self.state = "RELEASED" if self.released else "IDLE"
 
+    def _integrate_measured(self):
+        """Measured encoder travel drives the same state machine."""
+        if self.gpio is None:
+            return
+        event = self.gpio.update()
+        self.payout = max(0.0, self.gpio.payout_m())
+        self.measured_payout = self.payout
+        self._measurement_t = self._now()
+        if event == "fault":
+            self._set_fault(self.gpio.fault)
+            return
+        if self.state == "LOWERING" and self.at_limit():
+            self.gpio.stop()
+            self.state = "AT_LIMIT"
+        elif self.state == "STOWING" and (event == "stowed" or self.payout <= 1e-3):
+            self.gpio.stop()
+            self.payout = 0.0
+            self.state = "RELEASED" if self.released else "IDLE"
+
     def publish_status(self):
         ok, blockers = self.release_ok()
         payload = {
@@ -303,7 +396,10 @@ class WinchNode(Node):
             "at_limit": self.at_limit(),
             "ground": None,  # no contact sensor; travel cannot establish touchdown
             "payout_estimate_m": round(self.payout, 3),
-            "payout_basis": "integrated commanded motor rate; no encoder",
+            "measured_payout_m": self.measured_payout,
+            "measurement_age_s": None if self._measurement_t is None else max(0.0, self._now()-self._measurement_t),
+            "payout_basis": ("measured N20 encoder travel" if self.gpio is not None
+                             else "integrated commanded motor rate; no encoder"),
             "released": None,
             "release_requested": self.released,
             "hook": self.get_parameter("hook").value,

@@ -6,6 +6,16 @@ from scipy.sparse.csgraph import dijkstra
 from avoidance.local_planner import LocalPlanner
 
 
+# Clearance the PLANNED route keeps beyond the hard limit when the space
+# allows it. A route planned at the limit plus the 2.5 cm sampling reserve
+# was flown 0.664 and 0.698 m from return-corridor obstacles against the
+# 0.70 m floor: following the route costs a few centimetres. The hard limit
+# and every certificate are unchanged; only route choice prefers the reserve,
+# and a gap too narrow for it is still flown on the sampling reserve alone.
+TRACKING_RESERVE=.10
+SAMPLING_RESERVE=.025
+
+
 class FastConnectedPlanner(LocalPlanner):
     def plan(self, axis_bearing=0.):
         self.path=[]
@@ -13,9 +23,24 @@ class FastConnectedPlanner(LocalPlanner):
             self.reason='aircraft lacks required surface clearance'
             return []
         straight=(self.lookahead*math.cos(axis_bearing),self.lookahead*math.sin(axis_bearing))
-        if self.segment_clear((0,0),straight):
+        straight_clear=self.segment_clear((0,0),straight)
+        if straight_clear and self._least_clearance((0,0),straight)>=self.clearance+TRACKING_RESERVE:
             self.path,self.reason=[(0,0),straight],'connected lidar path'
             return self.path
+        path=self._plan_graph(axis_bearing,TRACKING_RESERVE)
+        if path:
+            return path
+        if straight_clear:
+            self.path,self.reason=[(0,0),straight],'connected lidar path'
+            return self.path
+        return self._plan_graph(axis_bearing,SAMPLING_RESERVE)
+
+    def _least_clearance(self, start, end):
+        samples=np.linspace(start,end,max(2,int(math.dist(start,end)/.05)+2))
+        return float(self.distances(samples).min())
+
+    def _plan_graph(self, axis_bearing, reserve):
+        self.path=[]
         step=self.resolution
         n=int(self.lookahead/step)
         side=2*n+1
@@ -24,7 +49,7 @@ class FastConnectedPlanner(LocalPlanner):
                            [-math.sin(axis_bearing),math.cos(axis_bearing)]])
         xy=ij*step @ rotation
         distances=self.distances(xy)
-        free=self.known(xy) & (distances>=self.clearance+.025) & (ij[:,0]*step>=-.3)
+        free=self.known(xy) & (distances>=self.clearance+reserve) & (ij[:,0]*step>=-.3)
         origin=n*side+n
         free[origin]=True
         cost=1.+.10/np.maximum(.05,distances-self.clearance)**2
@@ -88,7 +113,7 @@ class FastConnectedPlanner(LocalPlanner):
             nearest=np.minimum.reduceat(self.distances(samples),starts)
             observed=np.logical_and.reduceat(self.known(samples),starts)
             preserved=np.minimum.accumulate(raw_clearance[k:])[1:]
-            thresholds=np.maximum(self.clearance+.025,preserved-.025)
+            thresholds=np.maximum(self.clearance+reserve,preserved-.025)
             qualified=np.flatnonzero(observed & (nearest>=thresholds))
             if not len(qualified):
                 # A safe origin can be inside the grid's sampling reserve.

@@ -45,6 +45,7 @@ DESIRED = {
     1: 4.0,      # SYS_STATUS
     2: 4.0,      # SYSTEM_TIME
     27: 10.0,    # RAW_IMU
+    241: 2.0,   # VIBRATION: operator diagnostics only
     65: 5.0,     # RC_CHANNELS
     36: 20.0,    # SERVO_OUTPUT_RAW: delivery load proxy, not measured current
     # EKF_STATUS_REPORT. Nothing requested this, so MAVROS never

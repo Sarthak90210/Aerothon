@@ -215,6 +215,7 @@ class BannerEnvelopeTests(_RosCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.detail = []
         self.node.pub.publish = lambda m: None
         self.node.pub_detail.publish = self.detail.append
@@ -262,6 +263,8 @@ class RedZoneEnvelopeTests(_RosCase):
 
     def setUp(self):
         self.node = RedZoneNode()
+        self.node._supplied = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
+        self.node._red_hex = '#C4161C'
         self.node._pose = (0.0, 0.0, self.ALT, 0.0)
         self.node._hfov = HFOV
 

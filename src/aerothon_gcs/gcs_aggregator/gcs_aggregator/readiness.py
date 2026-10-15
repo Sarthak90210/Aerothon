@@ -43,9 +43,10 @@ ITEMS = (
     ("detectors", "Detector health"),
     ("actuator", "Winch health"),
     ("rc_failsafe", "RC failsafe"),
-    ("delivery_zone", "Delivery-zone boundary"),
+    ("delivery_zone", "Search area"),
     ("geofence", "Arena geofence"),
     ("banner_colours", "Banner colours"),
+    ("arena_dimensions", "Arena dimensions"),
 )
 
 DEFAULT_LIMITS = {
@@ -82,6 +83,7 @@ def evaluate(obs, limits=None):
         detectors        {name: age_seconds}
         winch_fault      str      ("" is healthy)
         rc_failsafe      bool     (True = in failsafe, which BLOCKS)
+        arena_dimensions_applied  bool  (the mission confirmed GCS dimensions)
 
     Returns a list of item dicts, in ITEMS order.
     """
@@ -198,11 +200,11 @@ def evaluate(obs, limits=None):
 
     # ---- organiser-supplied delivery field ---- #
     if "delivery_zone_valid" not in obs:
-        out.append(_unknown("delivery_zone", "Delivery-zone boundary"))
+        out.append(_unknown("delivery_zone", "Search area"))
     else:
         ok = bool(obs["delivery_zone_valid"])
-        value = "loaded" if ok else "invalid"
-        item("delivery_zone", "Delivery-zone boundary", ok, value,
+        value = obs.get("delivery_zone_value") or ("loaded" if ok else "invalid")
+        item("delivery_zone", "Search area", ok, value,
              "" if ok else (obs.get("delivery_zone_reason") or
                             "delivery-zone boundary is invalid"))
 
@@ -211,7 +213,8 @@ def evaluate(obs, limits=None):
         out.append(_unknown("geofence", "Arena geofence"))
     else:
         ok = bool(obs["geofence_valid"])
-        item("geofence", "Arena geofence", ok, "loaded" if ok else "invalid",
+        item("geofence", "Arena geofence", ok,
+             obs.get("geofence_value") or ("loaded" if ok else "invalid"),
              "" if ok else (obs.get("geofence_reason") or
                             "arena geofence is invalid"))
 
@@ -228,6 +231,20 @@ def evaluate(obs, limits=None):
              obs.get("banner_colours_value") or ("loaded" if ok else "invalid"),
              "" if ok else (obs.get("banner_colours_reason") or
                             "banner colours are invalid"))
+
+    # ---- organiser-supplied arena dimensions (typed at the GCS) ---- #
+    # QR side, corridor height and length, banner size and placement set the
+    # search altitude, gate crossing and ranging. Until the aircraft confirms
+    # the operator's values it flies launch defaults (a 2.2 m QR where the
+    # organisers lay 1 m ones), so the supplied arena is an interlock item.
+    if "arena_dimensions_applied" not in obs:
+        out.append(_unknown("arena_dimensions", "Arena dimensions"))
+    else:
+        ok = bool(obs["arena_dimensions_applied"])
+        item("arena_dimensions", "Arena dimensions", ok,
+             obs.get("arena_dimensions_value") or ("applied" if ok else "not applied"),
+             "" if ok else (obs.get("arena_dimensions_reason") or
+                            "arena dimensions not applied"))
 
     return out
 

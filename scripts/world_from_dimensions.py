@@ -64,14 +64,14 @@ def load_dims(args):
     raise SystemExit(f"no preset {args.preset!r} in {path} or the built-ins")
 
 
-def obstacles(length, width, wall_height):
+def obstacles(length, width, wall_height, reach_frac=0.5):
     """Alternating blocks, each reaching half the corridor's width from a wall.
 
     Spaced as the shipped slalom is, 2.4 m apart from 1.4 m in -- not
     squeezed to fit, which closed a 5 m corridor -- so a 5 m corridor gets two
     and a 10 m one four.
     """
-    reach = width / 2.0
+    reach = width * float(reach_frac)
     v = width / 2.0 - reach / 2.0
     out, u, side = [], 1.4, 1.0
     step = 2.4
@@ -94,7 +94,8 @@ def build(dims, layout, name, colours=None):
     spec["corridor"] = {**{k: spec["corridor"][k] for k in ("x", "y", "yaw_deg")}, **lane}
     spec["return_corridor"] = {"linked": True, **lane,
                                "obstacles": obstacles(c["length_m"], c["width_m"],
-                                                      c["wall_height_m"])}
+                                                      c["wall_height_m"],
+                                                      d["obstacle"]["reach_frac"])}
     # Rod-hung: the banner's top is the wall top.
     spec["banner"] = {
         "board_bottom_m": round(c["wall_height_m"] - b["height_m"], 4),

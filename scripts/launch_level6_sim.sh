@@ -316,6 +316,12 @@ fi
 FCU_IN_PORT="${AEROTHON_FCU_IN_PORT:-$((14560 + SHIFT))}"
 ROUTER_GCS_PORT="${AEROTHON_ROUTER_GCS_PORT:-$((14552 + SHIFT))}"
 
+if [[ "${AEROTHON_LAPTOP_SERVICES_ONLY:-0}" == 1 ]]; then
+    "${AEROTHON_GATEWAY_PYTHON:-python3}" -m aerothon_runtime.gateway --fcu-udp "$FCU_IN_PORT" \
+      --port "${AEROTHON_GATEWAY_PORT:-8090}" --mavlink-port "${AEROTHON_GATEWAY_MAVLINK_PORT:-5762}" \
+      --camera-channel 9 --winch-channel 10 --winch-rate 1.0 &
+    PIDS+=($!)
+else
 echo "[1/5] Starting MAVLink Router (FCU in ${FCU_IN_PORT}; MAVROS ${MAVROS_PORT}; GCS -> ${MP_HOST}:${MP_PORT}; port shift ${SHIFT})..."
 python3 "$SCRIPT_DIR/mav_router.py" --fcu-in "$FCU_IN_PORT" --mavros-port "$MAVROS_PORT" \
     --gcs-port "$ROUTER_GCS_PORT" --gcs-host "$MP_HOST" --gcs-out-port "$MP_PORT" &
@@ -326,6 +332,7 @@ sleep 1
 echo "[2/5] Starting built three-tab GCS on http://localhost:8899..."
 python3 -m http.server 8899 -d "$WORKSPACE_ROOT/src/aerothon_gcs/tauri_app/dist" >/dev/null 2>&1 &
 PIDS+=($!)
+fi
 
 echo "======================================================================"
 echo " [MISSION PLANNER CONNECTION]"
@@ -405,6 +412,16 @@ export AEROTHON_AIRFRAME="${AEROTHON_AIRFRAME:-cad}"
 # The pad size the world is built with (materialize_world.py's default) is
 # the size the mission's sweep has to plan for.
 export AEROTHON_TARGET_QR_M="${AEROTHON_TARGET_QR_M:-3.0}"
+# The arming interlock waits for the GCS's arena dimensions. A run that hands
+# the mission its arena as these launch values, with no GCS preset applied,
+# waives that item (reported WAIVED, never shown as supplied).
+if [[ -z "${AEROTHON_REQUIRE_ARENA_DIMENSIONS:-}" ]]; then
+    if [[ -n "${AEROTHON_GCS_PRESET:-}" ]]; then
+        export AEROTHON_REQUIRE_ARENA_DIMENSIONS=1
+    else
+        export AEROTHON_REQUIRE_ARENA_DIMENSIONS=0
+    fi
+fi
 if [[ "$AEROTHON_AIRFRAME" == "iris" ]]; then
     export AEROTHON_CAMERA_HFOV="${AEROTHON_CAMERA_HFOV:-1.0472}"
 else
@@ -566,8 +583,11 @@ fi
 # 6. Launch Full Simulation Stack (SITL + ROS 2 + SLAM + RViz)
 echo "[5/5] Launching Gazebo Harmonic + ROS 2 Stack + slam_toolbox + RViz 2..."
 if command -v ros2 >/dev/null 2>&1; then
-    ros2 launch sim_gazebo sim_full.launch.py \
-        fcu_url:=udp://127.0.0.1:${MAVROS_PORT}@127.0.0.1:$((MAVROS_PORT + 1)) rviz:="$RVIZ_ARG" slam:=true \
+    production=true
+    mapping=true
+    if [[ "${AEROTHON_LAPTOP_SERVICES_ONLY:-0}" == 1 ]]; then production=false; mapping=false; RVIZ_ARG=false; fi
+    ros2 launch sim_gazebo sim_full.launch.py mission_stack:="$production" \
+        fcu_url:=udp://127.0.0.1:${MAVROS_PORT}@127.0.0.1:$((MAVROS_PORT + 1)) rviz:="$RVIZ_ARG" slam:="$mapping" \
         stream_rate_keeper:="${AEROTHON_STREAM_KEEPER:-true}" \
         start_gz_server:=false gui:=false
 else

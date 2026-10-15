@@ -63,7 +63,7 @@ def node_cmd(module, params):
 
 def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigation_only=False,
         injected_command_delay_s=.4, gcs_preset=None, gcs_create_from=None,
-        gcs_create_from_file=None):
+        gcs_create_from_file=None, fence_only=None):
     if not math.isfinite(injected_command_delay_s) or injected_command_delay_s<0:
         raise ValueError('Injected command delay must be finite and nonnegative')
     spec = W.load(spec_path)
@@ -80,11 +80,16 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigatio
         artificial_transport_delay_injected=injected_command_delay_s>0,
         arena_dimensions=('GCS preset ' + repr(gcs_preset)) if gcs_preset
             else 'launch parameters from the world spec',
-        camera_capture_hz=CAMERA_CAPTURE_HZ,lidar_scan_hz=LIDAR_SCAN_HZ),indent=2))
+        camera_capture_hz=CAMERA_CAPTURE_HZ,lidar_scan_hz=LIDAR_SCAN_HZ,
+        fence_only=fence_only),indent=2))
     (out/'source_manifest.json').write_text(json.dumps(source_manifest(ROOT),indent=2))
     zone, fence = organiser_inputs(spec)
+    # The judges' polygon alone, local ENU "x,y;x,y;...": no delivery-zone
+    # corners reach the aircraft, as at the competition.
+    fence_env = {"AEROTHON_FENCE_ONLY": "1"} if fence_only else {}
+    fence = fence_only or fence
     env = dict(os.environ, ROS_DOMAIN_ID=str(domain), ROS_LOCALHOST_ONLY="1",
-               AEROTHON_DELIVERY_ZONE=zone, AEROTHON_GEOFENCE=fence,
+               AEROTHON_DELIVERY_ZONE=zone, AEROTHON_GEOFENCE=fence, **fence_env,
                AEROTHON_GCS_WS_PORT=str(18700 + domain),
                PYTHONPATH=os.pathsep.join(
                    [str(ROOT / "src" / a / b) for a, b in PKGS]
@@ -98,6 +103,10 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigatio
     # aircraft only as the competition delivers them: typed at the GCS, saved,
     # applied over the aggregator before START -- never as launch parameters.
     mission_params = {"camera_hfov": 0.851919}
+    # A frozen load profile, as the launch file passes it on the aircraft.
+    # Without one the drop is refused (fail closed) and no return lap flies.
+    if os.environ.get("AEROTHON_DELIVERY_CALIBRATION"):
+        mission_params["delivery_load_calibration"] = os.environ["AEROTHON_DELIVERY_CALIBRATION"]
     gcs = []
     if gcs_preset:
         world += ["--start-after-dimensions"]
@@ -201,6 +210,9 @@ def main():
                     help="built-in preset to save --gcs-preset from if missing")
     ap.add_argument("--gcs-create-from-file", type=Path, default=None,
                     help="dimensions JSON to save --gcs-preset from if missing")
+    ap.add_argument("--fence-only", default=None, metavar="X,Y;X,Y;...",
+                    help="give the aircraft only this local geofence polygon "
+                         "(the judges' points), no delivery-zone corners")
     args = ap.parse_args()
     signal.signal(signal.SIGTERM, stop_all)
     signal.signal(signal.SIGINT, stop_all)
@@ -219,7 +231,8 @@ def main():
             lambda iv: fly(iv[1][0], args.conditions, iv[1][1], args.out, args.rtf,
                            args.max_sim_s, args.domain_base + iv[0] % 100,args.navigation_only,
                            gcs_preset=args.gcs_preset, gcs_create_from=args.gcs_create_from,
-                           gcs_create_from_file=args.gcs_create_from_file),
+                           gcs_create_from_file=args.gcs_create_from_file,
+                           fence_only=args.fence_only),
             enumerate(runs)))
     ok = 0
     print(f"\n{'run':44s} {'result':10s} {'grade':5s} {'hits':>4s} {'fence':>5s} "

@@ -70,6 +70,7 @@ class BannerIdentityTests(unittest.TestCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.sent = []
         self.detail = []
         self.node.pub.publish = self.sent.append
@@ -464,6 +465,7 @@ class DistanceAwareAreaGateTests(unittest.TestCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
 
     def tearDown(self):
         self.node.destroy_node()
@@ -639,6 +641,7 @@ class RenderedFrameRegressionTests(unittest.TestCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.sent, self.detail = [], []
         self.node.pub.publish = self.sent.append
         self.node.pub_detail.publish = self.detail.append
@@ -846,6 +849,7 @@ class TextRescueTests(unittest.TestCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.detail = []
         self.node.pub.publish = lambda m: None
         self.node.pub_detail.publish = self.detail.append
@@ -969,6 +973,7 @@ class ShadowRobustLetteringTests(unittest.TestCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.sent, self.detail = [], []
         self.node.pub.publish = self.sent.append
         self.node.pub_detail.publish = self.detail.append
@@ -1142,6 +1147,7 @@ class PathSelectionTests(unittest.TestCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.sent, self.detail = [], []
         self.node.pub.publish = self.sent.append
         self.node.pub_detail.publish = self.detail.append
@@ -1273,6 +1279,7 @@ class BoardAreaGateTests(unittest.TestCase):
 
     def setUp(self):
         self.node = BannerNode()
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.sent, self.detail = [], []
         self.node.pub.publish = self.sent.append
         self.node.pub_detail.publish = self.detail.append

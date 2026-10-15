@@ -17,6 +17,8 @@ from mission_bt.detector_timing import DetectorTiming
 def camera():
     rclpy.init()
     node = RedZoneNode()
+    node._supplied = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
+    node._red_hex = '#C4161C'
     node._cam_pitch = math.pi/2
     node._hfov = .851919
     messages = []

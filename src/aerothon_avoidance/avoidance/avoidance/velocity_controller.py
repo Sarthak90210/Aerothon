@@ -9,6 +9,7 @@ No venue geometry or simulator truth is consumed here.
 
 import json
 import math
+import time
 from collections import deque
 
 import numpy as np
@@ -190,6 +191,13 @@ class VelocityController(Node):
         self.create_subscription(TwistStamped, '/mavros/local_position/velocity_local',
                                  self._on_velocity, qos_profile_sensor_data)
         self.create_subscription(Bool, '/avoidance/enable', self._on_enable, 10)
+        self.intent_enabled = False
+        self._intent_speed_cap = self.cruise
+        self._intent = None
+        self._intent_t = None
+        self._intent_steady = None
+        self.create_subscription(Bool, '/avoidance/intent_enabled', self._on_intent_enable, 10)
+        self.create_subscription(Vector3, '/avoidance/intent', self._on_intent, 10)
         self.create_subscription(Float32, '/avoidance/cruise', self._on_cruise, 10)
         self.create_subscription(Float32, '/avoidance/hold_alt',
                                  self._on_hold_alt, 10)
@@ -204,6 +212,19 @@ class VelocityController(Node):
     # ------------------------------------------------------------------ #
     def _g(self, n):
         return self.get_parameter(n).value
+
+    def _on_intent_enable(self, m):
+        if self.intent_enabled != m.data:
+            self._axis = None
+            self._origin = None
+            self._planner.path = []
+            self._intent = None
+        self.intent_enabled = m.data
+
+    def _on_intent(self, m):
+        self._intent = m
+        self._intent_t = self._now()
+        self._intent_steady = time.monotonic()
 
     def _on_enable(self, m: Bool):
         if m.data and not self.enabled:
@@ -895,6 +916,8 @@ class VelocityController(Node):
         fresh = 'fault' not in extra
         desired = (vx,vy)
         yaw_rate = float(self._yaw_rate_for(bearing)) if fresh and abs(vx)+abs(vy)>1e-6 else 0.0
+        if getattr(self, 'intent_enabled', False) and fresh and self._intent is not None:
+            yaw_rate = max(-float(self._g('max_yaw_rate')), min(float(self._g('max_yaw_rate')), self._intent.z))
         if fresh:
             vx,vy = self._compensated(vx,vy)
             c,s = math.cos(self._yaw or 0.0),math.sin(self._yaw or 0.0)
@@ -1112,6 +1135,14 @@ class VelocityController(Node):
         if not self.enabled:
             self._observe_only()
             return
+
+        if getattr(self, 'intent_enabled', False):
+            m = self._intent
+            if m is None or self._intent_t is None or self._intent_steady is None or self._now()-self._intent_t > .5 or time.monotonic()-self._intent_steady > .5 or not all(math.isfinite(x) for x in (m.x,m.y,m.z)):
+                self._publish(0,0,0,0,{'fault':'pilot intent stale or invalid'})
+                return
+            self.cruise = min(self._intent_speed_cap, math.hypot(m.x,m.y))
+            self._axis = self._yaw + math.atan2(m.y,m.x)
 
         if self.scan is None or self.scan_stale():
             # Never coast on stale data: an unknown world is a stop, not a

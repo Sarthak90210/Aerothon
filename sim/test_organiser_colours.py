@@ -64,6 +64,31 @@ def test_the_supplied_green_matches_that_green_and_not_the_orange():
     assert colours.mask(cv2.cvtColor(green, cv2.COLOR_BGR2HSV), bands).all()
     assert not colours.mask(cv2.cvtColor(orange, cv2.COLOR_BGR2HSV), bands).any()
 
+def test_banner_masks_follow_changed_hex_and_never_use_an_unsupplied_default():
+    from perception_banner.banner_node import BannerNode
+    node = object.__new__(BannerNode)
+    node._colours = {}
+    original = np.full((32,32,3), colours.parse_hex('#07A03D')[::-1], np.uint8)
+    assert not node.colour_mask(original).any()
+    node._colours = {'green':'#245FBC','orange':'#D68C21','red':'#BB235F'}
+    entered = np.full((32,32,3), colours.parse_hex(node._colours['green'])[::-1], np.uint8)
+    assert node.colour_mask(entered).all()
+    assert not node.colour_mask(original).any()
+
+def test_restricted_zone_mask_follows_entered_hex_and_has_no_default():
+    from perception_redzone.redzone_node import RedZoneNode
+    node = object.__new__(RedZoneNode)
+    node._g = lambda key: 60
+    node._drop_narrow = lambda mask: mask
+    node._red_hex = ''
+    old = np.full((32,32,3), colours.parse_hex('#C4161C')[::-1], np.uint8)
+    assert not node.red_mask(old).any()
+    node._red_hex = '#245FBC'
+    node._supplied = {'red':'#245FBC','green':'#07A03D','orange':'#D68C21'}
+    entered = np.full((32,32,3), colours.parse_hex(node._red_hex)[::-1], np.uint8)
+    assert node.red_mask(entered).any()
+    assert not node.red_mask(old).any()
+
 
 # ---- appearance-first QR ------------------------------------------------- #
 

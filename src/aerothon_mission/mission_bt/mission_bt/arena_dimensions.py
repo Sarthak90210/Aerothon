@@ -51,6 +51,11 @@ FIELDS = (
     ("payload", "width_m", "Payload width", 0.055, 0.02, 0.5,
      "drop confirmation blob size"),
     ("payload", "mass_kg", "Payload mass (kg)", 0.10, 0.01, 2.0, None),
+    # "Obstacles extend across approximately half the corridor width from a
+    # wall", in the exit corridor only. The lidar avoids what is there; this
+    # records the organisers' figure and builds the simulated slalom.
+    ("obstacle", "reach_frac", "Obstacle reach, fraction of corridor width",
+     0.5, 0.1, 0.9, None),
 )
 PLACEMENTS = ("suspended", "ground", "both")
 RETURN_SIDES = ("right", "left")
@@ -176,5 +181,6 @@ BUILTIN_PRESETS = {
         "qr": {"target_m": 1.0, "start_m": 1.0, "border_m": 3 * INCH},
         "red_zone": {"side_m": 5 * FT, "border_m": 0.5 * FT},
         "payload": {"length_m": 0.10, "width_m": 0.055, "mass_kg": 0.10},
+        "obstacle": {"reach_frac": 0.5},
     },
 }

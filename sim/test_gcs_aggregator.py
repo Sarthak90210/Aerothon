@@ -119,6 +119,9 @@ class TestGCSAggregator(unittest.TestCase):
         self.node.state["mission"]["mode"] = "GUIDED"
         for cmd, args in (("start_mission", {}), ("takeoff", {"alt": 5.0}),
                           ("arm", {}), ("start_test", {"part": "search"})):
+            # Independent requests: a previous execution has ended. The
+            # duplicate/concurrent-start contract is covered separately.
+            self.node.state["mission"]["state"] = "IDLE"
             result, _ = self.node._dispatch(cmd, args)
             self.assertEqual(result, "accepted", cmd)
 
@@ -151,11 +154,11 @@ class TestGCSAggregator(unittest.TestCase):
 
     def test_supplied_banner_colours_are_published_normalised(self):
         result, reason = self.node._dispatch("set_banner_colours", {
-            "colours": {"green": "#07a03d", "orange": "#EB5A0A"}})
+            "colours": {"green": "#07a03d", "orange": "#EB5A0A", "red": "#C4161C"}})
         self.assertEqual(result, "accepted", reason)
         payload = json.loads(self.node.pub_banner_colours.publish.call_args[0][0].data)
         self.assertEqual(payload["colours"],
-                         {"green": "#07A03D", "orange": "#EB5A0A"})
+                         {"green": "#07A03D", "orange": "#EB5A0A", "red": "#C4161C"})
 
     def test_banner_colours_are_refused_rather_than_silently_dropped(self):
         for bad in ({"green": "teal", "orange": "#EB5A0A"},
@@ -544,6 +547,7 @@ class MapForwardingTests(unittest.TestCase):
         self.node._publish_snapshot()
 
     def test_a_connected_gcs_still_gets_both(self):
+        self.node._clock = MagicMock()
         self.node._ws_clients = {object()}
         sent = []
         self.node._broadcast = sent.append
@@ -551,6 +555,9 @@ class MapForwardingTests(unittest.TestCase):
         grid.info.width, grid.info.height = 3, 2
         grid.info.resolution = 0.05
         grid.info.origin.position.x = grid.info.origin.position.y = 0.0
+        grid.info.origin.orientation = MagicMock(x=0.0, y=0.0, z=0.0, w=1.0)
+        grid.header.frame_id = "map"
+        grid.header.stamp.sec, grid.header.stamp.nanosec = 12, 0
         grid.data = [0, 100, -1, -1, 0, 0]
         self.node._last_map = 0.0
         self.node._on_map(grid)

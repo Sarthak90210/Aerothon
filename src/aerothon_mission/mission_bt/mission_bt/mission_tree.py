@@ -32,10 +32,10 @@ from mission_bt.banner_orbit import (_now as _ros_now,
                                      lidar_refutes,
                                      leg_clear, orbit_plan,
                                      outbound_structure)
-from mission_bt.decode_hover import DecodeHover
+from mission_bt.decode_hover import APPEARANCE_ONLY, DecodeHover
 from mission_bt.delivery_observer import DeliveryObserver
-from mission_bt.delivery_zone import (nearest_point_in_zone, point_in_polygon,
-                                      point_inside_with_margin)
+from mission_bt.delivery_zone import (chord_inside, nearest_point_in_zone,
+                                      point_in_polygon, point_inside_with_margin)
 from mission_bt.geofence import build_fence, compare_fences, rect_vertices
 from mission_bt.leg_router import ARRIVED, BLOCKED, LegRouter
 from mission_bt.detector_timing import search_speed as qualified_search_speed
@@ -188,6 +188,13 @@ class RequireDeliveryZone(py_trees.behaviour.Behaviour):
 
     def update(self):
         zone = self.mav.delivery_search_zone(self.clearance_m)
+        if zone is None and getattr(self.mav, "fence_only", False) is True:
+            # The judges' geofence alone: the field is its part beyond the
+            # corridor, known in flight. The fence itself is checked and
+            # uploaded by UploadArenaFence.
+            self.feedback_message = ("geofence only: the search area is the "
+                                     "fenced field beyond the corridor exit")
+            return py_trees.common.Status.SUCCESS
         if zone is None:
             reason = ("RequireDeliveryZone: " +
                       str(getattr(self.mav, "delivery_zone_reason",
@@ -3104,10 +3111,17 @@ class ScanStartQR(py_trees.behaviour.Behaviour):
     goal.md Q19 allows the operator to supply the target by hand if the start
     QR is physically unreadable. That path is honoured here, but it is an
     explicit, logged substitution rather than a silent empty string.
+
+    APPEARANCE ONLY. The organisers have not confirmed the codes encode
+    anything; the requirement is to match the pad by how it looks. A start
+    marker that perception holds as a module-grid pattern, located for
+    `confirm_frames` ticks after `appearance_wait_ticks` without a confirmed
+    decode, is the target as APPEARANCE_ONLY: perception then identifies the
+    pad by that pattern alone, and no decoded payload can stand in for it.
     """
 
     def __init__(self, mav, pose=None, timeout_ticks=150, confirm_frames=3,
-                 hover_s=5.0, clock=None):
+                 hover_s=5.0, clock=None, appearance_wait_ticks=40):
         super().__init__("ScanStartQR")
         self.mav = mav
         # Hold over the marker after reading it, so the decode is something an
@@ -3120,12 +3134,15 @@ class ScanStartQR(py_trees.behaviour.Behaviour):
         self.pose = pose
         self.timeout = timeout_ticks
         self.confirm_frames = confirm_frames
+        self.appearance_wait = int(appearance_wait_ticks)
         self._t = 0
         self._hold = None
+        self._seen = 0
 
     def initialise(self):
         self._t = 0
         self._hold = None
+        self._seen = 0
         self._confirmed = None
         self.hover.begin(getattr(self.mav, "mission_seq", 0))
 
@@ -3151,6 +3168,15 @@ class ScanStartQR(py_trees.behaviour.Behaviour):
         # "start QR not decoded" about a marker it is hovering over.
         if self._confirmed is None and self.mav.qr_confident(self.confirm_frames):
             self._confirmed = self.mav.qr_decoded
+
+        held = (getattr(self.mav, "qr_reference_captured", False) is True
+                and getattr(self.mav, "qr_reference_kind", None) == "modules")
+        self._seen = self._seen + 1 if held and self.mav.qr_visible() else 0
+        if (self._confirmed is None and self._t >= self.appearance_wait
+                and self._seen >= self.confirm_frames):
+            self._confirmed = APPEARANCE_ONLY
+            self.mav.log("ScanStartQR: start marker carries no readable "
+                         "payload; its pattern identifies the delivery pad")
 
         if self._confirmed is not None:
             if self.hover.tick(self.mav):
@@ -4092,6 +4118,10 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
     the plan is computed for whatever it turns out to be rather than baked in.
     """
 
+    # Lanes trimmed to a fenced field keep this far inside its edge, as the
+    # rectangle of a supplied delivery zone is inset (zone_boundary_clearance).
+    zone_margin_m = 1.0
+
     def __init__(self, mav, zone, alt, spacing=None,
                  image_width_px=1280, hfov_rad=1.0472, marker_m=2.2,
                  modules=33, px_floor=5.3, overlap=0.30, clearance_m=1.5,
@@ -4099,7 +4129,8 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
                  hover_s=5.0, clock=None, image_height_px=None,
                  crab=False, search_speed_mps=None, fix_wait_ticks=10,
                  frame_hz=2.0, turn_tol_rad=math.radians(30.0),
-                 lead_m=3.0, unread_hold_s=0.0):
+                 lead_m=3.0, unread_hold_s=0.0, overdue=None,
+                 arena_overlap=None):
         """`zone` may be an (x0, x1, y0, y1) tuple or a CALLABLE returning one.
 
         `crab` flies the lanes yawed 90 degrees to their direction, so the
@@ -4191,6 +4222,15 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         self._exclusions_src = exclusions
         self.i = 0
         self.search_budget_m = float(search_budget_m)
+        # Seconds past the latest moment a match still leaves time for the
+        # drop and the return lap, or None (see build_root, search_overdue).
+        self.overdue = overdue
+        # Lane overlap when the field is the judges' arena fence beyond the
+        # corridor exit (mav.arena_search), else None for `overlap`.
+        self.arena_overlap = arena_overlap
+        # Lanes flown from the top (descending) when that end is nearer the
+        # aircraft at the first plan; None until decided (arena reading only).
+        self._descending = None
         self.min_step_m = float(min_step_m)
         self._budget_left = float(search_budget_m)
         self._frontier = None       # zone last swept; the strip to extend from
@@ -4219,10 +4259,20 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
 
     def _replan(self, zone, exclusions=(), extend_swept=False):
         a = self._plan_args
+        overlap = a['overlap']
+        if (self.arena_overlap is not None
+                and getattr(self.mav, "arena_search", False) is True):
+            # THE ARENA IS BIGGER THAN THE ZONE. With the judges' points round
+            # the whole arena the sweep covers the fenced field beyond the
+            # corridor, not the delivery zone, and at 30% overlap the far lane
+            # was still unflown at the search deadline (rendered, 15 October).
+            # 20% keeps a 1 m pad wholly in frame on some lane with 0.4 m to
+            # spare at 10 m; lane_spacing still caps at swath - 1.1 marker.
+            overlap = self.arena_overlap
         self.plan = plan_search(zone, a['image_width_px'], a['hfov_rad'],
                                 a['marker_m'], a['modules'],
                                 px_per_module_floor=a['px_floor'],
-                                overlap=a['overlap'],
+                                overlap=overlap,
                                 max_altitude=a['max_alt'],
                                 axis=self._axis_override or a['axis'],
                                 swath_fov_rad=a['swath_fov'])
@@ -4253,6 +4303,32 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         else:
             wps = self.plan["waypoints"]
         self.wps = [(w[0], w[1]) for w in wps]
+        # A fence-only arena: the field is a polygon, the plan its bounding
+        # box. Trim every lane to the fenced field so no lane end leaves it.
+        get = getattr(self.mav, "search_polygon", None)
+        poly = get() if callable(get) else None
+        if poly:
+            trimmed = []
+            for a, b in zip(self.wps[0::2], self.wps[1::2]):
+                chord = chord_inside(poly, a, b, getattr(
+                    self.mav, "search_margin_m", self.zone_margin_m))
+                if chord:
+                    trimmed.extend(chord)
+            self.wps = trimmed
+            self.plan["n_lanes"] = len(trimmed) // 2
+        # START AT THE NEAR END. The pattern always began on the bottom lane;
+        # in the arena reading the corridor exit sat mid-field and the first
+        # leg flew 18 m away before sweeping back (15 October: 914 s against
+        # 900). The whole path flown backwards is the same sweep, so choose it
+        # once when its far end is nearer, and keep it through re-plans.
+        if self._descending is None and self.wps and getattr(
+                self.mav, "arena_search", False) is True:
+            x, y = self.mav.pos()[:2]
+            first, last = self.wps[0], self.wps[-1]
+            self._descending = (math.hypot(last[0] - x, last[1] - y)
+                                < math.hypot(first[0] - x, first[1] - y))
+        if self._descending:
+            self.wps = self.wps[::-1]
 
     def _locate_marker(self, mav):
         return offset_to_ground(mav, mav.qr_offset,
@@ -4271,7 +4347,8 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         count climbs every time a red cell is confirmed, so the first lane was
         flown five and six times over (583 of 1908 search samples in live run
         2) while the far lanes -- where the target was -- were starved.
-        Lanes run in increasing order from the bottom-left corner, so the
+        Lanes run in increasing order from the bottom-left corner (in
+        decreasing order when an arena sweep starts at its far end), so the
         remaining work is every lane from the current one on.
 
         On the current lane it is the next segment point AHEAD of the
@@ -4286,10 +4363,11 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
             return 0
         tol = 0.5 * float(self.plan["lane_spacing_m"])
         along = 0 if self.plan["lane_axis"] == "x" else 1
+        order = -1.0 if self._descending else 1.0
         for k in range(0, len(self.wps) - 1, 2):
             a, b = self.wps[k], self.wps[k + 1]
             c = self._lane_coord(a)
-            if c < lane - tol:
+            if (c - lane) * order < -tol:
                 continue
             if pos is None or abs(c - lane) > tol:
                 return k                    # a later lane: from its start
@@ -4643,7 +4721,13 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         if not remaining:
             return False
         active=[self.mav.pos()[:2],remaining[0]]
-        if plan_intersects_exclusions([(x,y,self.alt) for x,y in active],self.clearance_m,now):
+        leg=[(x,y,self.alt) for x,y in active]
+        # Re-plan at once only for an obstruction the plan did not have. A
+        # leg the router is already flying round crossed the old set too, and
+        # one georeferenced cell flickering in and out of it (9 <-> 10, every
+        # second or so) re-planned and reset the route each time.
+        if (plan_intersects_exclusions(leg,self.clearance_m,now)
+                and not plan_intersects_exclusions(leg,self.clearance_m,self.exclusions)):
             return True
         if self._ticks_since_replan < self.replan_min_ticks:
             return False
@@ -4708,6 +4792,18 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.SUCCESS
         self._fix_wait = 0
         self._fix_hold = None
+        late = self.overdue() if callable(self.overdue) else None
+        if late is not None and late > 0:
+            # THE CLOCK BEATS THE SWEEP. A field much larger than the real
+            # delivery zone (the judges' points round the whole arena) swept
+            # past 900 s in simulation. Past this point a match could not be
+            # delivered and still flown home in time, so stop: the delivery
+            # is skipped and the return lap, landing and time marks are kept.
+            reason = (f"LawnmowerSearch: search deadline passed {late:.0f} s ago; "
+                      "the return lap needs the remaining mission time")
+            self.feedback_message = reason
+            self.mav.abort_reason = reason
+            return py_trees.common.Status.FAILURE
         if self.hover.tick(self.mav):
             what = (f"'{self.hover.payload}'" if self.hover.payload
                     else "a marker it cannot read yet")
@@ -6481,6 +6577,10 @@ class Land(py_trees.behaviour.Behaviour):
             state = "DELIVERY_UNCONFIRMED"
             drop_txt = ("payload NOT confirmed on the ground by the camera; "
                         + drop_txt)
+        skipped = getattr(self.mav, "delivery_skipped", None)
+        if skipped:
+            state = "DELIVERY_SKIPPED"
+            drop_txt = f"delivery skipped before lowering ({skipped})"
         self.mav.publish_result(
             state, f"landed and disarmed; {drop_txt}; landing {precision}")
         return py_trees.common.Status.SUCCESS
@@ -6749,6 +6849,67 @@ def align_to_every_banner(mav, clock, p, label, **extra):
     return [either]
 
 
+def search_overdue(mav, clock, p):
+    """Seconds since arming beyond the search deadline, None before arming.
+
+    The deadline is `mission_limit_s - return_reserve_s +
+    search_deadline_extension_s`. The rulebook's 15 minutes run from
+    throttle-up; the reserve covers centring, the drop and the return lap
+    (275 s from the start of the drop to landing in the calm rendered
+    acceptance, plus margin). The extension is the team's choice (15 October):
+    300 s more search, so a far-side target in a large arena is still
+    delivered, accepting that the flight can then run past 900 s."""
+    t0 = getattr(mav, "armed_at", None)
+    if t0 is None:
+        return None
+    now = clock() if callable(clock) else time.monotonic()
+    return (now - t0) - (float(p.get('mission_limit_s', 900.0))
+                         - float(p.get('return_reserve_s', 300.0))
+                         + float(p.get('search_deadline_extension_s', 0.0)))
+
+
+class SkipDeliveryAndReturn(py_trees.behaviour.Behaviour):
+    """The delivery search failed before the winch moved: go home anyway.
+
+    A sweep that ends without a match, a matched pad the aircraft may not
+    hold station over (confirmed red ground within the clearance) or a pad it
+    cannot centre on used to fail the whole mission into recovery -- an FC
+    return that does not fly the corridor. The return lap, the landing and
+    the time are 40 of the 100 rulebook marks and none depends on the payload,
+    so the reason is recorded and the mission flies the return as normal.
+    Nothing has been lowered at this point; WinchDrop's own failures still
+    end the mission, because a payload may be hanging.
+    """
+
+    def __init__(self, mav):
+        super().__init__("SkipDeliveryAndReturn")
+        self.mav = mav
+
+    def update(self):
+        reason = self.mav.abort_reason or "delivery search did not complete"
+        self.mav.delivery_skipped = reason
+        self.mav.delivery_confirmed = False
+        self.mav.abort_reason = ""
+        self.mav.enable_avoidance(False)
+        self.mav.log(f"delivery skipped ({reason}); flying the return lap",
+                     warn=True)
+        self.feedback_message = f"skipped: {reason}"
+        return py_trees.common.Status.SUCCESS
+
+
+class DeliverySkipped(py_trees.behaviour.Behaviour):
+    """SUCCESS when the delivery was skipped, so the drop is not attempted."""
+
+    def __init__(self, mav):
+        super().__init__("DeliverySkipped")
+        self.mav = mav
+
+    def update(self):
+        if getattr(self.mav, "delivery_skipped", None):
+            return py_trees.common.Status.SUCCESS
+        return py_trees.common.Status.FAILURE
+
+
 def build_root(mav, node, p):
     # Import after the module's original GateAdvance class is defined.
     # Normal startup must use the measured, acknowledged gate handover too.
@@ -6798,7 +6959,9 @@ def build_root(mav, node, p):
                              px_floor=p.get('px_per_module_floor', 5.3),
                              overlap=p.get('lane_overlap', 0.30),
                              # No outward expansion inside a supplied boundary.
-                             search_budget_m=0.0)
+                             search_budget_m=0.0,
+                             overdue=lambda: search_overdue(mav, clock, p),
+                             arena_overlap=p.get('arena_lane_overlap', 0.20))
     gate_advance_m = p.get('gate_advance_m', 10.0)
     # THE GATE-HEIGHT WORK STAYS UNDER A HUNG BANNER. The search, orbits and
     # relocations at a gate fly at this height, where the lidar sees the
@@ -6838,6 +7001,40 @@ def build_root(mav, node, p):
         image_w_px=p.get('image_width_px', 1280),
         image_h_px=p.get('image_height_px', 720))
 
+    # Find, read and centre on the pad. A failure here, before the winch has
+    # moved, skips the delivery and still flies the return lap.
+    delivery_find = py_trees.composites.Sequence(name="DeliveryFind", memory=True)
+    delivery_find.add_children([
+        ClimbInPlace("ClimbToSweep", mav, lambda: search.alt),
+        search,
+        # Sweep high to FIND, descend to READ: the sweep altitude is set by
+        # pad detectability, which is well above the measured decode envelope.
+        DescendToDecode(mav, decode_alt=lambda: search.decode_alt,
+                        floor_alt=p.get('scan_floor_alt', 2.0),
+                        clearance_m=p.get('redzone_clearance', 1.5),
+                        exclusions=lambda: mav.exclusions),
+        # Centre over the MATCHED pad before descending to the drop altitude.
+        # Drop accuracy is 15 marks; the decode point is wherever the lane
+        # happened to be when the pad came into frame.
+        CenterOnQR("CenterOnTarget", mav, tol=0.08, require_match=True,
+                   settle_ticks=5, timeout_ticks=400,
+                   hfov_rad=p.get('camera_hfov', 1.0472),
+                   image_w_px=p.get('image_width_px', 1280),
+                   image_h_px=p.get('image_height_px', 720)),
+    ])
+    delivery_search = py_trees.composites.Selector(name="DeliverySearch", memory=True)
+    delivery_search.add_children([delivery_find, SkipDeliveryAndReturn(mav)])
+    drop = py_trees.composites.Selector(name="DropUnlessSkipped", memory=True)
+    drop.add_children([
+        DeliverySkipped(mav),
+        WinchDrop(mav, p['drop_alt'], p['search_alt'],
+                  winch_reach_m=p.get('winch_reach_m', 5.5),
+                  hfov_rad=p.get('camera_hfov', 1.0472),
+                  image_w_px=p.get('image_width_px', 1280),
+                  image_h_px=p.get('image_height_px', 720),
+                  marker_m=p.get('target_marker_m', 2.2),
+                  payload_size_m=p.get('payload_size_m', 0.10)),
+    ])
     mission = py_trees.composites.Sequence(name="Mission", memory=True)
     mission.add_children([
         WaitForMissionStart(mav),
@@ -6917,29 +7114,8 @@ def build_root(mav, node, p):
         # red ground), then "ascend to approximately 10 meters altitude".
         EnterDeliveryZone(mav, alt=p['corridor_alt'],
                           clearance_m=zone_clearance),
-        ClimbInPlace("ClimbToSweep", mav, lambda: search.alt),
-        search,
-        # Sweep high to FIND, descend to READ: the sweep altitude is set by
-        # pad detectability, which is well above the measured decode envelope.
-        DescendToDecode(mav, decode_alt=lambda: search.decode_alt,
-                        floor_alt=p.get('scan_floor_alt', 2.0),
-                        clearance_m=p.get('redzone_clearance', 1.5),
-                        exclusions=lambda: mav.exclusions),
-        # Centre over the MATCHED pad before descending to the drop altitude.
-        # Drop accuracy is 15 marks; the decode point is wherever the lane
-        # happened to be when the pad came into frame.
-        CenterOnQR("CenterOnTarget", mav, tol=0.08, require_match=True,
-                   settle_ticks=5, timeout_ticks=400,
-                   hfov_rad=p.get('camera_hfov', 1.0472),
-                   image_w_px=p.get('image_width_px', 1280),
-                   image_h_px=p.get('image_height_px', 720)),
-        WinchDrop(mav, p['drop_alt'], p['search_alt'],
-                  winch_reach_m=p.get('winch_reach_m', 5.5),
-                  hfov_rad=p.get('camera_hfov', 1.0472),
-                  image_w_px=p.get('image_width_px', 1280),
-                  image_h_px=p.get('image_height_px', 720),
-                  marker_m=p.get('target_marker_m', 2.2),
-                  payload_size_m=p.get('payload_size_m', 0.10)),
+        delivery_search,
+        drop,
         # RULEBOOK: "After payload delivery, the UAS must ascend to 10-meter
         # altitude, navigate back through the corridor". Transiting the
         # delivery zone at corridor altitude was both a rule deviation and
@@ -7085,6 +7261,31 @@ def latch_mission_failure(root, mav):
     return reason
 
 
+def ensure_failed_recovery(mav, now, retry_s=2.0):
+    """Keep asking the FC to bring a failed mission home while it hovers.
+
+    latch_mission_failure() recovers only if the state it sees on that one
+    tick says armed. In a rendered run the FCU state was stale at that tick
+    (the same staleness that failed GateAdvance), so no recovery was sent and
+    the aircraft hovered armed in GUIDED in the corridor until an operator
+    landed it (15 October, GPU-rendered arena run). Judge by the last state
+    the FCU actually reported and repeat the request until it leaves GUIDED.
+    Returns the mode commanded, or None.
+    """
+    if not getattr(mav, "mission_failed", False):
+        return None
+    st = mav.state if mav.state.connected else getattr(mav, "_fcu_state", None)
+    if st is None or not st.connected or not st.armed or st.mode != "GUIDED":
+        return None
+    last = getattr(mav, "_failed_recovery_at", None)
+    if last is not None and now - last < retry_s:
+        return None
+    mav._failed_recovery_at = now
+    mode = recover(mav)
+    mav.log(f"failed mission still armed in GUIDED -> {mode}", warn=True)
+    return mode
+
+
 def latch_mission_success(root, mav):
     """A completed mission is terminal too, and must not restart itself.
 
@@ -7154,6 +7355,9 @@ def declare_mission_params(node):
                                    # docs/QR_DECODE_ENVELOPE.md
     d('px_per_module_floor', 5.3)  # MEASURED in Phase 1
     d('lane_overlap', 0.30)
+    # Overlap when the search field is the arena fence beyond the corridor
+    # exit (the judges' points enclose take-off): more ground, fewer lanes.
+    d('arena_lane_overlap', 0.20)
 
     # --- payload: the drop's camera confirmation ------------------------ #
     # The longest edge the nadir camera sees of the payload lying on the
@@ -7170,6 +7374,15 @@ def declare_mission_params(node):
     # CEILING on the lawnmower's ground speed. Under it the speed is what the
     # camera's look-ahead and measured frame rate allow (safe_search_speed).
     d('search_speed_mps', 2.5)
+    # The rulebook's 15-minute flight, from arming, and the time kept back
+    # for drop and return: a sweep still searching after the difference skips
+    # the delivery and flies home (search_overdue).
+    d('mission_limit_s', 900.0)
+    d('return_reserve_s', 300.0)
+    # The team's choice (15 October): search 5 minutes past the deadline
+    # above, delivering a far-side target at the cost of a flight past 900 s.
+    # The rulebook limit itself (mission_limit_s) is unchanged.
+    d('search_deadline_extension_s', 300.0)
     # Simulation calibration defaults; field values require hardware response
     # qualification. Gate crossing waits for the FCU acknowledgement and
     # distinct fresh low-speed samples before handing over to avoidance.
@@ -7243,10 +7456,14 @@ def declare_mission_params(node):
         'banner_placement': str(g('banner_placement') or '') or None,
         'px_per_module_floor': float(g('px_per_module_floor')),
         'lane_overlap': float(g('lane_overlap')),
+        'arena_lane_overlap': float(g('arena_lane_overlap')),
         'payload_size_m': float(g('payload_size_m')),
         'zone_boundary_clearance': float(g('zone_boundary_clearance')),
         'redzone_clearance': float(g('redzone_clearance')),
         'search_speed_mps': float(g('search_speed_mps')),
+        'mission_limit_s': float(g('mission_limit_s')),
+        'return_reserve_s': float(g('return_reserve_s')),
+        'search_deadline_extension_s': float(g('search_deadline_extension_s')),
         'gate_speed_mps': float(g('gate_speed_mps')),
         'gate_arrival_speed_mps': float(g('gate_arrival_speed_mps')),
         'gate_settle_s': float(g('gate_settle_s')),
@@ -7339,6 +7556,9 @@ STATE_NAMES = {
     "FindStartQR": "START_QR", "CenterStartQR": "START_QR",
     "PrecisionDescent": "LAND",
     "LawnmowerSearch": "SEARCH_QR", "WinchDrop": "WINCH_DROP",
+    "DeliverySearch": "SEARCH_QR", "DeliveryFind": "SEARCH_QR",
+    "SkipDeliveryAndReturn": "DELIVERY_SKIPPED",
+    "DropUnlessSkipped": "WINCH_DROP", "DeliverySkipped": "WINCH_DROP",
     "ReturnCorridor": "RETURN_CORRIDOR",
     "GotoHome": "RETURN", "Land": "LAND", "StageAwareAbort": "ABORT",
 }
@@ -7435,6 +7655,7 @@ def main():
         if failure_reason is not None:
             node.get_logger().error(f"Mission FAILED: {failure_reason}")
             state = "FAILED"
+        ensure_failed_recovery(mav, time.monotonic())
 
         # A COMPLETED mission is terminal in exactly the same way. Without
         # this the tree re-armed and took off again 0.4 s after landing.

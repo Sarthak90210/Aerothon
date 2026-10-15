@@ -480,6 +480,53 @@ class ScanStartQRTests(unittest.TestCase):
         self.assertIn("OPERATOR", self.leaf.feedback_message)
 
 
+class ScanStartQRAppearanceTests(unittest.TestCase):
+    """A start marker that decodes to nothing: its PATTERN is the target."""
+
+    def setUp(self):
+        from mission_bt.decode_hover import APPEARANCE_ONLY
+        self.APPEARANCE_ONLY = APPEARANCE_ONLY
+        self.mav = FakeMav()
+        self.mav.qr_off = 0.25                       # located, not read
+        self.mav.qr_visible = lambda: self.mav.qr_off is not None and self.mav.qr_off > 0
+        self.mav.log = lambda msg, warn=False: self.mav.logs.append(msg)
+        self.leaf = ScanStartQR(self.mav, (0.0, 0.0, 5.0), timeout_ticks=30,
+                                confirm_frames=3, hover_s=0.0, clock=_FakeClock(),
+                                appearance_wait_ticks=8)
+
+    def test_a_held_module_pattern_becomes_the_target(self):
+        self.mav.qr_reference_captured = True
+        self.mav.qr_reference_kind = "modules"
+        self.assertEqual(run(self.leaf, 12), py_trees.common.Status.SUCCESS)
+        self.assertEqual(self.mav.target_set, self.APPEARANCE_ONLY)
+
+    def test_it_waits_for_a_decode_first(self):
+        self.mav.qr_reference_captured = True
+        self.mav.qr_reference_kind = "modules"
+        run(self.leaf, 5)
+        self.assertIsNone(self.mav.target_set)
+        # A decode inside the wait is still preferred.
+        self.mav.qr_decoded = "B"
+        self.mav.qr_streak = 3
+        self.assertEqual(run(self.leaf, 3), py_trees.common.Status.SUCCESS)
+        self.assertEqual(self.mav.target_set, "B")
+
+    def test_no_reference_or_a_coarse_one_still_fails_closed(self):
+        self.assertEqual(run(self.leaf, 40), py_trees.common.Status.FAILURE)
+        self.assertIsNone(self.mav.target_set)
+        self.mav.qr_reference_captured = True
+        self.mav.qr_reference_kind = "coarse"
+        self.leaf.initialise()
+        self.assertEqual(run(self.leaf, 40), py_trees.common.Status.FAILURE)
+        self.assertIsNone(self.mav.target_set)
+
+    def test_the_marker_must_be_in_view(self):
+        self.mav.qr_reference_captured = True
+        self.mav.qr_reference_kind = "modules"
+        self.mav.qr_off = 0.0
+        self.assertEqual(run(self.leaf, 40), py_trees.common.Status.FAILURE)
+
+
 # --------------------------------------------------------------------------- #
 class CorridorAltitudeTests(unittest.TestCase):
 
@@ -1143,8 +1190,18 @@ def gate_stage_names(mission):
     (mission_tree.align_to_every_banner). Every pass in it is an
     AlignToBanner, so for the rulebook ordering the gate IS that stage.
     """
-    return ["AlignToBanner" if c.name.endswith("BannerAlignment") else c.name
-            for c in mission.children]
+    names = []
+    for c in mission.children:
+        # The find stages sit under a selector whose fallback skips the
+        # delivery; the drop under one that skips it after such a skip.
+        if c.name == "DeliverySearch":
+            names.extend(x.name for x in c.children[0].children)
+        elif c.name == "DropUnlessSkipped":
+            names.append(c.children[-1].name)
+        else:
+            names.append("AlignToBanner" if c.name.endswith("BannerAlignment")
+                         else c.name)
+    return names
 
 
 class RulebookAltitudeTests(unittest.TestCase):
@@ -1271,7 +1328,7 @@ class RulebookAltitudeTests(unittest.TestCase):
         }
         root = build_root(FakeMav(), MagicMock(), params)
         mission = [c for c in root.children if c.name == "Mission"][0]
-        search = [c for c in mission.children
+        search = [c for c in mission.iterate()
                   if c.name == "LawnmowerSearch"][0]
         # A zone of the size the corridor exit actually observes.
         search._replan((16.5, 27.9, -8.1, 6.9))
@@ -1422,7 +1479,7 @@ class FrontierSearchTests(unittest.TestCase):
         }
         root = build_root(self.mav, MagicMock(), params)
         mission = next(c for c in root.children if c.name == "Mission")
-        leaf = next(c for c in mission.children if c.name == "LawnmowerSearch")
+        leaf = next(c for c in mission.iterate() if c.name == "LawnmowerSearch")
 
         st = self._fly(leaf, target_xy=(50.68, -0.25))
 
@@ -1553,6 +1610,31 @@ class FrontierSearchTests(unittest.TestCase):
         st = self._fly(leaf, max_ticks=600)
         self.assertNotEqual(st, py_trees.common.Status.RUNNING,
                             "the sweep never terminated")
+
+    def test_a_flickering_cell_does_not_replan_every_tick(self):
+        """Laptop-sim GCS run, 15 October: one georeferenced cell toggled the
+        confirmed set 9 <-> 10 about every second while the router was
+        already flying round the zone, and every toggle re-planned and reset
+        the route. An obstruction the plan already had waits for the normal
+        re-plan spacing; a NEW one on the active leg still re-plans at once."""
+        leaf = self._search(budget=0.0)
+        leaf.initialise()
+        (x0, y0), (x1, y1) = leaf.wps[0], leaf.wps[1]
+        mx, my = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        on_leg = (mx - 0.5, mx + 0.5, my - 0.5, my + 0.5)
+        far = (x1 + 30.0, x1 + 31.0, y1 + 30.0, y1 + 31.0)
+        self.mav._pos = (x0, y0, leaf.alt)
+        leaf.i = 1                                         # flying leg 0 -> 1
+        leaf.exclusions = [on_leg, far]
+        leaf.replan_min_ticks = 10 ** 6
+        leaf._ticks_since_replan = 0
+        leaf._exclusions_src = lambda: [on_leg]            # the far cell flickers out
+        self.assertFalse(leaf._exclusions_changed())
+        leaf._exclusions_src = lambda: [on_leg, far]       # and back in
+        self.assertFalse(leaf._exclusions_changed())
+        leaf.exclusions = [far]                            # the leg obstruction is new
+        leaf._exclusions_src = lambda: [on_leg, far]
+        self.assertTrue(leaf._exclusions_changed())
 
     def test_replan_resumes_ahead_not_at_the_lane_start(self):
         """Half-way along a lane, a re-plan carries on to the lane's end."""

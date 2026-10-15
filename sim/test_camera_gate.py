@@ -54,6 +54,8 @@ class CameraGateTests(unittest.TestCase):
     def setUp(self):
         self.bridge = CvBridge()
         self.banner = BannerNode()
+        self.banner._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
+        self.banner._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.vec, self.detail = [], []
         self.banner.pub.publish = self.vec.append
         self.banner.pub_detail.publish = self.detail.append
@@ -96,10 +98,14 @@ class CameraGateTests(unittest.TestCase):
             qr.pub_matched.publish = sent.append
             qr.pub_offset.publish = sent.append
             qr.pub_decoded.publish = sent.append
+            detail = []
+            qr.pub_detail.publish = lambda m: detail.append(json.loads(m.data))
             qr.gate._on_state(pose_state("FORWARD"))
             qr.on_image(self.bridge.cv2_to_imgmsg(BANNER, "bgr8"))
             self.assertEqual([getattr(m, "data", getattr(m, "z", None)) for m in sent],
                              [0.0, "", False])
+            self.assertEqual(detail[-1]['status'], 'NOT_VISIBLE')
+            self.assertFalse(detail[-1]['matched'])
         finally:
             qr.destroy_node()
 

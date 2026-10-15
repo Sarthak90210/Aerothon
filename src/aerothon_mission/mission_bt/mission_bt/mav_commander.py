@@ -29,9 +29,13 @@ from mavros_msgs.srv import (CommandBool, CommandLong, ParamSetV2, SetMode,
                              CommandTOL)
 from rcl_interfaces.msg import ParameterType, ParameterValue
 
-from mission_bt.delivery_zone import (boundary_to_local_zone, inset_zone,
-                                      parse_boundary, parse_polygon,
-                                      polygon_to_local)
+from mission_bt.delivery_zone import (ARENA_FENCE_LANE_MARGIN_M,
+                                      ROLE_DELIVERY_ZONE, ZONE_LANE_MARGIN_M,
+                                      boundary_to_local_zone, bounding_zone,
+                                      clip_beyond, inset_zone,
+                                      judges_polygon_role, parse_boundary,
+                                      parse_polygon, polygon_area,
+                                      polygon_to_local, safety_fence)
 from mission_bt.banner_orbit import SELF_M
 from mission_bt.banner_captures import BannerCaptures
 from mission_bt.detector_timing import DetectorTiming
@@ -75,6 +79,12 @@ class Mav:
         # unreadable the mission can still run, but the substitution is
         # explicit and logged rather than a silent empty string.
         self.target_override = ""
+        # Why the delivery was skipped and the return flown without it.
+        self.delivery_skipped = None
+        # The start marker's PATTERN as perception holds it (qr_node's
+        # /percep/qr/detail), for a start QR that decodes to nothing.
+        self.qr_reference_captured = False
+        self.qr_reference_kind = None
         # Latched terminal failure of the mission sequence, distinct from an
         # abort. Cleared only by an explicit new START.
         self.mission_failed = False
@@ -114,6 +124,9 @@ class Mav:
         self.abort_latched = False
         self.mission_started = False
         self.mission_seq = 0               # counts STARTs; a new one resets memory
+        # Node-clock seconds of the FCU's arm, when the rulebook's 15 minutes
+        # start (throttle-up). The sweep stops in time for the return lap.
+        self.armed_at = None
 
         # The team's 4S2P Li-ion pack: 3.0 V/cell under load is the last of
         # its usable charge (Li-ion runs to 2.5 V; LiPo figures of 3.5 V/cell
@@ -258,6 +271,10 @@ class Mav:
         self.geofence_global = None
         self.geofence_local = None
         self.geofence_reason = "arena geofence boundary is missing"
+        # The judges' points read as the delivery zone when take-off lies
+        # outside them; geofence_local is then the derived safety fence.
+        self.judges_role = None
+        self.judges_zone_local = None
         node.create_subscription(String, '/mission/geofence',
                                  self._on_geofence, _latched_qos())
         # Geofence: pushed, then READ BACK. An unverified fence is worse than
@@ -367,6 +384,20 @@ class Mav:
         pts, why = polygon_to_local(
             self.geofence_global,
             float(self.home.geo.latitude), float(self.home.geo.longitude))
+        self.judges_role = None
+        self.judges_zone_local = None
+        if pts is not None:
+            # polygon_to_local is about home, so take-off is the origin.
+            self.judges_role = judges_polygon_role(pts)
+            if self.judges_role == ROLE_DELIVERY_ZONE:
+                self.judges_zone_local = pts
+                pts = safety_fence(pts)
+                why = ("the judges' points are the delivery zone (take-off "
+                       "lies outside them); the enforced fence is derived "
+                       "round the zone and take-off")
+                self._log_once(
+                    f"Judges' points read as the delivery zone; safety fence "
+                    f"of {len(pts)} vertices round it and take-off")
         self.geofence_local = pts
         self.geofence_reason = why or "geofence polygon resolved in local ENU"
         if pts is not None:
@@ -404,11 +435,71 @@ class Mav:
             self._logged.add(text)
             self.node.get_logger().info(text)
 
-    def delivery_search_zone(self, clearance_m):
-        if self.delivery_zone_local is None:
+    @property
+    def fence_only(self):
+        """The judges gave the geofence and no delivery-zone corners."""
+        return self.delivery_zone_global is None and self.geofence_local is not None
+
+    @property
+    def arena_search(self):
+        """The search field is the judges' arena fence beyond the corridor."""
+        return self.fence_only and getattr(self, "judges_zone_local", None) is None
+
+    @property
+    def search_margin_m(self):
+        """How far sweep lanes keep inside search_polygon()."""
+        if getattr(self, "judges_zone_local", None) is not None:
+            return ZONE_LANE_MARGIN_M
+        return ARENA_FENCE_LANE_MARGIN_M
+
+    def search_polygon(self):
+        """The fenced field beyond the outbound corridor, local XY, or None.
+
+        Only in a fence-only arena, and only once the corridor exit is known:
+        the polygon clipped to the side of the exit the corridor leads to,
+        one metre past it. With organiser corners the field is their
+        rectangle and this is None.
+        """
+        zone = getattr(self, "judges_zone_local", None)
+        if self.fence_only and zone is not None:
+            # The points ARE the delivery zone: known before take-off.
+            self.delivery_zone_reason = "search area is the judges' delivery zone"
+            return zone
+        if not self.fence_only or self.corridor_exit_pose is None:
             return None
+        ex, ey, _z, yaw = self.corridor_exit_pose
+        heading = self.gate_heading if self.gate_heading is not None else yaw
+        key = (tuple(map(tuple, self.geofence_local)), round(ex, 2), round(ey, 2),
+               round(heading, 3))
+        if getattr(self, "_search_polygon_key", None) != key:
+            clipped = clip_beyond(self.geofence_local, (ex, ey), heading, 1.0)
+            if len(clipped) < 3 or abs(polygon_area(clipped)) < 25.0:
+                clipped = None
+                self.delivery_zone_reason = ("the geofence leaves no field "
+                                             "beyond the corridor exit")
+            else:
+                zone = bounding_zone(clipped)
+                self.delivery_zone_reason = "search area derived from the geofence"
+                self._log_once(
+                    f"Search area from the geofence beyond the corridor exit: "
+                    f"{len(clipped)} vertices, x {zone[0]:.1f}..{zone[1]:.1f}, "
+                    f"y {zone[2]:.1f}..{zone[3]:.1f}")
+            self._search_polygon_key, self._search_polygon = key, clipped
+        return self._search_polygon
+
+    def delivery_search_zone(self, clearance_m):
+        base = self.delivery_zone_local
+        if base is None:
+            poly = self.search_polygon()
+            if poly is None:
+                if self.fence_only and self.corridor_exit_pose is None:
+                    self.delivery_zone_reason = (
+                        "search area is derived from the geofence once the "
+                        "corridor exit is known")
+                return None
+            base = bounding_zone(poly)
         try:
-            return inset_zone(self.delivery_zone_local, clearance_m)
+            return inset_zone(base, clearance_m)
         except ValueError as exc:
             self.delivery_zone_reason = str(exc)
             return None
@@ -655,6 +746,12 @@ class Mav:
             self.outbound_banner_xy = None
             self.board_face_t = None
             self.delivery_confirmed = None     # set by WinchDrop's camera check
+            self.delivery_skipped = None       # set by SkipDeliveryAndReturn
+            # A new flight reads its own start marker: an empty target makes
+            # perception drop the previous flight's pattern reference.
+            self.qr_reference_captured = False
+            self.qr_reference_kind = None
+            self.set_target("")
             self.node.get_logger().info("Mission 2 start received from GCS")
 
     def _on_pose(self, m):
@@ -681,6 +778,8 @@ class Mav:
         self._fcu_state = prev if not m.connected else m
         if not m.connected:
             return
+        if m.armed and not prev.armed:
+            self.armed_at = self.node.get_clock().now().nanoseconds * 1e-9
         # Only an active mission can be interrupted; a disarmed idle aircraft
         # changing mode on the bench is not an event.
         if not self.mission_started:
@@ -795,6 +894,7 @@ class Mav:
             "delivery_offset_m": getattr(self, "delivery_offset_m", None),
             "delivery_confirmed": getattr(self, "delivery_confirmed", None),
             "delivery_confirmation_basis": getattr(self, "delivery_confirmation_basis", None),
+            "delivery_skipped": getattr(self, "delivery_skipped", None),
             "landing_precision": getattr(self, "landing_precision", None),
             "t": self.node.get_clock().now().nanoseconds / 1e9,
         })
@@ -1323,6 +1423,9 @@ class Mav:
         except (ValueError,TypeError):
             return
         self.detector_timing['qr'].add(detail,self.node.get_clock().now().nanoseconds*1e-9)
+        if isinstance(detail, dict) and 'reference_captured' in detail:
+            self.qr_reference_captured = detail.get('reference_captured') is True
+            self.qr_reference_kind = detail.get('reference_kind')
 
     def log(self, msg, warn=False):
         """Route a stage's findings to the ROS log.

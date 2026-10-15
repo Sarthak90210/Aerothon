@@ -34,6 +34,7 @@ set +u
 set -u
 
 export PYTHONPATH="$ROOT/src/aerothon_mission/mission_bt:$ROOT/src/aerothon_gcs/gcs_aggregator:$ROOT/src/aerothon_perception/camera_ctrl:$ROOT/src/aerothon_avoidance/avoidance:$ROOT/src/aerothon_payload/winch_ctrl:$ROOT/src/aerothon_perception/perception_qr:$ROOT/src/aerothon_perception/perception_banner:${PYTHONPATH:-}"
+export PYTHONPATH="$ROOT/src/aerothon_runtime:$PYTHONPATH"
 
 FAILED=0
 section() { printf '\n=== %s ===\n' "$1"; }
@@ -48,6 +49,13 @@ if [[ "$REDUCED_SCOPE" -eq 1 ]]; then
     echo "Reduced scope: deferred strong-gust flight tests are explicitly skipped and recorded."
 fi
 python3 -m pytest sim/ tests/ -q "${pytest_args[@]}"
+record $?
+
+section "Native ROS device and execution interfaces"
+# The laptop gateway needs pymavlink, which the distro Python lacks. Point
+# AEROTHON_NATIVE_PYTHON at a --system-site-packages venv that adds it (and
+# pytest-asyncio) without replacing the ROS NumPy.
+"${AEROTHON_NATIVE_PYTHON:-python3}" -m pytest verification/test_pi_ros_runtime.py -q
 record $?
 
 section "Python syntax (all mission/perception/GCS/sim sources)"
@@ -84,7 +92,7 @@ if [[ "$QUICK" -eq 0 ]]; then
     if [[ -d src/aerothon_gcs/tauri_app/node_modules ]]; then
         # A shared Windows/WSL checkout can contain Windows .bin launchers.
         # Execute the installed JavaScript entry points with this host's Node.
-        (cd src/aerothon_gcs/tauri_app && node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite.js build >/dev/null)
+        (python3 scripts/export_gcs_contract.py && cd src/aerothon_gcs/tauri_app && node --experimental-strip-types --test tests/*.test.mjs && node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite.js build >/dev/null)
         record $?
     else
         echo "  -> SKIPPED (node_modules absent; run npm install)"

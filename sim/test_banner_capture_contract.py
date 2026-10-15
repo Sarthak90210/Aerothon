@@ -84,6 +84,7 @@ class BannerImageContinuityTests(unittest.TestCase):
 
     def setUp(self):
         self.node=BannerNode();self.details=[]
+        self.node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
         self.node.pub.publish=lambda _:None
         self.node.pub_detail.publish=lambda msg:self.details.append(json.loads(msg.data))
 

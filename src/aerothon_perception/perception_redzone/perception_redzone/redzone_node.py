@@ -204,14 +204,7 @@ class RedZoneNode(Node):
             self.get_logger().info(f"restricted-zone red set -> {self._red_hex}")
 
     def red_mask(self, frame):
-        """Restricted-zone red: the operator's shade, or the default bands.
-
-        The organisers supply the zone's colour as a HEX code with the banner
-        shades. Until one arrives this keeps the two hand-written bands the
-        node has always used, so an un-told stack behaves exactly as before.
-        Either way red wraps the hue circle, which is why a colour yields a
-        list of ranges rather than one.
-        """
+        """Restricted-zone shade supplied by the operator; no fixed fallback."""
         hsv = cv2.cvtColor(normalise(frame), cv2.COLOR_BGR2HSV)
         s_lo, v_lo = int(self._g('s_lo')), int(self._g('v_lo'))
         supplied = getattr(self, '_red_hex', '')
@@ -220,10 +213,7 @@ class RedZoneNode(Node):
             mask = colours.mask(hsv, colours.separated_ranges(
                 'red', shades, s_floor=s_lo, v_floor=v_lo))
         else:
-            # Red wraps the hue circle -> two bands.
-            m1 = cv2.inRange(hsv, (0, s_lo, v_lo), (10, 255, 255))
-            m2 = cv2.inRange(hsv, (170, s_lo, v_lo), (179, 255, 255))
-            mask = cv2.bitwise_or(m1, m2)
+            mask = np.zeros(hsv.shape[:2], np.uint8)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
         return self._drop_narrow(mask)
 
@@ -284,6 +274,8 @@ class RedZoneNode(Node):
         # Red found where it cannot be placed on the ground is a number with
         # nowhere to go: skip the mask, keep publishing the map.
         ok, why = self.can_georeference()
+        if not self._red_hex:
+            ok, why = False, 'operator red HEX is not configured'
         pose = self.pose_at(capture) if capture>0 else None
         if pose is None:
             ok,why = False,'no fresh aircraft pose at camera capture time'
@@ -291,7 +283,8 @@ class RedZoneNode(Node):
         provisional = []
         if ok:
             provisional = partial_boundaries(normalise(frame), pose[2], self._hfov,
-                lambda contour, wh: self.project_polygon(contour, wh, pose))
+                lambda contour, wh: self.project_polygon(contour, wh, pose),
+                bands=colours.separated_ranges('red', self._supplied, s_floor=90, v_floor=60))
         if ok:
             mask = self.red_mask(frame)
             frac = float(np.count_nonzero(mask)) / mask.size

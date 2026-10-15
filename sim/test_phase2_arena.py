@@ -552,6 +552,7 @@ def detector():
 def _detector(height_m=1.15):
     from std_msgs.msg import String
     node = BannerNode()
+    node._colours = {'green':'#07A03D','orange':'#EB5A0A','red':'#C4161C'}
     node._on_banner_colours(String(data=json.dumps({"colours": SUPPLIED})))
     node._on_arena_dimensions(String(data=json.dumps(
         {"applied": True, "dimensions": {"banner": {"width_m": 3.5, "height_m": height_m}}})))

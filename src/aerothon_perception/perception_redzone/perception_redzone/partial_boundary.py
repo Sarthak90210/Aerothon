@@ -11,12 +11,13 @@ import numpy as np
 CONFIG = dict(min_major_m=.50, min_solid_fraction=.85, min_pixels=36,
               white_s_max=55, white_v_min=190, edge_px=2)
 
-def partial_boundaries(frame, altitude_m, hfov_rad, project):
+def partial_boundaries(frame, altitude_m, hfov_rad, project, *, bands=None):
+    from perception_banner.colours import mask
     if not math.isfinite(altitude_m) or altitude_m <= 1.5:
         return []
     h,w = frame.shape[:2]
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    red = cv2.inRange(hsv, (0,90,60), (10,255,255)) | cv2.inRange(hsv, (170,90,60), (179,255,255))
+    red = mask(hsv, bands or [])
     red = cv2.morphologyEx(red,cv2.MORPH_OPEN,np.ones((3,3),np.uint8))
     white = cv2.inRange(hsv,(0,0,CONFIG['white_v_min']),(179,CONFIG['white_s_max'],255))
     _,backing = cv2.connectedComponents(red | white, connectivity=8)

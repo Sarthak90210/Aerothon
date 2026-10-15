@@ -120,13 +120,16 @@ class CameraCtrl(Node):
         p("publish_rate_hz", 10.0)
         p("command_repeat_s", 0.5)          # re-send until settled
         p("startup_pose", "FORWARD")
+        p("external_joint_feedback", False)
         p("servo_settle_s", 1.0)            # mavlink, no attitude: time to angle
 
         self.backend = self.get_parameter("backend").value
         self.joint_name = self.get_parameter("joint_name").value
+        self.external_joint_feedback = self.get_parameter("external_joint_feedback").value is True
 
         self.requested_name = ""
         self.requested_rad = None
+        self._explicit_request = False
         self.actual_rad = None
         self.last_reading_t = None
         self._in_tolerance_count = 0
@@ -137,7 +140,7 @@ class CameraCtrl(Node):
         self._mount_t = None                # last mount attitude from the FC
 
         self.create_subscription(String, "/camera/set_pose", self._on_set_pose, 10)
-        if self.backend == "sim":
+        if self.backend == "sim" or self.external_joint_feedback:
             self.create_subscription(JointState, "/joint_states",
                                      self._on_joint_states, _sensor_qos())
 
@@ -190,6 +193,7 @@ class CameraCtrl(Node):
                 return
 
         new_rad = math.radians(deg)
+        self._explicit_request = True
         if self.requested_rad is not None and \
                 abs(new_rad - self.requested_rad) < 1e-6 and name == self.requested_name:
             return                                  # already commanding this
@@ -230,7 +234,7 @@ class CameraCtrl(Node):
     # read-back
     # ------------------------------------------------------------------ #
     def _on_joint_states(self, msg: JointState):
-        if self.backend != "sim":
+        if self.backend != "sim" and not self.external_joint_feedback:
             return
         try:
             idx = list(msg.name).index(self.joint_name)
@@ -248,7 +252,7 @@ class CameraCtrl(Node):
         self._observe(math.asin(max(-1.0, min(1.0, 2.0 * (q.w * q.y - q.z * q.x)))))
 
     def readback(self):
-        if self.backend == "sim":
+        if self.backend == "sim" or self.external_joint_feedback:
             return "joint"
         fresh = (self._mount_t is not None and self._now() - self._mount_t
                  <= float(self.get_parameter("stale_after_s").value))
@@ -264,10 +268,17 @@ class CameraCtrl(Node):
         self._observe(self.requested_rad if late else self._prev_rad)
 
     def _observe(self, rad):
+        if not math.isfinite(rad):
+            return
         self.actual_rad = rad
         self.last_reading_t = self._now()
         if self.requested_rad is None:
-            return
+            # Observe an already-positioned mount without moving it on Connect.
+            named = min(NAMED_POSES_DEG, key=lambda k: abs(math.radians(NAMED_POSES_DEG[k])-rad))
+            if abs(math.radians(NAMED_POSES_DEG[named])-rad) > math.radians(float(self.get_parameter('tolerance_deg').value)):
+                return
+            self.requested_name = named
+            self.requested_rad = math.radians(NAMED_POSES_DEG[named])
         tol = math.radians(float(self.get_parameter("tolerance_deg").value))
         if abs(rad - self.requested_rad) <= tol:
             self._in_tolerance_count += 1
@@ -304,7 +315,7 @@ class CameraCtrl(Node):
             self._observe_timed()
         # Keep re-issuing until the joint is measured in position. The Gazebo
         # position controller and a real servo can both miss a single command.
-        if self.requested_rad is not None and not self.is_settled():
+        if getattr(self, '_explicit_request', True) and self.requested_rad is not None and not self.is_settled():
             repeat = float(self.get_parameter("command_repeat_s").value)
             if self._last_command_t is None or \
                     (self._now() - self._last_command_t) >= repeat:

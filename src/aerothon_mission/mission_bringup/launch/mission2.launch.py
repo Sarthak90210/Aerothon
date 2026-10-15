@@ -24,6 +24,8 @@ from launch_ros.descriptions import ParameterValue
 
 def generate_launch_description():
     use_sim = LaunchConfiguration('use_sim')
+    managed = LaunchConfiguration('managed')
+    remote_gateway = LaunchConfiguration('remote_gateway')
     fcu_url = LaunchConfiguration('fcu_url')
     image_topic = LaunchConfiguration('image_topic')
     scan_topic = LaunchConfiguration('scan_topic')
@@ -53,6 +55,11 @@ def generate_launch_description():
         Command(['xacro "', xacro_file, '" airframe:=', airframe]), value_type=str)
 
     args = [
+        DeclareLaunchArgument('managed', default_value='false'),
+        DeclareLaunchArgument('remote_gateway', default_value=''),
+        DeclareLaunchArgument('target_system_id', default_value='1'),
+        DeclareLaunchArgument('target_component_id', default_value='1'),
+        DeclareLaunchArgument('rc_config', default_value='{}'),
         DeclareLaunchArgument('use_sim', default_value='true', description='Use sim time (Gazebo)'),
         DeclareLaunchArgument('fcu_url', default_value='udp://127.0.0.1:14555@127.0.0.1:14556', description='MAVROS FCU URL (via MAVLink router)'),
         DeclareLaunchArgument('image_topic', default_value='/image_raw', description='Camera image topic'),
@@ -95,7 +102,7 @@ def generate_launch_description():
                               description='winch_ctrl backend: gazebo (the Iris '
                                           'winch joint and a detachable payload), '
                                           'sim (sequence only, nothing moves) or '
-                                          'mavlink (MAV_CMD_DO_WINCH); default '
+                                          'mavlink (MAV_CMD_DO_WINCH) or gpio (Pi BTS7960 + N20 encoder); default '
                                           'gazebo in sim, mavlink on the aircraft'),
         # The flight sensors (use_sim:=false only). Mount yaw and direction
         # are measured with scripts/check_sensors.py.
@@ -124,10 +131,25 @@ def generate_launch_description():
     )
 
     # 2. MAVROS Core Node
+    #
+    # ONLY THE PLUGINS THE STACK USES. With no list MAVROS loads every plugin
+    # (about 50); on the Pi 5 it then sat at 100% CPU with a load average of
+    # 12.5 on 4 cores, and the camera, banner detector and pose freshness fell
+    # behind (15 October, Pi-GCS laptop-sim missions). These 15 serve every
+    # /mavros topic and service referenced in src/ and scripts/:
+    # state/battery/estimator/extended state, cmd/*, param/set, local and
+    # global position, home, imu, geofence fences/push, gimbal_control,
+    # gpsstatus, rc in/out, setpoint position/raw and vibration.
+    mavros_plugins = ['sys_status', 'sys_time', 'command', 'param',
+                      'local_position', 'global_position', 'home_position',
+                      'imu', 'geofence', 'gimbal_control', 'gps_status',
+                      'rc_io', 'setpoint_position', 'setpoint_raw', 'vibration']
     mavros = Node(
         package='mavros', executable='mavros_node', output='screen',
-        parameters=[{'fcu_url': fcu_url, 'gcs_url': '',
-                     'target_system_id': 1, 'target_component_id': 1,
+        parameters=[{'plugin_allowlist': mavros_plugins,
+                     'fcu_url': fcu_url, 'gcs_url': '',
+                     'target_system_id': ParameterValue(LaunchConfiguration('target_system_id'), value_type=int),
+                     'target_component_id': ParameterValue(LaunchConfiguration('target_component_id'), value_type=int),
                      'use_sim_time': use_sim}],
     )
 
@@ -135,7 +157,11 @@ def generate_launch_description():
     qr = Node(
         package='perception_qr', executable='qr_node', output='screen',
         parameters=[{'image_topic': image_topic, 'target': target,
-                     'use_sim_time': use_sim}],
+                     'use_sim_time': use_sim,
+                     # Test switch: fly as if the codes encoded nothing, so
+                     # the pattern alone must identify the pad.
+                     'use_payloads': os.environ.get(
+                         'AEROTHON_QR_IGNORE_PAYLOADS', '0') != '1'}],
     )
 
     banner = Node(
@@ -205,6 +231,9 @@ def generate_launch_description():
     camera = Node(
         package='camera_ctrl', executable='camera_ctrl_node', output='screen',
         parameters=[{'backend': LaunchConfiguration('camera_backend'),
+                     'external_joint_feedback': ParameterValue(PythonExpression(["bool('", remote_gateway, "')"]), value_type=bool),
+                     'joint_name': PythonExpression(["'camera_pitch' if '", remote_gateway, "' else 'webcam_pitch_joint'"]),
+                     'startup_pose': PythonExpression(["'' if '", managed, "'.lower() == 'true' else 'FORWARD'"]),
                      'use_sim_time': use_sim}],
     )
 
@@ -214,11 +243,12 @@ def generate_launch_description():
         package='winch_ctrl', executable='winch_node', output='screen',
         parameters=[params_file,
                     {'backend': LaunchConfiguration('winch_backend'),
+                     'external_joint_feedback': ParameterValue(PythonExpression(["bool('", remote_gateway, "')"]), value_type=bool),
                      'use_sim_time': use_sim}],
     )
 
     # 3d. Flight sensors. In the sim Gazebo publishes both.
-    real = UnlessCondition(use_sim)
+    real = IfCondition(PythonExpression(["not ('", use_sim, "'.lower() in ('true', '1')) and not bool('", remote_gateway, "')"]))
     lidar = Node(
         package='ldlidar_stl_ros2', executable='ldlidar_stl_ros2_node',
         name='ld06', output='screen', condition=real,
@@ -258,21 +288,43 @@ def generate_launch_description():
     # 5. Autonomous Behavior Tree Mission Executive
     mission = Node(
         package='mission_bt', executable='mission_tree', output='screen',
+        condition=UnlessCondition(managed),
         parameters=[params_file,
                     {'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
                      'target_marker_m': target_marker_m,
                      'delivery_load_calibration': os.environ.get('AEROTHON_DELIVERY_CALIBRATION', '')}],
     )
 
+    execution = Node(package='aerothon_runtime', executable='execution_node',
+        output='screen', condition=IfCondition(managed),
+        parameters=[params_file, {'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
+            'target_marker_m': target_marker_m,
+            'remote_gateway': ParameterValue(remote_gateway, value_type=str),
+            'slam_enabled': ParameterValue(launch_slam, value_type=bool),
+            'target_system_id': ParameterValue(LaunchConfiguration('target_system_id'), value_type=int),
+            'rc_config': ParameterValue(LaunchConfiguration('rc_config'), value_type=str),
+            'delivery_load_calibration': os.environ.get('AEROTHON_DELIVERY_CALIBRATION', '')}])
+    remote = Node(package='aerothon_runtime', executable='remote_devices',
+        output='screen', condition=IfCondition(PythonExpression(["bool('", remote_gateway, "')"])),
+        parameters=[{'gateway': remote_gateway, 'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
+            'system_id': ParameterValue(LaunchConfiguration('target_system_id'), value_type=int),
+            'component_id': ParameterValue(LaunchConfiguration('target_component_id'), value_type=int)}])
+
     # 6. GCS Aggregator WebSocket Server (port 8765)
     readiness = Node(
         package='gcs_aggregator', executable='readiness', output='screen',
-        parameters=[{'use_sim_time': use_sim, 'image_topic': image_topic}],
+        parameters=[{'use_sim_time': use_sim, 'image_topic': image_topic,
+                     # Off only where a script hands the mission its arena
+                     # as launch values instead of through the GCS.
+                     'require_arena_dimensions': os.environ.get(
+                         'AEROTHON_REQUIRE_ARENA_DIMENSIONS', '1') != '0'}],
     )
 
     aggregator = Node(
         package='gcs_aggregator', executable='aggregator', output='screen',
-        parameters=[{'use_sim_time': use_sim}],
+        parameters=[{'use_sim_time': use_sim, 'image_topic': image_topic,
+                     'managed': ParameterValue(managed, value_type=bool),
+                     'ws_host': PythonExpression(["'127.0.0.1' if '", managed, "'.lower() == 'true' else '0.0.0.0'"])}],
     )
 
     # 7. Annotated MJPEG Video Stream Server (port 8080)
@@ -340,7 +392,7 @@ def generate_launch_description():
     return LaunchDescription(args + [
         rsp_node, mavros, lidar, lidar_mount, webcam,
         qr, banner, redzone, payload, overlay, camera, winch, stream_rates,
-        controller, mission, readiness, aggregator, video,
+        controller, mission, execution, remote, readiness, aggregator, video,
         # The Gazebo odometry bridge needs a few seconds to establish odom TF.
         # Activating slam_toolbox before that point leaves its initial scan
         # filter without transforms and delays the first map indefinitely.
