@@ -18,7 +18,7 @@ class BrakedGateAdvance(GateAdvance):
 
     def __init__(self, *args, gate_speed_mps=.35, arrival_speed_mps=.08,
                  settle_s=.3, stale_s=.3, service_timeout_s=3.,
-                 restore_speed_mps=None, **kwargs):
+                 restore_speed_mps=None, bridge_s=None, pause_s=None, **kwargs):
         super().__init__(*args, **kwargs)
         values = (gate_speed_mps, arrival_speed_mps, stale_s, service_timeout_s)
         if not all(math.isfinite(value) and value > 0 for value in values):
@@ -34,6 +34,13 @@ class BrakedGateAdvance(GateAdvance):
         self.settle_s = float(settle_s)
         self.stale_s = float(stale_s)
         self.service_timeout_s = float(service_timeout_s)
+        # Braking captures: a gap up to bridge_s is integrated across, and a
+        # transient fault is held out for up to pause_s before failing.
+        self.bridge_s = float(3 * self.stale_s if bridge_s is None else bridge_s)
+        self.pause_s = float(2 * self.stale_s if pause_s is None else pause_s)
+        if not (math.isfinite(self.bridge_s) and self.bridge_s >= self.stale_s
+                and math.isfinite(self.pause_s) and self.pause_s >= 0):
+            raise ValueError('Invalid gate braking gap bridge or pause')
 
     def initialise(self):
         super().initialise()
@@ -43,6 +50,8 @@ class BrakedGateAdvance(GateAdvance):
         self._brake_motion_previous = None
         self._brake_capture_stamp = None
         self._brake_capture_fault = ''
+        self._brake_fault_since = None
+        self._brake_gap_fatal = False
         self._brake_displacement = [0., 0.]
         self._entry_speed = getattr(self.mav, 'speed_cmd', None)
         self._restore_basis = 'previous commanded navigation speed'
@@ -110,8 +119,12 @@ class BrakedGateAdvance(GateAdvance):
             # The ROS clock and capture headers have integer nanosecond
             # precision. Subtracting their float seconds can turn an exact
             # 0.30 s interval into 0.30000000000007 and reject valid motion.
-            if round(dt*1e9) > round(self.stale_s*1e9):
-                self._brake_capture_fault = f'capture gap {round(dt*1e9)} ns exceeds {round(self.stale_s*1e9)} ns'
+            # A gap up to bridge_s is integrated between the FCU velocities
+            # either side of it (braking is near-stationary by then); one
+            # longer than that leaves the displacement unknown.
+            if round(dt*1e9) > round(self.bridge_s*1e9):
+                self._brake_capture_fault = f'capture gap {round(dt*1e9)} ns exceeds {round(self.bridge_s*1e9)} ns'
+                self._brake_gap_fatal = True
                 return False
             self._brake_displacement[0] += .5 * dt * (vx + previous[1])
             self._brake_displacement[1] += .5 * dt * (vy + previous[2])
@@ -120,8 +133,15 @@ class BrakedGateAdvance(GateAdvance):
         if previous is None or not 0 <= now-previous[0] <= self.stale_s:
             self._brake_capture_fault = 'latest vector capture stale or unavailable'
             return False
-        if capture_stamp != self.mav.delivery_inputs.get('velocity_stamp'):
-            self._brake_capture_fault = 'scalar speed capture differs from vector history'
+        scalar_stamp = self.mav.delivery_inputs.get('velocity_stamp')
+        if capture_stamp != scalar_stamp:
+            # A capture stamped ahead of this node's clock (MAVROS timesync, or
+            # /clock delivery lagging) is in the scalar copy but not yet in the
+            # integrated history. That is a transient, not a disagreement.
+            ahead = (isinstance(scalar_stamp, (int, float)) and math.isfinite(scalar_stamp)
+                     and scalar_stamp > now)
+            self._brake_capture_fault = ('newest capture stamped ahead of the clock' if ahead
+                                         else 'scalar speed capture differs from vector history')
             return False
         self._brake_motion_previous = previous
         self._brake_capture_stamp = capture_stamp
@@ -135,12 +155,31 @@ class BrakedGateAdvance(GateAdvance):
         return True
 
     def _brake_or_fail(self):
+        """SUCCESS while braking from consistent captures; RUNNING while a
+        transient fault is held out at the last braking anchor (up to
+        pause_s); FAILURE for invalid data, an unbridgeable gap, or a fault
+        that outlasts the pause. One late or skewed capture used to abort the
+        mission on the spot (16 Oct campaign, h030L5_both calm s3)."""
+        self._brake_gap_fatal = False
         if self._brake_position():
-            return True
+            self._brake_fault_since = None
+            return SUCCESS
+        fault = self._brake_capture_fault
+        invalid = fault in ('invalid vector in capture history', 'nonfinite braking position')
+        now = self._now()
+        if not invalid and not self._brake_gap_fatal:
+            if self._brake_fault_since is None:
+                self._brake_fault_since = now
+            if now - self._brake_fault_since <= self.pause_s:
+                if self._brake_hold is not None:
+                    self.mav.goto(*self._brake_hold, self._brake_yaw)
+                else:
+                    self._hold_position()
+                self.feedback_message = 'holding for consistent braking captures: ' + fault
+                return RUNNING
         self._hold_position()
-        self._fail('continuous fresh ground velocity required for gate braking: '
-                   + self._brake_capture_fault)
-        return False
+        self._fail('continuous fresh ground velocity required for gate braking: ' + fault)
+        return FAILURE
 
     def _distance_covered_by_motion(self, now):
         """Confirm signed forward travel from fresh FCU ground velocities.
@@ -230,10 +269,10 @@ class BrakedGateAdvance(GateAdvance):
             self._settle_count = 0
             if self._capture_pause_started is None:
                 self._capture_pause_started = now
-            # No crossing or handover uses data beyond stale_s. A single
-            # missed capture pauses at the last fresh measured position;
-            # another stale_s without recovery still fails safely.
-            if now-self._capture_pause_started > self.stale_s:
+            # No crossing or handover uses data beyond stale_s. A missed
+            # capture pauses at the last fresh measured position; pause_s
+            # without recovery still fails safely.
+            if now-self._capture_pause_started > self.pause_s:
                 return self._fail('fresh pose, velocity and lidar capture times required')
             self.feedback_message = 'holding for fresh gate capture times'
             return RUNNING
@@ -281,8 +320,9 @@ class BrakedGateAdvance(GateAdvance):
             self._phase = 'BRAKE'
 
         if self._phase == 'BRAKE':
-            if not self._brake_or_fail():
-                return FAILURE
+            status = self._brake_or_fail()
+            if status is not SUCCESS:
+                return status
             if (speed > self.arrival_speed_mps or
                     math.dist(self.mav.pos(),self._brake_hold) > self.tol):
                 self._settle_first = self._settle_last = None
@@ -301,15 +341,17 @@ class BrakedGateAdvance(GateAdvance):
             self._phase = 'RESTORE'
 
         if self._phase == 'RESTORE':
-            if not self._brake_or_fail():
-                return FAILURE
+            status = self._brake_or_fail()
+            if status is not SUCCESS:
+                return status
             status = self._speed_ack(float(self._entry_speed), now)
             if status != SUCCESS:
                 return status
             self._phase = 'READY'
 
-        if not self._brake_or_fail():
-            return FAILURE
+        status = self._brake_or_fail()
+        if status is not SUCCESS:
+            return status
         if (speed > self.arrival_speed_mps or
                 math.dist(self.mav.pos(),self._brake_hold) > self.tol):
             self.feedback_message = 'waiting for the restored-speed position hold to settle'

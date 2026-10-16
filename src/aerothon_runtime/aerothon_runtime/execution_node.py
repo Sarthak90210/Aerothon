@@ -48,8 +48,10 @@ class Route(py_trees.behaviour.Behaviour):
             mav.hold_position()
             return S.SUCCESS
         point = self.points[self.i]
-        x = math.radians(point['lon']-home[1])*6378137*math.cos(math.radians(home[0]))
-        y = math.radians(point['lat']-home[0])*6378137
+        # About home, then into the EKF-origin frame that mav.pos() uses.
+        hx, hy = mav.home_local_xy()
+        x = math.radians(point['lon']-home[1])*6378137*math.cos(math.radians(home[0])) + hx
+        y = math.radians(point['lat']-home[0])*6378137 + hy
         if not mav.geofence_local or not fence_ok(mav, on_red=lambda a,b: point_in_exclusion(a,b,self.owner.params["redzone_clearance"],mav.exclusions))(x,y):
             mav.abort_reason = 'waypoint is outside the configured fence or exclusion margin'
             return S.FAILURE
@@ -102,13 +104,28 @@ class Mechanism(py_trees.behaviour.Behaviour):
         super().__init__('Mechanism')
         self.mav, self.action, self.sent = mav, action, False
 
+    STATUS_TIMEOUT_S = 3.0
+
     def update(self):
         if not self.sent:
             self.mav.winch(self.action)
             self.sent = True
+            self._fresh_t = self._start_t = time.monotonic()
             return S.RUNNING
+        # Abort applies to the bench winch too (one pressed after this start).
+        if (getattr(self.mav, 'abort_requested', False)
+                and getattr(self.mav, '_abort_t', 0.0) >= getattr(self, '_start_t', float('inf'))):
+            self.mav.winch('stop')
+            self.mav.abort_reason = 'abort requested'
+            return S.FAILURE
         if not self.mav.winch_status_fresh():
+            # A dead winch node left this RUNNING for ever with the motor on.
+            if time.monotonic() - getattr(self, '_fresh_t', time.monotonic()) > self.STATUS_TIMEOUT_S:
+                self.mav.winch('stop')
+                self.mav.abort_reason = f'winch status lost for {self.STATUS_TIMEOUT_S:.0f} s; stop sent'
+                return S.FAILURE
             return S.RUNNING
+        self._fresh_t = time.monotonic()
         state = self.mav.winch_status
         if state.get('fault'):
             self.mav.abort_reason = state['fault']
@@ -169,8 +186,11 @@ class ExecutionNode(Node):
         self.create_subscription(String, '/devices/status', self.device_status, 10)
         self.create_subscription(State, '/mavros/state', self.on_fcu_state, qos_profile_sensor_data)
         self.create_subscription(RCIn, '/mavros/rc/in', self.on_rc, qos_profile_sensor_data)
-        for typ,topic,key in [(Image,'/image_raw','camera'),(LaserScan,'/scan','lidar')]:
-            self.create_subscription(typ,topic,lambda m,k=key: self.sensor_seen.update({k:time.monotonic()}),qos_profile_sensor_data)
+        # Only the arrival time matters here. Raw delivery skips deserializing
+        # each 1280x720 frame, which cost ~0.45 of a Pi 5 core at 30 Hz (16 Oct).
+        for typ,topic,key,raw in [(Image,'/image_raw','camera',True),(LaserScan,'/scan','lidar',False)]:
+            self.create_subscription(typ,topic,lambda m,k=key: self.sensor_seen.update({k:time.monotonic()}),
+                                     qos_profile_sensor_data,raw=raw)
         self.create_subscription(PoseStamped, '/mavros/local_position/pose', self.pose_tf, qos_profile_sensor_data)
         self.create_timer(.2, self.tick)
         self.create_timer(.2, self.watchdog, clock=Clock(clock_type=ClockType.STEADY_TIME))
@@ -199,7 +219,9 @@ class ExecutionNode(Node):
 
     def on_rc(self, msg):
         self.rc, self.rc_seen = msg,time.monotonic()
-        if self.run and self.rc_config:
+        # Only a live run can be taken over: a switch left on used to rewrite
+        # a Completed run as Failed at RC rate.
+        if self.run and self.run['state'] not in TERMINAL and self.rc_config:
             try:
                 if intent(msg.channels,validate_rc(self.rc_config))['takeover']:
                     self.takeover('transmitter takeover switch')
@@ -213,6 +235,13 @@ class ExecutionNode(Node):
     def publish(self):
         if self.run:
             self.status_pub.publish(String(data=json.dumps(self.run)))
+            # /mission/state is published only while a tree ticks; without a
+            # terminal value the GCS keeps the last stage (controls locked)
+            # and arena dimensions are refused until reconnect.
+            final = {'Completed': 'COMPLETED', 'Failed': 'FAILED'}.get(self.run['state'])
+            if final and self.last_state['value'] not in {'', 'IDLE', 'WAITING', 'COMPLETED', 'FAILED'}:
+                self.last_state['value'] = final
+                self.state_pub.publish(String(data=final))
             if self.pending_stop_id and self.run['state'] in TERMINAL:
                 self.receipt(self.pending_stop_id,self.run['state'],self.run.get('reason',''))
                 self.pending_stop_id = None
@@ -231,6 +260,9 @@ class ExecutionNode(Node):
         self.mav.enable_avoidance(False)
         self.intent_enable.publish(Bool(data=False))
         self.mav.mission_started = False
+        # The operator's target is for this run only. Kept, the next run's
+        # ScanStartQR succeeded at once on the old target and skipped the QR.
+        self.mav.target_override = ""
         if self.tree:
             self.tree.root.stop(S.INVALID)
         self.tree = None
@@ -285,12 +317,19 @@ class ExecutionNode(Node):
                 raise ValueError('live FCU connection required')
             if task == 'mechanism' and self.mav.state.armed:
                 raise ValueError('mechanism bench execution requires disarm')
+            # The avoidance tasks never move the camera, so they do not wait on
+            # its (still unqualified) actuator feedback.
             required = {'mission': ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
-                        'mechanism': ['winch_actuator'], 'qr': ['camera','clock'], 'slam': ['lidar','clock']}.get(task,
+                        'mechanism': ['winch_actuator'], 'qr': ['camera','clock'], 'slam': ['lidar','clock'],
+                        'avoidance_manual': ['identity','camera','lidar','clock'],
+                        'avoidance_route': ['identity','camera','lidar','clock']}.get(task,
                         ['identity','camera','lidar','clock','camera_actuator'] + (['winch_actuator'] if task.startswith('delivery_') else []))
-            if self.device_seen is None or now-self.device_seen > 1 or (
-                                any(self.devices.get(k,{}).get('ok') is not True for k in required)):
+            if self.device_seen is None or now-self.device_seen > 1:
                 raise ValueError('required devices or measured actuator feedback are unavailable')
+            missing = [k for k in required if self.devices.get(k,{}).get('ok') is not True]
+            if missing:
+                raise ValueError('required devices or measured actuator feedback are unavailable: ' + ', '.join(
+                    f"{k} ({self.devices.get(k,{}).get('reason') or 'not ok'})" for k in missing))
             if task == 'avoidance_manual':
                 validate_rc(self.rc_config)
                 if self.rc_seen is None or now-self.rc_seen > .5:

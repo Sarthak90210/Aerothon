@@ -15,6 +15,7 @@ Phase 0 fail-closed rails live here:
 
 import json
 import math
+import time
 from collections import deque
 from pathlib import Path
 from rclpy.node import Node
@@ -398,6 +399,14 @@ class Mav:
                 self._log_once(
                     f"Judges' points read as the delivery zone; safety fence "
                     f"of {len(pts)} vertices round it and take-off")
+        if pts is not None:
+            # polygon_to_local is about HOME; mav.pos() is about the EKF
+            # origin. On hardware these differ (origin at first GPS fix, home
+            # at arming), so move the fence into the frame it is checked in.
+            hx, hy = self.home_local_xy()
+            pts = [(x + hx, y + hy) for x, y in pts]
+            if self.judges_zone_local is not None:
+                self.judges_zone_local = [(x + hx, y + hy) for x, y in self.judges_zone_local]
         self.geofence_local = pts
         self.geofence_reason = why or "geofence polygon resolved in local ENU"
         if pts is not None:
@@ -420,6 +429,10 @@ class Mav:
         zone, why = boundary_to_local_zone(
             self.delivery_zone_global,
             float(self.home.geo.latitude), float(self.home.geo.longitude))
+        if zone is not None:
+            # About home -> about the EKF origin (see _resolve_geofence).
+            hx, hy = self.home_local_xy()
+            zone = (zone[0] + hx, zone[1] + hx, zone[2] + hy, zone[3] + hy) + tuple(zone[4:])
         self.delivery_zone_local = zone
         self.delivery_zone_reason = why or "four-corner boundary resolved in local ENU"
         if zone is not None:
@@ -721,6 +734,8 @@ class Mav:
 
     def _on_abort(self, m):
         self.abort_requested = m.data
+        if m.data:
+            self._abort_t = time.monotonic()
 
     def _on_start(self, m):
         if m.data and not self.mission_started:
@@ -732,6 +747,11 @@ class Mav:
             # into a new mission would make the watchdog swallow a genuine
             # external disarm, so every start begins with a clean slate.
             self._expect_disarm = False
+            # An Abort pressed while idle (or during a passive task, which
+            # runs no tree) must not fail the next flight at its first tick.
+            # One racing this start (under a second old) still stands.
+            if time.monotonic() - getattr(self, '_abort_t', 0.0) > 1.0:
+                self.abort_requested = False
             self.abort_reason = ""
             self.abort_latched = False
             self.mission_failed = False
@@ -794,6 +814,12 @@ class Mav:
         if m.mode != prev.mode and m.mode in _TERMINAL_MODES:
             if not self._mode_was_ours(m.mode):
                 self._request_reset(f"external mode change to {m.mode}")
+        # A pilot taking over in LOITER/ALT_HOLD/POSHOLD (or the FC entering
+        # SMART_RTL/BRAKE) is an intervention too: the tree must stop, or a
+        # later stage failure commands RTL over the pilot. GUIDED is ours.
+        elif (m.armed and m.mode != prev.mode and m.mode != "GUIDED"
+              and not self._mode_was_ours(m.mode)):
+            self._request_reset(f"external mode change to {m.mode}")
 
     # ------------------------------------------------------------------ #
     # attitude
@@ -864,6 +890,7 @@ class Mav:
         self._reset_requested = False
         self._reset_reason = ""
         self.mission_started = False
+        self.target_override = ""      # one run only (see release_control)
         self.abort_requested = False
         self.abort_latched = False
         self.mission_failed = False

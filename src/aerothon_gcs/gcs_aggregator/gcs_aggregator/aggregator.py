@@ -53,6 +53,17 @@ def _euler_deg(q):
     yaw = math.atan2(siny, cosy)
     return math.degrees(roll), math.degrees(pitch), (math.degrees(yaw) + 360) % 360
 
+def _finite_json(value):
+    """value with every non-finite float replaced by None, recursively."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: _finite_json(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_finite_json(v) for v in value]
+    return value
+
+
 def _finite_number(value, nonnegative=False):
     if not isinstance(value, Real) or not math.isfinite(value):
         return None
@@ -113,7 +124,7 @@ class Aggregator(Node):
         q = 10
         qos_sensor = qos_profile_sensor_data
         self.declare_parameter("image_topic", "/image_raw")
-        self.create_subscription(Image, self.get_parameter("image_topic").value, self._on_image, qos_sensor)
+        self.create_subscription(Image, self.get_parameter("image_topic").value, self._on_image, qos_sensor, raw=True)
         self.create_subscription(State, "/mavros/state", self._on_state, qos_sensor)
         self.create_subscription(Vibration, "/mavros/vibration/raw/vibration", self._on_vibration, qos_sensor)
         self.create_subscription(MagneticField, "/mavros/imu/mag", self._on_magnetic, qos_sensor)
@@ -168,6 +179,9 @@ class Aggregator(Node):
         self.create_subscription(String, '/devices/status', self._on_devices, q)
         self.pub_start = self.create_publisher(Bool, "/mission/start", q)
         self.pub_target = self.create_publisher(String, "/mission/target", q)
+        # The mission reads the operator's target here; /mission/target is
+        # its own output to perception and is cleared at every start.
+        self.pub_target_override = self.create_publisher(String, "/mission/target_override", q)
         self.pub_winch = self.create_publisher(String, "/winch/cmd", q)
         self.pub_gimbal_pitch = self.create_publisher(Float64, "/gimbal/cmd_pitch", q)
         zone_qos = QoSProfile(depth=1, history=QoSHistoryPolicy.KEEP_LAST,
@@ -508,12 +522,12 @@ class Aggregator(Node):
         self._mark("state")
         self.state["safety"]["fcu_connected"] = bool(m.connected)
         if m.armed and self._arm_t is None:
-            self._arm_t = time.time()
+            self._arm_t = time.monotonic()
         elif not m.armed:
             self._arm_t = None
         self.state["mission"]["armed"] = m.armed
         self.state["mission"]["mode"] = m.mode
-        self.state["mission"]["elapsed"] = round(time.time() - self._arm_t, 1) if self._arm_t else 0.0
+        self.state["mission"]["elapsed"] = round(time.monotonic() - self._arm_t, 1) if self._arm_t else 0.0
 
     def _on_batt(self, m):
         self._mark("power")
@@ -607,9 +621,17 @@ class Aggregator(Node):
             r = m.ranges[i]
             out.append(round(r, 2) if (math.isfinite(r) and m.range_min < r < m.range_max) else None)
         self.state["scan"]["ranges"] = out
+        # Body frame (scan_mount): bearing of out[i] = angle_min + i*angle_step,
+        # CCW from the nose. The SLAM tab draws it before any map exists.
+        self.state["scan"]["angle_min"] = round(float(m.angle_min), 4)
+        self.state["scan"]["angle_step"] = round(float(m.angle_increment) * step, 5)
 
     def _on_image(self, m):
-        self._sensor_metrics["camera"].observe(m.header)
+        # Subscribed raw: only the stamp is needed, not the pixels.
+        if isinstance(m, (bytes, bytearray, memoryview)):
+            self._sensor_metrics["camera"].observe_raw(m)
+        else:
+            self._sensor_metrics["camera"].observe(m.header)
 
     def _on_gps(self, m):
         self._mark("gps")
@@ -711,7 +733,7 @@ class Aggregator(Node):
         """Forward the REAL slam_toolbox occupancy grid (throttled + downsampled)."""
         if not self._ws_clients:
             return                  # nobody to forward it to
-        now = time.time()
+        now = time.monotonic()
         if now - self._last_map < 1.0:
             return
         self._last_map = now
@@ -730,22 +752,46 @@ class Aggregator(Node):
 
     # ---- outbound ---- #
     def _env(self, kind, data):
-        return json.dumps({"v": SCHEMA_VERSION, "kind": kind, "t": time.time(), "data": data})
+        # Browsers' JSON.parse rejects Infinity/NaN, so one non-finite value
+        # (front_m is inf with nothing ahead, normal outdoors) dropped every
+        # telemetry frame and the GCS read "stale". Non-finite -> null.
+        return json.dumps({"v": SCHEMA_VERSION, "kind": kind, "t": time.time(),
+                           "data": _finite_json(data)}, allow_nan=False)
+
+    # An exception in a callback ends rclpy.spin; the launch does not respawn
+    # the aggregator, and the web host then refuses even Abort/Land/RTL as
+    # stale. Runtime messages are parsed defensively and a bad one dropped.
+    def _runtime_json(self, msg):
+        try:
+            data = json.loads(msg.data)
+        except (ValueError, TypeError):
+            self.get_logger().warning('dropped malformed runtime message')
+            return None
+        return data if isinstance(data, dict) else None
 
     def _on_execution(self, msg):
-        data = json.loads(msg.data)
+        data = self._runtime_json(msg)
+        if data is None:
+            return
         self.state['execution'] = data
         self._broadcast(self._env('execution', data))
 
     def _on_receipt(self, msg):
-        self._broadcast(self._env('receipt', json.loads(msg.data)))
+        data = self._runtime_json(msg)
+        if data is not None:
+            self._broadcast(self._env('receipt', data))
 
     def _on_runtime_health(self, msg):
+        data = self._runtime_json(msg)
+        if data is None:
+            return
         self._runtime_seen = time.monotonic()
-        self.state['runtime_health'] = json.loads(msg.data)
+        self.state['runtime_health'] = data
 
     def _on_devices(self, msg):
-        self._device_status = (json.loads(msg.data), time.monotonic())
+        data = self._runtime_json(msg)
+        if data is not None:
+            self._device_status = (data, time.monotonic())
 
     def _publish_snapshot(self):
         if not self._ws_clients:
@@ -773,7 +819,8 @@ class Aggregator(Node):
 
     async def _bcast(self, msg):
         dead = set()
-        for ws in self._ws_clients:
+        # A copy: a client can disconnect during an await below.
+        for ws in list(self._ws_clients):
             try:
                 await ws.send(msg)
             except Exception:
@@ -963,7 +1010,9 @@ class Aggregator(Node):
                 del presets[name]
                 self._write_presets(presets)
             elif cmd == "set_target":
-                self.pub_target.publish(String(data=args.get("target", "")))
+                target = String(data=args.get("target", ""))
+                self.pub_target.publish(target)
+                self.pub_target_override.publish(target)
             elif cmd == "set_geofence":
                 if self.state["mission"]["armed"]:
                     return "rejected", "arena fence can only change while disarmed"
@@ -1017,7 +1066,7 @@ class Aggregator(Node):
             raw = self._fresh_raw()
             if raw is None:
                 return "rejected", ("no fresh raw lidar scan (/scan_raw); is the "
-                                    "LD06 driver running on the aircraft?")
+                                    "lidar driver running on the aircraft?")
             near = lidar_calibration.nearest_bearing(raw)
             if near is None:
                 return "rejected", ("no return beyond 0.3 m: the box is too close "

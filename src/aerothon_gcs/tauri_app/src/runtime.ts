@@ -6,7 +6,7 @@ export interface ConnectionProfile {
   camera_device:string; lidar_port:string; lidar_yaw_deg:number; lidar_mirrored:boolean;
   camera_hfov:number; marker_m:number; rc_config:Record<string,unknown>; slam:boolean;
   hardware_reviewed:boolean; delivery_calibration:string;
-  vehicle?:'simulation'|'drone'; winch_backend?:'mavlink'|'gpio';
+  vehicle?:'simulation'|'drone'; winch_backend?:'mavlink'|'gpio'; gcs_host?:string;
 }
 export const vehicleLabel = (p?: ConnectionProfile | null) =>
   !p ? 'No vehicle selected'
@@ -16,7 +16,10 @@ export interface HostState {profiles:ConnectionProfile[]; profile_id:string|null
 export class ApiError extends Error { status:number; constructor(status:number, message:string) { super(message); this.status=status; } }
 export async function api(path:string, data?:unknown):Promise<any> {
   const r=await fetch(path, data === undefined ? undefined : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  const body=await r.json(); if(!r.ok) throw new ApiError(r.status, body.error || `Request failed (${r.status})`); return body;
+  // A proxy or crash can answer with plain text; show it, not a JSON parse error.
+  const text=await r.text(); let body:any;
+  try { body=text ? JSON.parse(text) : {}; } catch { body={error:text.slice(0,300)}; }
+  if(!r.ok) throw new ApiError(r.status, body.error || `Request failed (${r.status})`); return body;
 }
 
 export function commandId(provider: {

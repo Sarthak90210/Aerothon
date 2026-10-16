@@ -39,6 +39,7 @@ def test_capture_gap_cannot_reuse_old_settling_confirmations():
 def test_persistent_capture_gap_remains_fatal_without_speed_restore():
     mav,leaf=actor();leaf._phase='BRAKE';leaf._brake_hold=mav.xyz;leaf._brake_yaw=0.
     mav.t=1.35;assert leaf.update() is RUNNING
-    mav.t=1.66;assert leaf.update() is FAILURE
+    mav.t=1.66;assert leaf.update() is RUNNING     # within pause_s (0.6 s)
+    mav.t=1.96;assert leaf.update() is FAILURE
     assert mav.commands[-1]==mav.xyz and not mav.speed_requests
     assert 'capture times required' in mav.abort_reason

@@ -185,7 +185,11 @@ class CameraCtrl(Node):
         else:
             try:
                 deg = float(target)
-                name = f"{deg:.1f}deg"
+                # The GCS camera buttons send degrees; an angle that is a
+                # named pose must carry that name or the detector gates
+                # (NADIR/ALIGN/FORWARD) never open.
+                name = next((k for k, v in NAMED_POSES_DEG.items()
+                             if abs(v - deg) < 1e-6), f"{deg:.1f}deg")
             except ValueError:
                 self.get_logger().warning(
                     f"unknown camera pose '{target}'; "
@@ -207,6 +211,9 @@ class CameraCtrl(Node):
         self._in_tolerance_count = 0
         self._in_tolerance_since = None
         self._last_command_t = None
+        # Timed readback starts only once the FC has accepted THIS target.
+        self._cmd_gen = getattr(self, '_cmd_gen', 0) + 1
+        self._accepted_t = None
         self.get_logger().info(f"camera pose -> {name} ({deg:.1f} deg)")
         self._send()
 
@@ -214,21 +221,45 @@ class CameraCtrl(Node):
         if self.requested_rad is None:
             return
         if self.backend == "mavlink":
-            self._send_mavlink()
+            if not self._send_mavlink():
+                return          # not sent: try again next tick, not in 1 s
         else:
             self.pub_cmd.publish(Float64(data=float(self.requested_rad)))
         self._last_command_t = self._now()
 
     def _send_mavlink(self):
+        """True when a command went out. Its reply is checked: with timed
+        readback, a command lost before MAVROS was ready or rejected by the FC
+        used to be reported settled 1 s later while the camera never moved."""
         if self.cli_cmd is None or not self.cli_cmd.service_is_ready():
-            return
+            return False
         req = CommandLong.Request()
         req.command = MAV_CMD_DO_MOUNT_CONTROL
         req.param1 = float(math.degrees(self.requested_rad))   # pitch, degrees
         req.param2 = 0.0                                       # roll
         req.param3 = 0.0                                       # yaw
         req.param7 = float(MAV_MOUNT_MODE_MAVLINK_TARGETING)
-        self.cli_cmd.call_async(req)
+        gen = getattr(self, '_cmd_gen', 0)
+        future = self.cli_cmd.call_async(req)
+        if future is not None and hasattr(future, 'add_done_callback'):
+            future.add_done_callback(lambda f, gen=gen: self._on_command_reply(f, gen))
+        return True
+
+    def _on_command_reply(self, future, gen):
+        if gen != getattr(self, '_cmd_gen', 0):
+            return              # a reply about a superseded target
+        try:
+            reply = future.result()
+        except Exception as exc:  # noqa: BLE001
+            self.get_logger().warning(f"camera mount command failed: {exc}")
+            return
+        if reply is not None and reply.success and int(reply.result) == 0:
+            if getattr(self, '_accepted_t', None) is None:
+                self._accepted_t = self._now()
+        else:
+            self.get_logger().warning(
+                f"camera mount command not accepted (result "
+                f"{getattr(reply, 'result', None)}); retrying")
 
     # ------------------------------------------------------------------ #
     # read-back
@@ -263,7 +294,8 @@ class CameraCtrl(Node):
         there, at the old one until then."""
         if self.requested_rad is None or self._target_t is None:
             return
-        late = self._now() - self._target_t >= float(
+        accepted = getattr(self, '_accepted_t', None)
+        late = accepted is not None and self._now() - accepted >= float(
             self.get_parameter("servo_settle_s").value)
         self._observe(self.requested_rad if late else self._prev_rad)
 

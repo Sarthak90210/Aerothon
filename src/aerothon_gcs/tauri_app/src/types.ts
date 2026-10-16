@@ -128,7 +128,8 @@ export interface Telemetry {
     applied: { yaw_deg: number; mirrored: boolean; source: string;
                reason: string } | null;
   };
-  scan?: { yaw_deg: number; ranges: (number | null)[] };
+  scan?: { yaw_deg: number; ranges: (number | null)[];
+           angle_min?: number; angle_step?: number };
   scans?: ScanRow[];
   gimbal?: { pitch_deg: number };
 }

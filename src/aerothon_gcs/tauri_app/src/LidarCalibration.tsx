@@ -89,7 +89,7 @@ export default function LidarCalibration({
         <div className="hd">
           Lidar calibration
           <span className={`tag ${live ? "ok" : ""}`}>
-            {live ? "raw scan live" : "no raw scan — LD06 driver not running"}
+            {live ? "raw scan live" : "no raw scan — lidar driver not running"}
           </span>
           <button className="dims-close" onClick={onClose} aria-label="Close">
             ✕

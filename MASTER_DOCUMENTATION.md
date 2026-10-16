@@ -195,6 +195,159 @@ campaign and all physical qualification remain open, and the Pi (last
 addresses .100/.101) was unreachable on 15 October, so the new bundle is not
 deployed.
 
+### 16 October 2026: real-drone bring-up and real-path audit
+
+The deployed Pi (props-off bench, FC on TELEM3) showed no lidar in the SLAM
+tab. The fitted lidar is an RPLIDAR C1, not the LD06 the launch started; the
+C1 only spins after its driver's start command (section 5). Three read-only
+audits then traced the real-aircraft path (GCS and web host, flight logic,
+sensors and actuators) for defects that Gazebo hides. Fixed, each with a
+regression test (`sim/test_real_path_wiring.py`,
+`sim/test_mav_router_broadcast.py`, `tests/test_web_robustness.py` and
+additions to the camera, winch, GPIO-winch and vertical-motion tests):
+
+- Sensors and GCS: readiness heard `/scan` RELIABLE against a BEST_EFFORT
+  publisher (lidar rate 0 Hz for ever); QR read `/camera/camera_info` while
+  usb_cam publishes `/camera_info`; images carried an undefined frame; one
+  non-finite telemetry value (`front_m` inf with nothing ahead) made the
+  browser reject every frame; the SLAM tab now shows the live scan and why
+  no map exists; devices plugged in after boot reach the container.
+- Web host: the aggregator listener could die silently (all commands then
+  refused as stale); a Start the runtime refused wedged later Starts; a
+  corrupt `profiles.json` crash-looped the GCS; one log handle leaked per
+  Connect; non-JSON errors; the router supervisor relaunched a dying router
+  every 0.5 s. The web-host tests had been skipped wherever pytest-asyncio
+  was missing; `tests/conftest.py` runs them.
+- MAVLink router: FC MAVLink is also broadcast on each operator LAN at UDP
+  14550 (section 6), so Mission Planner in UDP mode needs no laptop IP.
+- Flight logic: arming retried for ever (an aircraft could arm itself once
+  a pre-arm condition cleared) -- now 20 s then FAILED; a pilot switch to
+  LOITER/ALT_HOLD/POSHOLD was not an intervention, so a later failure could
+  command RTL over the pilot; Takeoff compared height above the EKF origin
+  with a target above home and had no timeout; organiser fence, zone and
+  route points were converted about home but checked about the EKF origin
+  (they differ on hardware), and the uploaded FC fence is converted back;
+  Abort while idle failed the next flight; the operator target persisted
+  into the next run and never reached the mission (`/mission/target_override`);
+  `/mission/state` kept the last stage after a run; avoidance tasks waited on
+  the camera actuator they never use; the mechanism task hung if winch
+  status stopped.
+- Actuators: camera tilt reported settled with timed read-back although the
+  FC never accepted (or never received) the command; camera buttons sent
+  degrees that no detector gate recognised; the MAVLink winch estimated
+  0.30 m/s while ArduPilot's length control reels at `WNCH_RATE_MAX` (1.0),
+  now 0.30 on both sides (`fc_rate_max_mps`, `aerothon_hardware.parm`), and
+  counts only after an accepted `DO_WINCH`; the GPIO encoder lost counts when
+  lgpio delivered edges in batches.
+- Avoidance: one vertical-motion capture gap longer than `stale_scan_s`
+  latched a fault that also made `_velocity_fresh()` false for the rest of
+  the traversal, freezing the aircraft in a corridor until the battery
+  failed. Gaps up to 3x `stale_scan_s` are now bridged with the FCU
+  velocities either side (no barometer trust); longer gaps still latch.
+
+Evidence on this source (uncommitted worktree on `9e4cee6`; diff and hash in
+`logs/e2e_final_20261016/worktree.*`): reduced offline 2,062 passed, 8
+skipped (`logs/reduced_c1_20261016e.log`, ledger
+`logs/offline_reduced_scope_c1_20261016e.json`); native 9 passed with
+pymavlink; frontend 25 passed, typecheck and build. Headless
+navigation-only campaign, arena through each world's GCS preset,
+`logs/e2e_final_20261016/`: calm 23/24 across all eight clarified worlds
+(corridor 0.717-0.786 m, red at least 3.36 m, 609-687 s); field 10/12 on the
+h030 worlds (two h030_ground corridor clearances 0.617 and 0.687 m). The calm
+failure is GateAdvance failing closed ("scalar speed capture differs from
+vector history") under CPU load. A same-batch A/B on h115_both
+(`logs/ab_20261016/`) gave identical results for `9e4cee6` and this source
+before the gap fix (both froze on seed 5); with the fix the frozen seeds pass
+(`logs/gapfix_20261016/`). Headless runs omit delivery (no motor model), so
+delivery is still qualified only by the rendered runs above.
+
+Later on 16 October, approved by the user: gate braking no longer aborts the
+mission on the first late or skewed FCU velocity capture. A braking gap up to
+`bridge_s` (3x `stale_s`, 0.9 s) is integrated between the captures either
+side; a capture stamped ahead of the node's clock (MAVROS timesync, `/clock`
+lag) is a transient; a transient fault holds the last braking anchor for up
+to `pause_s` (2x `stale_s`, 0.6 s), as does the stage-level capture pause;
+invalid data, a gap beyond 0.9 s, or a fault outlasting the pause still fail
+closed. Stream requests (`stream_rate_keeper`, `scripts/set_stream_rates.py`)
+were cut from about 7.2 to 4.2 kB/s of the 11.5 kB/s TELEM3 link: ATTITUDE
+and LOCAL_POSITION_NED 25 Hz, GLOBAL_POSITION_INT 5, GPS_RAW_INT 2, VFR_HUD 4,
+SYSTEM_TIME 2, RAW_IMU 2; SERVO_OUTPUT_RAW stays 20 Hz (delivery
+calibration). Headless runs have no MAVLink link, so the rate cut is verified
+only on SITL or the aircraft. Mission Planner on the same serial link can
+re-raise streams through its own rate settings; keep its telemetry rates low.
+The lidar and camera drivers respawn. `camera_exposure` applies the
+`camera_exposure` launch argument through the current UVC control names
+(`auto_exposure`/`exposure_time_absolute`; usb_cam 0.8's `exposure_auto`/
+`exposure` are rejected). The default 0 keeps aperture-priority auto
+exposure: a forced 10 ms manual exposure with gain 0 made the Brio 100 feed
+very dark on 16 October. Set a positive value only after measuring it.
+
+The campaign for this change (`logs/e2e_gatepause_20261016/`, same worlds,
+seeds and presets as `e2e_final`) does not qualify it either way. Calm 15/24
+and field 7/12; nine runs ended "ReturnCorridor: corridor navigator reported
+STUCK" after the velocity controller found no gap. The old GateAdvance abort
+did not recur. The onboard nodes were CPU-starved: 258 lidar receipt gaps
+over 0.3 s against 4 in `e2e_final`, with receipt lag p99 up to 0.20 s against
+0.01-0.02 s, although the world kept 2x sim time. Velocity controller and
+corridor source were byte-identical between the two campaigns, and the
+change cannot delay scan delivery. The same-batch A/B
+(`logs/ab_gatepause_20261016/`, receipt and `ab_summary.*`) flew A
+(`9e4cee6` plus the `e2e_final` diff) beside B (this source as deployed).
+Starvation was light and equal: lidar gaps over 0.3 s were 30 (A) and 38 (B),
+with receipt lag p99 at most 0.14 s. B passed 29/30 and A 25/30: calm 24/24
+against 22/24, and field h030_both/h030_ground 5/6 against 3/6. Every seed A
+passed, B passed too. Fisher p is 0.195, so this shows no regression, not a
+demonstrated gain: neither arm hit a GateAdvance abort. "ReturnCorridor:
+corridor navigator reported STUCK" occurred three times in A (once with no
+receipt gaps) and once in B. It predates this change and remains an open
+corridor issue. Laptop standby interrupted field h030_suspended (kept under
+`interrupted_standby/`), and field h030L5_both was not flown; both remain to
+fly on AC power. The reduced suite passed 2,070 with 8 skipped. The frontend step failed only
+because the non-login WSL shell had no `node`; run with the nvm Node, it
+passed (25 tests, typecheck, build; `frontend_build.log`). The aggregator
+now takes camera frames serialized (`raw=True`) and reads only the header
+stamp.
+
+Still open from the audits: the camera-actuator gate stays closed on the
+aircraft until tilt feedback is qualified (all flight tasks except
+avoidance are refused); `stream_rate_keeper` asks for about 60% of the
+115200 TELEM3 link; the C1 mount yaw/mirror is unmeasured; the fitted
+camera is a Logitech Brio 100, not the C270 the field of view
+(`camera_hfov` 0.8519 rad) and exposure were set for, so measure both; Pi 5
+supply (below); offline
+map tiles cover only the simulation site; the EKF-datum display and Graphs
+sensor rates are empty on the aircraft; SLAM needs FCU local position (GPS
+fix) for its odometry.
+
+Pi 5 power, measured 16 October (synced logs in
+`/home/pi5/.local/state/aerothon/power_log_*.csv`, `kmsg_*.log`,
+`loadtest_*.csv`): every disappearance that day was a cold power-on
+(`power_reset` 0). With the runtime connected the supply fell from 4.97 V
+to 4.69 V in 19 s, the kernel logged `Undervoltage detected!` and the Pi lost
+power. A guarded step test: idle 4.98 V, C1 spinning 4.995 V (the lidar is
+not the load), two CPU cores 4.76 V within 12 s, still falling after the load
+stopped, then a loss at idle. The supply negotiated only 3000 mA on both the
+original and the replacement supply. The CPU itself is stock (no
+over_voltage, 2.4 GHz, ondemand); `usb_max_current_enable=1` is the one
+non-default power setting. Use the official 27 W (5.1 V 5 A) USB-C supply
+with its own cable, or a dedicated 5.1-5.2 V 5 A BEC on short heavy wires
+(then `PSU_MAX_CURRENT=5000` in the EEPROM), before any further runtime or
+flight work. The lidar and camera drivers now respawn, since a driver that
+exited (device absent at Connect, USB reset after a brown-out) left the C1
+still until the next Connect.
+
+From 12:09 to about 19:20 on 16 October the C1 head answered nothing. sllidar
+logged `SL_RESULT_OPERATION_TIMEOUT` on every respawn, across three USB
+ports. With the driver paused, a raw probe got zero bytes at 460800, 115200
+and 1,000,000 baud and after RESET, while the CP2102N adapter enumerated
+and accepted writes. After the user reconnected it and the Pi then
+cold-restarted, GET_INFO returned model 0x41, firmware 1.02, hardware 18, the
+same serial, and GET_HEALTH status 0. So a silent C1 behind a healthy adapter
+is a wedged head or its lead, not a driver fault: reseat the adapter-to-lidar
+cable or power-cycle the lidar. The kernel's `cp210x ... failed set request
+0x12 status: -110` (PURGE at port close) also appears while the lidar
+answers normally; it is not a fault indicator.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch
@@ -622,9 +775,13 @@ sudo apt install -y ros-jazzy-ros-base ros-dev-tools \
 ```
 
 Install MAVROS GeographicLib datasets with its packaged installer and verify
-geoid data. Add reviewed upstream `ldlidar_stl_ros2` source to the workspace
-and record its revision; that external driver is not in the application ZIP.
-Match the driver to the actual fitted lidar.
+geoid data. Add reviewed upstream lidar driver source to the workspace and
+record its revision; external drivers are not in the application ZIP. Match
+the driver to the actual fitted lidar. The fitted unit is a Slamtec RPLIDAR C1
+(CP2102N USB, 460800 baud): `sllidar_ros2`, selected by `lidar_model:=c1`
+(the default). Unlike the LD06, the C1 spins only after its driver sends the
+start-scan command, so a stopped C1 indicates a wrong or absent driver, not
+missing power. `lidar_model:=ld06` keeps `ldlidar_stl_ros2`.
 
 The tested development environment uses websockets 10.4; its server startup
 API differs from recent major versions. Verify imports/API before deployment.
@@ -660,9 +817,12 @@ Build that as `aerothon-dependencies:20261014`, then build
 `scripts/pi_runtime/Dockerfile` as `aerothon-runtime:20261014`. The final stage
 uses the completed dependency image directly and clears installation proxy settings.
 Build dependencies inside that environment; Node, Rust, Gazebo and SITL stay
-off the Pi. The external LD06 driver is pinned to upstream revision
-`bf668a89baf722a787dadc442860dcbf33a82f5a`, with its own inventory.
-Apply `scripts/pi_runtime/ldlidar-pthread.patch` in the driver directory before
+off the Pi. The external C1 driver is `Slamtec/sllidar_ros2` at revision
+`34300099fadfc772965962dec837bf436706188f` in
+`/home/pi5/aerothon_ws/src/sllidar_ros2` (16 October 2026: `/scan_raw`
+10.0 Hz, 720 beams, health OK on the Pi). The alternative LD06 driver is pinned
+to upstream revision `bf668a89baf722a787dadc442860dcbf33a82f5a`, with its own inventory.
+Apply `scripts/pi_runtime/ldlidar-pthread.patch` in the LD06 driver directory before
 compiling. It enables the upstream's commented Linux pthread include, required
 by the destination compiler. It changes no mission or scan-processing decisions.
 
@@ -726,13 +886,22 @@ currently names the Pi debug UART `/dev/ttyAMA10` and its login console.
 In the documented topology the router owns the serial device:
 
 ```bash
-python3 scripts/mav_router.py --fcu-serial /dev/ttyAMA0 --fcu-baud 921600 \
-  --mavros-port 14555 --gcs-port 14550 \
-  --gcs-host <laptop-ip> --gcs-out-port 14550
+python3 scripts/mav_router.py --fcu-serial /dev/ttyAMA0 --fcu-baud 115200 \
+  --mavros-port 14555 --gcs-port 14550 --gcs-broadcast \
+  [--gcs-host <extra-laptop-ip> --gcs-out-port 14550]
 ```
 
 MAVROS uses `udp://127.0.0.1:14555@127.0.0.1:14556`. Direct serial MAVROS
 requires the router to release that device. Never share the physical UART.
+The profile router passes `--gcs-broadcast` unless the profile sets
+`gcs_broadcast: false`: FC MAVLink goes to each operator LAN's broadcast
+address on UDP 14550 (docker/virtual links excluded, refreshed every 10 s), so
+any Mission Planner in UDP mode receives it without an IP. The router drops
+its own broadcast echo before the UART and skips unicast to a listener the
+broadcast already reaches. Mission Planner UDPCl to `<pi-ip>:14550` also
+works. Every LAN host can then read telemetry and send commands, so keep
+the operator network isolated. The optional profile `gcs_host` (GCS
+Connections, "Extra Mission Planner IP") adds one unicast target.
 
 The user identified the FC as CUAV X7+ and confirmed ArduPilot **SERVO9** for
 camera tilt. Confirm its physical output connector; this does not mean AUX9.

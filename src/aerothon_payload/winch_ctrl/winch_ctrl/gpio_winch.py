@@ -51,10 +51,13 @@ class LgpioDriver:
         self._callbacks = []
 
     def on_edge(self, handler):
+        # lgpio queues edge reports and hands them to Python in batches from a
+        # thread. Re-reading the pins in the callback sees the batch's FINAL
+        # state for every edge (counts lost); decode from each report's level.
         for pin in self.enc:
             self._callbacks.append(self.lg.callback(
                 self.h, pin, self.lg.BOTH_EDGES,
-                lambda chip, gpio, level, tick: handler()))
+                lambda chip, gpio, level, tick: handler(gpio, level)))
 
     def read_ab(self):
         a, b = (self.lg.gpio_read(self.h, pin) for pin in self.enc)
@@ -120,8 +123,17 @@ class EncoderWinch:
         driver.on_edge(self._edge)
 
     # -- encoder ------------------------------------------------------- #
-    def _edge(self):
-        ab = self.driver.read_ab()
+    def _edge(self, gpio=None, level=None):
+        enc = getattr(self.driver, "enc", None)
+        if gpio is not None and enc and level in (0, 1) and gpio in enc:
+            # A is the high bit, B the low bit (read_ab's layout).
+            shift = 1 if gpio == enc[0] else 0
+            with self._lock:
+                ab = (self._ab & ~(1 << shift)) | (int(level) << shift)
+        elif gpio is not None and level not in (0, 1):
+            return              # lgpio watchdog report (level 2): no edge
+        else:
+            ab = self.driver.read_ab()
         with self._lock:
             step = _QUADRATURE[(self._ab << 2) | ab]
             if step == 0 and ab != self._ab:

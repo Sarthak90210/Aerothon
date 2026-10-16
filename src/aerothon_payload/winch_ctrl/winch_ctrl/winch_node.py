@@ -53,6 +53,10 @@ class WinchNode(Node):
         p("hover_stable_samples", 5)
         p("publish_rate_hz", 5.0)
         p("stow_rate_mps", 0.45)
+        # backend:=mavlink -- the FC's WNCH_RATE_MAX, at which ArduPilot's
+        # relative-length control actually reels (it ignores the requested
+        # rate). Must equal the parameter loaded on the FC.
+        p("fc_rate_max_mps", 0.30)
         # HOW THE PAYLOAD LEAVES THE HOOK.
         #   gravity  the team's mechanism: a motor lowers a gravity-assisted
         #            hook that lets go by itself once the payload rests on the
@@ -245,7 +249,14 @@ class WinchNode(Node):
         if self.backend != "mavlink" or self.cli_cmd is None:
             return
         if not self.cli_cmd.service_is_ready():
+            # The node used to enter LOWERING anyway and grow a payout
+            # estimate while nothing moved.
+            if action in ("lower", "stow"):
+                self._set_fault(f"winch {action} not sent: MAVROS command service unavailable")
             return
+        self._mav_gen = getattr(self, "_mav_gen", 0) + 1
+        self._mav_accepted = False
+        gen = self._mav_gen
         req = CommandLong.Request()
         req.command = MAV_CMD_DO_WINCH
         req.param1 = 1.0                                   # instance
@@ -262,7 +273,27 @@ class WinchNode(Node):
             req.param4 = 0.0
         else:
             req.param2 = float(WINCH_RELAXED)
-        self.cli_cmd.call_async(req)
+        future = self.cli_cmd.call_async(req)
+        if future is not None and hasattr(future, "add_done_callback"):
+            future.add_done_callback(
+                lambda f, action=action, gen=gen: self._on_mav_reply(f, action, gen))
+
+    def _on_mav_reply(self, future, action, gen):
+        if gen != getattr(self, "_mav_gen", 0):
+            return              # superseded by a later command
+        try:
+            reply = future.result()
+        except Exception as exc:  # noqa: BLE001
+            reply, why = None, str(exc)
+        else:
+            why = f"result {getattr(reply, 'result', None)}"
+        if reply is not None and reply.success and int(reply.result) == 0:
+            self._mav_accepted = True
+            return
+        if action in ("lower", "stow"):
+            self._set_fault(f"flight controller refused DO_WINCH {action} ({why})")
+        else:
+            self.get_logger().warning(f"DO_WINCH {action} not accepted ({why})")
 
     # ------------------------------------------------------------------ #
     def at_ground(self):
@@ -355,16 +386,24 @@ class WinchNode(Node):
         if self.backend == "gpio":
             self._integrate_measured()
             return
+        lower_rate = float(self.get_parameter("payout_rate_mps").value)
+        stow_rate = float(self.get_parameter("stow_rate_mps").value)
+        if self.backend == "mavlink":
+            # ArduPilot's length control ignores DO_WINCH's rate and reels at
+            # WNCH_RATE_MAX, both ways; and nothing moves before the FC accepts.
+            if not getattr(self, "_mav_accepted", False):
+                return
+            lower_rate = stow_rate = float(self.get_parameter("fc_rate_max_mps").value)
         if self.state == "LOWERING":
             self.payout = min(
                 float(self.get_parameter("max_payout_m").value),
-                self.payout + float(self.get_parameter("payout_rate_mps").value) * dt)
+                self.payout + lower_rate * dt)
             if self.at_limit():
                 self.state = "AT_LIMIT"
         elif self.state == "STOWING":
             self.payout = max(
                 0.0,
-                self.payout - float(self.get_parameter("stow_rate_mps").value) * dt)
+                self.payout - stow_rate * dt)
             if self.payout <= 1e-3:
                 self.payout = 0.0
                 self.state = "RELEASED" if self.released else "IDLE"

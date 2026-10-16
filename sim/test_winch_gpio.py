@@ -56,6 +56,27 @@ class FakeBridge:
             self.handler()
 
 
+class BatchedBridge(FakeBridge):
+    """lgpio's real delivery: edges are queued and handed over in a batch,
+    each report carrying its pin and level, after the pins have moved on."""
+    enc = (17, 27)                      # A, B (BCM)
+
+    def turn(self, counts):
+        if self.jammed or not self.direction:
+            return
+        reports = []
+        for _ in range(counts):
+            before = GREY[self.phase % 4]
+            self.phase += self.direction * self.wired_sign
+            after = GREY[self.phase % 4]
+            changed = before ^ after
+            pin = self.enc[0] if changed & 0b10 else self.enc[1]
+            level = (after >> 1) & 1 if pin == self.enc[0] else after & 1
+            reports.append((pin, level))
+        for pin, level in reports:      # the pins already read the final state
+            self.handler(pin, level)
+
+
 class Clock:
     def __init__(self):
         self.t = 0.0
@@ -83,6 +104,20 @@ class EncoderWinchTests(unittest.TestCase):
         self.bridge.turn(1192)                         # one output revolution
         self.assertAlmostEqual(self.w.payout_m(), 2 * math.pi * 0.01, places=6)
         self.assertEqual(self.w.invalid_transitions, 0)
+
+    def test_batched_edge_reports_lose_no_counts(self):
+        """16 Oct audit: decoding by re-reading the pins saw a batch's final
+        state for every edge, so payout was under-measured and the line
+        overran max_payout_m."""
+        bridge = BatchedBridge()
+        w = winch(bridge, self.clock)
+        self.assertTrue(w.command("lower"))
+        for _ in range(10):
+            bridge.turn(119)                           # batches, not single edges
+        bridge.turn(2)
+        self.assertEqual(w.counts * w.lower_sign, 1192)
+        self.assertAlmostEqual(w.payout_m(), 2 * math.pi * 0.01, places=6)
+        self.assertEqual(w.invalid_transitions, 0)
 
     def test_stop_zeroes_the_drive(self):
         self.w.command("lower")

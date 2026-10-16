@@ -48,7 +48,8 @@ export default function Connections({ state, refresh }: { state: HostState | nul
         <label>FCU transport<select value={p.transport} onChange={e => change('transport', e.target.value)}>
           <option value="tcp">TCP</option><option value="udp">UDP</option><option value="serial">Local hardware UART</option>
         </select></label>
-        {p.transport === 'serial' ? <>{field('device', 'FCU device (router owns UART)')}{field('baud', 'Baud', 'number')}</> :
+        {p.transport === 'serial' ? <>{field('device', 'FCU device (router owns UART)')}{field('baud', 'Baud', 'number')}
+          {field('gcs_host', 'Extra Mission Planner IP (optional; the router already broadcasts to the LAN on UDP 14550)')}</> :
           <>{field('host', 'Laptop or router hostname / IP')}{field('port', 'FCU port', 'number')}{p.transport === 'udp' && field('bind_port', 'Pi UDP listen port', 'number')}</>}
         {field('system_id', 'Vehicle system ID', 'number')}{field('component_id', 'FCU component ID', 'number')}
         {vehicle === 'simulation' && field('gateway', 'Laptop sensor gateway (HTTP origin)')}
@@ -70,7 +71,9 @@ export default function Connections({ state, refresh }: { state: HostState | nul
     <div className="actions">
       <button disabled={busy || state?.runtime !== 'Stopped' || !state?.profiles.some(x => x.id === p.id)} onClick={() => void run('/api/connect', { profile_id: p.id })}>Connect vehicle</button>
       <button disabled={busy} onClick={() => void run('/api/check')}>Connection check</button>
-      <button disabled={busy || state?.runtime === 'Stopped' || !state?.can_disconnect} onClick={() => void run('/api/disconnect', {})}>Disconnect runtime</button>
+      {/* After a reboot the last profile stays selected with no runtime; Disconnect
+          releases it (the host still refuses while an armed session is unresolved). */}
+      <button disabled={busy || (state?.runtime === 'Stopped' && !state?.profile_id) || !state?.can_disconnect} onClick={() => void run('/api/disconnect', {})}>Disconnect runtime</button>
     </div>
     <p>Profile changes require a stopped runtime and confirmed disarm. Connect prepares the code and sensors; Start is the reviewed flight action. A gateway or vehicle identity change requires explicit reconnect.</p>
     {message && <p role="status">{message}</p>}

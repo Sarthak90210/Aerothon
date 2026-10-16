@@ -91,7 +91,10 @@ def test_stale_mid_crossing():
         mav._scan.header.stamp.sec = 1
         assert leaf.update() == RUNNING
         assert mav.commands[-1] == (16., -15., 2.)
-        mav.t = 2.31
+        mav.t = 2.31                      # past stale_s: still holding (pause_s 0.6)
+        assert leaf.update() == RUNNING
+        assert mav.commands[-1] == (16., -15., 2.)
+        mav.t = 2.61
         assert leaf.update() == FAILURE
         assert mav.commands[-1] == (16., -15., 2.)
         assert mav.commands[-1] != (20., -16., 2.)
@@ -105,7 +108,9 @@ def test_stale_pose():
         mav.t = 2.; mav.xyz = (999., 999., 2.)
         assert leaf.update() == RUNNING
         assert mav.commands[-1] == (19.9, -16., 2.)
-        mav.t = 2.31
+        mav.t = 2.31                      # past stale_s: still holding (pause_s 0.6)
+        assert leaf.update() == RUNNING
+        mav.t = 2.61
         assert leaf.update() == FAILURE
         assert mav.commands[-1] == (19.9, -16., 2.)
 

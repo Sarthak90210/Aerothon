@@ -43,7 +43,7 @@ class Host:
                         (json.dumps({'state': 'Outcome unknown', 'reason': 'web service restarted; inspect aircraft before starting again'}),))
         self.db.commit()
         self.profiles_path = self.state_dir / 'profiles.json'
-        self.profiles = json.loads(self.profiles_path.read_text()) if self.profiles_path.exists() else {}
+        self.profiles = self.read_profiles()
         self.controlled = False
         self.proc = None
         self.profile_id = None
@@ -98,6 +98,44 @@ class Host:
             print(f'runtime owner record unreadable ({exc}); kept as {aside.name}, no runtime adopted', flush=True)
             return None
 
+    def read_profiles(self):
+        """Saved connection profiles, each re-validated.
+
+        An empty or corrupt profiles.json (power cut mid-write) used to raise
+        here, and the container loop restarted the web host every 2 s: no
+        GCS. The unreadable file is kept aside; a profile that no longer
+        validates is dropped with a message instead of failing Connect."""
+        if not self.profiles_path.exists():
+            return {}
+        try:
+            raw = json.loads(self.profiles_path.read_text())
+            if not isinstance(raw, dict):
+                raise ValueError('profiles file is not an object')
+        except (OSError, ValueError) as exc:
+            aside = self.profiles_path.with_name(f'profiles.unreadable-{int(time.time())}.json')
+            try:
+                self.profiles_path.replace(aside)
+            except OSError:
+                pass
+            print(f'connection profiles unreadable ({exc}); kept as {aside.name}', flush=True)
+            return {}
+        profiles = {}
+        for key, value in raw.items():
+            try:
+                p = profile(value, require_gateway=False)
+                profiles[p['id']] = p
+            except (ValueError, KeyError, TypeError, AttributeError) as exc:
+                print(f'connection profile {key!r} skipped: {exc}', flush=True)
+        return profiles
+
+    def write_profiles(self):
+        tmp = self.profiles_path.with_suffix('.tmp')
+        with open(tmp, 'w') as f:
+            f.write(json.dumps(self.profiles, indent=2))
+            f.flush()
+            os.fsync(f.fileno())
+        tmp.replace(self.profiles_path)
+
     def write_owner(self, owner):
         # Written whole or not at all: a temporary file, synced, then renamed.
         tmp = self.owner_path.with_suffix('.tmp')
@@ -129,6 +167,10 @@ class Host:
             raise ValueError('confirm the secured props-off hardware setup before preparing its runtime')
         state = Path(os.environ.get('AEROTHON_DEVICE_STATE_DIR', Path.home()/'.aerothon'))
         state.mkdir(parents=True, exist_ok=True)
+        # Refuse before anything changes: the profile router acts on
+        # vehicle_connection.json, so a refused Connect must not rewrite it.
+        if p.get('delivery_calibration') and not (state/p['delivery_calibration']).is_file():
+            raise ValueError('selected delivery calibration is not installed on the Pi')
         current = state/'vehicle_connection.json'
         temporary = current.with_suffix('.tmp')
         temporary.write_text(json.dumps(p, indent=2))
@@ -157,7 +199,17 @@ class Host:
             if not calibration.is_file():
                 raise ValueError('selected delivery calibration is not installed on the Pi')
             env['AEROTHON_DELIVERY_CALIBRATION'] = str(calibration)
-        self.runlog = open(self.state_dir / 'runtime.log', 'ab', buffering=0)
+        # One handle per Connect leaked a file descriptor each time; and the
+        # log grew without bound. Keep the previous run as runtime.log.1.
+        if self.runlog:
+            self.runlog.close()
+        log = self.state_dir / 'runtime.log'
+        try:
+            if log.stat().st_size > 50 * 1024 * 1024:
+                log.replace(log.with_name('runtime.log.1'))
+        except OSError:
+            pass
+        self.runlog = open(log, 'ab', buffering=0)
         return await asyncio.create_subprocess_exec(*args, env=env, start_new_session=True,
                                                      stdout=self.runlog, stderr=self.runlog)
 
@@ -214,6 +266,14 @@ class Host:
                                 r = {'command_id': cid, 'state': 'Failed' if d.get('result') == 'rejected' else 'Accepted', 'reason': d.get('reason', '')}
                                 self.db.execute('UPDATE commands SET result=? WHERE id=?', (json.dumps(r), cid))
                                 self.db.commit()
+                            # A Start the aggregator refused never reaches the
+                            # execution service, so no status will release the
+                            # reservation; without this every later Start and
+                            # flight command was refused until reconnect.
+                            if d.get('result') == 'rejected' and cid and cid == self.start_reserved:
+                                self.start_reserved = None
+                                self.execution = {'command_id': cid, 'state': 'Failed',
+                                                  'reason': d.get('reason', '') or 'start refused by runtime'}
                         for client in list(self.clients):
                             try:
                                 await asyncio.wait_for(client.send_str(m.data), .1)
@@ -221,6 +281,11 @@ class Host:
                                 self.clients.discard(client)
             except (OSError, asyncio.TimeoutError, ValueError):
                 pass
+            except Exception as exc:  # noqa: BLE001
+                # aiohttp ClientErrors (aggregator restarting mid-handshake), a
+                # malformed envelope or a sqlite error used to end this task
+                # silently: no telemetry again, every command refused as stale.
+                print(f'aggregator link error ({type(exc).__name__}: {exc}); reconnecting', flush=True)
             finally:
                 self.internal_ws = None
                 if self.start_reserved:
@@ -309,6 +374,11 @@ async def errors(request, handler):
         return await handler(request)
     except (ValueError, KeyError, TypeError) as exc:
         return web.json_response({'error': str(exc)}, status=400)
+    except web.HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        # The UI parses JSON first; a plain-text 500 showed "Unexpected token".
+        return web.json_response({'error': f'{type(exc).__name__}: {exc}'}, status=500)
 
 
 def application(host):
@@ -327,9 +397,7 @@ def application(host):
             if getattr(host, 'standalone', False) and p['transport'] == 'serial':
                 raise ValueError('standalone GCS receives TCP/UDP from a router; it does not open the FCU serial port')
             host.profiles[p['id']] = p
-            tmp = host.profiles_path.with_suffix('.tmp')
-            tmp.write_text(json.dumps(host.profiles, indent=2))
-            tmp.replace(host.profiles_path)
+            host.write_profiles()
             return web.json_response(p)
 
     async def connect(request):
@@ -361,7 +429,10 @@ def application(host):
             if host.controlled and not host.disarmed():
                 raise ValueError('confirmed live disarm required; use Stop/return and land first')
             if not host.stopped():
-                os.killpg(host.proc.pid, signal.SIGINT)
+                try:
+                    os.killpg(host.proc.pid, signal.SIGINT)
+                except ProcessLookupError:
+                    pass  # it exited between the check and the signal
                 try:
                     await asyncio.wait_for(host.proc.wait(), 15)
                 except asyncio.TimeoutError:
@@ -445,7 +516,7 @@ def application(host):
                             or not body.startswith(b'\xff\xd8\xff') or not body.endswith(b'\xff\xd9')):
                         raise ValueError('map provider did not return JPEG imagery')
                 cached.parent.mkdir(parents=True, exist_ok=True)
-                tmp = cached.with_suffix('.tmp')
+                tmp = cached.with_suffix(f'.{os.getpid()}.{id(request)}.tmp')
                 tmp.write_bytes(body)
                 tmp.replace(cached)
                 return web.Response(body=body, content_type='image/jpeg',

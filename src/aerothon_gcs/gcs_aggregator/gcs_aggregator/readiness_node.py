@@ -135,8 +135,10 @@ class Readiness(Node):
                                  self._on_sys_status, qos_profile_sensor_data)
         self.create_subscription(RCIn, "/mavros/rc/in", self._on_rc,
                                  qos_profile_sensor_data)
+        # scan_mount publishes /scan best-effort; a reliable subscriber
+        # never receives it on the aircraft (lidar rate stuck at 0 Hz).
         self.create_subscription(LaserScan, "/scan",
-                                 self._on_lidar, 5)
+                                 self._on_lidar, qos_profile_sensor_data)
         self.create_subscription(String, "/percep/qr/detail",
                                  lambda m: self.detectors["qr"].touch(), 5)
         self.create_subscription(String, "/percep/banner/detail",

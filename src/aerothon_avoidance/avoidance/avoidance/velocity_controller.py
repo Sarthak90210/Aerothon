@@ -361,9 +361,16 @@ class VelocityController(Node):
             previous_t, previous_vz = self._alt_motion_previous
             if stamp > previous_t:
                 dt = stamp-previous_t
-                if dt > float(self._g('stale_scan_s')):
+                if dt > 3*float(self._g('stale_scan_s')):
                     self._alt_motion_fault = 'vertical motion capture gap'
                 elif not self._alt_motion_fault:
+                    # A gap up to 3x stale_scan_s is bridged by the two FCU
+                    # velocities either side of it (still no barometer
+                    # trust). Latching every gap also made _velocity_fresh()
+                    # false for the rest of the traversal: one telemetry
+                    # hiccup (CPU load in SITL; a busy 115200 TELEM link on the
+                    # aircraft) froze the aircraft in the corridor until the
+                    # battery failed (16 Oct campaign).
                     self._alt_motion_displacement += .5*dt*(previous_vz+vz)
                 self._alt_motion_previous = (stamp,vz)
         self._fcu_vz = vz

@@ -27,8 +27,10 @@ SERVO9_FUNCTION 7
 # ones: command NADIR and FORWARD from the GCS and check with a protractor
 # (MASTER_DOCUMENTATION.md, camera tilt calibration).
 
-# Winch: PWM-driven, no encoder; length is integrated from the commanded
-# rate, which winch_ctrl already assumes (payout_rate_mps).
+# Winch: PWM-driven, no encoder. ArduPilot's relative-length control reels
+# at WNCH_RATE_MAX whatever rate DO_WINCH asks for, so this must equal
+# winch_ctrl's fc_rate_max_mps (0.30): at 1.0 the line ran 3.3x faster than
+# the payout estimate and stow left line out.
 WNCH_TYPE 1
-WNCH_RATE_MAX 1.0
+WNCH_RATE_MAX 0.30
 SERVO10_FUNCTION 88

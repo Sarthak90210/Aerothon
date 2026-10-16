@@ -209,11 +209,29 @@ class RequireDeliveryZone(py_trees.behaviour.Behaviour):
 
 
 class SetModeArm(py_trees.behaviour.Behaviour):
+    # A refused arm (pre-arm check, safety switch) used to be retried every
+    # 2 s for ever: the run sat "Running", and when the condition cleared
+    # (someone pressed the safety switch) the aircraft armed and took off on
+    # its own. Give up instead and say why.
+    TIMEOUT_S = 20.0
+
     def __init__(self, mav):
-        super().__init__("SetModeArm"); self.mav = mav; self._t = 0
+        super().__init__("SetModeArm"); self.mav = mav; self._t = 0; self._t0 = None
+
+    def initialise(self):
+        self._t = 0
+        self._t0 = time.monotonic()
 
     def update(self):
         self._t += 1
+        if self._t0 is None:
+            self._t0 = time.monotonic()
+        if time.monotonic() - self._t0 > self.TIMEOUT_S:
+            reason = (f"SetModeArm: not {'armed' if self.mav.state.mode == 'GUIDED' else 'in GUIDED'} "
+                      f"within {self.TIMEOUT_S:.0f} s (FCU pre-arm checks, safety switch or RC?)")
+            self.mav.abort_reason = reason
+            self.feedback_message = reason
+            return py_trees.common.Status.FAILURE
         if self.mav.state.mode != "GUIDED":
             self.mav.set_mode("GUIDED"); return py_trees.common.Status.RUNNING
         if not self.mav.state.armed:
@@ -224,19 +242,38 @@ class SetModeArm(py_trees.behaviour.Behaviour):
 
 
 class Takeoff(py_trees.behaviour.Behaviour):
+    # ArduCopter's takeoff altitude is above HOME; the local z is above the
+    # EKF origin. On hardware they differ (origin at first GPS fix, home at
+    # arming, baro drift between), so compare against height above home.
+    # And bound it: an aircraft that never reaches the height must not hover
+    # in the takeoff stage for ever.
+    TIMEOUT_S = 45.0
+
     def __init__(self, mav, alt):
         super().__init__("Takeoff"); self.mav = mav; self.alt = alt; self._sent = False
+        self._t0 = None
 
     def initialise(self):
         self._sent = False
+        self._t0 = time.monotonic()
 
     def update(self):
+        if self._t0 is None:
+            self._t0 = time.monotonic()
         if not self._sent:
             self.mav.takeoff(self.alt); self._sent = True
-        if self.mav.alt() > self.alt - 0.5:
+        home_z = getattr(getattr(getattr(self.mav, "home", None), "position", None), "z", None)
+        home_z = float(home_z) if isinstance(home_z, (int, float)) else 0.0
+        if self.mav.alt() - home_z > self.alt - 0.5:
             # From here on, sinking to the ground is a fault, not a manoeuvre.
             self.mav.set_airborne_floor(max(1.0, self.alt * 0.4))
             return py_trees.common.Status.SUCCESS
+        if time.monotonic() - self._t0 > self.TIMEOUT_S:
+            reason = (f"Takeoff: {self.mav.alt() - home_z:.1f} m above home after "
+                      f"{self.TIMEOUT_S:.0f} s, target {self.alt:.1f} m")
+            self.mav.abort_reason = reason
+            self.feedback_message = reason
+            return py_trees.common.Status.FAILURE
         return py_trees.common.Status.RUNNING
 
 
@@ -3911,7 +3948,12 @@ class UploadArenaFence(py_trees.behaviour.Behaviour):
             if not ok:
                 return self._fail(why)
             from mavros_msgs.msg import Waypoint
-            self._sent = build_fence(poly, [], home[0], home[1], Waypoint)
+            # geofence_local is in the EKF-origin frame; build_fence converts
+            # about HOME, so step back into home's frame first or the FC
+            # fence lands offset from the organiser's points.
+            hx, hy = self.mav.home_local_xy()
+            about_home = [(x - hx, y - hy) for x, y in poly]
+            self._sent = build_fence(about_home, [], home[0], home[1], Waypoint)
             self._future = self.mav.push_fence(self._sent)
             if self._future is None:
                 if self._t < self.timeout_ticks:

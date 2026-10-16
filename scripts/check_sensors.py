@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure the flight sensors on the aircraft before the first flight.
 
-    python3 scripts/check_sensors.py lidar     # LD06 mount yaw and direction
+    python3 scripts/check_sensors.py lidar     # lidar mount yaw and direction
     python3 scripts/check_sensors.py camera    # C270 rate, exposure, sharpness
 
 Run with the bring-up up (use_sim:=false). Nothing in the sim can find these:
@@ -56,10 +56,10 @@ class Probe(Node):
 def check_lidar(probe):
     scans, hz = probe.collect(3.0)
     if not scans:
-        sys.exit("FAIL: nothing on /scan_raw -- is the LD06 driver running?")
+        sys.exit("FAIL: nothing on /scan_raw -- is the lidar driver running?")
     s = scans[-1]
     valid = np.isfinite(np.asarray(s.ranges, dtype=float)).mean()
-    print(f"/scan_raw {hz:.1f} Hz (LD06: ~10), {len(s.ranges)} beams, "
+    print(f"/scan_raw {hz:.1f} Hz (C1 or LD06: ~10), {len(s.ranges)} beams, "
           f"angle_min {math.degrees(s.angle_min):.0f} deg, increment "
           f"{math.degrees(s.angle_increment):+.2f} deg, {valid:.0%} returns")
     seen = []
