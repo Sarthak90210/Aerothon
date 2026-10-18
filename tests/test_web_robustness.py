@@ -7,6 +7,8 @@ telemetry value (front_m = inf with nothing ahead, normal outdoors) making
 the browser drop every frame.
 """
 import asyncio
+import os
+import signal
 import json
 import math
 import time
@@ -248,3 +250,41 @@ async def test_a_deployed_gcs_update_reaches_open_browsers(tmp_path):
             assert r.headers['Cache-Control'] == 'no-cache', path
         r = await client.get('/assets/index-abc.js')
         assert 'immutable' in r.headers['Cache-Control']
+
+
+@pytest.mark.asyncio
+async def test_nodes_that_outlived_their_launch_block_a_second_runtime(tmp_path):
+    """A hard-killed launch left its nodes running; Connect started a second
+    runtime beside them (two execution services, the old aggregator on 8765)."""
+    import subprocess
+    from aerothon_runtime.web import application, boot_id
+    import sys
+    # A child that, like a ROS node, stops on SIGINT (a shell's background
+    # job would ignore it) and outlives the leader of its process group.
+    leader = subprocess.Popen([sys.executable, '-c', 'import subprocess, sys; subprocess.Popen('
+                               '[sys.executable, "-c", "import time; time.sleep(30)"])'],
+                              start_new_session=True)
+    leader.wait()                       # the launch is gone; its child is not
+    state = tmp_path / 'state'
+    state.mkdir()
+    (state / 'runtime-owner.json').write_text(json.dumps(
+        {'pid': leader.pid, 'identity': f'{boot_id()}:1', 'profile_id': 'sim', 'controlled': False}))
+    launched = []
+
+    async def launch(p):
+        launched.append(p['id'])
+        return await asyncio.create_subprocess_exec('sleep', '30', start_new_session=True)
+    h = Host(tmp_path, state, launch=launch, aggregator='http://127.0.0.1:9/')
+    h.profiles = {'sim': {'id': 'sim', 'name': 'sim', 'transport': 'tcp', 'host': '127.0.0.1',
+                          'port': 5762, 'system_id': 1, 'component_id': 1, 'gateway': 'http://x'}}
+    assert h.leftover_group() == leader.pid
+    with pytest.raises(ValueError, match='previous runtime'):
+        await h.prepare_connection(h.profiles['sim'])
+    assert launched == [], 'a second runtime was started beside the old nodes'
+    async with TestClient(TestServer(application(h))) as client:
+        r = await client.post('/api/disconnect', json={})
+        assert r.status == 200, await r.text()
+    assert h.leftover_group() is None
+    await h.prepare_connection(h.profiles['sim'])
+    assert launched == ['sim']
+    os.killpg(h.proc.pid, signal.SIGKILL)

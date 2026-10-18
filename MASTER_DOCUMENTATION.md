@@ -433,6 +433,35 @@ reason; `index.html` had no `Cache-Control`, so browsers kept an old GCS after
 a deploy (pages opened before this fix need one manual reload). Display and
 host only: no flight decision changed.
 
+The same day the GCS was driven against local laptop simulation (Gazebo,
+SITL and gateway on domain 43; the real web host and production runtime on
+domain 42): profile, Connect, organiser inputs, readiness, GUIDED, Arm,
+Takeoff, camera tilt, Land, RTL, passive SLAM and QR tasks, every camera feed,
+and the SLAM map in flight (live throughout, under 1 s old). Further defects
+fixed: Chrome keeps an MJPEG request open after its image leaves the page, so
+feed switches, retries and tab visits left streams open and after six the
+browser queued every request to the Pi, Stop and Land included, while the
+status still read Live FCU (one stream now, released explicitly; API calls
+time out after 10 s as Outcome unknown); a feed with no frames showed a blank
+box; slam_toolbox publishes `/pose` only after 0.1 m or 0.1 rad of motion, so a
+still aircraft lost its marker (the last pose is kept, with its age); Stop and
+Abort act only on a production execution and were accepted while a manually
+launched aircraft kept hovering (the review now says so and points to Land or
+RTL); a refused Start named only "camera (not ok)" (the GCS now shows the
+measured rate against the requirement); a runtime that exited at launch left
+only "Stopped" (Connections shows it and the runtime log); a hard-killed launch
+left its nodes running and Connect started a second runtime beside them, with
+the old aggregator holding 8765 and the new one's server thread dead (Connect
+now refuses while the old process group has members, Disconnect stops them
+behind the same disarm gate, and the aggregator retries its port); a web-host
+restart with a page open took about 60 s (now about 10 s). Not GCS defects,
+left unchanged: on this laptop the simulated camera reached 8.7 Hz of vehicle
+time against the runtime's 10 Hz requirement and the actuator flags toggled
+several times a second, so camera-dependent flight tasks were mostly refused;
+Banner alignment, once accepted, failed at RequireDeliveryZone although
+readiness reported the search area ready (the mission resolves the fence only
+after an FCU home position, which was not observed in this run).
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch

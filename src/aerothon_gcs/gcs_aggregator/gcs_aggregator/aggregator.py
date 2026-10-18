@@ -1207,7 +1207,16 @@ class Aggregator(Node):
         def run():
             self._loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self._loop)
-            self._loop.run_until_complete(websockets.serve(self._handler, self.ws_host, WS_PORT))
+            while True:
+                try:
+                    self._loop.run_until_complete(websockets.serve(self._handler, self.ws_host, WS_PORT))
+                    break
+                except OSError as exc:
+                    # An aggregator left over from a killed runtime held the
+                    # port, this thread ended silently and the node ran on with
+                    # no GCS link at all. Wait for the port instead.
+                    self.get_logger().error(f'GCS WebSocket port {WS_PORT} unavailable ({exc}); retrying in 2 s')
+                    time.sleep(2)
             self._loop.run_forever()
         threading.Thread(target=run, daemon=True).start()
 

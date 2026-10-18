@@ -1,4 +1,4 @@
-import type { Telemetry } from "./types";
+import type { DeviceMetric, Telemetry } from "./types";
 
 export interface ConnectionProfile {
   id:string; name:string; transport:'tcp'|'udp'|'serial'; host:string; port:number; bind_port:number;
@@ -15,8 +15,17 @@ export const vehicleLabel = (p?: ConnectionProfile | null) =>
       ? 'Real drone' : 'Laptop simulation';
 export interface HostState {profiles:ConnectionProfile[]; profile_id:string|null; runtime:'Stopped'|'Running'; can_disconnect:boolean; can_edit_profiles:boolean;connection_error?:string;autoconnect_suspended?:boolean;}
 export class ApiError extends Error { status:number; constructor(status:number, message:string) { super(message); this.status=status; } }
-export async function api(path:string, data?:unknown):Promise<any> {
-  const r=await fetch(path, data === undefined ? undefined : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+export async function api(path:string, data?:unknown, timeoutMs=10000):Promise<any> {
+  // A request that never answers (lost Wi-Fi, a saturated browser connection
+  // pool) used to leave the page busy for ever. It now ends as a plain Error,
+  // which a command reports as "Outcome unknown", not as a refusal.
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),timeoutMs);
+  let r:Response;
+  try {
+    r=await fetch(path, {signal:controller.signal, ...(data === undefined ? {} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})});
+  } catch(e) {
+    throw new Error(controller.signal.aborted ? `No answer from the Pi within ${timeoutMs/1000} s` : `Pi unreachable: ${e instanceof Error ? e.message : String(e)}`);
+  } finally { clearTimeout(timer); }
   // A proxy or crash can answer with plain text; show it, not a JSON parse error.
   const text=await r.text(); let body:any;
   try { body=text ? JSON.parse(text) : {}; } catch { body={error:text.slice(0,300)}; }
@@ -100,6 +109,28 @@ export function missionActive(t: Telemetry | null): boolean {
     !["IDLE", "WAITING", "COMPLETED", "FAILED", "RESET"].includes(phase)
   );
 }
+export const executionActive = (t: Telemetry | null) =>
+  !!t?.execution && ['Submitted','Accepted','Running'].includes(t.execution.state);
+// The devices the execution service requires per task (execution_node.py).
+const REQUIRED: Record<string, string[]> = {
+  mission: ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
+  avoidance_manual: ['identity','camera','lidar','clock'], avoidance_route: ['identity','camera','lidar','clock'],
+  banner: ['identity','camera','lidar','clock','camera_actuator'],
+  delivery_here: ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
+  delivery_gps: ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
+};
+/** What is wrong with a device, from its own reason or its measured values. */
+export function deviceIssue(key: string, d?: DeviceMetric): string {
+  const name = key.replace(/_/g, ' ');
+  if (!d) return `${name} is not reported`;
+  if (d.reason) return `${name}: ${d.reason}`;
+  const m = d as DeviceMetric & {vehicle_hz?: number; required_vehicle_hz?: number};
+  if (typeof m.vehicle_hz === 'number' && typeof m.required_vehicle_hz === 'number' && m.vehicle_hz < m.required_vehicle_hz)
+    return `${name} at ${m.vehicle_hz.toFixed(1)} Hz in vehicle time, ${m.required_vehicle_hz} Hz required`;
+  if (typeof d.capture_age_s === 'number' && d.capture_age_s >= .3) return `${name} capture is ${d.capture_age_s.toFixed(2)} s old`;
+  if (typeof d.receipt_age_s === 'number' && d.receipt_age_s >= 1) return `no ${name} data for ${d.receipt_age_s.toFixed(1)} s`;
+  return `${name} is not ready`;
+}
 /** Why Start is unavailable for a task, or '' when it may be reviewed. */
 export function startBlockReason(t:Telemetry|null, connected:boolean, task:string):string {
   if(!connected || !t) return 'No live telemetry from the Pi runtime.';
@@ -108,7 +139,7 @@ export function startBlockReason(t:Telemetry|null, connected:boolean, task:strin
     return `${tasks.find(x=>x.id===t.execution?.task)?.label ?? 'A task'} is ${t.execution.state.toLowerCase()}. Stop it first.`;
   if(task === 'qr' || task === 'slam') {
     const sensor = task === 'qr' ? 'camera' : 'lidar', device = t.devices?.[sensor];
-    return device?.ok === true ? '' : `The ${sensor} is unavailable${device?.reason ? `: ${device.reason}` : '.'}`;
+    return device?.ok === true ? '' : `The ${sensor} is unavailable (${deviceIssue(sensor, device)}).`;
   }
   if(!freshFcu(t)) return 'No fresh flight-controller state.';
   if(task === 'mechanism') {
@@ -117,7 +148,10 @@ export function startBlockReason(t:Telemetry|null, connected:boolean, task:strin
     return winch?.ok === true ? '' : `Winch feedback is unavailable${winch?.reason ? `: ${winch.reason}` : '.'}`;
   }
   if(age(t,'readiness') >= 3) return 'The readiness interlock is not reporting.';
-  return t.safety.ready === true ? '' : 'The flight readiness interlock is blocked. See Readiness.';
+  if(t.safety.ready !== true) return 'The flight readiness interlock is blocked. See Readiness.';
+  // The runtime refuses these with only "camera (not ok)"; say what was measured.
+  const missing = t.devices ? (REQUIRED[task] ?? []).filter(k => t.devices?.[k]?.ok !== true) : [];
+  return missing.length ? `Waiting for devices: ${missing.map(k => deviceIssue(k, t.devices?.[k])).join('; ')}.` : '';
 }
 export function startAllowed(t:Telemetry|null, connected:boolean, task:string):boolean {
   return startBlockReason(t, connected, task) === '';

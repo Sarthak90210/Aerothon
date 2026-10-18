@@ -140,9 +140,20 @@ test("a blocked start names its reason, and the reason agrees with startAllowed"
   assert.match(startBlockReason(t, true, "qr"), /SLAM mapping is running/);
   delete t.execution;
   t.devices = {lidar:{ok:false,reason:'no scans for 3 s'}};
-  assert.equal(startBlockReason(t, true, "slam"), "The lidar is unavailable: no scans for 3 s");
+  assert.equal(startBlockReason(t, true, "slam"), "The lidar is unavailable (lidar: no scans for 3 s).");
   assert.equal(startAllowed(t, true, "slam"), false);
   t.safety.ready = false;
   assert.match(startBlockReason(t, true, "banner"), /readiness interlock is blocked/);
   assert.match(startBlockReason(t, true, "mechanism"), /Winch feedback is unavailable/);
+});
+test("a flight start waiting on a device says what the device measured", () => {
+  const t = ready();
+  t.devices = {identity:{ok:true}, lidar:{ok:true}, clock:{ok:true}, camera_actuator:{ok:true},
+    camera:{ok:false, reason:'', vehicle_hz:8.7, required_vehicle_hz:10}};
+  assert.equal(startBlockReason(t, true, "banner"),
+    "Waiting for devices: camera at 8.7 Hz in vehicle time, 10 Hz required.");
+  assert.equal(startAllowed(t, true, "banner"), false);
+  t.devices.camera = {ok:true};
+  assert.equal(startBlockReason(t, true, "banner"), "");
+  assert.match(startBlockReason(t, true, "delivery_here"), /winch actuator is not reported/);
 });

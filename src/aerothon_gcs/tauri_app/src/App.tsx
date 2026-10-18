@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Telemetry } from "./types";
@@ -11,6 +11,7 @@ import {
   missionActive,
   startAllowed,
   startBlockReason,
+  executionActive,
   reviewAllowed,
   taskCommand,
   tasks,
@@ -31,9 +32,10 @@ import { satelliteStyle } from "./mapSources";
 import "./gcs.css";
 const Graphs = lazy(() => import("./Graphs"));
 
+// toFixed keeps the sign of a value that rounds to zero ("-0.0 m" on the pad).
 const value = (n: unknown, unit = "", precision = 1) =>
   typeof n === "number" && Number.isFinite(n)
-    ? `${n.toFixed(precision)}${unit}`
+    ? `${n.toFixed(precision).replace(/^-(0(\.0+)?)$/, "$1")}${unit}`
     : "Unavailable";
 // Readiness values are numbers, text or, for detectors, {name: age seconds}.
 const readinessValue = (v: unknown): string =>
@@ -117,8 +119,7 @@ export default function App() {
     orange: "",
     red: "",
   });
-  const [topic, setTopic] = useState("/percep/overlay"),
-    [videoError, setVideoError] = useState(false);
+  const [topic, setTopic] = useState("/percep/overlay");
   const [grid, setGrid] = useState<Grid | null>(null),
     [gridReceived, setGridReceived] = useState(0),
     [onlineMap, setOnlineMap] = useState(false),
@@ -207,7 +208,7 @@ export default function App() {
             setTelemetry(envelope.data);
             setReceived(Date.now());
             const pose = envelope.data.slam_pose;
-            if (pose && age(envelope.data, "slam_pose") < 2 && Number.isFinite(pose.x) && Number.isFinite(pose.y)) {
+            if (pose && Number.isFinite(pose.x) && Number.isFinite(pose.y)) {
               const last = trail.current[trail.current.length - 1];
               if (!last || Math.hypot(pose.x - last[0], pose.y - last[1]) > 0.05)
                 trail.current = [...trail.current.slice(-599), [pose.x, pose.y]];
@@ -565,7 +566,13 @@ export default function App() {
           label="Height"
           text={value(age(t, "pose") < 3 ? t?.flight.alt : null, " m")}
         />
-        <Datum label="Execution" text={t?.execution ? `${t.execution.task}: ${t.execution.state} ${t.execution.stage || ''}` : t?.mission.state || "Unavailable"} />
+        <Datum label="Execution" text={!t?.execution ? t?.mission.state || "Unavailable" : (() => {
+          const label = tasks.find((x) => x.id === t.execution?.task)?.label ?? t.execution.task;
+          // A finished run is history: "qr: Failed" during a manual flight read as current.
+          return executionActive(t)
+            ? `${label}: ${t.execution.state}${t.execution.stage ? ` · ${t.execution.stage}` : ""}`
+            : `None running · last ${label} ${t.execution.state.toLowerCase()}`;
+        })()} />
       </section>
       <div className="toasts">
         {error && (
@@ -647,10 +654,7 @@ export default function App() {
                     Camera view
                     <select
                       value={topic}
-                      onChange={(e) => {
-                        setTopic(e.target.value);
-                        setVideoError(false);
-                      }}
+                      onChange={(e) => setTopic(e.target.value)}
                     >
                       <option value="/percep/overlay">
                         Composite detections
@@ -664,25 +668,16 @@ export default function App() {
                     </select>
                   </label>
                 </div>
-                {fresh && !videoError ? (
-                  <img
-                    className="camera-feed"
-                    src={videoUrl(activeEndpoint, topic)}
-                    alt="Live aircraft camera"
-                    onError={() => setVideoError(true)}
-                  />
-                ) : (
-                  <div className="empty-view camera-feed">
-                    Camera unavailable
-                  </div>
-                )}
+                <CameraFeed
+                  url={videoUrl(activeEndpoint, topic)}
+                  topic={topic}
+                  live={fresh}
+                  device={t?.devices?.camera}
+                />
                 <p className="view-note">
                   Changing the displayed feed does not move the physical camera.
                   Camera tilt is a separate reviewed command.
                 </p>
-                <button onClick={() => setVideoError(false)}>
-                  Retry video
-                </button>
               </>
             )}
             {view === "slam" && (
@@ -690,7 +685,8 @@ export default function App() {
                 status={fresh ? telemetry?.slam_status : undefined}
                 grid={grid}
                 mapAge={gridReceived > 0 ? Math.max(0, clock - gridReceived) / 1000 : null}
-                pose={fresh && age(telemetry, "slam_pose") < 2 ? (telemetry?.slam_pose as MapPose) : null}
+                pose={fresh && telemetry?.slam_pose ? (telemetry.slam_pose as MapPose) : null}
+                poseAge={age(telemetry, "slam_pose")}
                 trail={trail.current}
                 theme={theme}
                 scan={telemetry?.scan}
@@ -927,6 +923,15 @@ export default function App() {
                 Mode: {fcu ? t?.mission.mode : "Unavailable"} · Armed:{" "}
                 {fcu ? (t?.mission.armed ? "Yes" : "No") : "Unavailable"}
               </p>
+              {["stop", "abort"].includes(review.cmd) && !executionActive(t) && (
+                // Stop and Abort act on a production execution. After a manual
+                // takeoff from Aircraft controls they were accepted and the
+                // aircraft kept hovering.
+                <p className="review-warning" role="alert">
+                  No production execution is running, so this will not move the
+                  aircraft.{t?.mission.armed ? " It is armed: use Land or RTL to bring it down." : ""}
+                </p>
+              )}
               <p>
                 Runtime acceptance does not confirm the aircraft outcome. Stop
                 uses the current stage-aware LAND/RTL procedure.
@@ -966,7 +971,7 @@ export default function App() {
                   {item.label}: {item.ok ? "Ready" : "Blocked"}
                 </span>
                 <span>
-                  {readinessValue(item.value)} · {item.reason}
+                  {readinessValue(item.value)}{item.reason ? ` · ${item.reason}` : ""}
                 </span>
               </div>
             ))}
@@ -1183,6 +1188,67 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+/**
+ * The MJPEG feed with what it is showing. An open stream that delivers no
+ * frame never fires an error, so the old view stayed blank with no reason,
+ * and Retry kept the same URL so it reloaded nothing.
+ */
+function CameraFeed({ url, topic, live, device }: {
+  url: string; topic: string; live: boolean; device?: { ok: boolean; reason?: string };
+}) {
+  const [attempt, setAttempt] = useState(0),
+    [state, setState] = useState<"waiting" | "playing" | "stalled" | "error">("waiting");
+  const img = useRef<HTMLImageElement>(null);
+  const src = `${url}&attempt=${attempt}`;
+  // One late device report is not a frozen camera: warn after 2 s, not a blink.
+  const badSince = useRef(0);
+  const deviceBad = !!device && device.ok !== true;
+  if (!deviceBad) badSince.current = 0;
+  else if (!badSince.current) badSince.current = Date.now();
+  const deviceDown = deviceBad && Date.now() - badSince.current > 2000;
+  // Chrome keeps an MJPEG request open after its <img> leaves the page. Each
+  // feed switch, retry or visit to another tab left one stream running; at
+  // six the browser queued every request to the Pi, Stop and Land included.
+  useLayoutEffect(() => {
+    const element = img.current;
+    return () => {
+      if (element) element.src = "data:,";
+    };
+  }, [src, live, state === "error"]);
+  useEffect(() => {
+    setState("waiting");
+    if (!live) return;
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      if ((img.current?.naturalWidth ?? 0) > 0) setState((s) => (s === "error" ? s : "playing"));
+      else if (Date.now() - started > 6000) setState((s) => (s === "waiting" ? "stalled" : s));
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, [src, live]);
+  const message = !live
+    ? "Camera unavailable: no live telemetry from the Pi."
+    : state === "error"
+      ? "The video service did not answer. Check that the runtime is connected, then retry."
+      : state === "stalled"
+        ? `No frames on ${topic}. The camera or this detector is not publishing.`
+        : state === "waiting"
+          ? `Opening ${topic}…`
+          : deviceDown
+            ? `Camera not reporting${device?.reason ? `: ${device.reason}` : ""}. The picture may be frozen.`
+            : "";
+  return (
+    <>
+      <div className="camera-frame">
+        {live && state !== "error" && (
+          <img ref={img} key={src} className="camera-feed" src={src}
+            alt="Live aircraft camera" onError={() => setState("error")} />
+        )}
+        {message && <div className={`camera-overlay ${state === "playing" ? "warn" : ""}`}>{message}</div>}
+      </div>
+      <button onClick={() => setAttempt((a) => a + 1)}>Retry video</button>
+    </>
   );
 }
 function Datum({ label, text }: { label: string; text: string }) {

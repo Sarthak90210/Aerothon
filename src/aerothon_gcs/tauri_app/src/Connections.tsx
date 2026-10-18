@@ -16,6 +16,15 @@ export default function Connections({ state, refresh }: { state: HostState | nul
   const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
   const [rc, setRc] = useState('{}');
+  const [log, setLog] = useState('');
+  async function loadLog() {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const text = await (await fetch('/api/logs', {signal: controller.signal})).text();
+      setLog(text.split('\n').slice(-80).join('\n') || 'The runtime log is empty.');
+    } catch { setLog('The runtime log could not be read.'); }
+    finally { clearTimeout(timer); }
+  }
   useEffect(() => { setRc(JSON.stringify(p.rc_config, null, 2)); }, [p.id]);
   const change = (key: string, value: unknown) => setP(old => ({ ...old, [key]: value }));
   const vehicle = p.vehicle ?? (p.transport === 'serial' ? 'drone' : 'simulation');
@@ -37,6 +46,9 @@ export default function Connections({ state, refresh }: { state: HostState | nul
     <p>The Pi always runs the flight code and this GCS. Laptop simulation connects it over the intranet to Gazebo and SITL on the laptop (FCU TCP port and sensor gateway). Real drone uses the flight controller UART and the Pi camera and lidar.</p>
     <p>Runtime: {state?.runtime ?? 'Unavailable'} · Active profile: {state?.profile_id ?? 'None'}</p>
     {state?.connection_error&&<p role="alert">Automatic connection: {state.connection_error}</p>}
+    {/* A launch that fails at once used to leave only "Runtime: Stopped". */}
+    {state?.runtime === 'Stopped' && state.profile_id && !state.autoconnect_suspended &&
+      <p role="alert">The runtime for {state.profile_id} is not running. If Connect was just pressed it exited: read the runtime log below.</p>}
     <fieldset disabled={busy || !state?.can_edit_profiles}>
       <div className="connection-fields">
         <label>Saved profile<select value={p.id} onChange={e => setP(state?.profiles.find(x => x.id === e.target.value) ?? defaultProfile())}>
@@ -80,6 +92,11 @@ export default function Connections({ state, refresh }: { state: HostState | nul
     </div>
     <p>The hardware router starts at boot and sends Mission Planner UDP on port 14550. Automatic connection prepares telemetry and sensors without a props checkbox. Start controls execution. Disconnect pauses automatic connection until the next Pi/web-host restart or an explicit Connect.</p>
     {message && <p role="status">{message}</p>}
+    <details onToggle={e => { if ((e.target as HTMLDetailsElement).open) void loadLog(); }}>
+      <summary>Runtime log (last 80 lines)</summary>
+      <button onClick={() => void loadLog()}>Refresh log</button>
+      <pre className="runtime-log">{log}</pre>
+    </details>
     {items.map(item => <div className="readiness-row" key={String(item.key)}><span>{String(item.key)}</span><span>{item.ok === true ? 'Ready' : 'Unavailable'}</span><span>{String(item.reason ?? '')} {item.key === 'identity' ? `system ${item.value ?? 'unknown'}` : ''} {typeof item.hz === 'number' ? `${item.hz.toFixed(1)} Hz delivered` : ''} {typeof item.vehicle_hz === 'number' ? ` · ${item.vehicle_hz.toFixed(1)} Hz sensor clock` : ''} {typeof item.capture_age_s === 'number' ? ` · capture age ${item.capture_age_s.toFixed(3)} s` : ''}</span></div>)}
   </section>;
 }

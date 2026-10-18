@@ -22,6 +22,13 @@ def process_identity(pid):
     except (OSError,IndexError):
         return None
 
+def boot_id():
+    try:
+        return Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    except OSError:
+        return None
+
+
 class AdoptedProcess:
     def __init__(self, pid, identity):
         self.pid,self.identity = pid,identity
@@ -347,7 +354,29 @@ class Host:
                       if p.get('vehicle') == 'drone' and p.get('autoconnect')]
         return candidates[0] if len(candidates) == 1 else None
 
+    def leftover_group(self):
+        """The previous runtime's process group, if members outlived its launch.
+
+        A hard-killed `ros2 launch` left its nodes running: the old aggregator
+        kept port 8765 (the page showed its stale data) and Connect started a
+        second runtime beside the old execution service. Only a record from this
+        boot counts; after a reboot the number may belong to anything."""
+        owner = self.read_owner() if self.owner_path.exists() else None
+        pid = getattr(self.proc, 'pid', None) or (owner or {}).get('pid')
+        identity = str((owner or {}).get('identity') or '')
+        if not isinstance(pid, int) or pid <= 1 or (owner and not identity.startswith(f'{boot_id()}:')):
+            return None
+        try:
+            os.killpg(pid, 0)
+        except (ProcessLookupError, PermissionError):
+            return None
+        return pid
+
     async def prepare_connection(self, p):
+        leftover = self.leftover_group() if self.stopped() else None
+        if leftover:
+            raise ValueError(f'processes of the previous runtime are still running (process group {leftover}); '
+                             'press Disconnect with the aircraft disarmed to stop them, or restart the Pi')
         self.telemetry = None
         self.received = 0
         self.execution = None
@@ -561,6 +590,13 @@ def application(host):
     app.on_startup.append(host.start)
     app.on_cleanup.append(host.close)
 
+    async def close_browsers(app):
+        # Graceful shutdown waits for open handlers; an open GCS page held a
+        # restart for the full shutdown timeout. Pages reconnect by themselves.
+        await asyncio.gather(*(peer.socket.close(code=1001, message=b'GCS host restarting')
+                               for peer in list(host.clients)), return_exceptions=True)
+    app.on_shutdown.append(close_browsers)
+
     async def state(request):
         return web.json_response(host.state())
 
@@ -608,6 +644,19 @@ def application(host):
                     await asyncio.wait_for(host.proc.wait(), 15)
                 except asyncio.TimeoutError:
                     raise ValueError('runtime is still shutting down; no forced termination')
+            leftover = host.leftover_group()
+            if leftover:
+                # Nodes that outlived their launch, stopped as the launch would.
+                try:
+                    os.killpg(leftover, signal.SIGINT)
+                except ProcessLookupError:
+                    pass
+                for _ in range(150):
+                    if not host.leftover_group():
+                        break
+                    await asyncio.sleep(.1)
+                else:
+                    raise ValueError(f'previous runtime processes (group {leftover}) are still shutting down; no forced termination')
             host.owner_path.unlink(missing_ok=True)
             host.last_map = None
             host.profile_id = None
@@ -746,7 +795,9 @@ def main():
     p.add_argument('--bind', default='0.0.0.0')
     p.add_argument('--port', type=int, default=8899)
     args = p.parse_args()
-    web.run_app(application(Host(args.static, args.state_dir, aggregator=args.aggregator)), host=args.bind, port=args.port)
+    # Camera streams never end on their own; do not hold a restart for 60 s.
+    web.run_app(application(Host(args.static, args.state_dir, aggregator=args.aggregator)),
+                host=args.bind, port=args.port, shutdown_timeout=5)
 
 if __name__ == '__main__':
     main()

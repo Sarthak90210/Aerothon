@@ -139,10 +139,10 @@ function aircraft(c: CanvasRenderingContext2D, [x,y]: number[], angle: number) {
 
 const age = (s: number) => s < 10 ? `${s.toFixed(1)} s` : s < 120 ? `${Math.round(s)} s` : `${Math.round(s/60)} min`;
 
-export default function Slam({grid,mapAge,scan,lidarFresh,slamEnabled,status,pose,trail,theme}: {
+export default function Slam({grid,mapAge,scan,lidarFresh,slamEnabled,status,pose,poseAge=Infinity,trail,theme}: {
   grid:Grid|null; mapAge:number|null; scan?:Scan; lidarFresh:boolean;
   slamEnabled:boolean; status?:{state?:string;reason?:string;source?:string};
-  pose?:MapPose|null; trail?:Array<[number,number]>; theme?:string;
+  pose?:MapPose|null; poseAge?:number; trail?:Array<[number,number]>; theme?:string;
 }) {
   const [mode,setMode]=useState<'map'|'scan'>('map');
   const showMap=mode==='map'&&!!grid;
@@ -160,7 +160,10 @@ export default function Slam({grid,mapAge,scan,lidarFresh,slamEnabled,status,pos
         <button aria-pressed={mode==='scan'} onClick={()=>setMode('scan')}>Live lidar</button>
       </div>
       <span className={`chip ${chip[0]}`}>{chip[1]}</span>
-      {showMap&&<span className={`chip ${pose?'ok':'warn'}`}>{pose?'Aircraft located on map':'No SLAM pose'}</span>}
+      {/* slam_toolbox publishes a pose only after the aircraft moves 0.1 m or
+          turns 0.1 rad, so a still aircraft keeps its last, still-correct pose. */}
+      {showMap&&<span className={`chip ${pose?'ok':'warn'}`}>{!pose?'No SLAM pose yet: move the aircraft':
+        poseAge<5?'Aircraft located on map':`Aircraft at last SLAM pose (${age(poseAge)} ago, not moved since)`}</span>}
       {status?.state&&<span className="chip">{status.source||'LiDAR odometry'}: {status.state}{status.reason?` · ${status.reason}`:''}</span>}
     </div>
     {/* One plot per mode: map metres and the nose-up scan frame do not share a view. */}
