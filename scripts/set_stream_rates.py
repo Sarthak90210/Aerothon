@@ -55,12 +55,13 @@ DESIRED = {
     65:   5.0,   # RC_CHANNELS         - RC / failsafe state
     36: 20.0,    # SERVO_OUTPUT_RAW for delivery load assessment (calibrated at 20)
     193:  2.0,   # EKF_STATUS_REPORT   - EKF health (Q27 interlock)
+    242:  1.0,   # HOME_POSITION       - organiser fence and zone are resolved about home
 }
 
 MESSAGE_NAMES = {
     30: "ATTITUDE", 32: "LOCAL_POSITION_NED", 33: "GLOBAL_POSITION_INT",
     24: "GPS_RAW_INT", 74: "VFR_HUD", 1: "SYS_STATUS", 2: "SYSTEM_TIME",
-    27: "RAW_IMU", 65: "RC_CHANNELS", 193: "EKF_STATUS_REPORT",
+    27: "RAW_IMU", 65: "RC_CHANNELS", 193: "EKF_STATUS_REPORT", 242: "HOME_POSITION",
 }
 
 

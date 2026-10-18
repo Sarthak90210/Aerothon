@@ -37,6 +37,7 @@ REQUIRED = {
     1: ("SYS_STATUS", "Battery voltage"),
     193: ("EKF_STATUS_REPORT", "EKF health"),
     65: ("RC_CHANNELS", "RC failsafe"),
+    242: ("HOME_POSITION", "Search area / Arena geofence (resolved about home)"),
 }
 
 # The setpoint loop's rail, not an interlock item: the keeper warns below 10 Hz.

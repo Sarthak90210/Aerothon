@@ -55,6 +55,11 @@ DESIRED = {
     # requires EVERY item -- could never go true. On the real aircraft
     # as much as in simulation.
     193: 2.0,    # EKF_STATUS_REPORT
+    # HOME_POSITION. MAVROS asks for it once per connection, so a runtime that
+    # reconnected to an FCU whose home was already set missed it: the mission
+    # never resolved the organiser fence and failed RequireDeliveryZone while
+    # readiness, subscribed earlier, reported the search area ready.
+    242: 1.0,    # HOME_POSITION
 }
 
 
