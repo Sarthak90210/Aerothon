@@ -220,8 +220,7 @@ main {
 }
 .map-host,
 .camera-feed,
-.empty-view,
-.slam-view {
+.empty-view {
   height: 480px;
   width: 100%;
   background: var(--field);
@@ -250,20 +249,108 @@ main {
   margin: 0.6rem 0;
 }
 .slam-view {
+  width: 100%;
+}
+.slam-bar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 0;
 }
-.slam-view canvas {
-  max-height: 80%;
-  max-width: 80%;
-  object-fit: contain;
-  image-rendering: pixelated;
+.segmented {
+  display: inline-flex;
 }
-.slam-view span {
+.segmented button + button {
+  margin-left: -1px;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--selected);
+  font-weight: 600;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.chip.ok::before { background: #2f9e5b; }
+.chip.warn::before { background: #d9932b; }
+.chip.bad::before { background: var(--danger); }
+.slam-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.slam-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.swatch.free { background: rgb(250 251 252); }
+.swatch.occupied { background: rgb(28 35 43); }
+.swatch.unknown { background: rgb(206 212 219); }
+:root[data-theme="dark"] .swatch.free { background: rgb(46 54 64); }
+:root[data-theme="dark"] .swatch.occupied { background: rgb(232 238 245); }
+:root[data-theme="dark"] .swatch.unknown { background: rgb(25 29 35); }
+.swatch.scan { background: #14a5c9; border-radius: 50%; }
+.swatch.aircraft { background: #f39c32; }
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  max-width: min(440px, calc(100vw - 32px));
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--field);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--danger);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 18%);
+  font-size: 14px;
+}
+.toast.info {
+  border-left-color: #2f9e5b;
+}
+.toast p {
+  margin: 0;
+  flex: 1;
+}
+.toast button {
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  font-size: 18px;
+  line-height: 1;
+}
+.start-blocked {
   font-size: 13px;
   color: var(--muted);
 }
@@ -525,8 +612,7 @@ footer details {
   }
   .map-host,
   .camera-feed,
-  .empty-view,
-  .slam-view {
+  .empty-view {
     height: 380px;
   }
 }
@@ -558,8 +644,7 @@ footer details {
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 
 /* Metric lidar and occupancy views preserve equal scale on both axes. */
-.slam-view { display: block; }
-.slam-view .metric-plot canvas { width: 100%; max-width: none; height: 520px; aspect-ratio: auto; image-rendering: auto; }
+.slam-view .metric-plot canvas { height: 520px; border: 1px solid var(--line); border-radius: 6px; }
 .metric-plot { width: 100%; min-width: 0; }
 .metric-plot canvas { display: block; width: 100%; height: 480px; touch-action: none; cursor: grab; }
 .metric-plot canvas:active { cursor: grabbing; }

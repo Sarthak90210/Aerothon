@@ -100,12 +100,27 @@ export function missionActive(t: Telemetry | null): boolean {
     !["IDLE", "WAITING", "COMPLETED", "FAILED", "RESET"].includes(phase)
   );
 }
+/** Why Start is unavailable for a task, or '' when it may be reviewed. */
+export function startBlockReason(t:Telemetry|null, connected:boolean, task:string):string {
+  if(!connected || !t) return 'No live telemetry from the Pi runtime.';
+  if(t.runtime_health?.fresh !== true) return 'The production execution service is not reporting.';
+  if(t.execution && ['Submitted','Accepted','Running'].includes(t.execution.state))
+    return `${tasks.find(x=>x.id===t.execution?.task)?.label ?? 'A task'} is ${t.execution.state.toLowerCase()}. Stop it first.`;
+  if(task === 'qr' || task === 'slam') {
+    const sensor = task === 'qr' ? 'camera' : 'lidar', device = t.devices?.[sensor];
+    return device?.ok === true ? '' : `The ${sensor} is unavailable${device?.reason ? `: ${device.reason}` : '.'}`;
+  }
+  if(!freshFcu(t)) return 'No fresh flight-controller state.';
+  if(task === 'mechanism') {
+    if(t.mission.armed !== false) return 'Mechanism bench tasks need a disarmed aircraft.';
+    const winch = t.devices?.winch_actuator;
+    return winch?.ok === true ? '' : `Winch feedback is unavailable${winch?.reason ? `: ${winch.reason}` : '.'}`;
+  }
+  if(age(t,'readiness') >= 3) return 'The readiness interlock is not reporting.';
+  return t.safety.ready === true ? '' : 'The flight readiness interlock is blocked. See Readiness.';
+}
 export function startAllowed(t:Telemetry|null, connected:boolean, task:string):boolean {
-  if(!connected || t?.runtime_health?.fresh !== true || (t.execution && ['Submitted','Accepted','Running'].includes(t.execution.state))) return false;
-  if(task === 'qr' || task === 'slam') return t.devices?.[task === 'qr' ? 'camera' : 'lidar']?.ok === true;
-  if(!freshFcu(t)) return false;
-  if(task === 'mechanism') return t.mission.armed === false && t.devices?.winch_actuator?.ok === true;
-  return age(t,'readiness') < 3 && t.safety.ready === true;
+  return startBlockReason(t, connected, task) === '';
 }
 export function taskCommand(task:string, action:string, params:Record<string,unknown> = {}):{cmd:string;args:Record<string,unknown>} {
   if(!tasks.some(t=>t.id===task)) throw new Error('Unknown production task');

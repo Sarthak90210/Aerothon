@@ -137,6 +137,74 @@ async def test_a_start_the_runtime_refuses_releases_the_reservation(tmp_path):
             await h.close(None)
 
 
+@pytest.mark.asyncio
+async def test_a_reconnecting_browser_gets_the_current_map_at_once(tmp_path):
+    """A GCS page that reconnected kept its old map (or none) until the next
+    slam_toolbox publication; the host now replays the newest one."""
+    from aerothon_runtime.web import application
+    grid = {'w': 4, 'h': 2, 'res': .05, 'ox': 0, 'oy': 0, 'yaw': 0, 'frame': 'map', 'stamp': 7,
+            'encoding': 'rle', 'rle': [-1, 2, 0, 3, 100, 3]}
+
+    async def upstream(request):
+        ws = web.WebSocketResponse(); await ws.prepare(request)
+        await ws.send_str(json.dumps({'kind': 'map', 'data': grid}))
+        async for _ in ws:
+            pass
+        return ws
+    source = web.Application(); source.router.add_get('/upstream', upstream)
+    async with TestServer(source) as server:
+        h = Host(tmp_path, tmp_path / 'state', aggregator=str(server.make_url('/upstream')))
+        h.standalone = True
+        async with TestClient(TestServer(application(h))) as client:
+            for _ in range(50):
+                if h.last_map:
+                    break
+                await asyncio.sleep(.05)
+            assert h.last_map, 'the host did not keep the newest map'
+            for query, key in (('?map_encoding=rle', 'rle'), ('', 'data')):
+                async with client.ws_connect('/ws' + query) as browser:
+                    m = await browser.receive(timeout=2)
+                    env = json.loads(m.data)
+                    assert env['kind'] == 'map' and env['data']['stamp'] == 7
+                    assert key in env['data']
+
+
+@pytest.mark.asyncio
+async def test_staged_lidar_calibration_commands_reach_the_aggregator(tmp_path):
+    """Steps 1 and 2 of the calibration wizard were refused as 'unknown
+    command' by the web host, so no calibration could be completed."""
+    fresh = {"mission": {"armed": False}, "safety": {"fcu_connected": True},
+             "runtime_health": {"fresh": True}, "sample_age_s": {"state": 0}}
+    seen = []
+
+    async def aggregator(request):
+        ws = web.WebSocketResponse(); await ws.prepare(request)
+        await ws.send_str(json.dumps({"kind": "telemetry", "data": fresh}))
+        async for m in ws:
+            seen.append(json.loads(m.data)["data"]["cmd"])
+            await ws.send_str(json.dumps({"kind": "telemetry", "data": fresh}))
+        return ws
+    app = web.Application(); app.router.add_get("/", aggregator)
+    async with TestServer(app) as server:
+        h = Host(tmp_path, tmp_path / "state", aggregator=str(server.make_url("/")))
+        await h.start(None)
+        try:
+            for _ in range(50):
+                if h.internal_ws is not None and h.fresh():
+                    break
+                await asyncio.sleep(0.05)
+            for i, cmd in enumerate(("lidar_cal_geometry", "lidar_cal_background")):
+                r = await h.command({"command_id": f"calibration_step_{i}", "cmd": cmd, "args": {}})
+                assert r["state"] == "Submitted"
+            for _ in range(50):
+                if len(seen) == 2:
+                    break
+                await asyncio.sleep(0.05)
+            assert seen == ["lidar_cal_geometry", "lidar_cal_background"]
+        finally:
+            await h.close(None)
+
+
 def test_non_finite_telemetry_is_valid_browser_json():
     from gcs_aggregator.aggregator import _finite_json
     data = {"nav": {"front_m": float("inf"), "cmd_vx": float("nan"), "ok": 1.5},
@@ -162,3 +230,21 @@ def test_camera_rate_is_measured_without_deserializing_frames():
     assert m.capture == 1792157061 + 73767454 / 1e9 and len(m.receipts) == 1
     assert cdr_header_stamp(b"\x00\x05" + bytes(10)) is None      # unknown encapsulation
     assert cdr_header_stamp(b"\x00\x01") is None                  # truncated
+
+
+@pytest.mark.asyncio
+async def test_a_deployed_gcs_update_reaches_open_browsers(tmp_path):
+    """index.html was served without Cache-Control, so browsers kept the
+    previous GCS after a deploy; hashed assets may be cached for good."""
+    from aerothon_runtime.web import application
+    (tmp_path / 'assets').mkdir()
+    (tmp_path / 'index.html').write_text('<script src="/assets/index-abc.js"></script>')
+    (tmp_path / 'assets' / 'index-abc.js').write_text('1')
+    h = Host(tmp_path, tmp_path / 'state', aggregator='http://127.0.0.1:9/')
+    h.standalone = True
+    async with TestClient(TestServer(application(h))) as client:
+        for path in ('/', '/index.html', '/some/route'):
+            r = await client.get(path)
+            assert r.headers['Cache-Control'] == 'no-cache', path
+        r = await client.get('/assets/index-abc.js')
+        assert 'immutable' in r.headers['Cache-Control']

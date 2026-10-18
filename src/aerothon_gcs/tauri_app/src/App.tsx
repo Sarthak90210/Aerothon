@@ -10,6 +10,7 @@ import {
   freshFcu,
   missionActive,
   startAllowed,
+  startBlockReason,
   reviewAllowed,
   taskCommand,
   tasks,
@@ -23,7 +24,7 @@ import {
 import Connections from "./Connections";
 import ArenaDimensions from "./ArenaDimensions";
 import LidarCalibration from "./LidarCalibration";
-import Slam, { type Grid } from "./LidarView";
+import Slam, { type Grid, type MapPose } from "./LidarView";
 import { decodeGrid } from "./lidarGeometry";
 import coverage from "./satelliteCoverage.json";
 import { satelliteStyle } from "./mapSources";
@@ -102,7 +103,12 @@ export default function App() {
     } | null>(null),
     [busy, setBusy] = useState(false),
     [starting, setStarting] = useState(false);
-  const [outcome, setOutcome] = useState<CommandOutcome | null>(null);
+  const [outcome, setOutcomeState] = useState<CommandOutcome | null>(null),
+    [outcomeAt, setOutcomeAt] = useState(0);
+  const setOutcome = (next: CommandOutcome) => {
+    setOutcomeState(next);
+    setOutcomeAt(Date.now());
+  };
   const [target, setTarget] = useState(""),
     [fenceText, setFenceText] = useState(""),
     [mapReady, setMapReady] = useState(false);
@@ -123,6 +129,14 @@ export default function App() {
     map = useRef<maplibregl.Map | null>(null),
     marker = useRef<maplibregl.Marker | null>(null),
     centered = useRef(false);
+  // The command this browser sent last: only its own results replace the
+  // outcome line. The runtime republishes the previous run's terminal status
+  // every 0.2 s, which used to erase a refusal reason within a moment.
+  const latestCommand = useRef(""),
+    sentCommands = useRef(new Map<string, string>()),
+    lastExecution = useRef(""),
+    trail = useRef<Array<[number, number]>>([]),
+    mapSession = useRef<string | null>(null);
   const pending = useRef(
     new Map<
       string,
@@ -141,6 +155,18 @@ export default function App() {
       ...list.slice(-149),
       `${new Date().toLocaleTimeString()} ${text}`,
     ]);
+  // A different vehicle or a restarted runtime is a new SLAM session: the
+  // previous map must not stay on screen looking current.
+  const session = hostState ? `${hostState.profile_id}|${hostState.runtime}` : null;
+  useEffect(() => {
+    if (session === null) return;
+    if (mapSession.current !== null && mapSession.current !== session) {
+      setGrid(null);
+      setGridReceived(0);
+      trail.current = [];
+    }
+    mapSession.current = session;
+  }, [session]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("gcs-theme", theme);
@@ -156,12 +182,14 @@ export default function App() {
     let disposed = false,
       retry = 0;
     const open = () => {
+      let opened = false;
       const streamUrl = new URL(activeEndpoint);
       streamUrl.searchParams.set('map_encoding', 'rle');
       const ws = new WebSocket(streamUrl);
       socket.current = ws;
       ws.onopen = () => {
         if (disposed || socket.current !== ws) return;
+        opened = true;
         setLinked(true);
         record(`Connected to ${activeEndpoint}`);
       };
@@ -178,16 +206,40 @@ export default function App() {
             );
             setTelemetry(envelope.data);
             setReceived(Date.now());
+            const pose = envelope.data.slam_pose;
+            if (pose && age(envelope.data, "slam_pose") < 2 && Number.isFinite(pose.x) && Number.isFinite(pose.y)) {
+              const last = trail.current[trail.current.length - 1];
+              if (!last || Math.hypot(pose.x - last[0], pose.y - last[1]) > 0.05)
+                trail.current = [...trail.current.slice(-599), [pose.x, pose.y]];
+            }
             if (
               age(envelope.data, "mission") < 3 &&
               envelope.data.mission?.state !== "STARTING"
             )
               setStarting(false);
           } else if (envelope.kind === "execution" || envelope.kind === "receipt") {
-            setOutcome({ ...envelope.data, cmd: "execution" });
+            const d = envelope.data,
+              name = envelope.kind === "execution"
+                ? tasks.find((x) => x.id === d.task)?.label ?? "Execution"
+                : sentCommands.current.get(d.command_id) ?? "Runtime";
+            if (envelope.kind === "receipt")
+              record(`${name}: ${d.state}${d.reason ? `, ${d.reason}` : ""}`);
+            else {
+              const key = `${d.command_id}|${d.state}|${d.stage ?? ""}|${d.reason ?? ""}`;
+              if (lastExecution.current && key !== lastExecution.current)
+                record(`${name}: ${d.state}${d.stage ? ` · ${d.stage}` : ""}${d.reason ? `, ${d.reason}` : ""}`);
+              lastExecution.current = key;
+            }
+            if (d.command_id && d.command_id === latestCommand.current)
+              setOutcome({ ...d, cmd: name });
             setStarting(false);
           } else if (envelope.kind === "map") {
-            setGrid(decodeGrid(envelope.data));
+            const next = decodeGrid(envelope.data);
+            // A restarted slam_toolbox starts a new map and a new track.
+            setGrid((old) => {
+              if (old && (next.stamp < old.stamp - 1 || next.frame !== old.frame)) trail.current = [];
+              return next;
+            });
             setGridReceived(Date.now());
           } else if (envelope.kind === "event")
             record(envelope.data.msg || "Runtime event");
@@ -199,7 +251,7 @@ export default function App() {
               pending.current.delete(result.command_id);
               entry.resolve(result);
             }
-            setOutcome(result);
+            if (result.command_id === latestCommand.current) setOutcome(result);
             record(
               `${result.cmd}: ${result.state}${result.reason ? `, ${result.reason}` : ""}`,
             );
@@ -208,8 +260,10 @@ export default function App() {
           setError("The runtime sent an invalid message.");
         }
       };
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         if (disposed || socket.current !== ws) return;
+        if (opened)
+          record(`Link to the Pi lost (code ${event.code}${event.reason ? `: ${event.reason}` : ""}); reconnecting`);
         setLinked(false);
         history.current.disconnect();
         for (const [id, entry] of pending.current) {
@@ -251,8 +305,10 @@ export default function App() {
     const ws = socket.current;
     if (!ws || ws.readyState !== WebSocket.OPEN)
       throw new Error("Production runtime is disconnected.");
-    const id = commandId(),
-      submitted: CommandOutcome = {
+    const id = commandId();
+    latestCommand.current = id;
+    sentCommands.current.set(id, cmd);
+    const submitted: CommandOutcome = {
         command_id: id,
         cmd,
         state: "Submitted",
@@ -511,11 +567,19 @@ export default function App() {
         />
         <Datum label="Execution" text={t?.execution ? `${t.execution.task}: ${t.execution.state} ${t.execution.stage || ''}` : t?.mission.state || "Unavailable"} />
       </section>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
+      <div className="toasts">
+        {error && (
+          <div className="toast" role="alert">
+            <p>{error}</p>
+            <button aria-label="Dismiss" onClick={() => setError("")}>×</button>
+          </div>
+        )}
+        {(arenaOpen || lidarOpen) && outcome && clock - outcomeAt < 8000 && (
+          <div className={`toast ${outcome.state === "Failed" ? "" : "info"}`} role="status">
+            <p>{outcome.cmd.replace(/_/g, " ")}: {outcome.state}. {outcome.reason}</p>
+          </div>
+        )}
+      </div>
       {settings && <Connections state={hostState} refresh={refreshHost} />}
       <main>
         <section className="workspace">
@@ -623,12 +687,14 @@ export default function App() {
             )}
             {view === "slam" && (
               <Slam
-                status={telemetry?.slam_status}
+                status={fresh ? telemetry?.slam_status : undefined}
                 grid={grid}
-                current={gridReceived > 0 && clock - gridReceived < 3000}
+                mapAge={gridReceived > 0 ? Math.max(0, clock - gridReceived) / 1000 : null}
+                pose={fresh && age(telemetry, "slam_pose") < 2 ? (telemetry?.slam_pose as MapPose) : null}
+                trail={trail.current}
+                theme={theme}
                 scan={telemetry?.scan}
                 lidarFresh={age(telemetry, "lidar") < 2}
-                poseFresh={age(telemetry, "pose") < 2}
                 slamEnabled={
                   hostState?.runtime === "Running" &&
                   hostState.profiles.find((x) => x.id === hostState.profile_id)?.slam === true
@@ -827,12 +893,20 @@ export default function App() {
           <button
             disabled={!canStart}
             onClick={() => {
-              const request = taskCommand(selectedTask, action, {height, target, waypoints: waypoints.trim() ? boundary(waypoints) : []});
-              setReview({ ...request, label: `Start ${taskInfo.label}` });
+              try {
+                const request = taskCommand(selectedTask, action, {height, target, waypoints: waypoints.trim() ? boundary(waypoints) : []});
+                setError("");
+                setReview({ ...request, label: `Start ${taskInfo.label}` });
+              } catch (reason) {
+                setError(reason instanceof Error ? reason.message : String(reason));
+              }
             }}
           >
             Review start
           </button>
+          {!canStart && !busy && !starting && (
+            <p className="start-blocked">{startBlockReason(t, fresh, selectedTask)}</p>
+          )}
           <button
             disabled={!linked || busy}
             onClick={() =>

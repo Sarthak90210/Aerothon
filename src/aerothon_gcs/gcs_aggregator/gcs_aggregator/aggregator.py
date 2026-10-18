@@ -31,7 +31,7 @@ from rclpy.qos import (qos_profile_sensor_data, QoSProfile,
 from mavros_msgs.msg import State, EstimatorStatus, WaypointList, Vibration, ExtendedState
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from sensor_msgs.msg import BatteryState, NavSatFix, LaserScan, MagneticField, Image
-from geometry_msgs.msg import PoseStamped, Vector3, TwistStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Vector3, TwistStamped
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import String, Bool, Float64, UInt32
 
@@ -171,8 +171,14 @@ class Aggregator(Node):
         # The terminal outcome, including the delivery accuracy as a NUMBER.
         self.create_subscription(String, "/mission/result", self._on_mission_result, q)
         # Real slam_toolbox occupancy grid (throttled + downsampled to the GCS).
+        # The newest envelope is kept for a GCS link that connects later.
         self._last_map = 0.0
+        self._map_env = None
+        self._map_pending = None
         self.create_subscription(OccupancyGrid, "/map", self._on_map, 1)
+        # slam_toolbox's pose of the mapping base in the map frame: where the
+        # aircraft is on the SLAM map. Display only; nothing flies on it.
+        self.create_subscription(PoseWithCovarianceStamped, "/pose", self._on_slam_pose, q)
         self.create_subscription(EstimatorStatus, "/mavros/estimator_status",
                                  self._on_estimator, qos_sensor)
         self.create_subscription(UInt32, "/mavros/global_position/raw/satellites",
@@ -768,17 +774,35 @@ class Aggregator(Node):
         elif m.data == "LAND":
             self.state["checklist"]["land"] = True
 
+    def _on_slam_pose(self, m):
+        p = m.pose.pose
+        self._mark("slam_pose")
+        self.state["slam_pose"] = {"x": round(p.position.x, 3), "y": round(p.position.y, 3),
+                                   "yaw": round(math.radians(_euler_deg(p.orientation)[2]), 4),
+                                   "frame": m.header.frame_id}
+
+    # slam_toolbox publishes about once a second (map_update_interval 1.0).
+    # A 1.0 s throttle against that period dropped about every other map.
+    MAP_MIN_PERIOD_S = 0.4
+
     def _on_map(self, m):
         """Forward the REAL slam_toolbox occupancy grid (throttled + downsampled)."""
         if not self._ws_clients:
-            return                  # nobody to forward it to
+            self._map_pending = m   # encoded when a GCS link connects
+            return
         now = time.monotonic()
-        if now - self._last_map < 1.0:
+        if now - self._last_map < self.MAP_MIN_PERIOD_S:
             return
         self._last_map = now
+        env = self._map_envelope(m)
+        if env:
+            self._map_env = env
+            self._broadcast(env)
+
+    def _map_envelope(self, m):
         w, h, data = m.info.width, m.info.height, m.data
         if not w or not h:
-            return
+            return None
         step = max(1, math.ceil(max(w, h) / 1024))
         ow, oh, out = max_pool_grid(data, w, h, step)
         grid = {"res": round(m.info.resolution * step, 3), "w": ow, "h": oh,
@@ -787,7 +811,7 @@ class Aggregator(Node):
                 "yaw": math.radians(_euler_deg(m.info.origin.orientation)[2]),
                 "frame": m.header.frame_id,
                 "stamp": m.header.stamp.sec + m.header.stamp.nanosec / 1e9, **pack_grid(out)}
-        self._broadcast(self._env("map", grid))
+        return self._env("map", grid)
 
     # ---- outbound ---- #
     def _env(self, kind, data):
@@ -870,6 +894,11 @@ class Aggregator(Node):
     async def _handler(self, ws):
         self._ws_clients.add(ws)
         try:
+            pending, self._map_pending = self._map_pending, None
+            if pending is not None:
+                self._map_env = self._map_envelope(pending) or self._map_env
+            if self._map_env:
+                await ws.send(self._map_env)
             async for raw in ws:
                 await self._on_command(ws, raw)
         finally:

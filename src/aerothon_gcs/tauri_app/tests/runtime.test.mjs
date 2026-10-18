@@ -6,6 +6,7 @@ import {
   videoUrl,
   freshFcu,
   startAllowed,
+  startBlockReason,
   taskCommand,
   commandEnvelope,
   acknowledgement,
@@ -130,4 +131,18 @@ test("all twenty-one production arena dimensions and built-in presets validate o
   );
   d.banner.border_m = 1;
   assert.ok(validateDraft(d, schema.fields).some((s) => s.includes("panel")));
+});
+test("a blocked start names its reason, and the reason agrees with startAllowed", () => {
+  const t = ready();
+  assert.equal(startBlockReason(t, true, "mission"), "");
+  assert.match(startBlockReason(t, false, "mission"), /No live telemetry/);
+  t.execution = {task:'slam',state:'Running'};
+  assert.match(startBlockReason(t, true, "qr"), /SLAM mapping is running/);
+  delete t.execution;
+  t.devices = {lidar:{ok:false,reason:'no scans for 3 s'}};
+  assert.equal(startBlockReason(t, true, "slam"), "The lidar is unavailable: no scans for 3 s");
+  assert.equal(startAllowed(t, true, "slam"), false);
+  t.safety.ready = false;
+  assert.match(startBlockReason(t, true, "banner"), /readiness interlock is blocked/);
+  assert.match(startBlockReason(t, true, "mechanism"), /Winch feedback is unavailable/);
 });

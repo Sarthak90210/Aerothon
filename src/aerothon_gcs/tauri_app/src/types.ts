@@ -13,7 +13,7 @@ export interface ReadinessItem {
 export interface Telemetry {
   banner_colours?: Record<string,string>;
   geofence_vertices?: [number, number][];
-  execution?: {task:string; state:string; stage?:string; control_owner?:string};
+  execution?: {task:string; state:string; stage?:string; control_owner?:string; command_id?:string; reason?:string};
   runtime_health?: {fresh:boolean};
   sensor_diagnostics?: {
     vibration_mps2: (number | null)[] | null;
@@ -136,6 +136,8 @@ export interface Telemetry {
                reason: string; geometry_measured?:boolean } | null;
   };
   slam_status?: {source?:string;state?:string;reason?:string};
+  /** slam_toolbox's pose of the mapping base in the map frame (yaw in radians). */
+  slam_pose?: {x:number; y:number; yaw:number; frame?:string};
   scan?: { yaw_deg: number; ranges: (number | null)[];
            angle_min?: number; angle_step?: number; range_min?:number;range_max?:number;
            frame?:string;stamp?:number };

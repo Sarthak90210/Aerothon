@@ -157,6 +157,9 @@ class Host:
         self.execution = None
         self.start_reserved = None
         self.clients = set()
+        # The newest SLAM map envelope: a browser that (re)connects draws it at
+        # once instead of keeping whatever it showed before, or nothing.
+        self.last_map = None
         self.internal_ws = None
         self.lock = asyncio.Lock()
         self.launch = launch or self.launch_runtime
@@ -348,6 +351,7 @@ class Host:
         self.telemetry = None
         self.received = 0
         self.execution = None
+        self.last_map = None
         # Preparing sensors and telemetry never submits a Start or takes control.
         self.proc = await self.launch(p)
         self.profile_id = p['id']
@@ -437,6 +441,8 @@ class Host:
                                 self.execution = {'command_id': cid, 'state': 'Failed',
                                                   'reason': d.get('reason', '') or 'start refused by runtime'}
                         legacy_map = None
+                        if env.get('kind') == 'map':
+                            self.last_map = (m.data, env)
                         for client in list(self.clients):
                             try:
                                 payload = m.data
@@ -475,7 +481,7 @@ class Host:
                     raise ValueError('command ID already used with different parameters')
                 return json.loads(row[1])
             cmd = data.get('cmd')
-            if cmd not in {'start', 'stop', 'land', 'abort', 'set_mode', 'set_delivery_zone', 'set_geofence', 'set_target', 'arm', 'disarm', 'takeoff', 'set_banner_colours', 'set_arena_dimensions', 'save_dimension_preset', 'delete_dimension_preset', 'lidar_cal_capture', 'lidar_cal_apply', 'lidar_cal_reset', 'gimbal_pitch'}:
+            if cmd not in {'start', 'stop', 'land', 'abort', 'set_mode', 'set_delivery_zone', 'set_geofence', 'set_target', 'arm', 'disarm', 'takeoff', 'set_banner_colours', 'set_arena_dimensions', 'save_dimension_preset', 'delete_dimension_preset', 'lidar_cal_geometry', 'lidar_cal_background', 'lidar_cal_capture', 'lidar_cal_apply', 'lidar_cal_reset', 'gimbal_pitch'}:
                 raise ValueError('unknown command')
             recovery = cmd in {'stop','land','abort'} or (cmd=='set_mode' and data.get('args',{}).get('mode')=='RTL')
             if not self.internal_ws or (not self.fresh() and not recovery):
@@ -603,6 +609,7 @@ def application(host):
                 except asyncio.TimeoutError:
                     raise ValueError('runtime is still shutting down; no forced termination')
             host.owner_path.unlink(missing_ok=True)
+            host.last_map = None
             host.profile_id = None
             host.controlled = False
             host.telemetry = None
@@ -621,10 +628,20 @@ def application(host):
         return web.json_response(await host.check())
 
     async def websocket(request):
-        ws = web.WebSocketResponse(heartbeat=5, compress=True)
+        # A 5 s heartbeat allowed the page 2.5 s to answer a ping; a phone
+        # busy for a moment on Wi-Fi dropped and rejoined repeatedly. Telemetry
+        # freshness (3 s) still marks stale data on the page independently.
+        ws = web.WebSocketResponse(heartbeat=10, compress=True)
         await ws.prepare(request)
         peer = ClientRelay(ws, rle=request.query.get('map_encoding') == 'rle')
         host.clients.add(peer)
+        if host.last_map:
+            raw, env = host.last_map
+            try:
+                legacy = env.get('data', {}).get('encoding') == 'rle' and not peer.rle
+                peer.offer('map', map_for_legacy_client(env) if legacy else raw)
+            except (ValueError, ConnectionError):
+                pass
         try:
             async for _ in ws:
                 pass  # all mutations use the validated, journalled HTTP API
@@ -699,7 +716,12 @@ def application(host):
             path = host.static / 'index.html'
         if not path.is_file():
             return web.Response(status=503, text='Build the GCS browser assets before serving the Pi webpage.')
-        return web.FileResponse(path)
+        # Without this a browser heuristically cached index.html and kept
+        # running the previous GCS after a deploy. Built assets carry a content
+        # hash in their names, so they never change under the same URL.
+        hashed = path.parent.name == 'assets' and path.is_relative_to(host.static / 'assets')
+        return web.FileResponse(path, headers={'Cache-Control': 'public, max-age=31536000, immutable'
+                                               if hashed else 'no-cache'})
 
     app.router.add_get('/api/state', state)
     app.router.add_post('/api/profiles', save)

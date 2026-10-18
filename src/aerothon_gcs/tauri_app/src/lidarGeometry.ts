@@ -5,7 +5,7 @@ export interface Scan {
 }
 export interface Grid {
   w:number; h:number; res:number; ox:number; oy:number; yaw:number;
-  frame:string; stamp:number; data:number[];
+  frame:string; stamp:number; data:ArrayLike<number>;
 }
 export function decodeGrid(value: Grid & {encoding?:string; rle?:number[]}): Grid {
   const count=value.w*value.h;
@@ -13,7 +13,7 @@ export function decodeGrid(value: Grid & {encoding?:string; rle?:number[]}): Gri
     throw new Error('Invalid map dimensions');
   if(value.encoding==='rle') {
     if(!Array.isArray(value.rle)||value.rle.length%2)throw new Error('Invalid map run lengths');
-    const data=new Array<number>(count);let offset=0;
+    const data=new Int8Array(count);let offset=0;
     for(let i=0;i<value.rle.length;i+=2){
       const cell=value.rle[i],n=value.rle[i+1];
       if(!Number.isInteger(cell)||cell< -1||cell>100||!Number.isInteger(n)||n<=0||offset+n>count)
@@ -35,6 +35,34 @@ export function scanPoints(scan?: Scan): Array<[number, number]> {
     const a = a0 + i * da;
     return [[r * Math.cos(a), r * Math.sin(a)] as [number, number]];
   });
+}
+/** Pose of the mapping base in the SLAM map frame (slam_toolbox /pose). */
+export interface MapPose { x:number; y:number; yaw:number; }
+/** Body-frame scan points (forward, left) placed in the map frame. */
+export function scanInMap(points: Array<[number, number]>, pose: MapPose): Array<[number, number]> {
+  const c = Math.cos(pose.yaw), s = Math.sin(pose.yaw);
+  return points.map(([f, l]) => [pose.x + c*f - s*l, pose.y + s*f + c*l]);
+}
+export interface GridPalette { free:[number,number,number]; occupied:[number,number,number];
+  unknown:[number,number,number]; uncertain:[number,number,number]; }
+/**
+ * RGBA pixels for an occupancy grid, top row first (image order), packed as
+ * little-endian 32-bit words. One pass with no per-cell allocation: the old
+ * per-cell array spread cost ~30 ms for a 900 x 700 map and ran at 10 Hz.
+ */
+export function rasterizeGrid(g: Grid, palette: GridPalette): Uint32Array {
+  const pack = ([r, gr, b]: [number,number,number]) => ((255 << 24) | (b << 16) | (gr << 8) | r) >>> 0;
+  const free = pack(palette.free), occupied = pack(palette.occupied),
+    unknown = pack(palette.unknown), uncertain = pack(palette.uncertain);
+  const out = new Uint32Array(g.w * g.h);
+  for (let row = 0; row < g.h; row++) {
+    const src = row * g.w, dst = (g.h - 1 - row) * g.w;
+    for (let col = 0; col < g.w; col++) {
+      const v = g.data[src + col];
+      out[dst + col] = v < 0 ? unknown : v >= 65 ? occupied : v <= 25 ? free : uncertain;
+    }
+  }
+  return out;
 }
 export function gridBounds(g: Grid) {
   const c = Math.cos(g.yaw || 0), s = Math.sin(g.yaw || 0);

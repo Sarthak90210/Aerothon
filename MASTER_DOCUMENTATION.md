@@ -408,6 +408,31 @@ the live scan starts at 0 rad instead of -pi; a physical front/left target
 check is still pending. Fresh measured XYZ/tilt and panel captures
 are still required for a physical mounting claim.
 
+18 October, GCS testing pass. The user saw the GCS disconnect and reconnect
+repeatedly once SLAM mapping started, with the SLAM tab showing an old map.
+A local rig (fake FCU, lidar, growing map and execution service; the real
+aggregator and web host; `.scratch/gcs_testing_20261018/`) exercised every
+Testing task, the organiser inputs, both dialogs and all tabs. Causes found:
+the SLAM tab rebuilt the whole occupancy grid on every telemetry frame
+(10 Hz), so a slower phone or tablet fell behind the stream and missed the
+host's ping window (2.5 s), and the host closed the socket; the page kept its
+last grid across reconnects and runtime changes; the aggregator's 1.0 s map
+throttle against slam_toolbox's 1.0 s publication dropped about every other
+map. Fixed: the grid is rasterised once per map and drawn per animation
+frame; the view follows the growing map; slam_toolbox's `/pose` places the
+aircraft, its track and the live scan on the map; map age replaces the
+Live/Stale flicker; the aggregator and web host replay the newest map to a
+reconnecting page and the page drops it when the runtime or profile changes;
+the browser heartbeat allows 5 s. Other defects fixed in the same pass: the
+web host refused `lidar_cal_geometry` and `lidar_cal_background`, so the
+calibration wizard could not pass step 1; a refused Start showed its reason
+for 0.2 s before the previous run's republished status replaced it, and
+receipts never reached the event log; malformed waypoint text threw without a
+message; errors were drawn behind open dialogs; a blocked Start gave no
+reason; `index.html` had no `Cache-Control`, so browsers kept an old GCS after
+a deploy (pages opened before this fix need one manual reload). Display and
+host only: no flight decision changed.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch
