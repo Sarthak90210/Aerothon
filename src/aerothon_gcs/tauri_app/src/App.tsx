@@ -26,6 +26,7 @@ import LidarCalibration from "./LidarCalibration";
 import Slam, { type Grid } from "./LidarView";
 import { decodeGrid } from "./lidarGeometry";
 import coverage from "./satelliteCoverage.json";
+import { satelliteStyle } from "./mapSources";
 import "./gcs.css";
 const Graphs = lazy(() => import("./Graphs"));
 
@@ -298,31 +299,15 @@ export default function App() {
   };
   useEffect(() => {
     if (view !== "map" || !mapHost.current) return;
+    const satellite = satelliteStyle(coverage, onlineMap, location.origin);
     const m = new maplibregl.Map({
       container: mapHost.current,
-      center: coverage.center as [number, number],
-      zoom: coverage.initial_zoom,
+      center: coverage.initial.center as [number, number],
+      zoom: coverage.initial.zoom,
       maxZoom: 19,
       style: {
         version: 8,
-        sources: {
-          satellite: {
-            type: "raster",
-            tiles: [
-              onlineMap
-                ? "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                : `${location.origin}/satellite/{z}/{x}/{y}.jpg`,
-            ],
-            tileSize: 256,
-            bounds: onlineMap
-              ? undefined
-              : (coverage.bounds as [number, number, number, number]),
-            minzoom: onlineMap ? 0 : coverage.minzoom,
-            maxzoom: 19,
-            attribution:
-              "© Esri, Maxar, Earthstar Geographics, GIS User Community",
-          },
-        },
+        sources: satellite.sources,
         layers: [
           {
             id: "background",
@@ -331,7 +316,7 @@ export default function App() {
               "background-color": theme === "dark" ? "#252627" : "#ecece8",
             },
           },
-          { id: "satellite", type: "raster", source: "satellite" },
+          ...(satellite.layers as maplibregl.LayerSpecification[]),
         ],
       },
     });
@@ -581,7 +566,7 @@ export default function App() {
                     : "Cached coverage overview; aircraft position is unavailable."}{" "}
                   {onlineMap
                     ? "Online imagery needs an internet connection."
-                    : "Offline imagery uses bundled coverage at its available zoom levels."}
+                    : `Offline imagery: ${coverage.regions.map((r) => `${r.name} (zoom ${r.minzoom}-${r.maxzoom})`).join(", ")}.`}
                 </p>
                 {mapError && (
                   <p className="view-note">

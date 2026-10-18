@@ -29,9 +29,13 @@ def satellite_coverage():
     north, south = min(y for _, y in points), max(y for _, y in points) + 1
     lon = lambda x: x / 2**z * 360.0 - 180.0
     lat = lambda y: math.degrees(math.atan(math.sinh(math.pi * (1 - 2*y/2**z))))
-    return dict(center=[lon((west+east)/2), lat((north+south)/2)],
-                bounds=[lon(west), lat(south), lon(east), lat(north)],
-                minzoom=z, maxzoom=zooms[-1], initial_zoom=min(17, zooms[-1]))
+    bundled = dict(name='Simulator site (bundled)',
+                   bounds=[lon(west), lat(south), lon(east), lat(north)],
+                   minzoom=z, maxzoom=zooms[-1])
+    cached = json.loads((ROOT / 'scripts/map_regions.json').read_text(encoding='utf-8'))
+    # Drawn bottom to top: coarse regions (low minzoom) under detail regions.
+    regions = sorted([bundled, *cached['regions']], key=lambda r: r['minzoom'])
+    return dict(initial=cached['initial'], regions=regions)
 
 
 if __name__ == '__main__':

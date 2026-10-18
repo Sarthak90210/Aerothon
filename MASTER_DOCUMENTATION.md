@@ -315,7 +315,7 @@ avoidance are refused); `stream_rate_keeper` asks for about 60% of the
 camera is a Logitech Brio 100, not the C270 the field of view
 (`camera_hfov` 0.8519 rad) and exposure were set for, so measure both; Pi 5
 supply (below); offline
-map tiles cover only the simulation site; the EKF-datum display and Graphs
+map tiles beyond the regions in `scripts/map_regions.json` are absent; the EKF-datum display and Graphs
 sensor rates are empty on the aircraft; SLAM needs FCU local position (GPS
 fix) for its odometry.
 
@@ -861,12 +861,28 @@ cd ../../..
 python3 scripts/package_pi_runtime.py --out logs/pi-runtime.zip
 ```
 
-The ZIP contains 11 local flight/GCS ROS packages, selected operating scripts,
+The ZIP contains 13 local flight/GCS ROS packages, selected operating scripts,
 built `gcs/` assets with offline satellite tiles, these two guides and a SHA256
 `runtime_manifest.json`. It excludes simulator packages/models, tests, evidence,
 developer tools, CAD, Node/Rust dependencies, build/install outputs and caches.
 It refuses an existing ZIP. Build ROS output on the destination architecture.
 External drivers and OS dependencies are not application source.
+
+Regional offline imagery is not in the ZIP. `scripts/map_regions.json` lists
+the cached regions (18 October: VIT Vellore, zoom 0-19, 4,104 tiles); the
+GCS draws each as a bounded layer above the bundled simulator tiles, overscaling
+a region past its maxzoom. Fetch on an internet-connected host, then copy into
+the web host's tile cache, which `/satellite/` reads after the bundled tiles:
+
+```bash
+python scripts/download_map_tiles.py --out <tiles-dir>
+tar -C <tiles-dir> -cf - . | ssh pi5@<pi> 'mkdir -p ~/.local/state/aerothon/map-tiles && tar -C ~/.local/state/aerothon/map-tiles -xf -'
+```
+
+Re-running the download resumes. Imagery is Esri World Imagery; its terms of
+use govern bulk download, so keep regions to the sites actually flown.
+After editing the regions, rerun `scripts/export_gcs_contract.py` and rebuild
+the GCS so its declared coverage matches the cache.
 
 Identify Pi OS/version/architecture first. This native route requires Ubuntu
 24.04 arm64 and the official Jazzy APT repository. The flight dependency set is:
