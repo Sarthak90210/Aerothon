@@ -8,6 +8,26 @@ import stat
 import subprocess
 import time
 
+
+def routing_settings(p, env):
+    """A saved network profile releases the UART. No profile uses runtime.env.
+
+    Routing has no props or mission-start dependency. The host service can
+    receive and forward FC heartbeats before Docker, ROS or a browser exists.
+    """
+    if p and p.get('transport') != 'serial':
+        return None
+    device = str(p.get('device') or env.get('AEROTHON_FCU_DEVICE', ''))
+    if not device.startswith('/dev/') or '..' in device:
+        return None
+    baud = int(p.get('baud', env.get('AEROTHON_FCU_BAUD', '115200')))
+    if baud < 9600 or baud > 3000000:
+        return None
+    gcs_host = str(p.get('gcs_host') or env.get('AEROTHON_GCS_HOST', '')).strip()
+    if gcs_host and not all(c.isalnum() or c in '.:-' for c in gcs_host):
+        return None
+    return device, baud, gcs_host, p.get('gcs_broadcast', True) is not False
+
 def main():
     source = Path('/home/pi5/.aerothon/vehicle_connection.json')
     proc = None
@@ -23,17 +43,9 @@ def main():
         while not stopping:
             try:
                 p = json.loads(source.read_text()) if source.exists() else {}
-                serial = p.get('transport') == 'serial' and p.get('hardware_reviewed') is True
-                device = p.get('device', os.environ.get('AEROTHON_FCU_DEVICE','/dev/ttyAMA0'))
-                baud = int(p.get('baud',os.environ.get('AEROTHON_FCU_BAUD','115200')))
-                valid = serial and device.startswith('/dev/') and '..' not in device and Path(device).exists() and stat.S_ISCHR(Path(device).stat().st_mode)
-                gcs_host = str(p.get('gcs_host') or '').strip()
-                if gcs_host and not all(c.isalnum() or c in '.:-' for c in gcs_host):
-                    gcs_host = ''
-                # Every Mission Planner on the LAN gets the FC's MAVLink by
-                # default (UDP listen on 14550, no laptop IP to configure).
-                broadcast = p.get('gcs_broadcast', True) is not False
-                wanted = (device, baud, gcs_host, broadcast) if valid else None
+                wanted = routing_settings(p, os.environ)
+                if wanted and not (Path(wanted[0]).exists() and stat.S_ISCHR(Path(wanted[0]).stat().st_mode)):
+                    wanted = None
             except (OSError, ValueError, TypeError):
                 wanted = None
             died = proc is not None and proc.poll() is not None

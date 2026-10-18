@@ -33,4 +33,7 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>mavros_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>aerothon_slam_grid</exec_depend>
 </package>

@@ -328,8 +328,18 @@ power. A guarded step test: idle 4.98 V, C1 spinning 4.995 V (the lidar is
 not the load), two CPU cores 4.76 V within 12 s, still falling after the load
 stopped, then a loss at idle. The supply negotiated only 3000 mA on both the
 original and the replacement supply. The CPU itself is stock (no
-over_voltage, 2.4 GHz, ondemand); `usb_max_current_enable=1` is the one
-non-default power setting. Use the official 27 W (5.1 V 5 A) USB-C supply
+over_voltage, 2.4 GHz, ondemand). An earlier session had added
+`usb_max_current_enable=1` (USB ports 1.6 A instead of a shared 600 mA,
+backup `config.txt.before-usb-current-20261016`). It was reverted at 23:29
+at the user's request. Boot still logged under-voltage at 5 s and 37 s, and
+idle held 4.97-5.08 V, so that setting was not the cause. Restore it
+(`config.txt.with-usb-current-20261016`) if the C1 and camera drop out
+together at 600 mA. Later that night the Pixhawk was silent on TELEM3: the
+UART counted 0 bytes. GPIO14 (Pi TX, header 8) stayed at 0 V even with a
+pull-up, and GPIO15 (Pi RX, header 10) followed whichever pull was set.
+So the FC TX was not driving the line, and the Pi TX was clamped low: an
+unpowered FC/TELEM3, or disturbed wires next to the 5 V/GND pins 2/4/6.
+`pinctrl` with the router stopped tells these apart. Use the official 27 W (5.1 V 5 A) USB-C supply
 with its own cable, or a dedicated 5.1-5.2 V 5 A BEC on short heavy wires
 (then `PSU_MAX_CURRENT=5000` in the EEPROM), before any further runtime or
 flight work. The lidar and camera drivers now respawn, since a driver that
@@ -347,6 +357,56 @@ is a wedged head or its lead, not a driver fault: reseat the adapter-to-lidar
 cable or power-cycle the lidar. The kernel's `cp210x ... failed set request
 0x12 status: -110` (PURGE at port close) also appears while the lidar
 answers normally; it is not a fault indicator.
+
+Night of 16-17 October, Pixhawk link and rebuild. Mission Planner connected
+but stalled at "Getting params". The router was proven correct: 200 laptop
+frames all reached the UART. The FC returned only heartbeats (about 21 B/s
+against 58 B/s of requests). GPIO14 (Pi TX, header 8) read high even when
+driven low, while free GPIOs passed the same test. So that output stage or
+its wire is suspect. The link moved to UART2: `dtoverlay=uart2-pi5`, GPIO4
+TX (header 7) to TELEM3 RX (pin 3), GPIO5 RX (header 29) from TELEM3 TX
+(pin 2), `/dev/ttyAMA2` at 115200. The Pi's SD slot then failed: two
+different cards timed out at `mmc0: error -110 whilst initialising SD card`
+and dropped to `(initramfs)`. The bootloader still read them, but Linux
+could not. The Pi now boots Debian 13 from a USB 3 drive (`/dev/sda`) with
+the SD slot empty; BOOT_ORDER `0xf461` is unchanged. Because the boot drive,
+C1 and camera share USB on a supply without PD, `config.txt` sets
+`usb_max_current_enable=1` (backup `config.txt.before-aerothon-20261017`).
+The router LAN has no Internet, so the rebuild ran through the temporary
+loopback-only SSH proxy. A 12 s first DNS lookup on the laptop needs
+timeouts above 10 s, and the laptop must stay on wired Ethernet: its Wi-Fi
+kept hopping to the receiver's "ExpressLRS RX" access point. The rebuild
+followed section 5: Docker 26.1.5, `aerothon-dependencies:20261014` and
+`aerothon-runtime:20261014` from this source, the C1 driver at `34300099` and
+the LD06 driver at `bf668a89` (pthread patch). colcon finished 14 packages,
+`run_container.sh check` passed everything, and the services were enabled.
+The GCS profiles were recreated: drone on `/dev/ttyAMA2` with SLAM, and
+laptop-sim at the laptop's current address. "Secured props-off wiring
+reviewed" is left for the operator, who must press Save profile before
+Connect, because Connect uses the saved copy. The first UART2 wiring put the
+FC TX on header 31 (GPIO6, 1 Hz edge bursts) instead of 29. After moving it,
+a direct test on `/dev/ttyAMA2` without the runtime got FC heartbeats, and
+PARAM_REQUEST_LIST returned all 1,036 parameters in under 25 s.
+
+17 October, boot and LiDAR mapping repair. The Pi's live baseline reproduced
+the complaint with zero satellites: C1 at 9.7 Hz, only 72 beams forwarded to
+the GCS and no occupancy map. Runtime preparation was still manual. The new
+boot connection, full-beam display, mapping-only scan odometry, inclusive grid
+bounds and multi-stage measured calibration are described in sections 3, 5
+and 6. Native ROS testing with 120 moving room scans and 2 mm deterministic
+range perturbation retained all four walls within 0.15 m, put every occupied
+cell within 0.12 m of a known wall and marked over 97% of the room interior
+as observed free. This is synthetic-scan software evidence, not a physical
+calibration or flight qualification. Source/bundle inventories, test ledgers,
+Pi deployment, boot/UDP checks and physical scan/map receipts are kept in
+`.scratch/lidar_boot_20261017/`. On 18 October the user reported that objects
+at the C1's front were drawn behind the GCS arrow. `sllidar_ros2` puts the C1's
+0 degrees at pi, and the uncalibrated mount yaw 0 did not undo it, so every
+`/scan` consumer saw the scan reversed. `scan_mount` now applies the per-model
+driver correction (Sensors and mechanism, section 6). Deployed the same day,
+the live scan starts at 0 rad instead of -pi; a physical front/left target
+check is still pending. Fresh measured XYZ/tilt and panel captures
+are still required for a physical mounting claim.
 
 ## 2. Architecture and source map
 
@@ -396,7 +456,7 @@ Source map:
 
 Key interfaces include `/mission/arena_dimensions`, `/mission/banner_colours`,
 `/mission/delivery_zone`, `/mission_ready`, `/mavros/local_position/pose`,
-`/mavros/local_position/velocity_local`, `/scan_raw`, `/scan`, `/image_raw`,
+`/mavros/local_position/velocity_local`, `/scan_driver`, `/scan_raw`, `/scan`, `/image_raw`,
 `/camera/pose_state`, `/percep/*`, `/winch/cmd`, `/winch/status` and
 `/mission/delivery_observation`. Inspect the live graph with `ros2 node info`
 and `ros2 topic info` for exact publishers/subscribers.
@@ -536,14 +596,62 @@ requests use the same origin. Each connection profile names its **Vehicle**:
 *Laptop simulation* (the Pi runs the flight code and GCS and connects over the
 intranet to Gazebo and SITL on the laptop: FCU TCP port plus sensor gateway)
 or *Real drone* (FC UART or a network telemetry link, Pi camera and lidar, no
-gateway, secured props-off review required before Connect). The header shows
+gateway). The header shows
 the active profile and vehicle kind. Flight operations and Testing work with
 either vehicle. Connections saves vehicle profiles on the Pi:
 FCU TCP/UDP/UART, hostname, ports, system/component identity, remote sensor
 gateway, local devices, calibration and RC mappings. Save only with runtime
-stopped and aircraft disarmed. Connect prepares sensors and the supervisor;
+stopped and aircraft disarmed. The selected real-drone profile connects
+automatically at boot, without a props checkbox. Connect prepares sensors and the supervisor;
 it does not arm, start a mission or move the camera. A profile with SLAM enabled
 starts production mapping; the GCS displays its frame, origin and timestamp.
+The native UART router starts independently before networking and Docker. It
+uses the measured UART in runtime.env before any profile has been saved, then
+follows the selected serial/network profile. Mission Planner listens on UDP
+14550; the router discovers LAN interfaces every second and broadcasts telemetry
+as soon as the FC and operator network are available. Pi/FC boot and Wi-Fi
+association still take time after battery connection. Connection starts no mission.
+Outbound GCS telemetry coalesces bytewise UART reads for at most 10 ms into
+datagrams no larger than 1200 bytes. Previously each tiny read became another
+Wi-Fi broadcast, congesting the LAN during full telemetry. Local MAVROS data
+and inbound FC commands remain immediate. Learned UDP peers expire after 30 s
+without traffic; configured targets and LAN broadcast remain available.
+An explicit Disconnect pauses automatic runtime connection until the next
+Pi/web-host restart or an explicit Connect. A profile can opt out of automatic
+connection; simulation profiles opt out by default.
+
+For real hardware the default mapping pose source is LiDAR scan matching,
+independent of GPS and the FCU local-position stream. Its TF tree is
+`map -> lidar_odom -> lidar_mapping_base -> lidar_mapping_scan`; its scan topic
+is `/scan_slam`. This tree does not supply flight-navigation pose or change the
+FCU's `odom -> base_link` transform. Insufficient returns, degenerate scenes,
+poor overlap or failed registration hold new map updates. A capture gap first
+holds the map; consecutive scans can resume only after tightly matching the
+previous scene with small motion. Larger uncertainty requires a new mapping
+origin. FCU mapping remains selectable for qualified GPS/EKF operation and
+is the simulation default. The GCS shows mapping state, a full-resolution live
+scan independent of map availability, metric axes and scale, zoom and pan.
+Map cells retain native resolution up to 1024 cells per side; larger display
+grids declare their coarser resolution. All 720 C1 beams are retained in the
+live view. Unknown cells remain unknown.
+Each browser has a bounded output writer: pending maps and telemetry retain
+their latest snapshots, while command receipts retain order. A map transfer
+can no longer silently remove the browser after the former 100 ms write limit;
+a genuinely stalled connection closes explicitly so the browser can reconnect.
+Map runs use lossless encoding, preserving every native cell rather than
+thickening walls to save bandwidth. Deflate-capable browsers receive the normal
+telemetry stream; an uncompressed proxy/client is paced to two display snapshots
+per second. Mapping and avoidance still consume the original sensor stream.
+Built JavaScript/CSS include precompressed gzip assets so the Pi can serve
+the browser over the LAN with fewer transferred bytes.
+The pinned slam_toolbox 2.8.5 occupancy raster rounds maximum endpoint indices
+to its width/height and then drops them as outside the array. The local
+`aerothon_slam_grid` adapter adds the required last row/column when rastering
+the existing optimized scans. It is compiled for the destination architecture,
+checks the exact upstream version at build time and is preloaded only into the
+SLAM node. It leaves upstream binaries, scan matching, flight pose and clearance
+checks intact. One traversing ray marks observed free cells for the display
+mapper; the resulting occupancy map is not a flight-clearance input.
 Camera view tabs do not move the camera; explicit camera tilt is reviewed.
 Before flight, enter green, orange and red as `#RRGGBB` in Organiser inputs,
 then review Apply banner colours while disarmed. All three are required.
@@ -842,8 +950,10 @@ sudo bash /home/pi5/aerothon-deploy/run_container.sh check
 ```
 
 `aerothon-gcs.service` runs the Pi web host inside the Jazzy container.
-It starts at boot with no vehicle execution. `aerothon-router.service` watches
-the explicitly selected hardware profile and is the single UART owner.
+It connects the selected automatic profile at boot with no vehicle execution.
+`aerothon-router.service` starts after local filesystems, before networking
+and Docker, and is the single UART owner. No GCS Connect or props checkbox
+is needed for routing. It uses runtime.env until a profile selects a link.
 Network profiles use MAVROS directly through their configured TCP/UDP endpoint;
 they do not open the physical UART. The former console service is disabled,
 and direct mission-service launch refuses to create a second controller.
@@ -855,10 +965,10 @@ runtime without live disarm. The Docker attach process uses `--sig-proxy=false`
 so a refused stop does not forward a kill to the flight container. Power loss
 and FCU failsafe remain separate hardware concerns.
 
-Open `http://192.168.0.101:8899/`, select Connections, save a profile, Connect
-vehicle and run Connection check. For hardware, use the measured TELEM3
-`/dev/ttyAMA0` at 115200 and review secured props-off wiring first. At the last
-inspection this device was absent. `/dev/serial0` is the debug/login UART.
+Open `http://192.168.0.101:8899/` and run Connection check. The existing
+drone profile connects automatically; Connections configures another profile
+when required. The measured TELEM3 link is `/dev/ttyAMA2` at 115200,
+BCM4 TX/header7 and BCM5 RX/header29. `/dev/serial0` is the debug/login UART.
 For laptop simulation, use its gateway endpoints instead. Supply organiser
 arena dimensions, the judges' geofence and banner colours through the GCS,
 inspect readiness, then Review start and Confirm Start.
@@ -989,10 +1099,48 @@ travel limits before conversion to line length. They do not prove release.
 
 ### Sensors and mechanism
 
-With props off and real bringup running, use `scripts/check_sensors.py lidar`:
-capture targets ahead and to port and verify corrected 0/+90 degree bearings.
-Check shadow sectors, range and scan age. Saved GCS mounting calibration takes
-precedence over launch defaults. Use `scripts/check_sensors.py camera` to
+Scan frames run driver -> lidar -> body. The driver publishes `/scan_driver`.
+`scan_mount` turns it by `driver_yaw_deg` into `/scan_raw`, the lidar's own
+frame, with its marked 0 degrees at bearing 0, counter-clockwise. The mount
+(`lidar_yaw_deg`, `mirrored`, or the saved calibration) then gives `/scan`
+in the body frame. `sllidar_ros2` publishes bearing = pi - C1 angle, so its
+C1 front arrives at 180 degrees. `lidar_model:=c1` sets `driver_yaw_deg` 180;
+the LD06 uses 0. Mount yaw 0 means the C1's front faces the airframe nose.
+Calibration and `scripts/check_sensors.py` measure in `/scan_raw`.
+
+The GCS LiDAR calibration panel provides the full measured workflow, while
+disarmed and stationary. GPS is unnecessary:
+
+1. Measure the optical centre's X forward, Y left and Z up from the airframe
+   base_link origin. Enter roll and pitch measured with a level. These cannot
+   be inferred from an unknown room; level the scanner within 3 degrees.
+2. Remove the calibration panel and capture the background after 2 seconds.
+3. Put a matte panel at least 30 cm wide straight ahead, parallel to the nose
+   from the optical centre. Enter the measured optical-centre-to-panel-face
+   distance and capture after 2 seconds. Repeat farther ahead, at least 0.5 m
+   beyond the first distance, then to port and starboard at +90/-90 degrees.
+   Square each panel face to that direction and keep its centre in the laser plane.
+4. Each capture requires 15 distinct fresh scans, at least five adjacent
+   panel returns, stable edges, and at most 25 mm range variation. Background
+   subtraction must identify exactly one panel. Spikes, clutter, stale or
+   repeated timestamps and ambiguous targets are refused.
+5. Review yaw, mirror direction and the two-distance range scale/bias fit.
+   Independent port/starboard checks must remain within 2 degrees and 30 mm;
+   implausible scale/bias corrections are refused. Apply only a passing result.
+6. Reconnect the runtime to establish a new map after a mount change. Check
+   forward/left/right bearings, measured wall distances and airframe shadows.
+
+The saved record includes XYZ, roll/pitch/yaw, scan direction, range correction
+and per-capture quality. `/scan` carries corrected bearings/ranges; measured
+`base_link -> lidar_calibrated` TF carries translation and residual tilt,
+so its rays match the complete physical mounting rotation. Avoidance's existing
+capture-time transform path uses that measured frame. A running mapping session
+holds if its mounting transform changes instead of mixing two geometries.
+Legacy yaw-only files remain readable and are labelled position unmeasured.
+Reported errors are repeatability/validation bounds, not a claim of exact
+physical calibration. `scripts/check_sensors.py lidar` remains a quick two-target
+bearing diagnostic. Saved mounting calibration takes precedence over launch
+defaults. Use `scripts/check_sensors.py camera` to
 measure rates, resolution, clipping, exposure and sharpness. Default 1280x720,
 30 Hz and exposure 100 are configuration, not achieved performance.
 

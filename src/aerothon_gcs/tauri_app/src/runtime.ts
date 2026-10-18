@@ -7,12 +7,13 @@ export interface ConnectionProfile {
   camera_hfov:number; marker_m:number; rc_config:Record<string,unknown>; slam:boolean;
   hardware_reviewed:boolean; delivery_calibration:string;
   vehicle?:'simulation'|'drone'; winch_backend?:'mavlink'|'gpio'; gcs_host?:string;
+  autoconnect?:boolean; slam_odometry?:'lidar'|'fcu';
 }
 export const vehicleLabel = (p?: ConnectionProfile | null) =>
   !p ? 'No vehicle selected'
     : (p.vehicle ?? (p.transport === 'serial' ? 'drone' : 'simulation')) === 'drone'
       ? 'Real drone' : 'Laptop simulation';
-export interface HostState {profiles:ConnectionProfile[]; profile_id:string|null; runtime:'Stopped'|'Running'; can_disconnect:boolean; can_edit_profiles:boolean;}
+export interface HostState {profiles:ConnectionProfile[]; profile_id:string|null; runtime:'Stopped'|'Running'; can_disconnect:boolean; can_edit_profiles:boolean;connection_error?:string;autoconnect_suspended?:boolean;}
 export class ApiError extends Error { status:number; constructor(status:number, message:string) { super(message); this.status=status; } }
 export async function api(path:string, data?:unknown):Promise<any> {
   const r=await fetch(path, data === undefined ? undefined : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});

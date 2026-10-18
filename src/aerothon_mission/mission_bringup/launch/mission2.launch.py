@@ -12,7 +12,10 @@ Examples:
        lidar_yaw_deg:=<measured> lidar_mirrored:=<measured>
 """
 import os
-from ament_index_python.packages import get_package_share_directory
+import atexit
+import shutil
+import tempfile
+from ament_index_python.packages import get_package_share_directory, get_package_prefix
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
@@ -20,6 +23,18 @@ from launch.substitutions import (Command, EnvironmentVariable,
                                   LaunchConfiguration, PythonExpression)
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
+
+
+def grid_adapter_path():
+    path = os.path.join(get_package_prefix('aerothon_slam_grid'), 'lib', 'libaerothon_slam_grid.so')
+    if any(c.isspace() for c in path):
+        # ld.so splits LD_PRELOAD on whitespace even inside quoted shell args.
+        directory = tempfile.TemporaryDirectory(prefix='aerothon-slam-grid-')
+        atexit.register(directory.cleanup)
+        target = os.path.join(directory.name, 'libaerothon_slam_grid.so')
+        shutil.copy2(path, target)
+        return target
+    return path
 
 
 def generate_launch_description():
@@ -32,6 +47,8 @@ def generate_launch_description():
     target = LaunchConfiguration('target')
     launch_rviz = LaunchConfiguration('rviz')
     launch_slam = LaunchConfiguration('slam')
+    slam_odometry = LaunchConfiguration('slam_odometry')
+    lidar_slam = ["'", slam_odometry, "' == 'lidar'"]
     airframe = LaunchConfiguration('airframe')
     camera_hfov = ParameterValue(LaunchConfiguration('camera_hfov'), value_type=float)
     target_marker_m = ParameterValue(LaunchConfiguration('target_marker_m'),
@@ -93,6 +110,9 @@ def generate_launch_description():
         DeclareLaunchArgument('slam', default_value=sim_or('true', 'false'),
                               description='Launch async slam_toolbox 2D SLAM node '
                                           '(default: use_sim)'),
+        DeclareLaunchArgument('slam_odometry', default_value=sim_or('fcu', 'lidar'),
+                              choices=['fcu', 'lidar'],
+                              description='Mapping pose source; lidar has its own TF tree and requires no GPS'),
         DeclareLaunchArgument('stream_rate_keeper', default_value='true',
                               description='Continuously re-assert MAVLink stream '
                                           'rates (SITL/MAVProxy workaround; see '
@@ -113,7 +133,7 @@ def generate_launch_description():
                               description='c1 (Slamtec sllidar_ros2) or ld06 '
                                           '(ldlidar_stl_ros2)'),
         DeclareLaunchArgument('lidar_yaw_deg', default_value='0.0',
-                              description="the lidar's 0 deg, CCW from the nose"),
+                              description="the lidar's marked 0 deg, CCW from the nose"),
         DeclareLaunchArgument('lidar_mirrored', default_value='false',
                               description='driver angles run clockwise'),
         DeclareLaunchArgument('camera_device', default_value='/dev/video0'),
@@ -273,7 +293,7 @@ def generate_launch_description():
         # A sensor driver that exits (device absent at Connect, a USB reset
         # after a brown-out) used to stay dead until the next Connect.
         respawn=True, respawn_delay=2.0,
-        parameters=[{'product_name': 'LDLiDAR_LD06', 'topic_name': 'scan_raw',
+        parameters=[{'product_name': 'LDLiDAR_LD06', 'topic_name': 'scan_driver',
                      'frame_id': 'base_scan',
                      'port_name': LaunchConfiguration('lidar_port'),
                      'port_baudrate': 230400, 'laser_scan_dir': True,
@@ -283,7 +303,7 @@ def generate_launch_description():
         package='sllidar_ros2', executable='sllidar_node',
         name='rplidar_c1', output='screen', condition=real_lidar('c1'),
         respawn=True, respawn_delay=2.0,      # the C1 spins only while this runs
-        remappings=[('scan', 'scan_raw')],
+        remappings=[('scan', 'scan_driver')],
         parameters=[{'channel_type': 'serial',
                      'serial_port': LaunchConfiguration('lidar_port'),
                      'serial_baudrate': 460800, 'frame_id': 'base_scan',
@@ -293,7 +313,12 @@ def generate_launch_description():
     lidar_mount = Node(
         package='mission_bringup', executable='scan_mount', output='screen',
         condition=real,
-        parameters=[{'lidar_yaw_deg': ParameterValue(
+        # sllidar_ros2 publishes bearing = pi - C1 angle: the C1's marked
+        # front arrives at 180 deg. scan_mount undoes that before the mount.
+        parameters=[{'driver_yaw_deg': ParameterValue(PythonExpression([
+                        "180.0 if '", LaunchConfiguration('lidar_model'),
+                        "'.lower() == 'c1' else 0.0"]), value_type=float),
+                     'lidar_yaw_deg': ParameterValue(
                         LaunchConfiguration('lidar_yaw_deg'), value_type=float),
                      'mirrored': ParameterValue(
                         LaunchConfiguration('lidar_mirrored'), value_type=bool)}],
@@ -374,24 +399,45 @@ def generate_launch_description():
         parameters=[{'port': 8080, 'use_sim_time': use_sim}],
     )
 
+    # Mapping-only scan matching never publishes FCU/flight odometry.
+    mapping_odometry = Node(
+        package='mission_bringup', executable='scan_odometry', output='screen',
+        parameters=[{'use_sim_time': use_sim}],
+        condition=IfCondition(PythonExpression(["'", launch_slam,
+            "'.lower() in ('true', '1') and "] + lidar_slam)),
+    )
+
     # 8. slam_toolbox (Online 2D SLAM Mapping)
     slam_node = Node(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
+        additional_env={'LD_PRELOAD': grid_adapter_path()},
         output='screen',
         parameters=[{
             'use_sim_time': use_sim,
-            'odom_frame': 'odom',
+            'odom_frame': PythonExpression(["'lidar_odom' if "] + lidar_slam + [" else 'odom'"]),
             'map_frame': 'map',
-            'base_frame': 'base_link',
-            'scan_topic': scan_topic,
+            'base_frame': PythonExpression(["'lidar_mapping_base' if "] + lidar_slam + [" else 'base_link'"]),
+            'scan_topic': PythonExpression(["'/scan_slam' if "] + lidar_slam + [" else '", scan_topic, "'"]),
             'mode': 'mapping',
             'resolution': 0.05,
             'max_laser_range': 12.0,
             'minimum_time_interval': 0.1,
             'transform_timeout': 0.2,
             'tf_buffer_duration': 30.0,
+            'throttle_scans': 1,
+            'scan_queue_size': 3,
+            'map_update_interval': 1.0,
+            'minimum_travel_distance': 0.1,
+            'minimum_travel_heading': 0.1,
+            'use_scan_matching': True,
+            'use_scan_barycenter': True,
+            # The display mapper records a cell once a valid ray traverses it.
+            # Requiring two traversals left stationary C1 maps full of spokes.
+            # This map is not a navigation clearance or flight-readiness input.
+            'min_pass_through': 1,
+            'occupancy_threshold': 0.1,
         }],
         condition=IfCondition(launch_slam),
     )
@@ -433,7 +479,7 @@ def generate_launch_description():
     return LaunchDescription(args + [
         rsp_node, mavros, lidar_ld06, lidar_c1, lidar_mount, webcam, camera_exposure,
         qr, banner, redzone, payload, overlay, camera, winch, stream_rates,
-        controller, mission, execution, remote, readiness, aggregator, video,
+        controller, mission, execution, remote, readiness, aggregator, video, mapping_odometry,
         # The Gazebo odometry bridge needs a few seconds to establish odom TF.
         # Activating slam_toolbox before that point leaves its initial scan
         # filter without transforms and delays the first map indefinitely.

@@ -15,6 +15,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = (
     'src/aerothon_runtime',
+    'src/aerothon_slam_grid',
     'src/aerothon_mission/mission_bringup',
     'src/aerothon_mission/mission_bt',
     'src/aerothon_mission/uav_description',

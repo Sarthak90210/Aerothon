@@ -31,6 +31,30 @@ logger = logging.getLogger("mav_router")
 VIRTUAL_PREFIXES = ("lo", "docker", "br-", "veth", "virbr")
 
 
+class GcsTelemetryBatch:
+    """Coalesce UART fragments for the LAN, bounded by 10 ms and 1200 bytes.
+
+    Serial readiness can fire for a single byte. Broadcasting each read flooded
+    Wi-Fi with thousands of packets/s. MAVROS and inbound commands stay immediate.
+    """
+    def __init__(self):
+        self.pending = bytearray()
+        self.deadline = None
+
+    def append(self, data, now):
+        if not self.pending:
+            self.deadline = now + .01
+        self.pending.extend(data)
+
+    def ready(self, now):
+        if not self.pending or (len(self.pending) < 1200 and now < self.deadline):
+            return []
+        packets = [bytes(self.pending[i:i+1200]) for i in range(0, len(self.pending), 1200)]
+        self.pending.clear()
+        self.deadline = None
+        return packets
+
+
 def lan_interfaces(ip_output):
     """[(interface_ip, network, broadcast)] from `ip -o -4 addr show` text."""
     found = []
@@ -127,7 +151,7 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
         configured_gcs.add((gcs_host, gcs_out_port or gcs_port))
     
     # Active endpoints that have sent packets to us
-    active_gcs_senders = set()
+    active_gcs_senders = {}
     active_fcu_senders = set()
     active_mavros_senders = set()
 
@@ -158,6 +182,8 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
 
     sockets = [fcu_link, gcs_sock, mavros_sock]
     packet_count = 0
+    gcs_packet_count = 0
+    gcs_batch = GcsTelemetryBatch()
     t_last_stat = time.time()
 
     try:
@@ -187,13 +213,7 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                         mavros_sock.sendto(data, clients["mavros"])
                     except Exception:
                         pass
-                    # Forward to all GCS clients (Mission Planner / QGC)
-                    for g_addr in gcs_destinations(active_gcs_senders, configured_gcs,
-                                                   lans, out_port, gcs_broadcast):
-                        try:
-                            gcs_sock.sendto(data, g_addr)
-                        except Exception:
-                            pass
+                    gcs_batch.append(data, time.monotonic())
 
                 # 2. Packet from GCS (Mission Planner / QGC commands) -> Route to FCU
                 elif s is gcs_sock:
@@ -201,7 +221,7 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                     # FCU it would echo the FC's telemetry back into its UART.
                     if own_echo(addr, lans, out_port):
                         continue
-                    active_gcs_senders.add(addr)
+                    active_gcs_senders[addr] = time.monotonic()
                     try:
                         if fcu_serial:
                             write_fcu(data)
@@ -223,8 +243,21 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                     except Exception:
                         pass
 
+            now = time.monotonic()
+            for endpoint, seen in list(active_gcs_senders.items()):
+                if now - seen > 30.:
+                    del active_gcs_senders[endpoint]
+            for packet in gcs_batch.ready(now):
+                for g_addr in gcs_destinations(active_gcs_senders, configured_gcs,
+                                               lans, out_port, gcs_broadcast):
+                    try:
+                        gcs_sock.sendto(packet, g_addr)
+                        gcs_packet_count += 1
+                    except OSError:
+                        pass
+
             # DHCP can renumber the Pi; follow the LAN it is actually on.
-            if gcs_broadcast and time.time() - t_last_lan > 10.0:
+            if gcs_broadcast and time.time() - t_last_lan > 1.0:
                 fresh = read_lan_interfaces()
                 if fresh != lans:
                     logger.info(f"LAN broadcast now {', '.join(b for _, _, b in fresh) or 'none'}:{out_port}")
@@ -233,6 +266,7 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
 
             if time.time() - t_last_stat > 10.0:
                 logger.info(f"Router status: {packet_count} pkts routed | "
+                            f"{gcs_packet_count} GCS datagrams | "
                             f"{len(active_fcu_senders)} FCU, "
                             f"{len(active_mavros_senders)} MAVROS, "
                             f"{len(active_gcs_senders)} GCS endpoints active, "

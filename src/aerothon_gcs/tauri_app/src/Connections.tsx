@@ -5,8 +5,8 @@ import { defaultProfile, api } from './runtime';
 // Choosing the vehicle fills the link it uses; every field stays editable.
 function asVehicle(p: ConnectionProfile, vehicle: 'simulation' | 'drone'): ConnectionProfile {
   return vehicle === 'drone'
-    ? { ...p, vehicle, transport: 'serial', device: p.device || '/dev/ttyAMA0', baud: p.baud || 115200, gateway: '' }
-    : { ...p, vehicle, transport: 'tcp', port: 5762, hardware_reviewed: false, winch_backend: 'mavlink',
+    ? { ...p, vehicle, transport: 'serial', device: '/dev/ttyAMA2', baud: p.baud || 115200, gateway: '', autoconnect:true, slam:true, slam_odometry:'lidar' }
+    : { ...p, vehicle, transport: 'tcp', port: 5762, hardware_reviewed: false, winch_backend: 'mavlink', autoconnect:false, slam_odometry:'fcu',
         gateway: p.gateway || (p.host ? `http://${p.host}:8090` : '') };
 }
 
@@ -36,6 +36,7 @@ export default function Connections({ state, refresh }: { state: HostState | nul
     <h2>Vehicle connections</h2>
     <p>The Pi always runs the flight code and this GCS. Laptop simulation connects it over the intranet to Gazebo and SITL on the laptop (FCU TCP port and sensor gateway). Real drone uses the flight controller UART and the Pi camera and lidar.</p>
     <p>Runtime: {state?.runtime ?? 'Unavailable'} · Active profile: {state?.profile_id ?? 'None'}</p>
+    {state?.connection_error&&<p role="alert">Automatic connection: {state.connection_error}</p>}
     <fieldset disabled={busy || !state?.can_edit_profiles}>
       <div className="connection-fields">
         <label>Saved profile<select value={p.id} onChange={e => setP(state?.profiles.find(x => x.id === e.target.value) ?? defaultProfile())}>
@@ -57,13 +58,15 @@ export default function Connections({ state, refresh }: { state: HostState | nul
           <label>Winch<select value={p.winch_backend ?? 'mavlink'} onChange={e => change('winch_backend', e.target.value)}>
             <option value="mavlink">Flight controller (DO_WINCH)</option><option value="gpio">Pi GPIO: BTS7960 + N20 encoder (measured values required)</option>
           </select></label>
-          <label><input type="checkbox" checked={p.hardware_reviewed} onChange={e => change('hardware_reviewed', e.target.checked)} /> Secured props-off wiring reviewed</label></>}
+          <label><input type="checkbox" checked={p.autoconnect !== false} onChange={e => change('autoconnect', e.target.checked)} /> Connect automatically at Pi startup</label></>}
       </div>
       <details><summary>Calibration and transmitter configuration</summary><div className="connection-fields">
         {field('camera_hfov', 'Camera horizontal field of view (rad)', 'number')}{field('marker_m', 'Launch QR side (m); Arena dimensions replace it', 'number')}
         {field('lidar_yaw_deg', 'Lidar mount yaw (deg)', 'number')}{field('delivery_calibration', 'Measured delivery calibration file')}
         <label><input type="checkbox" checked={p.lidar_mirrored} onChange={e => change('lidar_mirrored', e.target.checked)} /> Lidar mirrored</label>
         <label><input type="checkbox" checked={p.slam} onChange={e => change('slam', e.target.checked)} /> Enable SLAM mapping</label>
+        <label>SLAM pose source<select value={p.slam_odometry??(vehicle==='drone'?'lidar':'fcu')} onChange={e=>change('slam_odometry',e.target.value)}>
+          <option value="lidar">LiDAR scan matching, no GPS required</option><option value="fcu">Flight-controller odometry</option></select></label>
       </div><label>RC channel mapping (JSON)<textarea rows={6} value={rc} onChange={e => setRc(e.target.value)} /></label>
       <p>Map forward, left, yaw, climb and takeover channels, min/trim/max, takeover active_above and speed limits. Transmitter takeover has priority.</p></details>
       <button onClick={() => { try { void run('/api/profiles', { ...p, rc_config: JSON.parse(rc) }); } catch { setMessage('RC mapping must be valid JSON.'); } }}>Save profile</button>
@@ -75,7 +78,7 @@ export default function Connections({ state, refresh }: { state: HostState | nul
           releases it (the host still refuses while an armed session is unresolved). */}
       <button disabled={busy || (state?.runtime === 'Stopped' && !state?.profile_id) || !state?.can_disconnect} onClick={() => void run('/api/disconnect', {})}>Disconnect runtime</button>
     </div>
-    <p>Profile changes require a stopped runtime and confirmed disarm. Connect prepares the code and sensors; Start is the reviewed flight action. A gateway or vehicle identity change requires explicit reconnect.</p>
+    <p>The hardware router starts at boot and sends Mission Planner UDP on port 14550. Automatic connection prepares telemetry and sensors without a props checkbox. Start controls execution. Disconnect pauses automatic connection until the next Pi/web-host restart or an explicit Connect.</p>
     {message && <p role="status">{message}</p>}
     {items.map(item => <div className="readiness-row" key={String(item.key)}><span>{String(item.key)}</span><span>{item.ok === true ? 'Ready' : 'Unavailable'}</span><span>{String(item.reason ?? '')} {item.key === 'identity' ? `system ${item.value ?? 'unknown'}` : ''} {typeof item.hz === 'number' ? `${item.hz.toFixed(1)} Hz delivered` : ''} {typeof item.vehicle_hz === 'number' ? ` · ${item.vehicle_hz.toFixed(1)} Hz sensor clock` : ''} {typeof item.capture_age_s === 'number' ? ` · capture age ${item.capture_age_s.toFixed(3)} s` : ''}</span></div>)}
   </section>;

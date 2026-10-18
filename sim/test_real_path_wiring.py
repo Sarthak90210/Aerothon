@@ -47,8 +47,8 @@ except ImportError:                                   # no ROS on this host
     LaunchContext = None
 
 
-def launched(**args):
-    """{package: node} for the nodes mission2.launch.py starts with args."""
+def started(**args):
+    """([started launch nodes], context) for mission2.launch.py with args."""
     spec = importlib.util.spec_from_file_location("mission2_launch", LAUNCH)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -61,11 +61,23 @@ def launched(**args):
         if isinstance(a, DeclareLaunchArgument):
             ctx.launch_configurations[a.name] = args.get(
                 a.name, perform_substitutions(ctx, a.default_value or []))
-    nodes = {}
-    for a in ld.entities:
-        if isinstance(a, LaunchNode) and (a.condition is None or a.condition.evaluate(ctx)):
-            nodes[a.node_package] = a
-    return nodes, ctx
+    return [a for a in ld.entities if isinstance(a, LaunchNode)
+            and (a.condition is None or a.condition.evaluate(ctx))], ctx
+
+
+def launched(**args):
+    """{package: node} for the nodes mission2.launch.py starts with args."""
+    nodes, ctx = started(**args)
+    return {a.node_package: a for a in nodes}, ctx
+
+
+def launched_executable(executable, **args):
+    """The started node running `executable`, for packages with several."""
+    nodes, ctx = started(**args)
+    for a in nodes:
+        if a.node_executable == executable:
+            return a, ctx
+    raise AssertionError(f"{executable} not started")
 
 
 def param(node, ctx, name):
@@ -73,6 +85,8 @@ def param(node, ctx, name):
         if isinstance(group, dict):
             for key, value in group.items():
                 if perform_substitutions(ctx, key) == name:
+                    if hasattr(value, 'value_type'):          # ParameterValue
+                        value = value.value
                     if isinstance(value, (list, tuple)) or hasattr(value, 'perform'):
                         # launch_ros hands strings back YAML-encoded.
                         import yaml
@@ -106,7 +120,19 @@ class LaunchSelectsTheFittedHardware(unittest.TestCase):
         self.assertEqual(param(c1, ctx, "frame_id"), "base_scan")
         remaps = [(perform_substitutions(ctx, a), perform_substitutions(ctx, b))
                   for a, b in c1._Node__remappings]
-        self.assertIn(("scan", "scan_raw"), remaps)
+        self.assertIn(("scan", "scan_driver"), remaps)
+
+    def test_scan_mount_corrects_each_drivers_frame(self):
+        """sllidar_ros2 publishes the C1's marked front at pi; ldlidar's LD06
+        frame is used as published. scan_mount turns /scan_driver into
+        /scan_raw with the lidar's own front at bearing 0."""
+        for model, driver_yaw in (("c1", 180.0), ("ld06", 0.0)):
+            with self.subTest(model=model):
+                mount, ctx = launched_executable("scan_mount", use_sim="false",
+                                                 lidar_model=model)
+                self.assertEqual(param(mount, ctx, "driver_yaw_deg"), driver_yaw)
+        nodes, ctx = launched(use_sim="false", lidar_model="ld06")
+        self.assertEqual(param(nodes["ldlidar_stl_ros2"], ctx, "topic_name"), "scan_driver")
 
     def test_qr_reads_the_camera_info_each_path_publishes(self):
         nodes, ctx = launched(use_sim="false")

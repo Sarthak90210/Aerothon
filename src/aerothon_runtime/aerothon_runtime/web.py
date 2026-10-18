@@ -8,6 +8,7 @@ from pathlib import Path
 import signal
 import sqlite3
 import time
+from collections import deque
 
 from aiohttp import ClientError, ClientSession, ClientTimeout, WSMsgType, web
 from .contracts import TASKS, TERMINAL, command_id, execution, fcu_url, profile
@@ -31,6 +32,102 @@ class AdoptedProcess:
         while self.returncode is None:
             await asyncio.sleep(.2)
         return 0
+
+
+class ClientRelay:
+    """A bounded writer per browser; map backpressure cannot block other peers.
+
+    Telemetry and maps keep only their latest pending snapshot. Command receipts
+    retain their order. A stalled transport closes explicitly instead of silently
+    removing a browser that still thinks its socket is connected.
+    """
+    def __init__(self, socket, rle=False):
+        self.socket = socket
+        self.rle = rle
+        self.latest = {}
+        self.receipts = deque()
+        self.changed = asyncio.Event()
+        self.closed = False
+        self.compressed = bool(getattr(socket, 'compress', False))
+        self.next_telemetry = 0.
+        self.last_snapshot = None
+        self.sent = {'telemetry': 0, 'map': 0}
+        self.task = asyncio.create_task(self.write())
+
+    def offer(self, kind, data):
+        if self.closed:
+            raise ConnectionError('browser writer closed')
+        if kind in {'telemetry', 'map'}:
+            self.latest[kind] = data
+        else:
+            if len(self.receipts) >= 32:
+                raise ConnectionError('browser receipt queue full')
+            self.receipts.append(data)
+        self.changed.set()
+
+    async def write(self):
+        try:
+            while True:
+                kind = None
+                if self.receipts:
+                    data = self.receipts.popleft()
+                elif 'map' in self.latest and self.last_snapshot == 'telemetry':
+                    kind = 'map'
+                    data = self.latest.pop('map')
+                elif 'telemetry' in self.latest and time.monotonic() >= self.next_telemetry:
+                    kind = 'telemetry'
+                    data = self.latest.pop('telemetry')
+                elif 'map' in self.latest:
+                    kind = 'map'
+                    data = self.latest.pop('map')
+                else:
+                    self.changed.clear()
+                    if 'telemetry' in self.latest:
+                        try:
+                            await asyncio.wait_for(self.changed.wait(), max(.001, self.next_telemetry-time.monotonic()))
+                        except TimeoutError:
+                            pass
+                    else:
+                        await self.changed.wait()
+                    continue
+                await asyncio.wait_for(self.socket.send_str(data), 5.)
+                if kind:
+                    self.last_snapshot = kind
+                    self.sent[kind] += 1
+                if kind == 'telemetry' and not self.compressed:
+                    # Native browsers negotiate deflate. An uncompressed
+                    # proxy/client gets bounded display traffic, full sensor data.
+                    self.next_telemetry = time.monotonic() + .5
+        except (TimeoutError, ConnectionError, RuntimeError):
+            self.closed = True
+            await self.socket.close(code=1013, message=b'connection stalled; reconnect')
+
+    async def close(self):
+        self.closed = True
+        self.task.cancel()
+        await asyncio.gather(self.task, return_exceptions=True)
+
+
+def map_for_legacy_client(envelope):
+    """Older open GCS pages still receive the original full-array map schema."""
+    grid = dict(envelope['data'])
+    size = grid['w']*grid['h']
+    if not 0 < size <= 1024*1024:
+        raise ValueError('invalid map size')
+    runs = grid.pop('rle')
+    grid.pop('encoding', None)
+    if len(runs) % 2:
+        raise ValueError('invalid map runs')
+    data = []
+    for i in range(0, len(runs), 2):
+        value, count = runs[i:i+2]
+        if not isinstance(count, int) or count <= 0 or len(data)+count > size:
+            raise ValueError('invalid map runs')
+        data.extend([value]*count)
+    if len(data) != size:
+        raise ValueError('incomplete map')
+    grid['data'] = data
+    return json.dumps({**envelope, 'data': grid}, separators=(',', ':'))
 
 class Host:
     def __init__(self, static, state_dir, launch=None, aggregator='http://127.0.0.1:8765'):
@@ -66,6 +163,10 @@ class Host:
         self.aggregator = aggregator
         self.session = None
         self.background = None
+        self.boot_connection = None
+        self.auto_suspended = False
+        self.connection_error = ''
+        self.selection_path = self.state_dir / 'connection-selection.json'
         self.runlog = None
         self.map_online = os.environ.get('AEROTHON_MAP_ONLINE', '1') != '0'
         self.tile_origin = os.environ.get('AEROTHON_MAP_TILE_ORIGIN',
@@ -159,12 +260,13 @@ class Host:
                 'runtime': 'Stopped' if self.stopped() else 'Running',
                 'fresh': self.fresh(), 'can_disconnect': self.disarmed() or not self.controlled,
                 'can_edit_profiles': self.editable(), 'execution': self.execution,
+                'autoconnect_suspended': self.auto_suspended,
+                'connection_error': self.connection_error,
+                'streams': [{'compressed': peer.compressed, **peer.sent} for peer in self.clients],
                 'tasks': [{'id': k, 'label': v[0], 'movement': v[1]} for k, v in TASKS.items()]}
 
     async def launch_runtime(self, p):
         vehicle = p.get('vehicle', 'drone' if p['transport'] == 'serial' else 'simulation')
-        if vehicle == 'drone' and not p.get('hardware_reviewed'):
-            raise ValueError('confirm the secured props-off hardware setup before preparing its runtime')
         state = Path(os.environ.get('AEROTHON_DEVICE_STATE_DIR', Path.home()/'.aerothon'))
         state.mkdir(parents=True, exist_ok=True)
         # Refuse before anything changes: the profile router acts on
@@ -178,6 +280,7 @@ class Host:
         link = 'udp://127.0.0.1:14555@127.0.0.1:14556' if p['transport']=='serial' else fcu_url(p)
         args = ['ros2', 'launch', 'mission_bringup', 'mission2.launch.py',
                 'managed:=true', 'rviz:=false', f"slam:={str(p.get('slam',False)).lower()}",
+                f"slam_odometry:={p.get('slam_odometry', 'lidar' if vehicle == 'drone' else 'fcu')}",
                 f"use_sim:={'true' if p['gateway'] else 'false'}",
                 'camera_backend:=mavlink', f"winch_backend:={p.get('winch_backend', 'mavlink')}",
                 f"fcu_url:={link}",
@@ -216,6 +319,61 @@ class Host:
     async def start(self, app):
         self.session = ClientSession(timeout=ClientTimeout(total=10))
         self.background = asyncio.create_task(self.listen())
+        if not getattr(self, 'standalone', False):
+            self.boot_connection = asyncio.create_task(self.autoconnect())
+
+    def select_connection(self, ident):
+        tmp = self.selection_path.with_suffix('.tmp')
+        with open(tmp, 'w') as f:
+            json.dump({'profile_id': ident}, f)
+            f.flush()
+            os.fsync(f.fileno())
+        tmp.replace(self.selection_path)
+
+    def boot_profile(self):
+        # The selected profile wins, including an explicit opt-out. Migration
+        # adopts the single saved hardware profile, never an arbitrary vehicle.
+        try:
+            ident = json.loads(self.selection_path.read_text())['profile_id']
+        except (OSError, ValueError, KeyError, TypeError):
+            ident = self.profile_id
+        if ident in self.profiles:
+            p = self.profiles[ident]
+            return p if p.get('autoconnect') else None
+        candidates = [p for p in self.profiles.values()
+                      if p.get('vehicle') == 'drone' and p.get('autoconnect')]
+        return candidates[0] if len(candidates) == 1 else None
+
+    async def prepare_connection(self, p):
+        self.telemetry = None
+        self.received = 0
+        self.execution = None
+        # Preparing sensors and telemetry never submits a Start or takes control.
+        self.proc = await self.launch(p)
+        self.profile_id = p['id']
+        self.connection_error = ''
+        self.select_connection(p['id'])
+        pid = getattr(self.proc, 'pid', None)
+        identity = process_identity(pid) if pid else None
+        if identity:
+            self.write_owner({'pid': pid, 'identity': identity,
+                              'profile_id': p['id'], 'controlled': self.controlled})
+
+    async def autoconnect(self):
+        delay = 1.0
+        while True:
+            try:
+                async with self.lock:
+                    p = self.boot_profile()
+                    if not self.auto_suspended and p and self.stopped():
+                        # A lost controlled runtime may recover the SAME vehicle.
+                        if not self.controlled or self.profile_id == p['id']:
+                            await self.prepare_connection(p)
+                            delay = 1.0
+            except (OSError, ValueError, KeyError) as exc:
+                self.connection_error = str(exc)
+                delay = min(30.0, delay * 2)
+            await asyncio.sleep(delay)
 
     async def close(self, app):
         # Do not kill a possibly airborne runtime on HTTP shutdown. systemd
@@ -223,6 +381,10 @@ class Host:
         if self.background:
             self.background.cancel()
             await asyncio.gather(self.background, return_exceptions=True)
+        if self.boot_connection:
+            self.boot_connection.cancel()
+            await asyncio.gather(self.boot_connection, return_exceptions=True)
+        await asyncio.gather(*(peer.close() for peer in list(self.clients)), return_exceptions=True)
         await self.session.close()
         self.db.close()
         if self.runlog:
@@ -231,7 +393,7 @@ class Host:
     async def listen(self):
         while True:
             try:
-                async with self.session.ws_connect(self.aggregator, heartbeat=2) as ws:
+                async with self.session.ws_connect(self.aggregator, heartbeat=2, max_msg_size=8*1024*1024) as ws:
                     self.internal_ws = ws
                     async for m in ws:
                         if m.type != WSMsgType.TEXT:
@@ -274,11 +436,18 @@ class Host:
                                 self.start_reserved = None
                                 self.execution = {'command_id': cid, 'state': 'Failed',
                                                   'reason': d.get('reason', '') or 'start refused by runtime'}
+                        legacy_map = None
                         for client in list(self.clients):
                             try:
-                                await asyncio.wait_for(client.send_str(m.data), .1)
-                            except (TimeoutError, ConnectionError, RuntimeError):
+                                payload = m.data
+                                if env.get('kind') == 'map' and env.get('data', {}).get('encoding') == 'rle' and not client.rle:
+                                    if legacy_map is None:
+                                        legacy_map = map_for_legacy_client(env)
+                                    payload = legacy_map
+                                client.offer(env.get('kind'), payload)
+                            except (ConnectionError, RuntimeError):
                                 self.clients.discard(client)
+                                await client.close()
             except (OSError, asyncio.TimeoutError, ValueError):
                 pass
             except Exception as exc:  # noqa: BLE001
@@ -398,6 +567,9 @@ def application(host):
                 raise ValueError('standalone GCS receives TCP/UDP from a router; it does not open the FCU serial port')
             host.profiles[p['id']] = p
             host.write_profiles()
+            if p.get('autoconnect') and not getattr(host, 'standalone', False):
+                host.select_connection(p['id'])
+                host.auto_suspended = False
             return web.json_response(p)
 
     async def connect(request):
@@ -409,16 +581,8 @@ def application(host):
             if getattr(host, 'standalone', False):
                 await host.connect_profile(p)
                 return web.json_response(host.state())
-            host.telemetry = None
-            host.received = 0
-            host.execution = None
-            # Preserve an unresolved controlled session through process loss.
-            host.proc = await host.launch(p)
-            host.profile_id = ident
-            pid = getattr(host.proc,'pid',None)
-            identity = process_identity(pid) if pid else None
-            if identity:
-                host.write_owner({'pid':pid,'identity':identity,'profile_id':ident,'controlled':host.controlled})
+            await host.prepare_connection(p)
+            host.auto_suspended = False
             return web.json_response(host.state())
 
     async def disconnect(request):
@@ -428,6 +592,7 @@ def application(host):
                 return web.json_response(host.state())
             if host.controlled and not host.disarmed():
                 raise ValueError('confirmed live disarm required; use Stop/return and land first')
+            host.auto_suspended = True
             if not host.stopped():
                 try:
                     os.killpg(host.proc.pid, signal.SIGINT)
@@ -456,14 +621,16 @@ def application(host):
         return web.json_response(await host.check())
 
     async def websocket(request):
-        ws = web.WebSocketResponse(heartbeat=5)
+        ws = web.WebSocketResponse(heartbeat=5, compress=True)
         await ws.prepare(request)
-        host.clients.add(ws)
+        peer = ClientRelay(ws, rle=request.query.get('map_encoding') == 'rle')
+        host.clients.add(peer)
         try:
             async for _ in ws:
                 pass  # all mutations use the validated, journalled HTTP API
         finally:
-            host.clients.discard(ws)
+            host.clients.discard(peer)
+            await peer.close()
         return ws
 
     async def video(request):

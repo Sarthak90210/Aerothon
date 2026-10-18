@@ -68,16 +68,20 @@ unreachable, so that bundle is not deployed.
 - For Pi deployment/operation, read the Debian route in master-guide section 5.
   Source is `/home/pi5/aerothon_ws`, launcher/configuration is
   `/home/pi5/aerothon-deploy`, measured state is `/home/pi5/.aerothon`.
-  GCS and profile-driven router start at boot. The managed GCS prepares the
-  production runtime on explicit Connect, without automatic camera movement;
+  The native router starts after local filesystems, before networking/Docker,
+  using the measured runtime.env UART until a saved profile selects another link.
+  The saved drone profile connects the production runtime automatically at boot,
+  without a props checkbox, arming, mission Start or automatic camera movement;
   reviewed Start controls mission or component execution. The old console is
   disabled and direct mission-service launch refuses a second controller.
-  Verify secured props-off wiring before preparing a physical connection.
+  An explicit Disconnect suspends automatic runtime connection for that web-host
+  session. Reviewed Start controls execution. Connection requires no props review.
   Preserve the archive and destination receipts in `.scratch/pi_deploy_20261014/`.
-- The prior Pi link was TELEM3 at 115200 on `/dev/ttyAMA0`, GPIO14/15.
+- The measured current link is TELEM3 at 115200 on `/dev/ttyAMA2`, BCM4 TX/header7
+  and BCM5 RX/header29. UART0 BCM14/15 was superseded on 17 October.
   `/dev/serial0` is the debug/login UART. Keep one FC serial owner and update
   measured link configuration explicitly; proposal defaults are not evidence.
-- `scripts/package_pi_runtime.py` lists the 12 local runtime ROS packages,
+- `scripts/package_pi_runtime.py` lists the 13 local runtime ROS packages,
   operating scripts and built browser GCS. External ROS/sensor dependencies
   still need supported destination installation.
 - `fast_connected_planner_candidate.py`, buffered scans, capture inbox and
@@ -92,6 +96,13 @@ unreachable, so that bundle is not deployed.
   command-capable; receive-only conversion would change behavior.
 - Preserve immutable source ZIPs, measured calibration, interrupted runs and
   failures. Passes from different source versions do not combine into acceptance.
+- LiDAR-only mapping uses `lidar_odom -> lidar_mapping_base -> lidar_mapping_scan`
+  and `/scan_slam`; flight navigation keeps FCU odometry. A held registration
+  does not publish a fresh mapping scan. Full mounting calibration requires
+  measured XYZ/roll/pitch, repeated background-isolated panels and independent
+  direction/range checks. Legacy yaw-only records leave XYZ unmeasured. Read the
+  master guide's Sensors and mechanism section before calibrating; keep receipts
+  and source inventories under `.scratch/lidar_boot_20261017/`.
 - Stop a flying simulator through GCS recovery and recorded disarm before
   shutdown. The current harness TERM trap can clean up and then continue;
   TERM alone is not a reliable pre-arm cancellation. Preserve interrupted

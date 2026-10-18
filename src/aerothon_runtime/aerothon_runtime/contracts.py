@@ -102,6 +102,10 @@ def profile(value, *, require_gateway=True):
     p['marker_m'] = number(p.get('marker_m', 2.2), 'target marker size', .05, 10)
     p['rc_config'] = p.get('rc_config') or {}
     p['slam'] = p.get('slam', False) is True
+    p['autoconnect'] = p.get('autoconnect', vehicle == 'drone') is True
+    p['slam_odometry'] = p.get('slam_odometry', 'lidar' if vehicle == 'drone' else 'fcu')
+    if p['slam_odometry'] not in {'lidar', 'fcu'}:
+        raise ValueError('SLAM odometry must be lidar or fcu')
     p['hardware_reviewed'] = p.get('hardware_reviewed', False) is True
     p['delivery_calibration'] = str(p.get('delivery_calibration', ''))
     if p['delivery_calibration'] and not re.fullmatch(r'[a-zA-Z0-9_-]+\.json', p['delivery_calibration']):

@@ -9,7 +9,7 @@ Gazebo mounts the lidar exactly on the nose and scans the way the stack
 expects, and a real one is wherever the bracket put it.
 
 lidar: asks for a box held 1 m ahead of the nose, then 1 m to port, reads
-where each shows up in the driver's raw scan (/scan_raw) and prints the
+where each shows up in the lidar-frame scan (/scan_raw) and prints the
 lidar_yaw_deg / lidar_mirrored launch arguments that put them at 0 and +90.
 camera: reports frame rate, resolution, brightness and clipping, and the
 Laplacian sharpness of a still frame, so a smeared or dark stream is caught

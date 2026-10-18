@@ -105,6 +105,18 @@ def max_pool_grid(data, w, h, step):
     return ow, oh, g.reshape(oh, step, ow, step).max(axis=(1, 3)).ravel().tolist()
 
 
+def pack_grid(data):
+    """Lossless run lengths keep large, mostly-free maps small on the LAN."""
+    values = np.asarray(data, dtype=np.int16)
+    if not len(values):
+        return {'data': []}
+    starts = np.r_[0, np.flatnonzero(values[1:] != values[:-1]) + 1]
+    counts = np.diff(np.r_[starts, len(values)])
+    if 2*len(starts) < len(values):
+        return {'encoding': 'rle', 'rle': np.column_stack((values[starts], counts)).ravel().tolist()}
+    return {'data': data}
+
+
 class Aggregator(Node):
     def __init__(self):
         super().__init__("gcs_aggregator")
@@ -210,6 +222,8 @@ class Aggregator(Node):
         # scan_mount reports it is applying.
         self._scan_raw = None          # (LaserScan, monotonic time)
         self._scan_body = None
+        self._lidar_session = lidar_calibration.CalibrationSession()
+        self.create_subscription(String, '/slam/status', self._on_slam_status, 10)
         self.create_subscription(LaserScan, "/scan_raw", self._on_scan_raw, qos_sensor)
         self.pub_lidar_mount = self.create_publisher(
             String, "/mission/lidar_mount", zone_qos)
@@ -582,6 +596,16 @@ class Aggregator(Node):
 
     def _on_scan_raw(self, m):
         self._scan_raw = (m, time.monotonic())
+        self._lidar_session.observe(m)
+
+    def _on_slam_status(self, m):
+        try:
+            data = json.loads(m.data)
+            if isinstance(data, dict):
+                self.state['slam_status'] = data
+                self._mark('slam_status')
+        except (ValueError, TypeError):
+            pass
 
     def _on_lidar_mount_applied(self, m):
         try:
@@ -604,6 +628,15 @@ class Aggregator(Node):
         cal["raw_fresh"] = raw is not None
         near = lidar_calibration.nearest_bearing(raw) if raw is not None else None
         cal["raw_nearest"] = None if near is None else [round(near[0], 1), round(near[1], 2)]
+        cal['geometry'] = self._lidar_session.geometry
+        cal['background_ready'] = self._lidar_session.baseline is not None
+        cal['samples'] = len(self._lidar_session.history)
+        cal['capture_details'] = self._lidar_session.captures
+        cal['result'] = self._lidar_session.result()
+        if raw is not None:
+            cal['scan'] = dict(ranges=[round(float(r), 3) if math.isfinite(r) and raw.range_min < r < raw.range_max else None for r in raw.ranges],
+                               angle_min=float(raw.angle_min), angle_step=float(raw.angle_increment),
+                               range_min=float(raw.range_min), range_max=float(raw.range_max))
         body = self._scan_body
         near = lidar_calibration.nearest_bearing(body) if body is not None else None
         cal["body_nearest"] = None if near is None else [round(near[0], 1), round(near[1], 2)]
@@ -615,7 +648,9 @@ class Aggregator(Node):
         n = len(m.ranges)
         if not n:
             return
-        step = max(1, n // 72)
+        # The C1's 720 beams fit comfortably in telemetry. Taking every tenth
+        # beam erased thin obstacles and made straight walls look disconnected.
+        step = max(1, math.ceil(n / 4096))
         out = []
         for i in range(0, n, step):
             r = m.ranges[i]
@@ -623,8 +658,12 @@ class Aggregator(Node):
         self.state["scan"]["ranges"] = out
         # Body frame (scan_mount): bearing of out[i] = angle_min + i*angle_step,
         # CCW from the nose. The SLAM tab draws it before any map exists.
-        self.state["scan"]["angle_min"] = round(float(m.angle_min), 4)
-        self.state["scan"]["angle_step"] = round(float(m.angle_increment) * step, 5)
+        self.state["scan"]["angle_min"] = float(m.angle_min)
+        self.state["scan"]["angle_step"] = float(m.angle_increment) * step
+        self.state["scan"]["range_min"] = float(m.range_min)
+        self.state["scan"]["range_max"] = float(m.range_max)
+        self.state["scan"]["frame"] = m.header.frame_id
+        self.state["scan"]["stamp"] = m.header.stamp.sec + m.header.stamp.nanosec / 1e9
 
     def _on_image(self, m):
         # Subscribed raw: only the stamp is needed, not the pixels.
@@ -740,14 +779,14 @@ class Aggregator(Node):
         w, h, data = m.info.width, m.info.height, m.data
         if not w or not h:
             return
-        step = max(1, max(w, h) // 120)          # cap output ~120 cells/side
+        step = max(1, math.ceil(max(w, h) / 1024))
         ow, oh, out = max_pool_grid(data, w, h, step)
         grid = {"res": round(m.info.resolution * step, 3), "w": ow, "h": oh,
                 "ox": round(m.info.origin.position.x, 3),
                 "oy": round(m.info.origin.position.y, 3),
                 "yaw": math.radians(_euler_deg(m.info.origin.orientation)[2]),
                 "frame": m.header.frame_id,
-                "stamp": m.header.stamp.sec + m.header.stamp.nanosec / 1e9, "data": out}
+                "stamp": m.header.stamp.sec + m.header.stamp.nanosec / 1e9, **pack_grid(out)}
         self._broadcast(self._env("map", grid))
 
     # ---- outbound ---- #
@@ -756,7 +795,7 @@ class Aggregator(Node):
         # (front_m is inf with nothing ahead, normal outdoors) dropped every
         # telemetry frame and the GCS read "stale". Non-finite -> null.
         return json.dumps({"v": SCHEMA_VERSION, "kind": kind, "t": time.time(),
-                           "data": _finite_json(data)}, allow_nan=False)
+                           "data": _finite_json(data)}, allow_nan=False, separators=(',', ':'))
 
     # An exception in a callback ends rclpy.spin; the launch does not respawn
     # the aggregator, and the web host then refuses even Abort/Land/RTL as
@@ -972,7 +1011,8 @@ class Aggregator(Node):
                 payload = json.dumps({"colours": colours}, separators=(",", ":"))
                 self.pub_banner_colours.publish(String(data=payload))
                 self.state["banner_colours"] = colours
-            elif cmd in ("lidar_cal_capture", "lidar_cal_reset", "lidar_cal_apply"):
+            elif cmd in ("lidar_cal_capture", "lidar_cal_reset", "lidar_cal_apply",
+                         "lidar_cal_geometry", "lidar_cal_background"):
                 return self._lidar_cal_command(cmd, args)
             elif cmd == "set_arena_dimensions":
                 # Refused in the air here AND in mission_bt: the leaves take
@@ -1056,33 +1096,37 @@ class Aggregator(Node):
             return "rejected", "the lidar can only be calibrated while disarmed"
         cal = self.state["lidar_cal"]
         if cmd == "lidar_cal_reset":
+            self._lidar_session = lidar_calibration.CalibrationSession()
             cal["captures"] = {"ahead": None, "port": None}
             cal["result"] = None
             return "accepted", ""
-        if cmd == "lidar_cal_capture":
-            where = str(args.get("where", ""))
-            if where not in ("ahead", "port"):
-                return "rejected", "capture 'ahead' or 'port'"
-            raw = self._fresh_raw()
-            if raw is None:
-                return "rejected", ("no fresh raw lidar scan (/scan_raw); is the "
-                                    "lidar driver running on the aircraft?")
-            near = lidar_calibration.nearest_bearing(raw)
-            if near is None:
-                return "rejected", ("no return beyond 0.3 m: the box is too close "
-                                    "or the lidar is blocked")
-            cal["captures"][where] = [round(near[0], 2), round(near[1], 3)]
-            cal["result"] = lidar_calibration.result(cal["captures"])
-            return "accepted", ""
+        try:
+            if cmd == 'lidar_cal_geometry':
+                self._lidar_session.measure_geometry(args)
+                cal['captures'] = {}
+                cal['result'] = None
+                return 'accepted', ''
+            if cmd == 'lidar_cal_background':
+                self._lidar_session.capture_background()
+                cal['captures'] = {}
+                cal['result'] = None
+                return 'accepted', ''
+            if cmd == "lidar_cal_capture":
+                where = str(args.get("where", ""))
+                self._lidar_session.capture(where, args.get('distance_m'))
+                cal['captures'] = {k: [round(v['bearing_deg'], 3), round(v['range_m'], 4)]
+                                   for k, v in self._lidar_session.captures.items()}
+                cal['result'] = self._lidar_session.result()
+                return "accepted", ""
+        except (ValueError, TypeError, KeyError) as exc:
+            return 'rejected', str(exc)
         # lidar_cal_apply
-        res = cal.get("result")
+        res = self._lidar_session.result()
         if not res:
-            return "rejected", "capture the box ahead and to port first"
+            return "rejected", "complete measured geometry, background, ahead, far, port and starboard checks first"
         if not res.get("ok"):
             return "rejected", res.get("reason") or "the captures do not agree"
-        self.pub_lidar_mount.publish(String(data=json.dumps(
-            {"yaw_deg": res["yaw_deg"], "mirrored": res["mirrored"]},
-            separators=(",", ":"))))
+        self.pub_lidar_mount.publish(String(data=json.dumps(res, separators=(",", ":"))))
         return "accepted", ""
 
     # ---- arena-dimension presets ------------------------------------------

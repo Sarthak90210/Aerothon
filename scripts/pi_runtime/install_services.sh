@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install destination launchers. This enables only the ground console and web UI.
+# Install the early UART router and the web host with automatic sensor connection.
 set -euo pipefail
 test "$(id -u)" = 0
 workspace=/home/pi5/aerothon_ws
@@ -29,13 +29,16 @@ EOF
 cat >/etc/systemd/system/aerothon-router.service <<'EOF'
 [Unit]
 Description=AeroTHON single FC UART owner
-After=network.target
+DefaultDependencies=no
+After=local-fs.target systemd-udev-trigger.service
+Before=network-pre.target network.target docker.service aerothon-gcs.service shutdown.target
+Conflicts=shutdown.target
 [Service]
 User=pi5
 EnvironmentFile=/home/pi5/aerothon-deploy/runtime.env
 ExecStart=/bin/bash /home/pi5/aerothon-deploy/run_router.sh
 Restart=on-failure
-RestartSec=5
+RestartSec=1
 NoNewPrivileges=true
 [Install]
 WantedBy=multi-user.target

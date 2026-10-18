@@ -23,20 +23,12 @@ import {
 import Connections from "./Connections";
 import ArenaDimensions from "./ArenaDimensions";
 import LidarCalibration from "./LidarCalibration";
+import Slam, { type Grid } from "./LidarView";
+import { decodeGrid } from "./lidarGeometry";
 import coverage from "./satelliteCoverage.json";
 import "./gcs.css";
 const Graphs = lazy(() => import("./Graphs"));
-type Grid = {
-  w: number;
-  h: number;
-  res: number;
-  ox: number;
-  oy: number;
-  yaw: number;
-  frame: string;
-  stamp: number;
-  data: number[];
-};
+
 const value = (n: unknown, unit = "", precision = 1) =>
   typeof n === "number" && Number.isFinite(n)
     ? `${n.toFixed(precision)}${unit}`
@@ -163,7 +155,9 @@ export default function App() {
     let disposed = false,
       retry = 0;
     const open = () => {
-      const ws = new WebSocket(activeEndpoint);
+      const streamUrl = new URL(activeEndpoint);
+      streamUrl.searchParams.set('map_encoding', 'rle');
+      const ws = new WebSocket(streamUrl);
       socket.current = ws;
       ws.onopen = () => {
         if (disposed || socket.current !== ws) return;
@@ -192,7 +186,7 @@ export default function App() {
             setOutcome({ ...envelope.data, cmd: "execution" });
             setStarting(false);
           } else if (envelope.kind === "map") {
-            setGrid(envelope.data);
+            setGrid(decodeGrid(envelope.data));
             setGridReceived(Date.now());
           } else if (envelope.kind === "event")
             record(envelope.data.msg || "Runtime event");
@@ -644,6 +638,7 @@ export default function App() {
             )}
             {view === "slam" && (
               <Slam
+                status={telemetry?.slam_status}
                 grid={grid}
                 current={gridReceived > 0 && clock - gridReceived < 3000}
                 scan={telemetry?.scan}
@@ -1153,96 +1148,5 @@ function Field({
       {label}
       <input value={text} onChange={(event) => change(event.target.value)} />
     </label>
-  );
-}
-// Before slam_toolbox has a map (no map yet, SLAM off, or no FCU local
-// position to place scans), the tab still shows what the lidar sees.
-const SCAN_PX = 360, SCAN_RANGE_M = 8;
-function drawScan(canvas: HTMLCanvasElement, scan: NonNullable<Telemetry["scan"]>) {
-  const c = canvas.getContext("2d");
-  if (!c) return;
-  const mid = SCAN_PX / 2, k = mid / SCAN_RANGE_M;
-  const css = getComputedStyle(canvas);
-  c.clearRect(0, 0, SCAN_PX, SCAN_PX);
-  c.strokeStyle = css.getPropertyValue("--line").trim() || "#888";
-  c.lineWidth = 1;
-  for (let r = 2; r <= SCAN_RANGE_M; r += 2) {
-    c.beginPath(); c.arc(mid, mid, r * k, 0, 2 * Math.PI); c.stroke();
-  }
-  // Nose up; bearings are CCW from the nose in the body frame.
-  c.beginPath(); c.moveTo(mid, mid); c.lineTo(mid, mid - 0.6 * k); c.stroke();
-  c.fillStyle = css.getPropertyValue("--text").trim() || "#111";
-  const n = scan.ranges.length;
-  const a0 = scan.angle_min ?? -Math.PI;
-  const step = scan.angle_step ?? (2 * Math.PI) / Math.max(1, n);
-  scan.ranges.forEach((r, i) => {
-    if (r == null || r > SCAN_RANGE_M) return;
-    const a = a0 + i * step;
-    c.fillRect(mid - Math.sin(a) * r * k - 2, mid - Math.cos(a) * r * k - 2, 4, 4);
-  });
-}
-
-function slamWaiting(slamEnabled: boolean, lidarFresh: boolean, poseFresh: boolean) {
-  if (!lidarFresh) return "No live lidar scan. Connect the vehicle and check the lidar (Connection check).";
-  if (!slamEnabled) return "SLAM mapping is off: tick Enable SLAM mapping in the connection profile and reconnect. Live lidar scan shown.";
-  if (!poseFresh) return "SLAM is running but has no flight-controller local position to place scans (needs GPS fix / EKF origin). Live lidar scan shown.";
-  return "SLAM is running; waiting for its first map. Live lidar scan shown.";
-}
-
-function Slam({ grid, current, scan, lidarFresh, poseFresh, slamEnabled }: {
-  grid: Grid | null; current: boolean; scan?: Telemetry["scan"];
-  lidarFresh: boolean; poseFresh: boolean; slamEnabled: boolean;
-}) {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const scanCanvas = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    if (!grid && scanCanvas.current && scan?.ranges?.length && lidarFresh)
-      drawScan(scanCanvas.current, scan);
-  }, [grid, scan, lidarFresh]);
-  useEffect(() => {
-    if (!grid || !canvas.current || grid.data.length !== grid.w * grid.h)
-      return;
-    const context = canvas.current.getContext("2d");
-    if (!context) return;
-    const image = context.createImageData(grid.w, grid.h);
-    grid.data.forEach((cell, index) => {
-      const shade = cell < 0 ? 145 : Math.round(255 * (1 - cell / 100)),
-        offset =
-          ((grid.h - 1 - Math.floor(index / grid.w)) * grid.w +
-            (index % grid.w)) *
-          4;
-      image.data.set([shade, shade, shade, 255], offset);
-    });
-    context.putImageData(image, 0, 0);
-  }, [grid]);
-  return (
-    <div className="slam-view">
-      {grid ? (
-        <canvas
-          ref={canvas}
-          width={grid.w || 1}
-          height={grid.h || 1}
-          aria-label="SLAM occupancy grid"
-        />
-      ) : (
-        lidarFresh && (
-          <canvas
-            ref={scanCanvas}
-            width={SCAN_PX}
-            height={SCAN_PX}
-            aria-label="Live lidar scan, nose up, rings every 2 m"
-          />
-        )
-      )}
-      {grid ? (
-        <span>
-          {current ? "Live" : "Stale"} SLAM · frame {grid.frame || "Unknown"} ·
-          origin {value(grid.ox)}, {value(grid.oy)} m · yaw {value(grid.yaw)}{" "}
-          rad · stamp {grid.stamp} · {grid.res} m/cell
-        </span>
-      ) : (
-        <span>{slamWaiting(slamEnabled, lidarFresh, poseFresh)}</span>
-      )}
-    </div>
   );
 }

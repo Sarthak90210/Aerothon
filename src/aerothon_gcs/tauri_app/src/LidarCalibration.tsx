@@ -1,186 +1,57 @@
-import { useEffect } from "react";
-import type { Telemetry } from "./types";
+import { useEffect, useState } from 'react';
+import type { Telemetry } from './types';
+import { MetricPlot } from './LidarView';
 
-// The LD06 is wherever its bracket put it, and its driver may scan either
-// way; every scan consumer reads a beam's bearing off the nose, CCW. Two
-// boxes measure the mount: one ahead of the nose, one to port. The aircraft
-// sends what it measured to scan_mount, which applies it at once and keeps
-// it across a restart (gcs_aggregator/lidar_calibration.py).
+type Props = {S:Telemetry|null;connected:boolean;send:(cmd:string,args?:any,danger?:boolean)=>void;onClose:()=>void};
+const fields = [['x_m','Forward X, m'],['y_m','Left Y, m'],['z_m','Up Z, m'],['roll_deg','Roll, degrees'],['pitch_deg','Pitch, degrees']];
+const targets = [['ahead','Ahead, parallel to nose, 0°'],['far','Farther ahead, same line, 0°'],['port','Left, +90°'],['starboard','Right, −90°, independent check']];
 
-type Props = {
-  S: Telemetry | null;
-  connected: boolean;
-  send: (cmd: string, args?: any, danger?: boolean) => void;
-  onClose: () => void;
-};
-
-const fmt = (p: [number, number] | null | undefined) =>
-  p
-    ? `${p[0] >= 0 ? "+" : ""}${p[0].toFixed(1)}° at ${p[1].toFixed(2)} m`
-    : "—";
-
-// Top view, nose up; bearings CCW from the nose, so +90 (port) is left.
-function TopView({
-  body,
-  raw,
-}: {
-  body?: [number, number] | null;
-  raw?: [number, number] | null;
-}) {
-  const R = 90,
-    scale = R / 2.5; // 2.5 m to the edge
-  const dot = (p: [number, number] | null | undefined, cls: string) => {
-    if (!p) return null;
-    const r = Math.min(p[1], 2.5) * scale,
-      b = (p[0] * Math.PI) / 180;
-    return (
-      <circle
-        className={cls}
-        cx={100 - r * Math.sin(b)}
-        cy={100 - r * Math.cos(b)}
-        r={6}
-      />
-    );
-  };
-  return (
-    <svg
-      className="lidar-view"
-      viewBox="0 0 200 200"
-      aria-label="Nearest lidar return, top view"
-    >
-      <circle cx="100" cy="100" r={1 * scale} className="lidar-ring" />
-      <circle cx="100" cy="100" r={2 * scale} className="lidar-ring" />
-      <line x1="100" y1="100" x2="100" y2="10" className="lidar-axis" />
-      <line x1="100" y1="100" x2="10" y2="100" className="lidar-axis" />
-      <text x="104" y="16" className="lidar-lbl">
-        nose 0°
-      </text>
-      <text x="10" y="94" className="lidar-lbl">
-        port +90°
-      </text>
-      <polygon points="100,86 92,108 108,108" className="lidar-craft" />
-      {dot(raw, "lidar-raw")}
-      {dot(body, "lidar-body")}
-    </svg>
-  );
-}
-
-export default function LidarCalibration({
-  S,
-  connected,
-  send,
-  onClose,
-}: Props) {
-  const cal = S?.lidar_cal;
-  const armed = !connected || S?.mission?.armed !== false;
-  const res = cal?.result ?? null;
-  const applied = cal?.applied ?? null;
-  const live = Boolean(cal?.raw_fresh);
-  // Escape closes the dialog, as the arena panel does.
-  useEffect(() => {
-    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
-  }, [onClose]);
-
-  return (
-    <div className="dims-overlay" role="dialog" aria-label="Lidar calibration">
-      <div className="card dims lidar">
-        <div className="hd">
-          Lidar calibration
-          <span className={`tag ${live ? "ok" : ""}`}>
-            {live ? "raw scan live" : "no raw scan — lidar driver not running"}
-          </span>
-          <button className="dims-close" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <div className="lidar-body">
-          <ol className="lidar-steps">
-            <li>
-              Disarmed, props off. Clear everything within 2 m of the aircraft.
-            </li>
-            <li>
-              Hold a box ~1 m <b>straight ahead of the nose</b>, square to the
-              aircraft.
-              <div className="lidar-step-row">
-                <span>Nearest (raw): {fmt(cal?.raw_nearest)}</span>
-                <button
-                  disabled={armed || !live}
-                  onClick={() => send("lidar_cal_capture", { where: "ahead" })}
-                >
-                  Capture ahead
-                </button>
-                <span className="lidar-cap">{fmt(cal?.captures?.ahead)}</span>
-              </div>
-            </li>
-            <li>
-              Move it ~1 m <b>to port (left)</b>, square to the aircraft.
-              <div className="lidar-step-row">
-                <span>Nearest (raw): {fmt(cal?.raw_nearest)}</span>
-                <button
-                  disabled={armed || !live}
-                  onClick={() => send("lidar_cal_capture", { where: "port" })}
-                >
-                  Capture port
-                </button>
-                <span className="lidar-cap">{fmt(cal?.captures?.port)}</span>
-              </div>
-            </li>
-            <li>
-              Apply, then check: the box ahead must read about 0°, to port about
-              +90°, in the corrected scan.
-            </li>
-          </ol>
-          <div className="lidar-side">
-            <TopView body={cal?.body_nearest} raw={cal?.raw_nearest} />
-            <div className="lidar-legend">
-              <span className="sw body" /> corrected (/scan){" "}
-              <span className="sw raw" /> raw (/scan_raw)
-            </div>
-            <div>
-              Corrected nearest: <b>{fmt(cal?.body_nearest)}</b>
-            </div>
-          </div>
-        </div>
-        <div className="dims-actions">
-          <span className="dims-note">
-            {res
-              ? res.ok
-                ? `Measured: mount yaw ${res.yaw_deg >= 0 ? "+" : ""}${res.yaw_deg}°, ` +
-                  `${res.mirrored ? "driver scans clockwise (mirrored)" : "counter-clockwise"}, ` +
-                  `captures ${res.error_deg}° from square.`
-                : res.reason
-              : "Capture both boxes to measure the mount."}
-            {applied && (
-              <>
-                <br />
-                In force: yaw {applied.yaw_deg >= 0 ? "+" : ""}
-                {applied.yaw_deg}°,{" "}
-                {applied.mirrored ? "mirrored" : "counter-clockwise"} —{" "}
-                {applied.source}
-                {applied.reason ? ` (${applied.reason})` : ""}
-              </>
-            )}
-            {armed && (
-              <>
-                <br />
-                Disarm to calibrate.
-              </>
-            )}
-          </span>
-          <button onClick={() => send("lidar_cal_reset")} disabled={armed}>
-            Start again
-          </button>
-          <button
-            className="primary"
-            disabled={armed || !res?.ok}
-            onClick={() => send("lidar_cal_apply", {}, true)}
-          >
-            APPLY TO AIRCRAFT
-          </button>
-        </div>
+export default function LidarCalibration({S,connected,send,onClose}:Props) {
+  const cal=S?.lidar_cal, result=cal?.result, applied=cal?.applied;
+  const disabled=!connected||S?.mission?.armed!==false;
+  const [geometry,setGeometry]=useState<Record<string,string>>(()=>Object.fromEntries(fields.map(([key])=>[key,cal?.geometry?.[key]?.toString()??''])));
+  const [distances,setDistances]=useState<Record<string,string>>({});
+  useEffect(()=>{const key=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose();};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[onClose]);
+  return <div className="dims-overlay" role="dialog" aria-label="Lidar calibration">
+    <div className="card dims lidar calibration-wizard">
+      <div className="hd">Lidar mounting calibration
+        <span className={`tag ${cal?.raw_fresh?'ok':''}`}>{cal?.raw_fresh?`${cal.samples??0} recent raw scans`:'Waiting for raw scans'}</span>
+        <button className="dims-close" onClick={onClose} aria-label="Close">×</button></div>
+      <p>Keep the aircraft disarmed and stationary. Use a matte flat panel, at least 30 cm wide, with its centre in the laser plane. GPS is unnecessary.</p>
+      <fieldset disabled={disabled} className="calibration-stage">
+        <legend>1. Measure the optical centre relative to the airframe</legend>
+        <p>The reference is the airframe base_link origin used by the aircraft model, at the centre of its frame. Measure forward X, left Y and up Z to the lidar optical centre. Use a level to measure roll and pitch. Negative values mean backward, right and down. Level the scanner within 3° before continuing.</p>
+        <div className="connection-fields">{fields.map(([key,label])=><label key={key}>{label}<input type="number" step="0.001" value={geometry[key]} onChange={e=>setGeometry(g=>({...g,[key]:e.target.value}))}/></label>)}</div>
+        <button disabled={fields.some(([key])=>geometry[key].trim()==='')} onClick={()=>send('lidar_cal_geometry',Object.fromEntries(fields.map(([key])=>[key,Number(geometry[key])])))}>Record measured mounting geometry</button>
+        <span>{cal?.geometry?'Measurements recorded.':'All five measurements are required. These values cannot be inferred from an unknown room.'}</span>
+      </fieldset>
+      <fieldset disabled={disabled||!cal?.geometry} className="calibration-stage">
+        <legend>2. Record the background</legend>
+        <p>Remove the panel. Keep people still and leave space around all four target positions. Wait 2 seconds, then capture. The panel will be identified by its difference from this background.</p>
+        <button disabled={!cal?.raw_fresh} onClick={()=>send('lidar_cal_background')}>Capture empty background</button>
+        <span>{cal?.background_ready?'Background recorded.':'Needs at least 15 distinct, fresh scans.'}</span>
+      </fieldset>
+      <fieldset disabled={disabled||!cal?.background_ready} className="calibration-stage">
+        <legend>3. Measure four target positions</legend>
+        <p>Place the panel centre on each direction from the lidar optical centre, parallel to the airframe axes. Its face must be square to that direction. Measure the distance from the optical centre to the panel face. Hold still for 2 seconds before each capture. Put the far panel at least 0.5 m beyond the first panel.</p>
+        {targets.map(([key,label])=>{
+          const capture=cal?.captures?.[key as keyof typeof cal.captures];const detail=cal?.capture_details?.[key];
+          return <div className="calibration-target" key={key}>
+            <strong>{label}</strong><label>Measured distance, m<input type="number" min="0.4" max="4" step="0.001" value={distances[key]??''} onChange={e=>setDistances(d=>({...d,[key]:e.target.value}))}/></label>
+            <button disabled={!distances[key]||!cal?.raw_fresh} onClick={()=>send('lidar_cal_capture',{where:key,distance_m:Number(distances[key])})}>Capture {key}</button>
+            <span>{capture?`${capture[0].toFixed(2)}° raw, ${capture[1].toFixed(3)} m`:'Pending'}{detail?` · ${detail.samples} scans, ${detail.beams} beams · spread ${(1000*detail.spread_m).toFixed(1)} mm`:''}</span>
+          </div>;
+        })}
+      </fieldset>
+      <div className="calibration-preview"><h3>Full raw scan</h3><MetricPlot scan={cal?.scan} fresh={cal?.raw_fresh}/></div>
+      <div className="calibration-stage"><h3>4. Review the independent checks</h3>
+        {result?<p role="status">{result.ok?`Checks passed. Yaw ${result.yaw_deg.toFixed(3)}°, ${result.mirrored?'mirrored':'counter-clockwise'}. Maximum direction error ${result.error_deg}°. Independent range error ${((result.validation_error_m??0)*1000).toFixed(1)} mm. Range scale ${result.range_scale?.toFixed(5)}, bias ${((result.range_bias_m??0)*1000).toFixed(1)} mm.`:result.reason}</p>:<p>Complete all four captures. A target must contain at least five adjacent returns in each of 15 scans. Independent checks must be within 2° and 30 mm.</p>}
+        <p>Applying updates measured translation, tilt, yaw, scan direction and range correction for the scan consumers. Reconnect the runtime afterwards to start a new map with the new geometry.</p>
+        {applied&&<p>Applied yaw {applied.yaw_deg}°, {applied.mirrored?'mirrored':'counter-clockwise'} · {applied.geometry_measured?'full measured geometry':'legacy yaw only, position unmeasured'} · {applied.source}{applied.reason?` · ${applied.reason}`:''}</p>}
       </div>
+      <div className="dims-actions"><span>{disabled?'Connect telemetry and disarm to calibrate.':'Measured checks establish repeatability within the displayed errors. They do not remove measurement uncertainty.'}</span>
+        <button disabled={disabled} onClick={()=>send('lidar_cal_reset')}>Reset measurements</button>
+        <button className="primary" disabled={disabled||!result?.ok} onClick={()=>send('lidar_cal_apply',{},true)}>Apply measured calibration</button></div>
     </div>
-  );
+  </div>;
 }

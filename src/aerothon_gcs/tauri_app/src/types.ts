@@ -122,14 +122,23 @@ export interface Telemetry {
     raw_fresh: boolean;
     raw_nearest: [number, number] | null;
     body_nearest: [number, number] | null;
-    captures: { ahead: [number, number] | null; port: [number, number] | null };
+    geometry?: Record<string, number> | null;
+    background_ready?: boolean;
+    samples?: number;
+    capture_details?: Record<string, {samples:number; beams:number; spread_m:number; spread_deg:number}>;
+    scan?: import('./lidarGeometry').Scan;
+    captures: { ahead?: [number, number] | null; port?: [number, number] | null;
+                far?: [number, number] | null; starboard?: [number, number] | null };
     result: { yaw_deg: number; mirrored: boolean; error_deg: number;
+              validation_error_m?:number; range_scale?:number; range_bias_m?:number;
               ok: boolean; reason: string } | null;
     applied: { yaw_deg: number; mirrored: boolean; source: string;
-               reason: string } | null;
+               reason: string; geometry_measured?:boolean } | null;
   };
+  slam_status?: {source?:string;state?:string;reason?:string};
   scan?: { yaw_deg: number; ranges: (number | null)[];
-           angle_min?: number; angle_step?: number };
+           angle_min?: number; angle_step?: number; range_min?:number;range_max?:number;
+           frame?:string;stamp?:number };
   scans?: ScanRow[];
   gimbal?: { pitch_deg: number };
 }

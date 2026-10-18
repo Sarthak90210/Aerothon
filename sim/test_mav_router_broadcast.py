@@ -86,3 +86,38 @@ def test_gcs_commands_still_reach_the_fcu_with_broadcast_on(monkeypatch):
     assert fcu.recv(4096) == b"\xfeGCS-CMD"
     fcu.sendto(b"\xfeTELEMETRY", ("127.0.0.1", fcu_port))     # and telemetry comes back
     assert gcs.recv(4096) == b"\xfeTELEMETRY"
+
+
+def test_bytewise_uart_input_does_not_create_a_wifi_datagram_storm():
+    import os
+    import subprocess
+    import sys
+    master,slave=os.openpty()
+    gcs=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    gcs.bind(('127.0.0.1',0));gcs.settimeout(.1)
+    process=subprocess.Popen([sys.executable,str(Path(router.__file__)),
+        '--fcu-serial',os.ttyname(slave),'--fcu-baud','115200',
+        '--gcs-port',str(free_port()),'--mavros-port',str(free_port()),
+        '--gcs-host','127.0.0.1','--gcs-out-port',str(gcs.getsockname()[1])],
+        stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+    try:
+        startup=[]
+        for line in process.stderr:
+            startup.append(line)
+            if 'Mission Planner output:' in line:break
+        assert any('Mission Planner output:' in line for line in startup),''.join(startup)
+        assert process.poll() is None
+        expected=bytes(range(240))
+        for byte in expected:
+            os.write(master,bytes((byte,)))
+            time.sleep(.0005)
+        packets=[];end=time.monotonic()+1.
+        while sum(map(len,packets))<len(expected) and time.monotonic()<end:
+            try:packets.append(gcs.recv(4096))
+            except socket.timeout:pass
+        assert b''.join(packets)==expected,'telemetry bytes changed or disappeared'
+        assert len(packets)<=25,f'{len(packets)} UDP packets from 240 UART bytes congests Wi-Fi'
+        assert all(len(p)<=1200 for p in packets)
+    finally:
+        process.terminate();process.wait(timeout=3)
+        gcs.close();os.close(master);os.close(slave)

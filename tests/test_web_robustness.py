@@ -10,12 +10,55 @@ import asyncio
 import json
 import math
 import time
+import aiohttp
 
 import pytest
 from aiohttp import web
-from aiohttp.test_utils import TestServer
+from aiohttp.test_utils import TestClient, TestServer
 
 from aerothon_runtime.web import Host, errors
+
+
+def test_old_open_gcs_pages_receive_the_original_array_map():
+    from aerothon_runtime.web import map_for_legacy_client
+    envelope={'kind':'map','data':{'w':4,'h':2,'res':.05,'encoding':'rle','rle':[-1,2,0,3,100,3]}}
+    decoded=json.loads(map_for_legacy_client(envelope))
+    assert decoded['data']['data']==[-1,-1,0,0,0,100,100,100]
+    assert 'encoding' not in decoded['data']
+    assert decoded['data']['res']==.05
+
+
+@pytest.mark.asyncio
+async def test_map_backpressure_does_not_silently_remove_browser_telemetry(tmp_path, monkeypatch):
+    from aerothon_runtime.web import application
+    gate=asyncio.Event()
+    original=web.WebSocketResponse.send_str
+
+    async def slow_map(self,data,*args,**kwargs):
+        if self._req.path=='/ws' and '"kind": "map"' in data:
+            await asyncio.sleep(.2)
+        await original(self,data,*args,**kwargs)
+
+    monkeypatch.setattr(web.WebSocketResponse,'send_str',slow_map)
+    async def upstream(request):
+        ws=web.WebSocketResponse();await ws.prepare(request)
+        await gate.wait()
+        await ws.send_str(json.dumps({'kind':'map','data':{'w':500,'h':500,'data':[0]*250000}}))
+        await ws.send_str(json.dumps({'kind':'telemetry','data':{'phase':'after map'}}))
+        async for _ in ws:pass
+        return ws
+    source=web.Application();source.router.add_get('/upstream',upstream)
+    async with TestServer(source) as server:
+        h=Host(tmp_path,tmp_path/'relay-state',aggregator=str(server.make_url('/upstream')))
+        async with TestClient(TestServer(application(h))) as client:
+            async with client.ws_connect('/ws') as browser:
+                gate.set();received=[]
+                for _ in range(2):
+                    try:message=await browser.receive(timeout=1.)
+                    except asyncio.TimeoutError:break
+                    if message.type==aiohttp.WSMsgType.TEXT:received.append(json.loads(message.data))
+                assert any(m['kind']=='map' for m in received),'large map was cancelled after 100 ms'
+                assert any(m.get('data',{}).get('phase')=='after map' for m in received),'the map transfer silently killed later telemetry'
 
 
 def test_corrupt_profiles_file_is_set_aside_not_fatal(tmp_path):
