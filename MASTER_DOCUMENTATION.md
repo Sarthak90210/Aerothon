@@ -679,10 +679,21 @@ independent of GPS and the FCU local-position stream. Its TF tree is
 `map -> lidar_odom -> lidar_mapping_base -> lidar_mapping_scan`; its scan topic
 is `/scan_slam`. This tree does not supply flight-navigation pose or change the
 FCU's `odom -> base_link` transform. Insufficient returns, degenerate scenes,
-poor overlap or failed registration hold new map updates. A capture gap first
-holds the map; consecutive scans can resume only after tightly matching the
-previous scene with small motion. Larger uncertainty requires a new mapping
-origin. FCU mapping remains selectable for qualified GPS/EKF operation and
+poor overlap or failed registration hold new map updates. The alignment gate
+scales with each reference scan's measured scatter about its wall lines:
+40-80 mm in tracking (20-40 mm when revalidating), so the C1's own ~20 mm
+scatter is not mistaken for misalignment. When the keyframe stops registering,
+the previous accepted scan continues tracking and becomes the new keyframe.
+While held, each raw scan registers against the newest registered held scan,
+or the previous scan carried at constant velocity, to dead-reckon an
+unpublished prediction. That prediction seeds and bounds re-registration
+against the keyframe. A chain with at most one constant-velocity scan may
+also resume tracking directly. Both paths keep the 2 m/s and 90 deg/s average
+bound since the last accepted pose. A capture gap, more than one second
+without a registered scan or 1 m of accumulated uncertainty drops the
+prediction. Mapping then resumes only after tightly matching the previous
+scene with small motion; larger uncertainty requires a new mapping origin.
+FCU mapping remains selectable for qualified GPS/EKF operation and
 is the simulation default. The GCS shows mapping state, a full-resolution live
 scan independent of map availability, metric axes and scale, zoom and pan.
 Map cells retain native resolution up to 1024 cells per side; larger display
@@ -1042,6 +1053,30 @@ BCM4 TX/header7 and BCM5 RX/header29. `/dev/serial0` is the debug/login UART.
 For laptop simulation, use its gateway endpoints instead. Supply organiser
 arena dimensions, the judges' geofence and banner colours through the GCS,
 inspect readiness, then Review start and Confirm Start.
+
+A local diagnosis of the 19 October manual POSHOLD capture, in which mapping
+initialised and then stayed held, found two causes. First, the C1's
+scatter about wall lines is ~20 mm, so even adjacent-pair RMS alignment error
+had a 37 mm median. The fixed 40 mm tracking gate rejected 38% of adjacent
+pairs, and the 20 mm recovery gate could never pass. Second, the aircraft was
+not stationary: FCU local position recorded ~1.4 m forward drift at up to
+0.86 m/s around capture seconds 10-12, with pitch between +3 and -6 deg.
+Chained LiDAR registrations agreed with that displacement within ~0.1 m at
+the time and ~0.2 m by the end. Once held, the mapper retried a stale seed
+against a keyframe the aircraft had left. Recovery also required the pose to
+lie within 0.15 m of the last accepted pose, so it never re-acquired. The
+mapper now uses the noise-scaled gates and held dead reckoning described in
+the mapping-pose paragraph above. Replaying the full capture tracks 332/339
+scans: six consecutive scans are held during the drift and one later scan
+is held alone. The original code tracks 46/339 and then stays held. Across 30 replays with 5 mm
+range jitter and five start points, none ended held, the longest hold was
+eight scans and at least 97% of scans tracked; the original ended held in
+all 30. Registration costs 3 ms median and 21 ms maximum per scan on the
+development laptop. Attitude-induced 2D scan bias remains: accepted poses
+differ from FCU local position by up to 0.72 m (0.43 m RMS) in this capture, for
+`slam_toolbox` to correct. A 90-scan slice of this capture is the regression
+fixture `sim/fixtures/lidar_held_poshold_drift_20261019.json`. This is a
+mapping-only change; it has not yet been deployed to or flown on the Pi.
 
 At inspection, the old standalone GCS, disposable SITL, MAVProxy and redundant
 native MAVLink Router installation were replaced. Thonny was removed. Their
