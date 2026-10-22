@@ -133,7 +133,8 @@ export interface Telemetry {
               validation_error_m?:number; range_scale?:number; range_bias_m?:number;
               ok: boolean; reason: string } | null;
     applied: { yaw_deg: number; mirrored: boolean; source: string;
-               reason: string; geometry_measured?:boolean } | null;
+               reason: string; geometry_measured?:boolean; x_m?:number; y_m?:number; z_m?:number;
+               roll_deg?:number; pitch_deg?:number } | null;
   };
   slam_status?: {source?:string;state?:string;reason?:string};
   /** slam_toolbox's pose of the mapping base in the map frame (yaw in radians). */

@@ -61,15 +61,15 @@ export interface CommandOutcome {
   reason: string;
 }
 export const tasks = [
-  {id:'mission',label:'Full mission',movement:true,description:'Complete production workflow: takeoff, detection, delivery, return and disarm.'},
-  {id:'slam',label:'SLAM mapping',movement:false,description:'Map using the production lidar while the transmitter controls flight. Enable SLAM in the connection profile.'},
-  {id:'qr',label:'QR detection',movement:false,description:'Run production QR detection using the current camera pose. No automatic arming or camera movement.'},
-  {id:'banner',label:'Banner alignment',movement:true,description:'Take off and align using the production banner behaviour, then return and land.'},
-  {id:'avoidance_manual',label:'Avoidance with transmitter',movement:true,description:'Use configured RC channels as pilot intent through the production obstacle controller.'},
-  {id:'avoidance_route',label:'Avoidance with GPS route',movement:true,description:'Follow GPS waypoints through the production obstacle controller, then return and land.'},
-  {id:'mechanism',label:'Mechanism only',movement:false,description:'Disarmed bench lower, release, stow or stop. Measured device feedback is required.'},
-  {id:'delivery_here',label:'Payload delivery here',movement:true,description:'Take off at the current location, centre on the specified QR and run production delivery.'},
-  {id:'delivery_gps',label:'Payload delivery at GPS',movement:true,description:'Fly to one GPS location and height, verify the specified QR and deliver through production behaviours.'},
+  {id:'mission',label:'Full mission',movement:true,description:'Takeoff, detection, delivery, return and disarm.'},
+  {id:'slam',label:'SLAM mapping',movement:false,description:'Map with lidar while the transmitter flies. Needs SLAM in the profile.'},
+  {id:'qr',label:'QR detection',movement:false,description:'Detect QR from the current camera pose. No arming or camera movement.'},
+  {id:'banner',label:'Banner alignment',movement:true,description:'Take off, align to the banner, return and land.'},
+  {id:'avoidance_manual',label:'Avoidance with transmitter',movement:true,description:'RC sticks as intent through obstacle avoidance.'},
+  {id:'avoidance_route',label:'Avoidance with GPS route',movement:true,description:'Fly GPS waypoints with obstacle avoidance, return and land.'},
+  {id:'mechanism',label:'Mechanism only',movement:false,description:'Disarmed bench lower, release, stow or stop. Accepted release ≠ detached.'},
+  {id:'delivery_here',label:'Payload delivery here',movement:true,description:'Take off here, centre on the QR and deliver.'},
+  {id:'delivery_gps',label:'Payload delivery at GPS',movement:true,description:'Fly to a GPS point, verify the QR and deliver.'},
 ] as const;
 
 export function endpoint(value: string): string {
@@ -133,7 +133,7 @@ export function deviceIssue(key: string, d?: DeviceMetric): string {
 }
 /** Why Start is unavailable for a task, or '' when it may be reviewed. */
 export function startBlockReason(t:Telemetry|null, connected:boolean, task:string):string {
-  if(!connected || !t) return 'No live telemetry from the Pi runtime.';
+  if(!connected || !t) return 'No live telemetry.';
   if(t.runtime_health?.fresh !== true) return 'The production execution service is not reporting.';
   if(t.execution && ['Submitted','Accepted','Running'].includes(t.execution.state))
     return `${tasks.find(x=>x.id===t.execution?.task)?.label ?? 'A task'} is ${t.execution.state.toLowerCase()}. Stop it first.`;
@@ -236,7 +236,7 @@ export function acknowledgement(data: {
     reason:
       data.reason ||
       (data.result === "accepted"
-        ? "Request accepted by the runtime; physical outcome is not confirmed."
+        ? "Accepted; physical outcome not confirmed."
         : ""),
   };
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {scanPoints,gridBounds,decodeGrid,rasterizeGrid,scanInMap} from '../src/lidarGeometry.ts';
+import {scanPoints,gridBounds,decodeGrid,rasterizeGrid,scanInMap,scanMountTransform,scanInBody} from '../src/lidarGeometry.ts';
 
 test('full C1 scan keeps a narrow obstacle between former decimation bins',()=>{
   const scan={angle_min:0,angle_step:Math.PI/360,ranges:Array(720).fill(3)};
@@ -43,4 +43,23 @@ test('scan points are placed in the map from the SLAM pose, nose along its headi
   assert.ok(Math.abs(p[0]-1)<1e-12);assert.ok(Math.abs(p[1]-3)<1e-12);
   const [q]=scanInMap([[0,1]],{x:0,y:0,yaw:0});
   assert.deepEqual(q,[0,1]);
+});
+
+test('registered scan uses applied translation before the map pose and does not repeat yaw correction',()=>{
+  const mount={geometry_measured:true,x_m:.15,y_m:-.02,z_m:.1,roll_deg:0,pitch_deg:0,yaw_deg:90};
+  const body=scanInBody([[2,0]],scanMountTransform('lidar_calibrated',mount));
+  const [p]=scanInMap(body,{x:1,y:1,yaw:Math.PI/2});
+  assert.ok(Math.abs(p[0]-1.02)<1e-12);
+  assert.ok(Math.abs(p[1]-3.15)<1e-12);
+  const tilted=scanInBody([[2,0]],scanMountTransform('lidar_calibrated',{...mount,x_m:0,y_m:0,roll_deg:3}));
+  assert.ok(Math.abs(tilted[0][0]-2*Math.cos(3*Math.PI/180))<1e-12);
+  assert.ok(Math.abs(tilted[0][1])<1e-12);
+});
+
+test('unmeasured or unknown sensor frames cannot fabricate a map overlay',()=>{
+  assert.equal(scanMountTransform('base_scan'),null);
+  assert.equal(scanMountTransform('lidar_calibrated',{geometry_measured:false}),null);
+  assert.equal(scanMountTransform('lidar_calibrated',{geometry_measured:true,yaw_deg:0}),null);
+  assert.equal(scanMountTransform('arbitrary_frame'),null);
+  assert.deepEqual(scanInBody([[1,2]],scanMountTransform('base_link')),[[1,2]]);
 });

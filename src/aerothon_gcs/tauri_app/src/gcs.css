@@ -131,6 +131,8 @@ nav button[aria-pressed="true"],
   align-items: center;
   gap: 0.8rem;
   color: var(--muted);
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .status-strip {
   position: sticky;
@@ -178,6 +180,10 @@ main {
 }
 .graph-controls button {
   min-height: 41px;
+}
+.graph-controls .view-note {
+  align-self: center;
+  margin: 0;
 }
 .graph-grid {
   display: grid;
@@ -358,13 +364,6 @@ main {
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid var(--line);
-}
-.observation-line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  font-size: 13px;
-  margin-bottom: 1rem;
 }
 table {
   border-collapse: collapse;
@@ -644,9 +643,9 @@ footer details {
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 
 /* Metric lidar and occupancy views preserve equal scale on both axes. */
-.slam-view .metric-plot canvas { height: 520px; border: 1px solid var(--line); border-radius: 6px; }
+.slam-view .metric-plot canvas { height: clamp(360px, 52vh, 580px); }
 .metric-plot { width: 100%; min-width: 0; }
-.metric-plot canvas { display: block; width: 100%; height: 480px; touch-action: none; cursor: grab; }
+.metric-plot canvas { display: block; width: 100%; height: 480px; touch-action: none; cursor: grab; outline-offset: -3px; }
 .metric-plot canvas:active { cursor: grabbing; }
 .plot-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
 .plot-tools span { font-size: 12px; }
@@ -697,4 +696,129 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   font-size: 12px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* Local mapping keeps the occupancy raster quiet and sensor state explicit. */
+.metric-plot {
+  --plot-bg: #eaf0f4;
+  --plot-grid: #647f981d;
+  --plot-axis: #647f983a;
+  --plot-hud: #ffffffed;
+  --plot-ink: #34495b;
+}
+:root[data-theme="dark"] .metric-plot {
+  --plot-bg: #14202b;
+  --plot-grid: #9eb4c71a;
+  --plot-axis: #9eb4c738;
+  --plot-hud: #22313eeb;
+  --plot-ink: #c5d4df;
+}
+.slam-view {
+  overflow: hidden;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 3px 14px rgb(26 42 55 / 4%);
+}
+.slam-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 12px;
+}
+.slam-heading h2 { margin: 0; font-size: 19px; letter-spacing: -.025em; }
+.slam-heading-actions { display: flex; gap: 8px; align-items: center; }
+.slam-view button { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; border-radius: 6px; }
+.slam-view button svg { flex-shrink: 0; }
+.slam-view .segmented { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 3px; }
+.slam-view .segmented button { border: 1px solid transparent; margin: 0; min-height: 32px; padding: 5px 10px; }
+.slam-view .segmented button[aria-pressed="true"] { background: var(--field); border-color: var(--line); box-shadow: 0 1px 3px rgb(0 0 0 / 5%); }
+.slam-expand { width: 36px; padding: 0; }
+.slam-health { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 0 18px 15px; font-size: 11px; }
+.slam-signal { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slam-signal i, .plot-frame-dot { height: 6px; width: 6px; flex-shrink: 0; border-radius: 50%; background: #81919c; }
+.slam-signal.ok i { background: #268665; }
+.slam-signal.warn i { background: #bf861e; }
+.slam-signal.bad i { background: #cf6258; }
+.slam-signal b { font-weight: 400; color: var(--muted); }
+.slam-view .plot-tools { padding: 9px 14px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); gap: 8px; }
+.plot-navigation, .plot-zoom { display: flex; gap: 6px; align-items: center; }
+.plot-navigation button { display: inline-flex; align-items: center; gap: 6px; }
+.slam-view .plot-navigation button { border-color: transparent; padding: 6px 9px; }
+.slam-view .plot-navigation button[aria-pressed="true"] { background: #089bb415; border-color: #089bb45c; color: #08758a; }
+:root[data-theme="dark"] .slam-view .plot-navigation button[aria-pressed="true"] { color: #79d1df; }
+.plot-zoom { margin-left: auto; }
+.slam-view .plot-zoom button { font-size: 20px; padding: 0; width: 34px; min-height: 32px; }
+.plot-stage { position: relative; color: var(--plot-ink); background: var(--plot-bg); }
+.plot-stage canvas:focus-visible { outline: 2px solid #089bb4; }
+.plot-frame-label, .plot-orientation, .plot-coordinates, .plot-scale, .plot-notice { position: absolute; pointer-events: none; }
+.plot-frame-label { top: 14px; left: 14px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; background: var(--plot-hud); font-size: 11px; box-shadow: 0 1px 5px #14202b0a; }
+.plot-frame-label > span:last-child { padding-left: 8px; border-left: 1px solid #8298a533; color: var(--muted); }
+.plot-orientation { top: 12px; right: 12px; width: 58px; height: 58px; border-radius: 8px; background: var(--plot-hud); }
+.plot-orientation svg { height: 100%; width: 100%; }
+.plot-orientation path { stroke: currentColor; stroke-width: 1.3; fill: none; }
+.plot-orientation text { font: 10px system-ui, sans-serif; fill: currentColor; }
+.plot-coordinates { bottom: 14px; left: 14px; padding: 7px 10px; background: var(--plot-hud); border-radius: 5px; font-size: 10px; font-variant-numeric: tabular-nums; white-space: pre; }
+.plot-scale { bottom: 14px; right: 16px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 10px 9px; border-radius: 5px; background: var(--plot-hud); font-size: 11px; font-variant-numeric: tabular-nums; }
+.plot-scale i { display: block; height: 6px; border: 1.5px solid currentColor; border-top: 0; }
+.plot-notice { top: 26%; left: 50%; transform: translateX(-50%); width: min(310px, calc(100% - 40px)); background: var(--plot-hud); border: 1px solid #8298a53d; border-radius: 10px; padding: 18px; display: grid; gap: 9px; text-align: center; justify-items: center; box-shadow: 0 5px 25px #14202b0c; }
+.plot-notice > svg { width: 25px; height: 25px; }
+.plot-notice strong { font-size: 14px; font-weight: 600; }
+.plot-notice > span { font-size: 12px; line-height: 1.5; }
+.plot-layerbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.plot-layers { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.plot-layers > svg { color: var(--muted); margin-right: 5px; }
+.slam-view .plot-layers button { border-color: transparent; color: var(--muted); padding: 5px 8px; min-height: 30px; font-size: 11px; }
+.slam-view .plot-layers button[aria-pressed="true"] { background: var(--selected); color: var(--text); border-color: var(--line); }
+.plot-layerbar > span { font-size: 10px; color: var(--muted); }
+.layer-key { width: 6px; height: 6px; border-radius: 50%; background: #089bb4; }
+.layer-key.trail { width: 12px; height: 2px; border-radius: 0; background: #e9a23b; }
+.slam-advisory { display: flex; align-items: baseline; gap: 8px; font-size: 12px; line-height: 1.5; padding: 10px 18px; border-bottom: 1px solid var(--line); background: #b5801210; }
+.slam-advisory-dot { width: 6px; height: 6px; background: #bf861e; border-radius: 50%; flex-shrink: 0; }
+.slam-summary { display: flex; flex-wrap: wrap; gap: 16px 28px; padding: 16px 18px; }
+.slam-summary dl { min-width: 95px; }
+.slam-summary dt { font-size: 10px; margin-bottom: 5px; }
+.slam-summary dd { font-size: 12px; }
+.slam-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg); border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.slam-footer .slam-legend { gap: 8px 14px; }
+.slam-footer .swatch { width: 9px; height: 9px; border-color: #8298a555; }
+.slam-footer .swatch.free { background: #f7f9fa; }
+.slam-footer .swatch.occupied { background: #2c3945; }
+.slam-footer .swatch.unknown { background: #dae1e7; }
+.slam-footer .swatch.aircraft { background: #e9a23b; border-radius: 50%; }
+:root[data-theme="dark"] .slam-footer .swatch.free { background: #313f4d; }
+:root[data-theme="dark"] .slam-footer .swatch.occupied { background: #dde6ee; }
+:root[data-theme="dark"] .slam-footer .swatch.unknown { background: #1a2530; }
+.slam-view:fullscreen { display: flex; flex-direction: column; border-radius: 0; border: 0; overflow: auto; }
+.slam-view:fullscreen .metric-plot { flex: 1; display: flex; flex-direction: column; min-height: 300px; }
+.slam-view:fullscreen .plot-stage { flex: 1; min-height: 200px; }
+.slam-view:fullscreen .plot-stage canvas { position: absolute; height: 100%; }
+.slam-view:fullscreen .plot-layerbar { flex-shrink: 0; }
+@media (max-width: 1100px) {
+  .slam-heading { flex-wrap: wrap; }
+}
+@media (max-width: 700px) {
+  .slam-heading { padding: 14px 12px 10px; }
+  .slam-heading h2 { font-size: 18px; }
+  .slam-heading-actions { gap: 5px; }
+  .slam-health { padding: 0 12px 12px; gap: 8px 14px; }
+  .slam-view button { min-height: 40px; }
+  .slam-view .segmented button { min-height: 36px; padding: 5px 8px; }
+  .slam-view .plot-tools { padding: 7px 8px; }
+  .slam-view .plot-navigation button { padding: 5px 7px; }
+  .slam-view .plot-zoom button { min-height: 40px; width: 34px; }
+  .slam-view .plot-layers button { min-height: 36px; }
+  .plot-layerbar { padding: 8px 10px; }
+  .plot-layers { gap: 3px; }
+  .plot-coordinates { font-size: 9px; padding: 6px 7px; left: 10px; }
+  .plot-scale { right: 10px; font-size: 10px; }
+  .slam-summary { padding: 14px 12px; gap: 14px 24px; }
+  .slam-footer { padding: 10px 12px; }
+}
+@media (max-width: 400px) {
+  .slam-view .segmented button svg, .plot-layers > svg { display: none; }
+  .slam-view .plot-navigation button { font-size: 11px; gap: 5px; }
+  .plot-navigation { gap: 0; }
+  .slam-view .plot-zoom button { width: 30px; }
 }

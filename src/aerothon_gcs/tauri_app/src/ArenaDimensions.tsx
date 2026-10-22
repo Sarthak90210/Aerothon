@@ -126,12 +126,12 @@ export default function ArenaDimensions({
 
   const appliedOk = status?.ok;
   const verdict = !status
-    ? "launch values (none supplied)"
+    ? "Defaults"
     : appliedOk
-      ? "APPLIED by the mission"
+      ? "Applied"
       : status.reason
-        ? `NOT applied · ${status.reason}`
-        : "sent · awaiting the mission";
+        ? `Not applied · ${status.reason}`
+        : "Sent, waiting";
 
   return (
     <div className="dims-overlay" role="dialog" aria-label="Arena dimensions">
@@ -185,7 +185,7 @@ export default function ArenaDimensions({
               })
             }
           >
-            SAVE PRESET
+            Save preset
           </button>
           <button
             disabled={!canApply || !presets.saved[chosen]}
@@ -193,15 +193,15 @@ export default function ArenaDimensions({
               send("delete_dimension_preset", { name: chosen }, true)
             }
           >
-            DELETE
+            Delete
           </button>
         </div>
 
-        <p className="view-note">
-          {connected
-            ? "Edit the draft, then apply and wait for aircraft confirmation."
-            : "Offline draft. Values are configuration defaults, not measured arena dimensions. Connect a disarmed aircraft to apply."}
-        </p>
+        {!connected && (
+          <p className="view-note">
+            Offline draft: defaults, not measured. Connect a disarmed aircraft to apply.
+          </p>
+        )}
         {errors.length > 0 && <p role="alert">{errors.join(" · ")}</p>}
         <div className="dims-grid">
           {Object.entries(groups).map(([group, list]) => (
@@ -281,9 +281,7 @@ export default function ArenaDimensions({
 
         <div className="dims-actions">
           <span className="dims-note">
-            Applied on the ground only: the mission rebuilds with these while
-            disarmed. Fields marked <em>rec.</em> are recorded for the operator;
-            no algorithm reads them yet.
+            Disarmed only. <em>rec.</em> = recorded, not used.
           </span>
           <button
             className="primary"
@@ -293,7 +291,7 @@ export default function ArenaDimensions({
             }
             onClick={() => send("set_arena_dimensions", { dimensions: values })}
           >
-            APPLY TO AIRCRAFT
+            Apply to aircraft
           </button>
         </div>
       </div>

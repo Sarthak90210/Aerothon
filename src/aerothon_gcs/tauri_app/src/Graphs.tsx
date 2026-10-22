@@ -77,7 +77,7 @@ export default function Graphs({
     <section className="graphs" aria-label="Telemetry graphs">
       <div className="graph-controls">
         <label>
-          Graph group
+          Group
           <select
             value={group}
             onChange={(e) => setGroup(e.target.value as GraphGroup)}
@@ -90,25 +90,28 @@ export default function Graphs({
           </select>
         </label>
         <label>
-          Time window
+          Window
           <select
             value={windowSeconds}
             onChange={(e) => setWindowSeconds(Number(e.target.value))}
           >
-            <option value={30}>30 seconds</option>
-            <option value={120}>2 minutes</option>
-            <option value={600}>10 minutes</option>
+            <option value={30}>30 s</option>
+            <option value={120}>2 min</option>
+            <option value={600}>10 min</option>
           </select>
         </label>
         <button
           aria-pressed={!!paused}
           onClick={() => setPaused(paused ? null : history.rows.slice())}
         >
-          {paused ? "Resume live view" : "Pause view"}
+          {paused ? "Resume" : "Pause"}
         </button>
         <button onClick={exportCsv} disabled={!rows.length}>
-          Export window CSV
+          Export CSV
         </button>
+        <span className="view-note" role="status">
+          {paused ? "Paused" : live ? "Live" : "No telemetry: history only"}
+        </span>
       </div>
       {group === "sensors" && (
         <div className="magnetic-reference">
@@ -126,26 +129,11 @@ export default function Graphs({
           </button>
           <p className="view-note">
             {history.magneticReference
-              ? `Reference ${history.magneticReference.strength.toFixed(2)} µT · frame ${history.magneticReference.frame}.`
-              : "No magnetic reference. Capture one with fresh compass telemetry while the FCU reports disarmed."}{" "}
-            This observes telemetry and sends no aircraft command.
+              ? `Reference ${history.magneticReference.strength.toFixed(2)} µT · frame ${history.magneticReference.frame}`
+              : "No reference. Needs fresh compass data while disarmed."}
           </p>
         </div>
       )}
-      <p className="view-note" role="status">
-        {paused
-          ? "View paused; collection continues."
-          : live
-            ? "Live telemetry"
-            : "Telemetry unavailable; showing retained history."}{" "}
-        · Last 10 minutes retained in this browser, up to 5 snapshots/s. Reload
-        clears history.
-      </p>
-      <p className="view-note">
-        Horizontal axis: elapsed steady seconds since the first browser sample.
-        Gaps mean missing, stale or paused-clock data. Hover for values; each
-        legend toggles a trace.
-      </p>
       <div className="graph-grid">
         {graphs
           .filter((g) => g.group === group)
@@ -169,8 +157,9 @@ export default function Graphs({
             const latest = rows.length ? rows[rows.length - 1] : null;
             return (
               <figure key={g.title} className="trend-figure">
-                <figcaption>
+                <figcaption title={g.note}>
                   {g.title} <span>{g.unit}</span>
+                  {g.note && <span aria-label={g.note}> ⓘ</span>}
                 </figcaption>
                 <ReactECharts
                   echarts={echarts}
@@ -207,7 +196,7 @@ export default function Graphs({
                       valueFormatter: (v: unknown) =>
                         typeof v === "number"
                           ? `${v.toFixed(2)} ${g.unit}`
-                          : "Unavailable",
+                          : "—",
                     },
                     xAxis: {
                       type: "value",
@@ -234,15 +223,14 @@ export default function Graphs({
                 />
                 <p className="graph-reading">
                   {!hasData
-                    ? "No measured data in this window."
+                    ? "No data"
                     : g.traces
                         .map((s) => {
                           const n = latest?.values[s.key];
-                          return `${s.label}: ${typeof n === "number" ? n.toFixed(2) + " " + g.unit : "Unavailable"}`;
+                          return `${s.label}: ${typeof n === "number" ? n.toFixed(2) + " " + g.unit : "—"}`;
                         })
                         .join(" · ")}
                 </p>
-                {g.note && <p className="view-note">{g.note}</p>}
               </figure>
             );
           })}
