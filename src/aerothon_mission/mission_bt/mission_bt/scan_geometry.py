@@ -362,7 +362,8 @@ def _line_through_bearing(points, bearing_rad, inlier_m, min_len_m=0.5):
 def gate_opening(angle_min, angle_increment, ranges, bearing_rad,
                  half_width_rad, need_clear_m=10.0, range_min=0.05,
                  range_max=12.0, gap_m=0.35, max_depth_m=0.75,
-                 min_gap_m=1.0, min_cluster_points=2, corridor_m=1.5):
+                 min_gap_m=1.0, min_cluster_points=2, corridor_m=1.5,
+                 raw_ranges=None):
     """Is there a way THROUGH the gate at this height, or is the board here?
 
     WHY THIS EXISTS
@@ -403,6 +404,13 @@ def gate_opening(angle_min, angle_increment, ranges, bearing_rad,
 
     `open` is False both for a solid face and for a gap with something
     standing in it, and the reason says which. Neither is a thing to fly at.
+
+    `raw_ranges`, the scan before despeckle, lets a lone return AT THE GATE'S
+    DEPTH inside the crossing strip count against `clear_m`. A 0.1 m wall end
+    seen end-on at 5 m catches one 0.8 deg beam, and despeckle replaced it
+    with the wall face 2 m behind: on ten recorded scans the strip read clear
+    straight into that wall end (shipped_20kmh_r2). Lone returns anywhere else
+    stay despeckled, so dust in front of the gate still does not refuse it.
     """
     half = abs(float(half_width_rad))
     inc = float(angle_increment)
@@ -503,6 +511,26 @@ def gate_opening(angle_min, angle_increment, ranges, bearing_rad,
                 continue
             pairs.append((0.5 * (af + bf), a, b, ap, bp))
 
+    # ADJACENT PAIRS ONLY. A pair with another surface's front standing
+    # between its two fronts, at their depth, is two openings, not one; the
+    # flight line lies in only one of them. World 'shipped' hangs its board on
+    # a rod, so below it there are only wall ends, and the linked return
+    # lane's wall ends level with this mouth's, 1.9 m beyond its right wall:
+    # nearest mean depth took that 4 m pair on a degree of residual square-up
+    # yaw and recentred a metre onto the right wall (shipped_20kmh_r2, r3).
+    def _split(item):
+        depth, ga, gb, ap, bp = item
+        lat_lo, lat_hi = sorted((_lat(ap), _lat(bp)))
+        for g in groups:
+            if g is ga or g is gb:
+                continue
+            f, lat, _ = _front(g)
+            if f > 0.0 and lat_lo < lat < lat_hi and abs(f - depth) <= float(max_depth_m):
+                return True
+        return False
+
+    pairs = [item for item in pairs if not _split(item)]
+
     if not pairs:
         blocking = [g for g in groups if _crosses_line(g)]
         what = ("one continuous surface" if blocking or len(groups) <= 1
@@ -541,6 +569,23 @@ def gate_opening(angle_min, angle_increment, ranges, bearing_rad,
         lateral = -x * sin_b + y * cos_b
         if forward > 0.0 and abs(lateral) <= float(corridor_m) / 2.0:
             ahead.append(forward)
+    if raw_ranges is not None and len(raw_ranges) == len(ranges):
+        for i, (r_raw, r_kept) in enumerate(zip(raw_ranges, ranges)):
+            if r_raw is None or r_raw != r_raw:
+                continue
+            r_raw = float(r_raw)
+            kept = float("inf") if r_kept is None or r_kept != r_kept else float(r_kept)
+            if not (lo < r_raw < hi) or r_raw >= kept:
+                continue                  # not a return despeckle removed
+            a = angle_min + i * inc
+            if abs(_wrap(a - bearing_rad)) > half:
+                continue
+            x, y = r_raw * math.cos(a), r_raw * math.sin(a)
+            forward = x * cos_b + y * sin_b
+            lateral = -x * sin_b + y * cos_b
+            if (forward > 0.0 and abs(lateral) <= float(corridor_m) / 2.0
+                    and abs(forward - gate) <= float(max_depth_m)):
+                ahead.append(forward)
     clear = min(ahead) if ahead else float(range_max)
 
     if gap < float(min_gap_m):

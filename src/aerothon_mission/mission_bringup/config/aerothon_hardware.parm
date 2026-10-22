@@ -28,9 +28,12 @@ SERVO9_FUNCTION 7
 # (MASTER_DOCUMENTATION.md, camera tilt calibration).
 
 # Winch: PWM-driven, no encoder. ArduPilot's relative-length control reels
-# at WNCH_RATE_MAX whatever rate DO_WINCH asks for, so this must equal
+# at WINCH_RATE_MAX whatever rate DO_WINCH asks for, so this must equal
 # winch_ctrl's fc_rate_max_mps (0.30): at 1.0 the line ran 3.3x faster than
 # the payout estimate and stow left line out.
-WNCH_TYPE 1
-WNCH_RATE_MAX 0.30
+# Copter 4.5 names these WINCH_* (libraries/AP_Winch, group "WINCH"); the
+# earlier WNCH_* lines matched no parameter, leaving the winch type and rate
+# at their defaults. winch_ctrl now reads WINCH_RATE_MAX back before lowering.
+WINCH_TYPE 1
+WINCH_RATE_MAX 0.30
 SERVO10_FUNCTION 88

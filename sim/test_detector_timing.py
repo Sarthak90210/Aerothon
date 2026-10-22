@@ -1,4 +1,5 @@
 """Delivered distinct frames and braking, rather than publication counts."""
+import math
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -156,3 +157,95 @@ def test_larger_safe_increase_still_requires_acknowledgement():
  assert stage._qualified_pace(1.) is False
  assert len(calls)==1 and abs(calls[0]-.65)<1.e-8
  assert stage._qualified_pace(1.) is True
+
+
+def test_measured_braking_raises_the_paced_cap_and_the_default_is_unchanged():
+ stage,calls=paced_stage(None,15.)
+ stage.alt=5.;stage._ahead_rad=.47
+ assert stage._qualified_pace(1.) is False
+ default=calls[-1]
+ assert abs(default-search_speed(5.*math.tan(.47),1.5,15.,.14,1.5))<.05, 'no brake_mps2: the 0.5 m/s^2 model'
+ stage,calls=paced_stage(None,15.)
+ stage.alt=5.;stage._ahead_rad=.47;stage.brake_mps2=2.0
+ stage._qualified_pace(1.)
+ assert calls[-1]>default+.1
+
+
+def test_the_braking_allowance_still_stops_short_of_the_clearance():
+ for decel in (.5,1.,2.,3.):
+  v=search_speed(2.6,1.5,15.,.05,9.,decel=decel)
+  delay=4/15.+.05+.6
+  assert v*delay+v*v/(2*decel)<=2.6-1.5+1e-9
+ assert search_speed(2.6,1.5,15.,.05,9.,decel=0.)==0.
+
+
+def test_a_simulation_speed_override_replaces_the_derived_pace_and_says_so():
+ stage,calls=paced_stage(None,15.)
+ logs=[]
+ stage.mav.log=lambda msg,warn=False:logs.append((msg,warn))
+ stage.speed_override_mps=5.56
+ stage._qualified_pace(1.)
+ assert abs(calls[-1]-5.56)<1e-9
+ assert any('OVERRIDE' in m and w for m,w in logs)
+
+
+def test_no_override_keeps_the_derived_pace():
+ stage,calls=paced_stage(None,15.)
+ stage._qualified_pace(1.)
+ assert calls[-1]<1.5
+
+
+def continuous_stage():
+ stage,calls=paced_stage(None,15.)
+ stage.mav.detector_timing={name:SimpleNamespace(qualified=lambda now:None) for name in ('qr','red')}
+ stage.mav.log=lambda msg,warn=False:None
+ stage.speed_override_mps=5.56
+ return stage,calls
+
+
+def test_a_continuous_sweep_never_holds_for_stale_detector_timing():
+ """The user's order, 21 Oct: 20 km/h without stopping, braking only for a QR.
+ Stale detectors held the derived pace; the override flies on."""
+ stage,calls=continuous_stage()
+ assert stage._qualified_pace(1.) is True
+ assert stage._qualified_pace(2.) is True
+ assert calls==[5.56], 'the fixed speed is commanded once, not re-requested every tick'
+
+
+def test_the_derived_pace_still_holds_for_stale_detector_timing():
+ stage,calls=continuous_stage()
+ stage.speed_override_mps=0.0
+ assert stage._qualified_pace(1.) is False and calls==[]
+
+
+def test_a_refused_speed_command_is_sent_again_without_holding():
+ stage,calls=continuous_stage()
+ refused=SimpleNamespace(done=lambda:True,result=lambda:SimpleNamespace(success=False))
+ stage.mav.set_speed=lambda value:(calls.append(value) or refused)
+ assert stage._qualified_pace(1.) is True
+ assert stage._qualified_pace(2.) is True
+ assert calls==[5.56,5.56]
+
+
+def test_a_continuous_sweep_turns_onto_the_next_lane_on_the_move():
+ from mission_bt.mission_tree import LawnmowerSearch
+ stage=LawnmowerSearch.__new__(LawnmowerSearch)
+ gotos=[]
+ stage.mav=SimpleNamespace(yaw=lambda:0.0,pos=lambda:(0.,0.,10.),goto=lambda *a:gotos.append(a))
+ stage.alt=10.;stage.turn_tol=math.radians(30.);stage._turn_hold=None
+ stage.speed_override_mps=5.56
+ assert stage._turning(math.pi) is False and gotos==[]
+ stage.speed_override_mps=0.0
+ assert stage._turning(math.pi) is True and gotos, 'the derived pace still turns in place'
+
+
+def test_a_continuous_sweep_does_not_brake_before_a_red_ground_replan():
+ import py_trees
+ from mission_bt.mission_tree import LawnmowerSearch
+ stage=LawnmowerSearch.__new__(LawnmowerSearch)
+ stage._search_braking_gate=SimpleNamespace(tick=lambda s:True)
+ stage.speed_override_mps=0.0
+ assert stage.update() is py_trees.common.Status.RUNNING, 'the derived pace brakes first'
+ stage.speed_override_mps=5.56
+ stage.plan=None;stage.mav=SimpleNamespace(abort_reason=None)
+ assert stage.update() is py_trees.common.Status.FAILURE, 'past the gate: no plan here, so FAILURE proves it was skipped'

@@ -186,3 +186,18 @@ def test_recovery_is_repeated_until_the_fcu_leaves_guided(monkeypatch):
     state.mode, state.armed = 'RTL', False
     ex.ExecutionNode.tick(node)
     assert node.run['state'] == 'Failed' and node.run['disarmed'] is True
+
+
+def test_successful_bench_task_does_not_report_a_previous_run_failure():
+    import aerothon_runtime.execution_node as ex
+    root = NS(status=ex.S.SUCCESS, tip=lambda: NS(name='Mechanism'))
+    node = NS(run={'state':'Accepted', 'task':'mechanism', 'params':{'action':'stow'}},
+              recovery=None, normal_task=lambda: False,
+              mav=NS(reset_pending=lambda: False, abort_reason='release refused: too low',
+                     winch_status={'state':'IDLE'}),
+              tree=NS(root=root, tick=lambda: None),
+              state_pub=NS(publish=lambda _: None), last_state={'value':'FAILED'},
+              release_control=lambda: None, publish=lambda: None)
+    ex.ExecutionNode.tick(node)
+    assert node.run['state'] == 'Completed'
+    assert node.run['reason'] == '', 'successful stow inherited the refused release reason'

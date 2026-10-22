@@ -66,6 +66,25 @@
     border-radius: 6px; padding: 6px; max-height: 220px; overflow: auto; font-size: 11px; }
   kbd { background: var(--chip); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px;
     font-size: 11px; }
+  #simStatus { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px; max-height: 180px; overflow: auto; font-size: 11px; }
+  .dgroup { margin: 8px 0 2px; font-weight: 600; font-size: 12px; }
+  .dfield { display: grid; grid-template-columns: 1fr 86px 58px; gap: 4px; align-items: center;
+    margin: 2px 0; }
+  .dfield span { font-size: 12px; }
+  .dfield small { grid-column: 1 / -1; color: var(--muted); margin-top: -2px; font-size: 11px; }
+  .locked { color: var(--muted); font-size: 11px; }
+  .steps { padding-left: 18px; margin: 6px 0; } .steps li { margin: 6px 0; }
+  textarea { width: 100%; font: 11px ui-monospace, monospace; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 5px; padding: 4px; }
+  .pts { font: 11px ui-monospace, monospace; width: 100%; border-collapse: collapse; margin: 4px 0; }
+  .pts td { padding: 1px 4px; border-bottom: 1px solid var(--line); }
+  .pts tr.sel td { background: var(--chip); }
+  .colour { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+  .colour input[type=color] { width: 30px; height: 24px; padding: 0; border: 1px solid var(--line); border-radius: 4px; }
+  .colour input[type=text] { width: 76px; }
+  .hex { display: inline-flex; align-items: center; gap: 4px; }
+  .hex i { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--line); display: inline-block; }
   @media (max-width: 800px) {
     #app { flex-direction: column; }
     #view { height: 55vh; flex: none; }
@@ -132,6 +151,17 @@
       <label>Target QR (m)<input id="qrTarget" type="number" step="0.1" min="0.2" max="5"></label>
     </div>
 
+    <h2>Arena dimensions <span class="muted">· the GCS's own fields</span></h2>
+    <div id="dimsBox">
+      <p class="muted" id="dimsNote">Served by serve.py only.</p>
+      <div class="row">
+        <select id="dimsPreset" style="width:auto;flex:1"><option value="">Start from a GCS preset…</option></select>
+        <button id="dimsSlalom" title="Replace the return-corridor obstacles with the organisers' alternating slalom">Regenerate slalom</button>
+      </div>
+      <div id="dimsForm"></div>
+      <div id="dimsMsg" class="muted"></div>
+    </div>
+
     <h2>Geofence</h2>
     <div class="row">
       <select id="fenceMode" style="width:auto">
@@ -142,22 +172,64 @@
         style="width:70px"> m</label>
     </div>
     <div class="row">
+      <button id="fenceSix" title="The organisers give six points: start from six around everything, then drag them">6 organiser points</button>
       <button id="fenceFromAuto">Polygon from auto</button>
       <button id="fenceAddV">+ Vertex</button>
       <button id="fenceDelV">− Vertex</button>
     </div>
+    <div id="fencePts"></div>
+    <div class="row">
+      <button id="btnHome">Get lat/lon (simulator connected)</button>
+      <button id="btnCopyPts" disabled>Copy lat, lon lines</button>
+    </div>
+    <p id="homeNote" class="muted">Lat/lon are placed on the running simulator's FCU home, as the aircraft reads them. Launch and Connect first; relaunch after moving the take-off area.</p>
+
+    <h2>Banners</h2>
+    <div class="row" id="colourRow"></div>
+    <p class="muted">The organisers give these as HEX. Green marks each corridor's entry, orange
+      every opening the aircraft must not take (the far end of both corridors), red the restricted
+      zones. Gazebo prints these; the same codes go into the GCS. Relaunch to see a change in Gazebo.</p>
+    <label class="muted" id="orangeWrap"><input id="orangeOn" type="checkbox"> orange no-entry banners</label>
 
     <h2>Checks <span id="checkSrc" class="muted"></span></h2>
     <div id="checks" class="checks"></div>
 
     <div id="runbox" hidden>
-      <h2>Simulation</h2>
+      <h2>Simulation · fly it yourself</h2>
+      <p class="muted">Starts Gazebo, SITL and the sensor gateway for this world, and the real GCS web
+        host. Nothing is connected, applied, armed or started: you do that in the GCS, as with the Pi.</p>
       <div class="row">
-        <label><input id="runGui" type="checkbox" checked> open Gazebo chase view</label>
-        <label><input id="runRec" type="checkbox"> record video</label>
+        <button id="btnSim" class="primary">Save &amp; launch simulator</button>
+        <button id="btnSimStop">Stop simulator</button>
       </div>
-      <div class="row"><button id="btnRun" class="primary">Save &amp; run simulation</button></div>
-      <pre id="runStatus">idle</pre>
+      <pre id="simStatus">idle</pre>
+      <div id="gcsSteps" hidden>
+        <ol class="steps">
+          <li>Open the GCS: <a id="gcsLink" href="http://localhost:8899/" target="_blank" rel="noopener">http://localhost:8899/</a></li>
+          <li>Connections → profile <b>World maker simulation</b> → Connect, once the status above says
+            the gateway is up. That starts the production runtime (as on the Pi); wait for live FCU telemetry.</li>
+          <li>Organiser inputs → <b>Arena dimensions</b> → load preset <code id="presetName"></code> → Apply. Wait for the aircraft's applied confirmation.</li>
+          <li>Organiser inputs → the three banner HEX codes → Apply banner colours:
+            <div id="hexes" class="row"></div></li>
+          <li>Organiser inputs → Geofence: paste these lines → Apply geofence.
+            <div class="row"><button id="btnOrg">Get geofence (after Connect: needs the FCU home)</button>
+              <button id="btnCopyFence" disabled>Copy</button></div>
+            <textarea id="fenceOut" rows="6" readonly placeholder="arena fence, one latitude, longitude per line"></textarea>
+            <details><summary class="muted">Delivery-zone corners instead</summary>
+              <p class="muted">Applied as the geofence, four points with take-off outside them are read as the delivery zone.</p>
+              <textarea id="zoneOut" rows="4" readonly></textarea></details></li>
+          <li>Readiness green → Review start → Confirm start. Land and disarm before Stop.</li>
+        </ol>
+      </div>
+      <details>
+        <summary class="muted">Scripted graded run instead (starts the mission by itself)</summary>
+        <div class="row">
+          <label><input id="runGui" type="checkbox" checked> open Gazebo chase view</label>
+          <label><input id="runRec" type="checkbox"> record video</label>
+        </div>
+        <div class="row"><button id="btnRun">Save &amp; run simulation</button></div>
+        <pre id="runStatus">idle</pre>
+      </details>
     </div>
     <p class="muted" style="margin-top:18px">World frame (Gazebo ENU), metres, yaw in degrees
       anticlockwise from +x. The mission's local frame starts at the spawn point.</p>
@@ -213,12 +285,14 @@ function rectCorners(cx, cy, w, h, yaw = 0) {
     .map(p => place(p, cx, cy, yaw));
 }
 // Same as world_spec.linked_return_pose(): beside the outbound lane, to its
-// starboard, entrance level with its exit, pointing back.
+// starboard (port with side "left"), entrance level with its exit, pointing
+// back; `spacing` centre to centre, as the GCS enters it.
 function linkReturn(s) {
   const c = s.corridor, r = s.return_corridor;
   if (!r.linked) return;
-  const spacing = (+c.width + +r.width) / 2 + 2 * WALL_T + LANE_GAP;
-  const [x, y] = place([+c.length, -spacing], c.x, c.y, rad(c.yaw_deg));
+  const spacing = r.spacing ?? (+c.width + +r.width) / 2 + 2 * WALL_T + LANE_GAP;
+  const sign = r.side === "left" ? 1 : -1;
+  const [x, y] = place([+c.length, sign * spacing], c.x, c.y, rad(c.yaw_deg));
   r.x = Math.round(x * 1e4) / 1e4; r.y = Math.round(y * 1e4) / 1e4;
   r.yaw_deg = ((+c.yaw_deg + 360) % 360) - 180;
 }
@@ -311,7 +385,10 @@ function validate(s) {
   }
   const cor = corridorPoly(s), ret = returnPoly(s), tk = takeoffPoly(s);
   for (const [n, c] of [["outbound corridor", s.corridor], ["return corridor", s.return_corridor]])
-    for (const [k, lo, hi] of [["length", 4, 40], ["width", 2, 8], ["wall_height", 2, 8]]) {
+    for (const k of ["length", "width", "wall_height"]) {
+      // The GCS field's range (world_spec.gcs_range), once the server sent it.
+      const f = catalogue?.fields.find(f => f.group === "corridor" && f.key === k + "_m");
+      const [lo, hi] = f ? [f.min, f.max] : { length: [2, 30], width: [1, 10], wall_height: [1, 8] }[k];
       const v = +c[k]; if (!(v >= lo && v <= hi)) E.push(`the ${n}'s ${k.replace("_", " ")} ${v} m is outside ${lo}-${hi} m`);
     }
   if (overlap(cor, tk)) E.push("the outbound corridor overlaps the take-off pad");
@@ -480,11 +557,19 @@ function qrTex(seed, letter) {
   });
   qrTexCache[key] = t; return t;
 }
-const redTex = canvasTex(512, 256, (g, w, h) => {
-  g.fillStyle = "#e01414"; g.fillRect(0, 0, w, h);
-  g.strokeStyle = "#fff"; g.lineWidth = 14; g.strokeRect(10, 10, w - 20, h - 20);
-  g.fillStyle = "#fff"; g.font = "bold 96px system-ui"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("RED ZONE", w / 2, h / 2);
-});
+// The organisers' shades: the spec's, else what the simulator prints
+// (publish_banner_colours.py).
+const SIM_COLOURS = { green: "#07A03D", orange: "#EB5A0A", red: "#C4161C" };
+function colourOf(name) { return ((spec.banner || {}).colours || {})[name] || SIM_COLOURS[name]; }
+function hexInt(h) { return parseInt(String(h).replace("#", ""), 16); }
+const redTexCache = {};
+function redTex(hex) {
+  return redTexCache[hex] ??= canvasTex(512, 256, (g, w, h) => {
+    // The organisers' zones carry no wording: red with a white border.
+    g.fillStyle = hex; g.fillRect(0, 0, w, h);
+    g.strokeStyle = "#fff"; g.lineWidth = 14; g.strokeRect(10, 10, w - 20, h - 20);
+  });
+}
 
 function tag(obj, kind, key) { obj.traverse(o => { o.userData.sel = { kind, key }; }); return obj; }
 function isSel(kind, key) { return sel && sel.kind === kind && String(sel.key) === String(key); }
@@ -510,13 +595,29 @@ function rebuild() {
     world.add(tag(g, "takeoff", "")); if (isSel("takeoff")) world.add(selRing(takeoffPoly(s)));
   }
   // corridors: each lane from its own length / width / wall height
+  // The banner as the spec (and so the GCS dimensions) sizes it: hung from a
+  // rod between the walls or on posts, laid on the ground at the mouth, or both.
+  const bn = { width_m: 3.7, height_m: 1.15, board_bottom_m: 2.805, placement: "suspended", mount: "posts", ...(s.banner || {}) };
+  // One opening's banner at lane-frame x: hung across it and/or laid on the
+  // ground just outside it (`outward` -1 before the entrance, +1 past the end),
+  // as materialize_world.py builds them.
+  function gate(g, x, colour, Wd, outward) {
+    const bw = +bn.width_m, bh = +bn.height_m, bb = +bn.board_bottom_m;
+    if (bn.placement !== "ground") {
+      if (bn.mount === "rod") g.add(box(0.04, Wd + 2 * WALL_T, 0.04, 0x444444, [x, 0, bb + bh]));
+      else g.add(box(0.18, 0.18, bb + bh, 0x555555, [x, -bw / 2 - 0.1, (bb + bh) / 2]), box(0.18, 0.18, bb + bh, 0x555555, [x, bw / 2 + 0.1, (bb + bh) / 2]));
+      g.add(box(0.08, bw, bh, colour, [x, 0, bb + bh / 2]));
+    }
+    if (bn.placement !== "suspended") { const sh = flat(bh, bw, colour, 0.03); sh.position.set(x + outward * (bh / 2 + 0.2), 0, 0.03); g.add(sh); }
+  }
   function lane(c, floor, text) {
     const g = new THREE.Group(), L = +c.length, Wd = +c.width, H = +c.wall_height;
     const f = flat(L, Wd, floor, 0.02); f.position.set(L / 2, 0, 0.02); g.add(f);
     const wy = Wd / 2 + WALL_T / 2;
     for (const y of [wy, -wy]) g.add(box(L + 0.2, WALL_T, H, 0xdfe5ec, [L / 2, y, H / 2], 0.55));
-    g.add(box(0.18, 0.18, 4, 0x067a2d, [0, -1.92, 2]), box(0.18, 0.18, 4, 0x067a2d, [0, 1.92, 2]));
-    g.add(box(0.08, 3.7, 1.15, 0x0b8f3a, [0, 0, 3.38]));
+    // Green where the aircraft enters; orange at the far opening it must not use.
+    gate(g, 0, hexInt(colourOf("green")), Wd, -1);
+    if (bn.orange) gate(g, L, hexInt(colourOf("orange")), Wd, 1);
     g.add(label(text, 0xffffff, 0.9, [L / 2, 0, 0.05]));
     g.position.set(c.x, c.y, 0); g.rotation.z = rad(c.yaw_deg);
     return g;
@@ -546,7 +647,7 @@ function rebuild() {
   }
   // red zones
   s.red_zones.forEach((r, i) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(r.w, r.h), new THREE.MeshLambertMaterial({ map: redTex }));
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(r.w, r.h), new THREE.MeshLambertMaterial({ map: redTex(colourOf("red")) }));
     m.position.set(r.x, r.y, 0.04); m.rotation.z = rad(r.yaw_deg || 0);
     const l = label(String(i + 1), 0xffffff, 1.0, [r.x, r.y - Math.min(r.h / 2 - 0.6, 1.8), 0.08]);
     world.add(tag(m, "red", i), tag(l, "red", i)); if (isSel("red", i)) world.add(selRing(redPoly(r)));
@@ -575,6 +676,7 @@ function rebuild() {
     s.geofence.vertices.forEach((v, i) => {
       const h = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.2, 16), new THREE.MeshBasicMaterial({ color: isSel("fencev", i) ? 0x1f6feb : 0xff7a00 }));
       h.rotation.x = Math.PI / 2; h.position.set(v[0], v[1], 0.2); world.add(tag(h, "fencev", i));
+      world.add(tag(label("P" + (i + 1), 0xff7a00, 1.2, [v[0], v[1] + 1.4, 0.25]), "fencev", i));
     });
   }
   // corridor exit marker, for the eye
@@ -630,11 +732,15 @@ renderer.domElement.addEventListener("pointerdown", ev => {
   sel = s;
   if (s) {
     const p = groundAt(ev), a = anchorOf(s);
-    pushUndo();
-    // Moving a linked return corridor by hand is a request to place it freely.
-    if (s.kind === "return" && spec.return_corridor.linked) spec.return_corridor.linked = false;
-    drag = { s, dx: a.x - p.x, dy: a.y - p.y, moved: false };
-    renderer.domElement.setPointerCapture(ev.pointerId);
+    // With arena dimensions the GCS spacing and return side place the return
+    // corridor; it moves with the outbound one and is not dragged on its own.
+    if (!(s.kind === "return" && spec.dimensions)) {
+      pushUndo();
+      // Moving a linked return corridor by hand is a request to place it freely.
+      if (s.kind === "return" && spec.return_corridor.linked) spec.return_corridor.linked = false;
+      drag = { s, dx: a.x - p.x, dy: a.y - p.y, moved: false };
+      renderer.domElement.setPointerCapture(ev.pointerId);
+    }
   }
   rebuild();
 });
@@ -643,7 +749,8 @@ renderer.domElement.addEventListener("pointermove", ev => {
   if (p) {
     const [hx, hy] = spawnPoint(spec);
     document.getElementById("cursor").textContent =
-      `world x ${p.x.toFixed(2)}, y ${p.y.toFixed(2)}   ·   mission-local x ${(p.x - hx).toFixed(2)}, y ${(p.y - hy).toFixed(2)}`;
+      `world x ${p.x.toFixed(2)}, y ${p.y.toFixed(2)}   ·   mission-local x ${(p.x - hx).toFixed(2)}, y ${(p.y - hy).toFixed(2)}`
+      + (fcuHome ? `   ·   ${toLatLon([p.x, p.y]).map(v => v.toFixed(7)).join(", ")}` : "");
   }
   if (!drag || !p) return;
   const a = anchorOf(drag.s);
@@ -724,21 +831,36 @@ function refreshPanel() {
     if (sel.kind === "fencev") { const v = spec.geofence.vertices[sel.key]; g.append(field("x", v, 0), field("y", v, 1)); }
     else if (sel.kind === "obst") {
       const o = spec.return_corridor.obstacles[sel.key];
-      g.append(field("along u", o, "u", 0.1), field("across v", o, "v", 0.05), field("yaw°", o, "yaw_deg", 5),
-               field("length (along)", o, "w", 0.05), field("width (across)", o, "d", 0.05), field("height", o, "h", 0.1));
+      g.append(field("along u", o, "u", 0.1));
+      if (!dims()) g.append(field("across v", o, "v", 0.05));
+      g.append(field("yaw°", o, "yaw_deg", 5), field("length (along)", o, "w", 0.05));
+      if (!dims()) g.append(field("width (across)", o, "d", 0.05), field("height", o, "h", 0.1));
     } else {
       const r = spec.return_corridor, locked = sel.kind === "return" && r.linked;
       if (!locked) g.append(field("x", a, "x"), field("y", a, "y"));
       if (sel.kind !== "zone" && !locked) g.append(field("yaw°", a, "yaw_deg", 5));
-      if (sel.kind === "zone" || sel.kind === "red") g.append(field("width", a, "w"), field("height", a, "h"));
-      if (sel.kind === "corridor" || sel.kind === "return")
+      if (sel.kind === "zone" || (sel.kind === "red" && !dims())) g.append(field("width", a, "w"), field("height", a, "h"));
+      if ((sel.kind === "corridor" || sel.kind === "return") && !dims())
         g.append(field("length", a, "length", 0.5), field("width", a, "width", 0.1), field("wall height", a, "wall_height", 0.1));
     }
     pr.append(g);
+    if (dims() && ["corridor", "return", "obst", "red"].includes(sel.kind)) {
+      const p = document.createElement("p"); p.className = "locked";
+      p.textContent = { corridor: "Length, width and wall height come from Arena dimensions.",
+        return: "Sizes, spacing and side come from Arena dimensions; it moves with the outbound corridor.",
+        obst: "Reach across the lane and height come from Arena dimensions (obstacle reach, wall height).",
+        red: "Side comes from Arena dimensions (red zone side)." }[sel.kind];
+      pr.append(p);
+      if (sel.kind === "obst") {
+        const b = document.createElement("button"); b.textContent = "Move to the other wall";
+        b.onclick = () => { pushUndo(); const o = spec.return_corridor.obstacles[sel.key]; o.v = -o.v; changed(); };
+        pr.append(b);
+      }
+    }
     if (sel.kind === "return") {
       const row = document.createElement("div"); row.className = "row";
       const lab = document.createElement("label"), cb = document.createElement("input");
-      cb.type = "checkbox"; cb.checked = !!spec.return_corridor.linked;
+      cb.type = "checkbox"; cb.checked = !!spec.return_corridor.linked; cb.disabled = !!dims();
       cb.onchange = () => { pushUndo(); spec.return_corridor.linked = cb.checked; changed(); };
       lab.append(cb, " linked beside the outbound corridor (rulebook layout)");
       const add = document.createElement("button"); add.textContent = "+ Obstacle";
@@ -756,6 +878,9 @@ function refreshPanel() {
     if (["red", "decoy", "fencev", "obst"].includes(sel.kind)) { const b = document.createElement("button"); b.textContent = "Remove"; b.onclick = () => { pushUndo(); removeSelected(); }; pr.append(b); }
   }
   $("startTarget").value = spec.start_target; $("qrStart").value = spec.qr.start_m; $("qrTarget").value = spec.qr.target_m;
+  $("qrStart").disabled = $("qrTarget").disabled = !!dims();
+  $("qrStart").title = $("qrTarget").title = dims() ? "Set in Arena dimensions" : "";
+  renderDims(); renderColours(); renderFencePoints();
   $("fenceMode").value = spec.geofence.mode; $("fenceMargin").value = spec.geofence.margin ?? 6;
   $("marginWrap").style.display = spec.geofence.mode === "auto" ? "" : "none";
   $("fenceAddV").disabled = $("fenceDelV").disabled = spec.geofence.mode !== "polygon";
@@ -805,13 +930,230 @@ $("fenceAddV").onclick = () => {
   v.splice(i + 1, 0, [snapv((a[0] + b[0]) / 2), snapv((a[1] + b[1]) / 2)]); sel = { kind: "fencev", key: i + 1 }; changed();
 };
 $("fenceDelV").onclick = () => { if (sel && sel.kind === "fencev") { pushUndo(); removeSelected(); } };
-$("addRed").onclick = () => { pushUndo(); const z = spec.delivery_zone; spec.red_zones.push({ x: z.x, y: z.y, w: 5, h: 4, yaw_deg: 0 }); sel = { kind: "red", key: spec.red_zones.length - 1 }; changed(); };
+// The organisers give the geofence as six points: start from six around
+// everything (the auto fence's corners and its long sides' midpoints).
+$("fenceSix").onclick = () => {
+  pushUndo(); const m = spec.geofence.margin ?? 6; spec.geofence = { mode: "auto", margin: m };
+  const xs = fencePoly(spec).map(p => p[0]), ys = fencePoly(spec).map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const r = v => Math.round(v * 10) / 10, wide = x1 - x0 >= y1 - y0;
+  const v = wide
+    ? [[x0, y0], [(x0 + x1) / 2, y0], [x1, y0], [x1, y1], [(x0 + x1) / 2, y1], [x0, y1]]
+    : [[x0, y0], [x1, y0], [x1, (y0 + y1) / 2], [x1, y1], [x0, y1], [x0, (y0 + y1) / 2]];
+  spec.geofence = { mode: "polygon", margin: m, vertices: v.map(p => p.map(r)) };
+  sel = null; changed();
+};
+
+// ---- the organisers' banner colours ----
+function renderColours() {
+  const row = $("colourRow"); if (row.dataset.sig === JSON.stringify([spec.banner?.colours, spec.banner?.orange, !!dims()])) return;
+  row.dataset.sig = JSON.stringify([spec.banner?.colours, spec.banner?.orange, !!dims()]); row.innerHTML = "";
+  for (const name of ["green", "orange", "red"]) {
+    const w = document.createElement("label"); w.className = "colour";
+    const pick = document.createElement("input"); pick.type = "color"; pick.value = colourOf(name).toLowerCase();
+    const text = document.createElement("input"); text.type = "text"; text.value = colourOf(name).toUpperCase(); text.maxLength = 7;
+    const set = hex => {
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex)) { text.classList.add("e"); return; }
+      pushUndo(); spec.banner = { ...(spec.banner || {}) }; spec.banner.colours = { ...(spec.banner.colours || {}), [name]: hex.toUpperCase() };
+      changed();
+    };
+    pick.oninput = () => { text.value = pick.value.toUpperCase(); };
+    pick.onchange = () => set(pick.value);
+    text.onchange = () => set(text.value.trim());
+    w.append(pick, text, name); row.append(w);
+  }
+  // With arena dimensions the organisers' rule applies: orange at every other opening.
+  $("orangeOn").checked = !!(spec.banner?.orange || dims()); $("orangeOn").disabled = !!dims();
+  $("orangeWrap").title = dims() ? "Always on with arena dimensions (the organisers' rule)" : "";
+}
+$("orangeOn").onchange = e => { pushUndo(); spec.banner = { ...(spec.banner || {}), orange: e.target.checked }; changed(); };
+
+// ---- geofence points in latitude/longitude ----
+// world_spec / organiser_inputs: positions relative to the spawn (the FCU
+// home), then mission_bt.geofence.local_to_global about the FCU home.
+const EARTH_R = 6378137.0;
+let fcuHome = null;
+function toLatLon([x, y]) {
+  const [hx, hy] = spawnPoint(spec), [lat0, lon0] = fcuHome;
+  return [lat0 + (y - hy) / EARTH_R * 180 / Math.PI,
+          lon0 + (x - hx) / (EARTH_R * Math.cos(lat0 * Math.PI / 180)) * 180 / Math.PI];
+}
+function fencePts() { return spec.geofence.mode === "polygon" ? spec.geofence.vertices : fencePoly(spec); }
+function fenceLines() { return fencePts().map(p => toLatLon(p).map(v => v.toFixed(8)).join(", ")).join("\n"); }
+function renderFencePoints() {
+  const pts = fencePts();
+  const rows = pts.map((p, i) => {
+    const ll = fcuHome ? toLatLon(p).map(v => v.toFixed(8)).join(", ") : "—";
+    return `<tr class="${isSel("fencev", i) ? "sel" : ""}"><td>P${i + 1}</td><td>${(+p[0]).toFixed(1)}, ${(+p[1]).toFixed(1)}</td><td>${ll}</td></tr>`;
+  }).join("");
+  $("fencePts").innerHTML = `<table class="pts"><tr class="muted"><td></td><td>world x, y (m)</td><td>latitude, longitude</td></tr>${rows}</table>`
+    + `<div class="muted">${pts.length} points${pts.length === 6 ? "" : " (the organisers give 6)"}${spec.geofence.mode === "polygon" ? " · drag P-markers to place them" : " · auto: use “6 organiser points” to place your own"}</div>`;
+  $("btnCopyPts").disabled = !fcuHome;
+}
+async function getHome() {
+  $("btnHome").disabled = true; $("homeNote").textContent = "waiting for the FCU home position…";
+  try {
+    const r = await fetch("api/home"), j = await r.json();
+    if (!r.ok) { $("homeNote").textContent = j.error; return; }
+    fcuHome = j.home; $("homeNote").textContent = `FCU home ${j.home[0].toFixed(7)}, ${j.home[1].toFixed(7)} (the running simulator). Paste the lines into the GCS geofence box; relaunch after moving the take-off area.`;
+    renderFencePoints();
+  } finally { $("btnHome").disabled = false; }
+}
+$("btnHome").onclick = getHome;
+$("btnCopyPts").onclick = () => navigator.clipboard?.writeText(fenceLines());
+$("addRed").onclick = () => {
+  pushUndo(); const z = spec.delivery_zone, side = dims() ? dims().red_zone.side_m : null;
+  spec.red_zones.push({ x: z.x, y: z.y, w: side ?? 5, h: side ?? 4, yaw_deg: 0 });
+  sel = { kind: "red", key: spec.red_zones.length - 1 }; changed();
+};
 function addObstacle() {
-  const r = spec.return_corridor; pushUndo();
+  const r = spec.return_corridor, d = dims(); pushUndo();
   r.obstacles = r.obstacles || [];
-  r.obstacles.push({ u: +r.length / 2, v: 0.8, w: 0.35, d: 1.2, h: 3.2, yaw_deg: 0 });
+  // With arena dimensions: the organisers' reach from a wall, 95% of the wall height.
+  const reach = d ? d.obstacle.reach_frac * d.corridor.width_m : 1.2;
+  r.obstacles.push({ u: +r.length / 2, v: d ? +r.width / 2 - reach / 2 : 0.8, w: 0.35, d: reach,
+                     h: d ? Math.round(0.95 * d.corridor.wall_height_m * 1000) / 1000 : 3.2, yaw_deg: 0 });
   sel = { kind: "obst", key: r.obstacles.length - 1 }; changed();
 }
+
+// ---------------------------------------------------------------------------
+// Arena dimensions: the GCS's fields (mission_bt.arena_dimensions, served by
+// serve.py), building the world. Saving stores them as GCS preset
+// "World NAME", which the operator loads and applies in the GCS.
+// ---------------------------------------------------------------------------
+const UNITS = { m: 1, cm: 0.01, ft: 0.3048, in: 0.0254 };
+const GROUP_TITLES = { corridor: "Corridor", hall: "Hall / arena", banner: "Banner", qr: "QR codes",
+  red_zone: "Red zone", payload: "Payload", obstacle: "Exit-corridor obstacles" };
+let catalogue = null, dimsShown = null, unitPrefs = {};
+try { unitPrefs = JSON.parse(localStorage.getItem("world-editor-units") || "{}"); } catch { /* per-viewer only */ }
+function dims() { return spec.dimensions || null; }
+function baseDims() {
+  const p = catalogue.presets.builtin["SAE Aerothon 2026 (clarified)"];
+  if (p) return clone(p);
+  const d = {}; for (const f of catalogue.fields) (d[f.group] ??= {})[f.key] = f.default;
+  d.banner.placement = "suspended"; d.corridor.return_side = "right"; return d;
+}
+async function applyDims(next, regenerate = false) {
+  const body = { spec: clone(spec), dimensions: next };
+  if (regenerate) body.spec.return_corridor.obstacles = [];
+  let r, j;
+  try { r = await fetch("api/apply_dimensions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); j = await r.json(); }
+  catch { $("dimsMsg").textContent = "server unreachable"; $("dimsMsg").className = "e"; return; }
+  if (!r.ok) { $("dimsMsg").textContent = "Not applied: " + j.error; $("dimsMsg").className = "e"; dimsShown = null; renderDims(); return; }
+  pushUndo(); spec = j.spec; dimsShown = null;
+  $("dimsMsg").textContent = "Applied to the world. Save to update GCS preset “World " + (spec.name || "") + "”."; $("dimsMsg").className = "ok";
+  changed();
+}
+function setDim(group, key, value) { const next = clone(dims() || baseDims()); next[group] = { ...next[group], [key]: value }; applyDims(next); }
+function choice(label, group, key, options) {
+  const row = document.createElement("div"); row.className = "dfield";
+  const s = document.createElement("select"); s.innerHTML = options.map(o => `<option>${o}</option>`).join("");
+  s.value = (dims() || baseDims())[group][key]; s.onchange = () => setDim(group, key, s.value);
+  const sp = document.createElement("span"); sp.textContent = label;
+  row.append(sp, s, document.createElement("span")); return row;
+}
+function renderDims() {
+  if (!catalogue) return;
+  const d = dims() || baseDims(), sig = JSON.stringify([d, unitPrefs, !!dims()]);
+  if (sig === dimsShown) return; dimsShown = sig;
+  $("dimsNote").textContent = dims()
+    ? "The world is built from these. Saving stores them as GCS preset “World " + (spec.name || "…") + "”."
+    : "No arena dimensions yet: these are the organisers' clarified values. Pick a preset or change a field to build the world from them.";
+  const form = $("dimsForm"); form.innerHTML = ""; let group = null;
+  for (const f of catalogue.fields) {
+    if (f.group !== group) {
+      group = f.group; const h = document.createElement("div"); h.className = "dgroup"; h.textContent = GROUP_TITLES[group] || group; form.append(h);
+      if (group === "corridor") form.append(choice("Return lane side", "corridor", "return_side", catalogue.return_sides));
+      if (group === "banner") form.append(choice("Banner placement", "banner", "placement", catalogue.placements));
+    }
+    const id = f.group + "." + f.key, metres = f.key.endsWith("_m");
+    const unit = metres ? (unitPrefs[id] || "m") : null, k = metres ? UNITS[unit] : 1;
+    const row = document.createElement("div"); row.className = "dfield";
+    const sp = document.createElement("span"); sp.textContent = f.label;
+    const inp = document.createElement("input"); inp.type = "number"; inp.step = "any";
+    inp.value = Math.round(d[f.group][f.key] / k * 1e4) / 1e4;
+    inp.title = `${f.min}–${f.max} ${metres ? "m" : f.key.endsWith("_kg") ? "kg" : ""}`;
+    inp.onchange = () => { const v = +inp.value * k; if (Number.isFinite(v)) setDim(f.group, f.key, v); };
+    let u;
+    if (metres) {
+      u = document.createElement("select"); u.innerHTML = Object.keys(UNITS).map(x => `<option>${x}</option>`).join(""); u.value = unit;
+      u.onchange = () => { unitPrefs[id] = u.value; try { localStorage.setItem("world-editor-units", JSON.stringify(unitPrefs)); } catch { /* fine */ } dimsShown = null; renderDims(); };
+    } else { u = document.createElement("span"); u.className = "muted"; u.textContent = f.key.endsWith("_kg") ? "kg" : "× width"; }
+    const note = document.createElement("small"); note.textContent = f.used_by ? "aircraft: " + f.used_by : "recorded only";
+    row.append(sp, inp, u, note); form.append(row);
+  }
+}
+async function loadCatalogue() {
+  try { catalogue = await (await fetch("api/dimensions")).json(); } catch { return; }
+  const s = $("dimsPreset"), opt = (group, names) => names.map(n => `<option value="${group}:${n.replace(/"/g, "&quot;")}">${group === "builtin" ? "built-in" : "saved"}: ${n}</option>`).join("");
+  s.innerHTML = `<option value="">Start from a GCS preset…</option>` + opt("builtin", Object.keys(catalogue.presets.builtin)) + opt("saved", Object.keys(catalogue.presets.saved));
+  dimsShown = null; renderDims();
+}
+$("dimsPreset").onchange = e => {
+  const v = e.target.value; if (!v) return; const i = v.indexOf(":");
+  applyDims(clone(catalogue.presets[v.slice(0, i)][v.slice(i + 1)])); e.target.value = "";
+};
+$("dimsSlalom").onclick = () => { if (catalogue) applyDims(clone(dims() || baseDims()), true); };
+
+// ---- the simulator, flown by hand from the GCS ----
+function showHexes(colours) {
+  $("hexes").innerHTML = "";
+  for (const [name, hex] of Object.entries(colours)) {
+    const b = document.createElement("button"); b.className = "hex"; b.title = "copy";
+    b.innerHTML = `<i style="background:${hex}"></i>${name} ${hex}`;
+    b.onclick = () => navigator.clipboard?.writeText(hex); $("hexes").append(b);
+  }
+}
+let simTimer = null;
+async function simPoll() {
+  clearTimeout(simTimer);
+  let j; try { j = await (await fetch("api/sim")).json(); } catch { $("simStatus").textContent = "server unreachable"; return; }
+  const lines = [];
+  if (!j.name) lines.push(j.other_simulator ? "another simulator is running on this machine" : "idle");
+  else {
+    lines.push(`${j.running ? "RUNNING" : "stopped"}  ${j.name}  ${Math.round((j.elapsed_s || 0) / 60)} min`);
+    if (j.running) lines.push(`GCS ${j.gcs_up ? "up" : "starting…"} · Gazebo/SITL gateway ${j.gateway_up ? "up" : "starting…"} · runtime ${j.runtime_up ? "connected" : "not connected (Connect in the GCS)"}`);
+    if (!j.running && j.exit_code != null) lines.push(`launcher exited with code ${j.exit_code}`);
+    if (j.log_tail?.length) lines.push("", ...j.log_tail);
+  }
+  $("simStatus").textContent = lines.join("\n");
+  $("gcsSteps").hidden = !j.running;
+  if (j.running) {
+    $("presetName").textContent = `“${j.preset}”`;
+    if (!$("hexes").children.length) showHexes({ ...SIM_COLOURS, ...Object.fromEntries(Object.entries(spec.banner?.colours || {}).map(([k, v]) => [k, v.toUpperCase()])) });
+  }
+  $("btnSim").disabled = j.running || j.other_simulator; $("btnSimStop").disabled = !j.running;
+  simTimer = setTimeout(simPoll, j.running ? 3000 : 10000);
+}
+$("btnSim").onclick = async () => {
+  if (!dims()) { $("simStatus").textContent = "Apply arena dimensions first: they become the GCS preset you apply."; return; }
+  if (!(await save())) return;
+  // The server validates with world_spec.py (the browser's quick check
+  // assumes a fixed corridor altitude); its refusal lists the errors.
+  clearTimeout(simTimer);
+  $("hexes").innerHTML = ""; $("fenceOut").value = $("zoneOut").value = ""; $("btnCopyFence").disabled = true;
+  const r = await fetch(`api/sim/start/${encodeURIComponent(spec.name)}`, { method: "POST" });
+  const j = await r.json(); $("simStatus").textContent = r.ok ? `starting ${j.started}… (Gazebo and SITL take a few minutes)` : "not started: " + j.error;
+  simPoll();
+};
+$("btnSimStop").onclick = async () => {
+  let r = await fetch("api/sim/stop", { method: "POST" }), j = await r.json();
+  if (!r.ok && j.confirm && confirm(j.error + "\n\nStop the simulator?")) { r = await fetch("api/sim/stop?force=1", { method: "POST" }); j = await r.json(); }
+  $("simStatus").textContent = r.ok ? "stopped " + j.stopped : "not stopped: " + j.error;
+  setTimeout(simPoll, 1500);
+};
+$("btnOrg").onclick = async () => {
+  $("btnOrg").disabled = true; $("fenceOut").value = "waiting for the FCU home position…";
+  try {
+    const r = await fetch(`api/organiser/${encodeURIComponent(spec.name)}`), j = await r.json();
+    if (!r.ok) { $("fenceOut").value = j.error; return; }
+    fcuHome = j.home; renderFencePoints();
+    // Same points, labels and order as the Geofence panel (P1, P2, ...).
+    $("fenceOut").value = fenceLines(); $("zoneOut").value = j.delivery_zone; showHexes(j.banner_colours);
+    $("btnCopyFence").disabled = false;
+  } finally { $("btnOrg").disabled = false; }
+};
+$("btnCopyFence").onclick = () => navigator.clipboard?.writeText($("fenceOut").value);
 $("addObst").onclick = addObstacle;
 $("addDecoy").onclick = () => { pushUndo(); const c = spec.corridor; spec.decoys.push({ x: c.x + 5, y: c.y - 12, yaw_deg: 0 }); sel = { kind: "decoy", key: spec.decoys.length - 1 }; changed(); };
 $("btnNew").onclick = () => { pushUndo(); spec = defaultSpec(); sel = null; changed(); fit(); };
@@ -848,18 +1190,14 @@ async function save() {
   if (!served) { $("btnExport").click(); return true; }
   const r = await fetch("api/worlds/" + encodeURIComponent(spec.name), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(spec, null, 2) });
   const j = await r.json();
-  $("saveMsg").textContent = r.ok ? `saved ${j.path}` : `not saved: ${j.error}`;
-  $("saveMsg").className = r.ok ? "ok" : "e";
-  listWorlds(); return r.ok;
+  $("saveMsg").textContent = r.ok ? `saved ${j.path}` + (j.preset ? ` · GCS preset “${j.preset}”` : "") + (j.preset_error ? ` · GCS preset not saved: ${j.preset_error}` : "") : `not saved: ${j.error}`;
+  $("saveMsg").className = r.ok && !j.preset_error ? "ok" : "e";
+  listWorlds(); if (j.preset) loadCatalogue(); return r.ok;
 }
 $("btnSave").onclick = save;
 $("btnRun").onclick = async () => {
   if (!(await save())) return;
-  const [errs] = validate(spec);
-  if (errs.length) {
-    $("runStatus").textContent = "not started: fix the errors first\n\n" + errs.map(e => "• " + e).join("\n");
-    return;
-  }
+  // The server refuses a world world_spec.py rejects and lists why.
   const q = new URLSearchParams({ gui: $("runGui").checked ? 1 : 0, record: $("runRec").checked ? 1 : 0 });
   const r = await fetch(`api/run/${encodeURIComponent(spec.name)}?${q}`, { method: "POST" });
   const j = await r.json(); $("runStatus").textContent = r.ok ? "starting…" : "not started: " + j.error;
@@ -913,7 +1251,7 @@ function resize() {
 addEventListener("resize", resize);
 
 resize(); rebuild(); fit(); changed(false);
-if (served) { $("runbox").hidden = false; listWorlds(); poll(); }
+if (served) { $("runbox").hidden = false; listWorlds(); poll(); loadCatalogue(); simPoll(); }
 (function loop() { requestAnimationFrame(loop); renderer.render(scene, camera); })();
 </script>
 </body>

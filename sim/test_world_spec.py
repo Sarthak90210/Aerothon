@@ -495,5 +495,216 @@ class UnloadedPayloadFixtureTests(unittest.TestCase):
         self.assertGreater(math.dist((px, py), (-2.0, 2.0)), 1.0)
 
 
+def gcs_dims(**corridor):
+    """The organisers' clarified GCS preset, with corridor fields overridden."""
+    A = W.arena_dimensions()
+    d = json.loads(json.dumps(A.BUILTIN_PRESETS["SAE Aerothon 2026 (clarified)"]))
+    d["corridor"].update(corridor)
+    return d
+
+
+class ArenaDimensionTests(unittest.TestCase):
+    """The world editor builds the world from the GCS's own dimension fields,
+    so the arena flown is the arena the operator applies in the GCS."""
+
+    def test_the_gcs_fields_reach_the_world_and_positions_stay(self):
+        s = custom_spec()
+        d = gcs_dims(length_m=8.0, width_m=3.0, wall_height_m=3.2, nav_height_m=2.4,
+                     spacing_m=5.0)
+        d["qr"].update(target_m=1.2, start_m=0.9)
+        d["red_zone"]["side_m"] = 2.0
+        d["obstacle"]["reach_frac"] = 0.4
+        out = W.apply_dimensions(s, d)
+        for lane in (out["corridor"], out["return_corridor"]):
+            self.assertEqual((lane["length"], lane["width"], lane["wall_height"]), (8.0, 3.0, 3.2))
+        self.assertEqual((out["corridor"]["x"], out["corridor"]["y"], out["corridor"]["yaw_deg"]),
+                         (12.0, -14.0, 25.0))
+        self.assertEqual(out["qr"], {"start_m": 0.9, "target_m": 1.2})
+        self.assertTrue(all(z["w"] == z["h"] == 2.0 for z in out["red_zones"]))
+        self.assertEqual(out["banner"]["board_bottom_m"], d["banner"]["suspended_bottom_m"])
+        for o in out["return_corridor"]["obstacles"]:
+            self.assertAlmostEqual(o["d"], 1.2)
+            self.assertAlmostEqual(abs(o["v"]) + o["d"] / 2, 1.5)   # touching a wall
+        self.assertEqual(out["pads"], W.normalise(s)["pads"])
+        self.assertEqual(out["dimensions"]["corridor"]["spacing_m"], 5.0)
+
+    def test_spacing_and_side_place_the_return_lane(self):
+        s = W.default_spec()               # outbound at (2, 2), yaw 0, 10 m long
+        right = W.apply_dimensions(s, gcs_dims(spacing_m=6.0, return_side="right"))
+        left = W.apply_dimensions(s, gcs_dims(spacing_m=6.0, return_side="left"))
+        self.assertEqual(right["return_corridor"]["y"], -4.0)
+        self.assertEqual(left["return_corridor"]["y"], 8.0)
+        self.assertEqual(right["return_corridor"]["x"], 12.0)
+        # Without a spacing the shipped pose is unchanged.
+        self.assertEqual(W.linked_return_pose(W.normalise(W.default_spec())), (12.0, -2.0, -180.0))
+
+    def test_a_dimension_built_world_is_valid_and_materialises_on_its_side(self):
+        s = W.apply_dimensions(W.default_spec(), gcs_dims(return_side="left", spacing_m=5.0))
+        s["red_zones"] = [{"x": 38.0, "y": 5.0, "yaw_deg": 0.0}]
+        s = W.apply_dimensions(s, s["dimensions"])
+        errs, _ = W.validate(s)
+        self.assertEqual(errs, [])
+        root, _, _ = build(s)
+        self.assertEqual(model_pose(root, "corridor_return")[:2], [12.0, 7.0])
+
+    def test_a_world_edited_away_from_its_dimensions_is_refused(self):
+        s = W.apply_dimensions(W.default_spec(), gcs_dims())
+        s["corridor"]["width"] = 4.0
+        errs, _ = W.validate(s)
+        self.assertTrue(any("outbound corridor width" in e for e in errs), errs)
+        s = W.apply_dimensions(W.default_spec(), gcs_dims())
+        s["return_corridor"]["linked"] = False
+        errs, _ = W.validate(s)
+        self.assertTrue(any("stays linked" in e for e in errs), errs)
+
+    def test_bad_dimensions_are_refused_by_the_gcs_rules(self):
+        with self.assertRaisesRegex(ValueError, "navigation height"):
+            W.apply_dimensions(W.default_spec(), gcs_dims(nav_height_m=3.5))
+
+    def test_an_emptied_return_lane_gets_the_organisers_slalom(self):
+        s = W.default_spec()
+        s["return_corridor"]["obstacles"] = []
+        out = W.apply_dimensions(s, gcs_dims(length_m=5.0))
+        self.assertEqual(len(out["return_corridor"]["obstacles"]), 2)
+
+
+class OrganiserInputTests(unittest.TestCase):
+
+    def test_the_geofence_lines_land_on_the_arena_about_the_fcu_home(self):
+        sys.path.insert(0, str(ROOT / "src/aerothon_mission/mission_bt"))
+        import organiser_inputs as O
+        from mission_bt.geofence import global_to_local
+        s = custom_spec()
+        home = (12.9716, 79.1594)
+        out = O.organiser_inputs(s, *home)
+        hx, hy = W.spawn_point(W.normalise(s))
+        got = [global_to_local(*map(float, line.split(",")), *home)
+               for line in out["geofence"].splitlines()]
+        want = [(x - hx, y - hy) for x, y in W.fence_polygon(W.normalise(s))]
+        self.assertEqual(len(got), len(want))
+        for (gx, gy), (wx, wy) in zip(got, want):
+            self.assertAlmostEqual(gx, wx, delta=0.01)
+            self.assertAlmostEqual(gy, wy, delta=0.01)
+        self.assertEqual(len(out["delivery_zone"].splitlines()), 4)
+        self.assertEqual(set(out["banner_colours"]), {"green", "orange", "red"})
+
+
+class EditorGcsPresetTests(unittest.TestCase):
+    """Saving a dimension-built world saves the same values as a GCS preset."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        import threading
+        from http.server import ThreadingHTTPServer
+        spec = importlib.util.spec_from_file_location(
+            "world_editor_serve_presets", ROOT / "tools/world_editor/serve.py")
+        cls.mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.mod)
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.mod.WORLDS = Path(cls.tmp.name) / "worlds"
+        cls.mod.ROOT = Path(cls.tmp.name)
+        cls.mod.PRESETS = Path(cls.tmp.name) / "aerothon" / "dimension_presets.json"
+        cls.srv = ThreadingHTTPServer(("127.0.0.1", 0), cls.mod.Handler)
+        cls.base = f"http://127.0.0.1:{cls.srv.server_address[1]}"
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+        cls.tmp.cleanup()
+
+    def call(self, method, path, body=None):
+        import urllib.error
+        import urllib.request
+        req = urllib.request.Request(self.base + path, method=method,
+                                     data=json.dumps(body).encode() if body is not None else None,
+                                     headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read())
+
+    def test_the_editor_offers_exactly_the_gcs_fields(self):
+        code, j = self.call("GET", "/api/dimensions")
+        self.assertEqual(code, 200)
+        gcs = json.loads((ROOT / "src/aerothon_gcs/tauri_app/src/arenaSchema.json").read_text())
+        key = lambda f: (f["group"], f["key"], f["label"], f["min"], f["max"])  # noqa: E731
+        self.assertEqual([key(f) for f in j["fields"]], [key(f) for f in gcs["fields"]])
+
+    def test_apply_then_save_writes_the_gcs_preset_beside_the_others(self):
+        self.mod.PRESETS.parent.mkdir(parents=True, exist_ok=True)
+        self.mod.PRESETS.write_text(json.dumps({"Another team preset": gcs_dims()}))
+        code, j = self.call("POST", "/api/apply_dimensions",
+                            {"spec": W.default_spec(), "dimensions": gcs_dims(length_m=12.0)})
+        self.assertEqual(code, 200, j)
+        code, saved = self.call("POST", "/api/worlds/linked_world", j["spec"])
+        self.assertEqual(code, 200, saved)
+        self.assertEqual(saved["preset"], "World linked_world")
+        presets = json.loads(self.mod.PRESETS.read_text())
+        self.assertIn("Another team preset", presets)
+        self.assertEqual(presets["World linked_world"]["corridor"]["length_m"], 12.0)
+        self.assertEqual(presets["World linked_world"], j["spec"]["dimensions"])
+
+    def test_bad_dimensions_are_refused_with_the_field(self):
+        code, j = self.call("POST", "/api/apply_dimensions",
+                            {"spec": W.default_spec(), "dimensions": gcs_dims(width_m=50.0)})
+        self.assertEqual(code, 400)
+        self.assertIn("Corridor width", j["error"])
+
+    def test_the_sim_profile_carries_the_simulators_delivery_calibration(self):
+        # Without one the aircraft refuses to lower the payload (19 Oct run).
+        self.mod.WEB_STATE = Path(self.tmp.name) / "web"
+        self.mod.write_profile(W.apply_dimensions(W.default_spec(), gcs_dims()))
+        profile = json.loads((self.mod.WEB_STATE / "profiles.json").read_text())["world_sim"]
+        name = profile["delivery_calibration"]
+        self.assertTrue(name)
+        installed = json.loads((self.mod.WEB_STATE / "devices" / name).read_text())
+        self.assertEqual(installed["source"], "fcu_motor_output_squared")
+        self.assertEqual(profile["marker_m"], 1.0)
+
+    def test_a_world_without_dimensions_is_not_launched(self):
+        self.call("POST", "/api/worlds/plain_world", W.default_spec())
+        code, _ = self.call("POST", "/api/sim/start/plain_world")
+        self.assertIn(code, (400, 409))
+
+
+class GcsRangeAndColourTests(unittest.TestCase):
+
+    def test_a_corridor_the_gcs_accepts_is_not_refused_for_its_size(self):
+        # The organisers may give a 1.8 m corridor; the GCS takes 1-10 m.
+        d = gcs_dims(width_m=1.8, spacing_m=2.5)
+        d["banner"]["width_m"] = 1.8
+        d["obstacle"]["reach_frac"] = 0.3
+        errs, _ = W.validate(W.apply_dimensions(W.default_spec(), d))
+        self.assertFalse([e for e in errs if "width" in e], errs)
+        self.assertEqual(W.gcs_range("corridor", "width_m"), (1.0, 10.0))
+
+    def test_half_width_obstacles_in_a_narrow_corridor_are_still_refused(self):
+        d = gcs_dims(width_m=1.8, spacing_m=2.5)
+        d["banner"]["width_m"] = 1.8
+        errs, _ = W.validate(W.apply_dimensions(W.default_spec(), d))
+        self.assertTrue(any("blocks the return corridor" in e for e in errs), errs)
+
+    def test_the_supplied_colours_are_printed(self):
+        s = W.apply_dimensions(W.default_spec(), gcs_dims())
+        s["red_zones"] = [{"x": 38.0, "y": 5.0, "yaw_deg": 0.0}]
+        s = W.apply_dimensions(s, s["dimensions"])
+        s["banner"]["colours"] = {"green": "#07A03D", "orange": "#123456", "red": "#B00020"}
+        root, _, _ = build(s)
+        names = {m.get("name") for m in root.iter("model")}
+        self.assertTrue({"outbound_exit_orange_banner", "return_exit_orange_banner"} <= names)
+        orange = [m for m in root.iter("model") if m.get("name") == "outbound_exit_orange_banner"][0]
+        self.assertIn("0.071 0.204 0.337", ET.tostring(orange, encoding="unicode"))
+        red = [m for m in root.iter("model") if m.get("name") == "restricted_red_zone_1"][0]
+        red_xml = ET.tostring(red, encoding="unicode")
+        self.assertIn("0.690 0.000 0.126", red_xml)
+        # No wording on the organisers' zones; the GCS border is printed.
+        self.assertNotIn("_text_", red_xml)
+        self.assertIn("red_1_border_n", red_xml)
+        self.assertFalse(s["banner"]["lettered"])
+
+
 if __name__ == "__main__":
     unittest.main()

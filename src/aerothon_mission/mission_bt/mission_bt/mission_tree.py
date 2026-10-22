@@ -373,6 +373,25 @@ def nearest_low(mav, x, y):
     return min((math.hypot(x - a, y - b), (a, b)) for a, b in spots)
 
 
+def ramp_yaw(cmd, target, rate_rad_s, dt):
+    """The heading to command now: `cmd` stepped toward `target` by at most
+    `rate_rad_s * dt`, the short way round.
+
+    BANNER SEARCH YAW SPEED (the operator, 22 Oct). Sent straight to the
+    autopilot, each 30 deg sweep step was a snap -- 27 deg in under a second,
+    a 6 deg overshoot and a bounce back (shipped_20kmh_r6, p90 44 deg/s) -- so
+    a board crossing the frame was blurred and seen on a frame or two. Ramped,
+    the camera pans steadily and the board stays in frame across the turn."""
+    if not math.isfinite(float(rate_rad_s)):
+        return target                    # unlimited: the old instant command
+    d = math.atan2(math.sin(target - cmd), math.cos(target - cmd))
+    step = max(0.0, float(rate_rad_s)) * max(0.0, float(dt))
+    if abs(d) <= step:
+        return target
+    return math.atan2(math.sin(cmd + math.copysign(step, d)),
+                      math.cos(cmd + math.copysign(step, d)))
+
+
 class AlignToBanner(py_trees.behaviour.Behaviour):
     """Stop, stare, decide -- then face the banner. That heading IS the corridor.
 
@@ -429,6 +448,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                  stable_frames=5, sweep_limit_rad=2 * math.pi,
                  step_rad=math.radians(30.0), dwell_s=5.0,
                  settle_tol_rad=math.radians(6.0), settle_timeout_s=8.0,
+                 yaw_rate_rad_s=math.inf,
                  min_hit_ratio=0.6, min_samples=4, clock=None,
                  hfov_rad=1.0472, align_gain=0.8, align_dwell_s=1.0,
                  max_corrections=8, min_fallback_hits=4,
@@ -468,6 +488,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self.focal_px = (0.5 * float(image_width_px)
                          / math.tan(0.5 * float(hfov_rad)))
         self.image_height_px = float(image_height_px)
+        self._frame_args = (float(hfov_rad), float(image_width_px),
+                            float(image_height_px))
         self.banner_area_m2 = float(banner_w_m) * float(banner_h_m)
         self.banner_h_m = float(banner_h_m)
         # The hung banner's lower edge, as entered at the GCS (None: unknown),
@@ -492,6 +514,9 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self.dwell_s = float(dwell_s)
         self.settle_tol = float(settle_tol_rad)
         self.settle_timeout_s = float(settle_timeout_s)
+        self.yaw_rate = float(yaw_rate_rad_s)   # sweep turns pan at this (ramp_yaw)
+        self._ramp_t = None
+        self._ramp_done_t = None
         # A dwell is a find only if most of it agreed. This one number is what
         # makes a full turn safe to sweep; see the class docstring.
         self.min_hit_ratio = float(min_hit_ratio)
@@ -701,6 +726,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self._turn_clip_first_stamp = None
         self._return_level_tried = False
         self._return_level_pending = None
+        self._return_retry_pose = 'FORWARD'
+        self._last_clip_down = False
 
     def _enter_square_state(self):
         self._sq_phase = self.MEASURE
@@ -867,7 +894,15 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 return laid
         if not area_px or area_px <= 0.0:
             return float("inf")
-        return self.focal_px * math.sqrt(self.banner_area_m2 / float(area_px))
+        focal, _ = self._frame()
+        return focal * math.sqrt(self.banner_area_m2 / float(area_px))
+
+    def _frame(self):
+        """(focal px, height px) of the detection frame; see banner_frame."""
+        args = getattr(self, "_frame_args", None)
+        if args is None:
+            return self.focal_px, self.image_height_px
+        return banner_frame(self.mav, *args)
 
     def ground_range(self):
         """Horizontal range to a banner LAID ON THE GROUND, or None.
@@ -890,8 +925,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
             alt = float(self.mav.alt())
         except (KeyError, TypeError, ValueError, AttributeError):
             return None
-        depression = -pitch + math.atan(
-            below * 0.5 * self.image_height_px / self.focal_px)
+        focal, height = self._frame()
+        depression = -pitch + math.atan(below * 0.5 * height / focal)
         if not (math.isfinite(depression) and math.isfinite(alt)) \
                 or depression <= math.radians(3.0) or alt <= 0.3:
             return None
@@ -1548,7 +1583,22 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         """Wait for the AIRFRAME to reach the heading, not for the command to
         have been sent. Counting commanded yaw as achieved yaw is what once
         reported 180 degrees swept while 23 degrees had been turned."""
-        self._hold(self._target_yaw)
+        # Pan to the step's heading at yaw_rate, from the heading last
+        # commanded, rather than snapping to it (ramp_yaw).
+        now = self.clock()
+        last = getattr(self, "_ramp_t", None)
+        dt = 0.0 if last is None else min(0.5, max(0.0, now - last))
+        self._ramp_t = now
+        if getattr(self, "_ramp_target", None) != self._target_yaw:
+            self._ramp_target = self._target_yaw
+            self._ramp_done_t = None
+        cmd = getattr(self, "_commanded_yaw", None)
+        cmd = self.mav.yaw() if cmd is None else cmd
+        cmd = ramp_yaw(cmd, self._target_yaw, getattr(self, "yaw_rate", math.inf), dt)
+        ramped = abs(self._wrap(cmd - self._target_yaw)) < 1e-9
+        if ramped and getattr(self, "_ramp_done_t", None) is None:
+            self._ramp_done_t = now
+        self._hold(self._target_yaw if ramped else cmd)
         if self._raise_to_visible_return_board():
             if self._sq_phase is self.MOVING:
                 return self._restart_sweep_at(
@@ -1560,15 +1610,18 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         if framing is not None:
             return framing
         err = abs(self._wrap(self.mav.yaw() - self._target_yaw))
-        if err <= self.settle_tol:
+        if err <= self.settle_tol and ramped:
             self._hits = 0
             self._samples = 0
             self._clipped = 0
             self._best_bearing = None
             self._best_area = 0.0
+            self._ramp_done_t = None
             self._enter(self.DWELL)
             return py_trees.common.Status.RUNNING
-        if self._elapsed() > self.settle_timeout_s:
+        # The settle budget runs from when the pan reached the heading: a
+        # 180 deg re-point at 15 deg/s is 12 s of commanded turning.
+        if ramped and now - self._ramp_done_t > self.settle_timeout_s:
             reason = (f"AlignToBanner: the aircraft would not hold heading "
                       f"{math.degrees(self._wrap(self._target_yaw)):.0f} deg "
                       f"({math.degrees(err):.0f} deg off after "
@@ -1588,7 +1641,7 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
         self._hold(self._target_yaw)
         if self._return_level_pending is not None:
             settled = getattr(self.mav, 'camera_settled', None)
-            if callable(settled) and settled('FORWARD'):
+            if callable(settled) and settled(getattr(self, '_return_retry_pose', 'FORWARD')):
                 self._return_level_pending = None
                 self._hits = self._samples = self._clipped = 0
                 self._enter(self.DWELL)
@@ -1621,6 +1674,8 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 iw, ih = (observation.get('image_wh') or [1280, 720])[:2]
                 clipped = bool(box) and (box[0] <= 1 or box[1] <= 1
                     or box[0]+box[2] >= iw-1 or box[1]+box[3] >= ih-1)
+                if clipped:
+                    self._last_clip_down = box[1] > 1 and box[1] + box[3] >= ih - 1
                 area = float(observation.get('board_area_px') or 0.0)
             if not seen:
                 carried = self._carried_bearing()
@@ -1651,9 +1706,15 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 and camera.get('settled') is True and camera.get('stale') is False):
             self._return_level_tried = True
             self._return_level_pending = self.clock()
-            self.mav.set_camera_pose('FORWARD')
+            # Cut off at the bottom: the board is BELOW the -20 deg frame, so
+            # look down (BANNER_DOWN, -45 deg), not level -- level put it further
+            # out of frame and the return search swept empty (r5).
+            down = getattr(self, '_last_clip_down', False)
+            self._return_retry_pose = 'BANNER_DOWN' if down else 'FORWARD'
+            self.mav.set_camera_pose(self._return_retry_pose)
             self.mav.log('AlignToBanner: no complete return identity on the '
-                         'informed heading; trying a settled level camera '
+                         'informed heading; trying a settled '
+                         f"{'45 deg down' if down else 'level'} camera "
                          'at the same pose before sweeping or relocating')
             return py_trees.common.Status.RUNNING
 
@@ -3254,6 +3315,28 @@ def _blocked(stage, router):
     return py_trees.common.Status.FAILURE
 
 
+def banner_frame(mav, hfov_rad, width_px, height_px):
+    """(focal px, image height px) of the frame the banner was DETECTED in.
+
+    The configured image size is the aircraft camera's; the laptop
+    simulation's camera delivers 960 x 540. Ranging that frame with the
+    1280 px focal read every board 1.33 x too far, and from the return
+    stand-off the return gate at 6.4 m then ranged ~10 m -- far enough for
+    FindReturnBanner._toward to take it for the outbound banner 17 m beyond
+    it on nearly the same line of sight, and refuse it on every frame
+    (logs/return_lap_20261020/manual_test_winchfix). The detector reports
+    the frame's size with every detection; use it.
+    """
+    wh = getattr(mav, "banner_image_wh", None)
+    try:
+        w, h = float(wh[0]), float(wh[1])
+    except (TypeError, ValueError, IndexError):
+        w, h = float(width_px), float(height_px)
+    if not (math.isfinite(w) and math.isfinite(h) and w > 0 and h > 0):
+        w, h = float(width_px), float(height_px)
+    return 0.5 * w / math.tan(0.5 * float(hfov_rad)), h
+
+
 def safe_search_speed(look_ahead_m, frame_hz, confirm_frames=4,
                       accel_mps2=2.0, margin_m=1.2, react_s=0.3,
                       ceiling_mps=2.5):
@@ -3439,7 +3522,7 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                  hfov_rad=1.0472, clock=None, max_steps=12,
                  crossing_margin_m=0.6, obstacle_margin_m=0.4,
                  board_memory_s=30.0, recentre_m=0.25, max_recentres=4,
-                 probe_up_m=0.9, banner_bottom_m=None):
+                 probe_up_m=0.9, banner_bottom_m=None, crossing_strip_m=1.5):
         # The margins must fit the gap between the posts and the first
         # obstacle behind them. On the shipped arena the return lane's first
         # slalom block stands 1.2 m past the return gate; 1.0 + 0.75 m could
@@ -3460,6 +3543,10 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self.max_steps = int(max_steps)
         self.crossing_margin_m = float(crossing_margin_m)
         self.obstacle_margin_m = float(obstacle_margin_m)
+        # Width of the strip down the flight line that must be clear through
+        # the gate (scan_geometry.gate_opening corridor_m): twice the
+        # centre-to-surface clearance. 1.5 m unless the venue sets it.
+        self.crossing_strip_m = float(crossing_strip_m)
         self.board_memory_s = float(board_memory_s)
         self.recentre_m = float(recentre_m)
         self.max_recentres = int(max_recentres)
@@ -3571,9 +3658,11 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                 f"edge ({self.mav.alt():.1f} m now)")
             return py_trees.common.Status.RUNNING
 
+        strip = ({} if self.crossing_strip_m == 1.5
+                 else {"corridor_m": self.crossing_strip_m})
         opening = self.mav.opening_ahead(self._sector(),
                                          self.sector_half_width,
-                                         need_clear_m=0.0)
+                                         need_clear_m=0.0, **strip)
         here = self.mav.alt()
         centre = opening.get("centre_m")
         if (centre is not None and abs(centre) > self.recentre_m
@@ -4172,7 +4261,7 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
                  crab=False, search_speed_mps=None, fix_wait_ticks=10,
                  frame_hz=2.0, turn_tol_rad=math.radians(30.0),
                  lead_m=3.0, unread_hold_s=0.0, overdue=None,
-                 arena_overlap=None):
+                 arena_overlap=None, brake_mps2=0.5, speed_override_mps=0.0):
         """`zone` may be an (x0, x1, y0, y1) tuple or a CALLABLE returning one.
 
         `crab` flies the lanes yawed 90 degrees to their direction, so the
@@ -4215,6 +4304,16 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
                                         * float(image_height_px)
                                         / float(image_width_px))
         self.search_speed_mps = search_speed_mps
+        # The braking the paced sweep may count on after red ground is
+        # confirmed (detector_timing.search_speed). 0.5 m/s^2 unless the
+        # airframe's stop has been MEASURED (search_brake_mps2).
+        self.brake_mps2 = float(brake_mps2)
+        # SIMULATION ONLY (search_speed_override_mps): a fixed sweep speed in
+        # place of both caps below. It DISABLES the stop-short-of-red-ground
+        # guarantee -- at 5.6 m/s the airframe needs ~18 m to stop and sees
+        # red ground ~2.5 m ahead. 0 keeps the derived pace.
+        self.speed_override_mps = float(speed_override_mps or 0.0)
+        self._override_logged = False
         # Ground seen AHEAD at the sweep altitude: the image's vertical half-
         # angle nose-first, its horizontal half-angle crabbed.
         ahead = hfov_rad / 2.0
@@ -4498,6 +4597,8 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
                     else ("camera", self.frame_hz0))
         look = self.alt * math.tan(self._ahead_rad)
         v = safe_search_speed(look, hz, ceiling_mps=self.search_speed_mps)
+        if getattr(self, "speed_override_mps", 0.0) > 0.0:
+            v = self._override_speed()
         if self._speed is not None and abs(v - self._speed) < 0.15:
             return
         fn = getattr(self.mav, "set_speed", None)
@@ -4510,18 +4611,52 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
                 f"{hz:.1f} Hz ({name} detector"
                 f"{'' if measured else ', assumed'})")
 
+    def _override_speed(self):
+        """The simulation-only fixed sweep speed; logged once, loudly."""
+        if not getattr(self, "_override_logged", False):
+            self._override_logged = True
+            self.mav.log(f"search speed OVERRIDE {self.speed_override_mps:.2f} m/s "
+                         f"(search_speed_override_mps, simulation venue): the "
+                         f"stop-short-of-red-ground guarantee is DISABLED", warn=True)
+        return self.speed_override_mps
+
     def _qualified_pace(self,now):
         if now is None:
             return False
         timing = {name:value.qualified(now) for name,value in self.mav.detector_timing.items()}
         fresh = all(timing.get(name) is not None for name in ('qr','red'))
         speed=0.0
+        if self._continuous():
+            # CONTINUOUS SWEEP (the user's 20 km/h order, 21 Oct): the fixed
+            # speed is commanded and the sweep never holds for detector
+            # timing. Only a QR sighting stops it (DecodeHover, the match fix).
+            speed=self._override_speed()
+            if hasattr(self.mav,'pub_search_timing'):
+                self.mav.pub_search_timing.publish(String(data=json.dumps(dict(stamp=now,detectors=timing,
+                    qualified=fresh,speed_cap_mps=speed,clearance_m=self.clearance_m))))
+            future=getattr(self,'_pace_future',None)
+            if future is not None and future.done():
+                try:
+                    accepted=bool(future.result().success)
+                except Exception:
+                    accepted=False
+                self._pace_future=None
+                if not accepted:
+                    self._speed=None
+            if self._speed is None and getattr(self,'_pace_future',None) is None:
+                self._pace_future=self.mav.set_speed(speed)
+                if self._pace_future is not None:
+                    self._speed=speed
+            return True
         if fresh:
             hz=min(timing[name]['hz'] for name in ('qr','red'))
             latency=max(timing[name]['latency_s'] for name in ('qr','red'))
             look=self.alt*math.tan(self._ahead_rad)
-            speed=qualified_search_speed(look,self.clearance_m,hz,latency,self.search_speed_mps)
+            speed=qualified_search_speed(look,self.clearance_m,hz,latency,self.search_speed_mps,
+                                         decel=getattr(self,"brake_mps2",.5))
             speed=math.floor(speed/.05)*.05
+            if getattr(self,"speed_override_mps",0.0)>0.0:
+                speed=self._override_speed()
         if hasattr(self.mav,'pub_search_timing'):
             self.mav.pub_search_timing.publish(String(data=json.dumps(dict(stamp=now,detectors=timing,
                 qualified=fresh,speed_cap_mps=speed,clearance_m=self.clearance_m))))
@@ -4552,11 +4687,20 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
             return False
         return True
 
+    def _continuous(self):
+        """The simulation-only fixed speed flies the sweep without stopping
+        except for a QR: no detector-timing holds, no stop before a red-ground
+        re-plan, no turn in place at a lane start."""
+        return getattr(self, "speed_override_mps", 0.0) > 0.0
+
     def _turning(self, yaw):
         """Turn in place to face a leg before flying it (nose-first only).
 
         Moving while turning is flying with the camera looking sideways, at
         the ground the look-ahead is there to see."""
+        if self._continuous():
+            self._turn_hold = None
+            return False
         err = abs(math.atan2(math.sin(yaw - self.mav.yaw()),
                              math.cos(yaw - self.mav.yaw())))
         if err <= self.turn_tol:
@@ -4798,7 +4942,11 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
     def update(self):
         if not hasattr(self,'_search_braking_gate'):
             self._search_braking_gate = SearchBrakingGate()
-        if self._search_braking_gate.tick(self):
+        # A continuous sweep re-plans round new red ground on the move (below,
+        # _exclusions_changed) instead of braking to a stop first: at 5.56 m/s
+        # the stop is ~19 m against ~2.5 m of look-ahead, so it cannot stop
+        # short of red ground either way.
+        if not self._continuous() and self._search_braking_gate.tick(self):
             return py_trees.common.Status.RUNNING
         if self.plan is None:
             reason = "LawnmowerSearch: no observed zone to sweep"
@@ -5229,8 +5377,11 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                  orbit_min_radius_m=5.0, fence_margin_m=2.0,
                  orbit_alt_m=3.0, zone_side_m=3.0, transit_alt=10.0,
                  look_pose="FORWARD", camera_timeout_s=6.0,
-                 corridor_length_m=None):
+                 corridor_length_m=None, yaw_rate_rad_s=math.inf):
         super().__init__("FindReturnBanner")
+        # Sweep turns pan at this rate (ramp_yaw), the board looked for on
+        # the way round, instead of snapping 30 deg and bouncing back.
+        self.yaw_rate = float(yaw_rate_rad_s)
         self.mav = mav
         self.alt = float(alt)
         self.transit_alt = float(transit_alt)
@@ -5239,6 +5390,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self.clock = clock or time.monotonic
         self.hfov = float(hfov_rad)
         self.focal_px = 0.5 * float(image_width_px) / math.tan(self.hfov / 2.0)
+        self._image_w = float(image_width_px)
         self.banner_area_m2 = float(banner_w_m) * float(banner_h_m)
         self.banner_h_m = float(banner_h_m)
         self.near_range_m = float(near_range_m)
@@ -5293,8 +5445,16 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         # increasingly distant left/right headings made one empty scan turn
         # 1260 degrees, and repeated the travel at the second camera tilt.
         # Adjacent views preserve coverage and dwell without those crossings.
+        # ANTICLOCKWISE, THEN CLOCKWISE (the operator's search, 20 Oct): left
+        # from the informed heading to the half turn, then back right through
+        # it to the other side. One step apart throughout, so the autopilot's
+        # shortest-way turn is the commanded direction; a jump from +180 to
+        # -30 deg would have kept turning left. One reversal, not the old
+        # left/right alternation that turned 1260 deg.
         n = max(1, int(round(2 * math.pi / self.step)))
-        self.headings = [self._wrap(now + k * self.step) for k in range(n)]
+        half = n // 2
+        offsets = list(range(half + 1)) + list(range(half - 1, half - n, -1))
+        self.headings = [self._wrap(now + k * self.step) for k in offsets]
         self.hi = 0
         self.vantages = None
         self.vi = -1
@@ -5312,8 +5472,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self._leg_speed = self._entry_speed
         self._cur_alt = self.alt
         self._look = self._first_look()  # the tilt this vantage is swept at
-        self._second_look = ('BANNER' if self._look in ('FORWARD', 'GROUND')
-                             else 'FORWARD')
+        self._second_look = self._second_tilt(self._look)
         self._second_look_done = False
         self._high = False           # this leg flown at transit_alt, nadir
         self._then = "sweep"         # what the lowering at its end leads to
@@ -5340,6 +5499,9 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
 
     def _begin_heading(self):
         self._turning = True
+        self._yaw_cmd = None         # the ramp starts from the airframe's heading
+        self._yaw_cmd_t = None
+        self._ramp_done_t = None
         self._since = None           # clock when the turn / dwell began
         self._hits = 0
         self._last_banner_sample = None
@@ -5494,6 +5656,16 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         and the flight ran past its 900 s budget."""
         return "GROUND" if self._ground() else self.look_pose
 
+    @staticmethod
+    def _second_tilt(look):
+        """The tilt a vantage's second sweep uses. A hung board swept at
+        BANNER (-20 deg) is next looked for DOWN at BANNER_DOWN (-45 deg), not
+        level: from the 5 m look height a board 3-4 m away sits 31-40 deg
+        below the horizon, under the BANNER frame and far under a level one
+        (shipped_20kmh_r5: every return sighting clipped at the bottom, then
+        the level retry and both yaw sweeps came back empty)."""
+        return {"BANNER": "BANNER_DOWN", "BANNER_DOWN": "BANNER"}.get(look, "BANNER")
+
     def _ground_range(self):
         """Horizontal range to an identified sheet LAID ON THE GROUND: where
         the ray to the sheet's centre meets the ground (AlignToBanner's
@@ -5507,7 +5679,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             alt = float(self.mav.alt())
         except (KeyError, TypeError, ValueError, AttributeError):
             return None
-        depression = -pitch + math.atan(below * 0.5 * 720.0 / self.focal_px)
+        focal, height = self._frame()
+        depression = -pitch + math.atan(below * 0.5 * height / focal)
         if not (math.isfinite(depression) and math.isfinite(alt)) \
                 or depression <= math.radians(3.0) or alt <= 0.3:
             return None
@@ -5578,7 +5751,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         # A previous vantage may have exhausted its down-tilted retry.
         # Each new orbit view starts level with its own second look.
         self._look = self._first_look()
-        self._second_look = 'BANNER'
+        self._second_look = self._second_tilt(self._look)
         self._second_look_done = False
         self._camera(self._look)
         self.target = (v["at"][0], v["at"][1], v["face"])
@@ -5586,8 +5759,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         self._guard_leg = True
         self._high = False
         self._set_leg_speed(self.guard_speed_mps)
-        self.headings = [v["face"], self._wrap(v["face"] - self.step),
-                         self._wrap(v["face"] + self.step)]
+        self.headings = [v["face"], self._wrap(v["face"] + self.step),
+                         self._wrap(v["face"] - self.step)]
         self.hi = 0
         self.phase = "transit"
         self.router.reset()
@@ -5608,9 +5781,11 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         vx, vy, out = self.vantages[self.vi]
         self.target = (vx, vy, out)
         self._look = self._first_look()
+        self._second_look = self._second_tilt(self._look)
         self._second_look_done = False
         # Outward half only: the return entrance is at or beyond the edge.
-        fan = [0, 1, -1, 2, -2, 3, -3]
+        # Anticlockwise across it, then clockwise.
+        fan = [0, 1, 2, 3, -1, -2, -3]
         self.headings = [self._wrap(out + k * self.step) for k in fan]
         self.hi = 0
         self._go_high("sweep")
@@ -5644,7 +5819,8 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             # and subsequent vantages can recover the complete board.
             return None
         area = float(getattr(self.mav, "banner_board_area", 0.0) or 0.0)
-        rng = (self.focal_px * math.sqrt(self.banner_area_m2 / area)
+        focal, _ = self._frame()
+        rng = (focal * math.sqrt(self.banner_area_m2 / area)
                if area > 0 else self.standoff_m)
         if self._ground() and self._look == "GROUND":
             laid = self._ground_range()
@@ -5668,6 +5844,13 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
             return None
         return bx, by, th, rng
 
+    def _frame(self):
+        """(focal px, height px) of the detection frame; see banner_frame."""
+        w = getattr(self, "_image_w", None)
+        if w is None:
+            return self.focal_px, 720.0
+        return banner_frame(self.mav, self.hfov, w, w * 9.0 / 16.0)
+
     def _toward(self, ob, x, y, th, rng):
         """Is the outbound banner on this line of sight, at a range the
         sighting could be? The BEARING is what the camera knows; the range
@@ -5679,8 +5862,15 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
         d = math.dist((x, y), ob)
         off = abs(self._wrap(math.atan2(ob[1] - y, ob[0] - x) - th))
         across = d * math.sin(min(off, math.pi / 2))
+        # Area ranging only OVERestimates: an oblique, clipped or partly
+        # hidden board loses pixels and reads farther, never nearer (the
+        # outbound banner 13 m off read ~20 m). So a sighting ranged well
+        # short of the outbound banner is a nearer board, not it. With 2x,
+        # world 'shipped' threw away 374 identified frames of the RETURN
+        # board 4-5 m away because the outbound banner stood 10-13 m behind
+        # it on nearly the same line (shipped_20kmh_r7).
         return (off < math.pi / 2 and across < self.exclude_radius_m
-                and 0.5 * rng <= d <= 2.0 * rng)
+                and 0.5 * rng <= d <= 1.25 * rng)
 
     # ---- tick ---------------------------------------------------------------
     def update(self):
@@ -5743,6 +5933,9 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                         self._look = 'FORWARD'
                     elif box and box[1] + box[3] >= height - 1 and (self._look == 'FORWARD') and (self._cur_alt > self.orbit_alt_m + 0.3):
                         self._look = 'BANNER'
+                    elif box and box[1] > 1 and box[1] + box[3] >= height - 1 and self._look == 'BANNER':
+                        # Cut off at the bottom at -20 deg: look further down.
+                        self._look = 'BANNER_DOWN'
                     elif (box and box[1] <= 1 and box[1] + box[3] < height * 0.48
                           and self._look == 'FORWARD' and self._clip_climbs < 3
                           and 1 < box[0] and box[0] + box[2] < (observation.get('image_wh') or [1280, 720])[0] - 1):
@@ -5843,16 +6036,29 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                     return self._give_up()
                 return py_trees.common.Status.RUNNING
             h = self.headings[self.hi]
-            self.mav.goto(self.here[0], self.here[1], self._cur_alt, h)
             now = self.clock()
+            if getattr(self, '_yaw_cmd', None) is None:
+                self._yaw_cmd = self.mav.yaw()
+            last = getattr(self, '_yaw_cmd_t', None)
+            self._yaw_cmd_t = now
+            self._yaw_cmd = ramp_yaw(self._yaw_cmd, h, getattr(self, 'yaw_rate', math.inf),
+                                     0.0 if last is None else min(0.5, max(0.0, now - last)))
+            self.mav.goto(self.here[0], self.here[1], self._cur_alt, self._yaw_cmd)
             if self._since is None:
                 self._since = now
+            panning = False
             if self._turning:
-                # Dwell only once pointing where asked (or the turn stalled).
+                # Dwell only once pointing where asked (or the turn stalled),
+                # timed from when the pan reached the heading. Look for the
+                # board on the way round.
+                ramped = abs(self._wrap(self._yaw_cmd - h)) < 1e-9
+                if ramped and getattr(self, '_ramp_done_t', None) is None:
+                    self._ramp_done_t = now
                 err = abs(self._wrap(self.mav.yaw() - h))
-                if err <= self.yaw_tol or now - self._since > self.turn_timeout_s:
+                if ramped and (err <= self.yaw_tol or now - self._ramp_done_t > self.turn_timeout_s):
                     self._turning, self._since = False, now
-                return py_trees.common.Status.RUNNING
+                    return py_trees.common.Status.RUNNING
+                panning = True
             s = self._sighting()
             observe = getattr(self.mav, 'banner_observation', None)
             if callable(observe):
@@ -5878,7 +6084,7 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                 if f is not None and better_green(f, self._green):
                     self._green = f
                 self._remember_stable_green(f, observation if callable(observe) else None, now)
-            if now - self._since >= self.dwell_s:
+            if not panning and now - self._since >= self.dwell_s:
                 self.hi += 1
                 self._begin_heading()
             return py_trees.common.Status.RUNNING
@@ -6798,7 +7004,7 @@ class BannerPlacement(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.SUCCESS
 
 
-def align_to_every_banner(mav, clock, p, label, **extra):
+def align_to_every_banner(mav, clock, p, label, hung_pose="BANNER", **extra):
     """Align to each banner at this gate, one view at a time.
 
     WHY TWO PASSES
@@ -6836,13 +7042,22 @@ def align_to_every_banner(mav, clock, p, label, **extra):
             min_hit_ratio=p.get('banner_min_hit_ratio', 0.6),
             hfov_rad=p.get('camera_hfov', 1.0472),
             square_tol_rad=p.get('square_tol_rad', math.radians(5.0)),
+            # Banner sweeps pan at this rate instead of snapping (ramp_yaw).
+            yaw_rate_rad_s=math.radians(p.get('banner_yaw_rate_deg_s', 15.0)),
             lidar_range_m=p.get('lidar_range_m', 12.0),
             min_standoff_m=p.get('min_standoff_m', 3.3),
             banner_w_m=p.get('banner_w_m', 3.7),
             banner_h_m=p.get('banner_h_m', 1.15),
             banner_bottom_m=p.get('banner_bottom_m'),
             wall_top_m=p.get('corridor_wall_m'),
-            **{**extra, **view})
+            **{**extra, **(view or hung_view)})
+
+    # The hung board is searched for at `hung_pose`: BANNER (-20 deg) from the
+    # 5 m identification height, FORWARD (level) from corridor height, where
+    # the board is straight ahead -- at -20 deg there it was cut off at the
+    # top edge, area-ranged ~10 m instead of 4.5 m and refused as "beyond the
+    # 9.6 m a gate in front of the aircraft can be" (shipped_20kmh_r8b).
+    hung_view = dict(search_camera_pose=hung_pose)
 
     # A laid sheet is only visible looking down: the ground pass searches,
     # and recovers, in GROUND rather than levelling the camera at a board.
@@ -6861,27 +7076,27 @@ def align_to_every_banner(mav, clock, p, label, **extra):
     ])
     hung_first = seq("HungBannerPass", [
         BannerPlacement(f"{label}HungViewWorthTrying", mav),
-        SetCameraPose(f"{label}CameraBannerSearch", mav, "BANNER"),
+        SetCameraPose(f"{label}CameraBannerSearch", mav, hung_pose),
         UntilIdentified(f"{label}HungBannerBudget", leaf(), mav, clock=clock,
                         budget_s=p.get('banner_view_budget_s', 60.0)),
         py_trees.decorators.FailureIsSuccess(
             name=f"{label}GroundBannerOptional", child=ground_glance),
         # Leave the camera where the hung-banner view expects it, so the
         # stages after this one are not looking at the ground.
-        SetCameraPose(f"{label}CameraBannerAgain", mav, "BANNER"),
+        SetCameraPose(f"{label}CameraBannerAgain", mav, hung_pose),
         BannerPlacement(f"{label}NoteHungBanner", mav, note="hung"),
     ])
     ground_only = seq("GroundOnlyPass", [
         SetCameraPose(f"{label}CameraGroundOnly", mav, "GROUND"),
         leaf(**ground_view),
-        SetCameraPose(f"{label}CameraBannerRestore", mav, "BANNER"),
+        SetCameraPose(f"{label}CameraBannerRestore", mav, hung_pose),
         BannerPlacement(f"{label}NoteGroundBanner", mav, note="ground"),
     ])
     # Last resort: the hung view again, with no budget. Reached only when the
     # hung view identified nothing in its budget AND the ground view failed
     # -- a far-off start, say -- so the old full-recovery search still runs.
     hung_full = seq("HungBannerFullPass", [
-        SetCameraPose(f"{label}CameraBannerRetry", mav, "BANNER"),
+        SetCameraPose(f"{label}CameraBannerRetry", mav, hung_pose),
         leaf(),
         BannerPlacement(f"{label}NoteHungBannerLate", mav, note="hung"),
     ])
@@ -7003,7 +7218,9 @@ def build_root(mav, node, p):
                              # No outward expansion inside a supplied boundary.
                              search_budget_m=0.0,
                              overdue=lambda: search_overdue(mav, clock, p),
-                             arena_overlap=p.get('arena_lane_overlap', 0.20))
+                             arena_overlap=p.get('arena_lane_overlap', 0.20),
+                             brake_mps2=p.get('search_brake_mps2', 0.5),
+                             speed_override_mps=p.get('search_speed_override_mps', 0.0))
     gate_advance_m = p.get('gate_advance_m', 10.0)
     # THE GATE-HEIGHT WORK STAYS UNDER A HUNG BANNER. The search, orbits and
     # relocations at a gate fly at this height, where the lidar sees the
@@ -7030,9 +7247,11 @@ def build_root(mav, node, p):
     # corridor refused a crossing measured at 5.6 m (clarified arena).
     crossing_cap_m = gate_advance_m + 0.5 * p.get('lidar_range_m', 12.0)
     outbound_duck = DuckUnderBoard(mav, need_clear_m=crossing_cap_m, clock=clock,
-                                   banner_bottom_m=p.get('banner_bottom_m'))
+                                   banner_bottom_m=p.get('banner_bottom_m'),
+                                   crossing_strip_m=p.get('crossing_strip_m', 1.5))
     return_duck = DuckUnderBoard(mav, need_clear_m=crossing_cap_m, clock=clock,
-                                 banner_bottom_m=p.get('banner_bottom_m'))
+                                 banner_bottom_m=p.get('banner_bottom_m'),
+                                 crossing_strip_m=p.get('crossing_strip_m', 1.5))
     landing = PrecisionDescent(
         mav, start_alt=p['takeoff_alt'],
         commit_alt=p.get('land_commit_alt', 1.5),
@@ -7179,11 +7398,14 @@ def build_root(mav, node, p):
             previous_speed=lambda: getattr(search, 'navigation_speed_before_search', None),
             navigation_speed_mps=p.get('navigation_speed_mps', 5.),
             transit_alt=p['search_alt'], clock=clock),
+        # Stand off 5 m from the mouth (AlignToBanner's 3.3-6.0 m band): the
+        # look is now level from corridor height, where the pitch-derived
+        # stand-off would collapse to ~1.4 m.
         ReturnToCorridorMouth(mav, alt=p['search_alt'],
-                              ident_alt=p['takeoff_alt'],
+                              ident_alt=p['corridor_alt'], standoff_m=5.0,
                               clearance_m=p.get('redzone_clearance', 1.5),
                               lane_offset_m=p.get('return_lane_offset_m', -4.0)),
-        SetCameraPose("CameraBannerReturn", mav, "BANNER"),
+        SetCameraPose("CameraBannerReturn", mav, "FORWARD"),
         # RULEBOOK, "Corridor Entry Detection Return Lap": the banner must be
         # detected and the aircraft aligned again for the return lap. This is
         # a separately scored task; the return leg previously just flew back
@@ -7206,13 +7428,20 @@ def build_root(mav, node, p):
         # so the text rescue cannot help either: it needs letter blobs to read
         # and there is one. The outbound leg identifies the same banner from
         # 5 m without trouble.
-        ClimbInPlace("DescendToReturnIdent", mav, p['takeoff_alt']),
+        # The operator's order, 22 Oct: search for the return banner at the
+        # height the ENTRY banner was found and lined up at -- the corridor
+        # altitude, the board straight ahead of a level camera -- not 5 m.
+        ClimbInPlace("DescendToReturnIdent", mav, p['corridor_alt']),
         # WHERE the return corridor is, found with the camera. Beside the
         # outbound lane (the rulebook drawing) it is identified from the
         # stand-off on the first look; anywhere else, the aircraft searches
         # the zone's edge for it. See FindReturnBanner.
-        FindReturnBanner(mav, alt=p['takeoff_alt'], clock=clock,
-                         transit_alt=p['search_alt'],
+        # The whole return-gate search stays at that corridor height: no
+        # climb to search_alt between vantages (22 Oct: it climbed to 10 m for
+        # a 3 m hop and came back down), the camera level first, as the entry
+        # banner was lined up, then the BANNER tilt.
+        FindReturnBanner(mav, alt=p['corridor_alt'], clock=clock,
+                         transit_alt=p['corridor_alt'], look_pose="FORWARD",
                          hfov_rad=p.get('camera_hfov', 1.0472),
                          image_width_px=p.get('image_width_px', 1280),
                          near_range_m=0.8 * p.get('lidar_range_m', 12.0),
@@ -7220,12 +7449,14 @@ def build_root(mav, node, p):
                          banner_w_m=p.get('banner_w_m', 3.7),
                          banner_h_m=p.get('banner_h_m', 1.15),
                          orbit_alt_m=p['corridor_alt'],
-                         corridor_length_m=p.get('gate_advance_m')),
+                         corridor_length_m=p.get('gate_advance_m'),
+                         yaw_rate_rad_s=math.radians(p.get('banner_yaw_rate_deg_s', 15.0))),
         # Search can bracket the camera at a distant vantage, then approach
         # the gate. Restore the alignment view and wait for measured joint
         # settlement before reusing the near-view detector. AlignToBanner
         # retains its bounded level-camera retry for low gate-height views.
-        *align_to_every_banner(mav, clock, p, "Return",
+        # Corridor height: the board is straight ahead of a level camera.
+        *align_to_every_banner(mav, clock, p, "Return", hung_pose="FORWARD",
                                alt_floor_m=gate_alt),
         ClimbInPlace("DescendToReturnCorridor", mav, p['corridor_alt']),
         SetCameraPose("CameraForwardForReturn", mav, "FORWARD"),
@@ -7416,6 +7647,19 @@ def declare_mission_params(node):
     # CEILING on the lawnmower's ground speed. Under it the speed is what the
     # camera's look-ahead and measured frame rate allow (safe_search_speed).
     d('search_speed_mps', 2.5)
+    # The paced sweep's braking allowance after red ground is confirmed,
+    # m/s^2. 0.5 is the unmeasured default; raise it only to an airframe's
+    # MEASURED stop (equivalent v^2 / 2 x travel after the hold command),
+    # which keeps the 1.5 m red clearance at the higher pace.
+    d('search_brake_mps2', 0.5)
+    # Strip down the flight line kept clear through a gate, m: twice the
+    # centre-to-surface clearance (0.75 m a side). The aircraft keeps 1.5;
+    # only a simulation venue file may narrow it.
+    d('crossing_strip_m', 1.5)
+    # SIMULATION ONLY: a fixed lawnmower speed, m/s, replacing the derived
+    # pace and with it the stop-short-of-red-ground guarantee. 0 = off; the
+    # aircraft's venue file never sets it.
+    d('search_speed_override_mps', 0.0)
     # The rulebook's 15-minute flight, from arming, and the time kept back
     # for drop and return: a sweep still searching after the difference skips
     # the delivery and flies home (search_overdue).
@@ -7446,6 +7690,8 @@ def declare_mission_params(node):
     # stared at every direction twice.
     d('banner_sweep_step', math.radians(45.0))
     d('banner_dwell_s', 5.0)
+    # Banner sweeps pan at this rate instead of snapping (ramp_yaw).
+    d('banner_yaw_rate_deg_s', 15.0)
     d('banner_min_hit_ratio', 0.6)
     # SQUARENESS, measured with the lidar rather than inferred from a camera
     # bounding box. An angle in degrees means what it says; the aspect ratio
@@ -7503,6 +7749,9 @@ def declare_mission_params(node):
         'zone_boundary_clearance': float(g('zone_boundary_clearance')),
         'redzone_clearance': float(g('redzone_clearance')),
         'search_speed_mps': float(g('search_speed_mps')),
+        'search_brake_mps2': float(g('search_brake_mps2')),
+        'crossing_strip_m': float(g('crossing_strip_m')),
+        'search_speed_override_mps': float(g('search_speed_override_mps')),
         'mission_limit_s': float(g('mission_limit_s')),
         'return_reserve_s': float(g('return_reserve_s')),
         'search_deadline_extension_s': float(g('search_deadline_extension_s')),
@@ -7516,6 +7765,7 @@ def declare_mission_params(node):
         'banner_sweep_limit': float(g('banner_sweep_limit')),
         'banner_sweep_step': float(g('banner_sweep_step')),
         'banner_dwell_s': float(g('banner_dwell_s')),
+        'banner_yaw_rate_deg_s': float(g('banner_yaw_rate_deg_s')),
         'banner_min_hit_ratio': float(g('banner_min_hit_ratio')),
         'square_tol_rad': math.radians(float(g('square_tol_deg'))),
         'lidar_range_m': float(g('lidar_range_m')),

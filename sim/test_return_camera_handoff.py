@@ -19,14 +19,14 @@ def handoff():
         camera_commands.append(pose)
         mav.camera_state['requested']=pose
     mav.set_camera_pose=command
-    mav.camera_settled=lambda pose: (pose=='BANNER' and mav.camera_state['settled'] is True
-        and mav.camera_state['stale'] is False and abs(mav.camera_state['actual_rad']+math.pi/9)<1e-6)
+    mav.camera_settled=lambda pose: (pose=='FORWARD' and mav.camera_state['settled'] is True
+        and mav.camera_state['stale'] is False and abs(mav.camera_state['actual_rad'])<1e-6)
     mav.camera_state_summary=lambda:str(mav.camera_state)
     tree=build_root(mav,MagicMock(),dict(fixtures.BuiltTreeCarriesTheNewBehaviourTests.PARAMS))
     mission=next(n for n in tree.children if n.name=='Mission')
     first=next(i for i,n in enumerate(mission.children) if n.name=='FindReturnBanner')
     # The return gate is one selector over the hung, ground and fallback
-    # passes; its first pass is the hung view this handoff restores BANNER for.
+    # passes; its first pass is the hung view, LEVEL at corridor height (r8b).
     end=next(i for i,n in enumerate(mission.children) if i>first and n.name.endswith('BannerAlignment'))
     children=mission.children[first:end+1]
     for child in children:mission.remove_child(child)
@@ -53,16 +53,16 @@ def test_normal_return_approach_restores_banner_camera_and_waits_for_measured_se
     before=mav.pos()
     sequence.tick_once()
     assert not entered,'Alignment ran at the inherited -10 degree search tilt after the approach'
-    assert commands[-1]=='BANNER'
+    assert commands[-1]=='FORWARD'
     assert mav.pos()==before,'Camera handoff cannot move the aircraft'
-    mav.camera_state.update(actual_rad=-math.pi/9,settled=True,stale=False)
+    mav.camera_state.update(actual_rad=0.0,settled=True,stale=False)
     sequence.tick_once()
     assert len(entered)==1
 
 def test_stale_camera_readback_cannot_release_return_alignment():
     sequence,mav,_,entered=handoff()
     sequence.tick_once()
-    mav.camera_state.update(actual_rad=-math.pi/9,settled=True,stale=True)
+    mav.camera_state.update(actual_rad=0.0,settled=True,stale=True)
     sequence.tick_once()
     assert not entered
     assert sequence.status is py_trees.common.Status.RUNNING
@@ -86,4 +86,4 @@ def test_camera_handoff_keeps_existing_bounded_failure_and_does_not_move_aircraf
     # aligning at the wrong tilt; the gate then goes on to its other views.
     assert hung.status is py_trees.common.Status.FAILURE
     assert not entered and mav.pos()==before
-    assert 'camera did not reach BANNER' in mav.abort_reason
+    assert 'camera did not reach FORWARD' in mav.abort_reason

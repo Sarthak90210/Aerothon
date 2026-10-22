@@ -10,10 +10,19 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 
+# The lowest floor a simulation venue may set (airframe radius 0.4 m + 5 cm);
+# the aircraft's floor is the rulebook 0.70 m (clearance_floor default).
+SIMULATION_CLEARANCE_FLOOR_M = 0.45
+
+
 class LocalPlanner:
-    def __init__(self, clearance=0.70, resolution=0.05, lookahead=5.0, occupied_radius=0.025):
-        if clearance < 0.70:
-            raise ValueError('minimum corridor clearance is 0.70 m')
+    def __init__(self, clearance=0.70, resolution=0.05, lookahead=5.0, occupied_radius=0.025,
+                 clearance_floor=0.70):
+        floor = float(clearance_floor)
+        if not SIMULATION_CLEARANCE_FLOOR_M <= floor <= 0.70:
+            raise ValueError('clearance floor must be 0.45-0.70 m')
+        if clearance < floor:
+            raise ValueError(f'minimum corridor clearance is {floor:.2f} m')
         self.clearance = clearance
         self.resolution = resolution
         self.lookahead = lookahead

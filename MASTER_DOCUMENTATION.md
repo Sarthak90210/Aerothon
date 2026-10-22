@@ -236,7 +236,9 @@ additions to the camera, winch, GPIO-winch and vertical-motion tests):
   FC never accepted (or never received) the command; camera buttons sent
   degrees that no detector gate recognised; the MAVLink winch estimated
   0.30 m/s while ArduPilot's length control reels at `WNCH_RATE_MAX` (1.0),
-  now 0.30 on both sides (`fc_rate_max_mps`, `aerothon_hardware.parm`), and
+  now 0.30 on both sides (`fc_rate_max_mps`, `aerothon_hardware.parm`; the
+  parameter names and the simulator's rate were only corrected on 20 October,
+  see "20 October 2026" below), and
   counts only after an accepted `DO_WINCH`; the GPIO encoder lost counts when
   lgpio delivered edges in batches.
 - Avoidance: one vertical-motion capture gap longer than `stale_scan_s`
@@ -461,6 +463,100 @@ several times a second, so camera-dependent flight tasks were mostly refused;
 Banner alignment, once accepted, failed at RequireDeliveryZone although
 readiness reported the search area ready (the mission resolves the fence only
 after an FCU home position, which was not observed in this run).
+
+19 October 2026, SLAM display refresh and local testing continuation. The map
+now uses a larger neutral occupancy view, separate map/lidar/mapping-state
+indicators, independent Occupancy/Lidar returns/Track/Grid switches, explicit
+Fit map and Follow aircraft controls, an expanding view, cursor coordinates
+and an adaptive metric scale. Manual pan releases follow; mouse-centred zoom,
+touch pinch and keyboard navigation preserve equal metric axes. Fit scan
+includes the sensor's full range at phone width. The design references RViz's
+occupancy display, [Foxglove's layers and coordinate frames](https://docs.foxglove.dev/docs/visualization/panels/3d)
+and [QGroundControl's vehicle centring](https://docs.qgroundcontrol.com/master/en/qgc-user-guide/settings_view/general.html#fly-view).
+The local map labels +X/+Y rather than claiming geographic north. Unknown
+cells and the original grid resolution remain intact; the raster is still
+cached per received map rather than rebuilt for each telemetry snapshot.
+
+Scan freshness is independent of map freshness. Held or old mapping status,
+an old/mismatched pose or unavailable mounting geometry suppresses the
+registered scan overlay while leaving Live lidar available. An old marker
+is grey and explicitly described as the last mapped position; age does not
+prove the aircraft stayed still. Full applied `lidar_calibrated` geometry
+projects the corrected scan through the residual mounting tilt and measured
+XY translation before the map pose. Yaw, mirror and range correction are not
+applied twice. Legacy `base_scan` offsets are not invented. The projection
+matched 80 production-quaternion reference cases within 4e-15 m in software.
+Phone header overflow is also fixed. Browser checks used a synthetic ROS
+fixture and the actual local Gazebo/SITL map; these are distinct evidence.
+
+The local continuation also fixed a refused bench release that prevented a
+later safe stop/stow, a release request that could replace a genuine encoder
+fault with a transient diagnostic, and successful bench receipts that reused
+the previous execution failure reason. Real encoder/backend faults and all
+release preconditions remain enforced. The affected backend checks passed
+51 tests; the frontend build and 45 frontend tests passed. Evidence, research,
+source hashes and final software-check results are recorded under
+`.scratch/slam_ui_20261018/`. Flight-navigation algorithms and qualification
+thresholds are unchanged.
+
+Local flight results remain incomplete: an accepted avoidance route made
+under 1 m progress in 112 s before operator Stop and RTL/disarm. A calibrated
+full-mission attempt decoded the start QR and reached banner alignment, but
+repeatedly lacked lidar returns for its banner fit and was stopped after a
+300 s observation window. The first GPS-delivery attempt at 5 m could not
+frame the world's 3 m QR; the corrected 7 m request was refused by measured
+actuator-capability gates before arming. Delivery here reached WinchDrop but
+reported missing/unqualified load calibration. None is a completed mission or
+delivery acceptance. The revised package is intended for props-off Pi software
+verification; Pi sensor/mounting verification and flight qualification remain
+separate outstanding steps.
+
+### 20 October 2026: laptop-simulation search pace, winch retraction, return banner
+
+All on the world-maker laptop route (`manual_test` world, unlettered rod-hung
+banners, orange no-entry boards). Uncommitted worktree on `21ae45b`.
+
+- Search pacing: `camera_ctrl` publishes the measured joint's `rate_dps`;
+  `perception_redzone`, for joint read-back only, accepts a fresh (<= 0.3 s),
+  non-slewing (<= 15 deg/s) angle and checks the true line of sight against
+  its nadir tolerance. The old settle rule compared a body-relative joint with
+  the earth-frame mount request and stop-go paced the search at 0.17 m/s.
+- Winch: the simulator's FC reeled at `WINCH_RATE_MAX` 1.0 while the estimate
+  used 0.30, so "stowed" left 2.6 m of line out (measured joint); the hook
+  dragged through the return corridor (stall, 44 deg tilt, sink). Both
+  parameter files now set `WINCH_TYPE 1`/`WINCH_RATE_MAX 0.30` (the hardware
+  file used the nonexistent `WNCH_*` names). `winch_node` reads the two FC
+  parameters back, refuses to lower until it has, estimates with the FC's
+  rate, and with a measured line reports stowed only when it is measured in,
+  re-sending stow on a stall and faulting after three tries.
+- Return banner: the mission ranged banners with the configured 1280 px focal
+  while this route's camera delivers 960 x 540. From the return stand-off the
+  return board 6.4 m ahead ranged ~10 m and `FindReturnBanner._toward` took it
+  for the outbound banner 17 m beyond it on nearly the same sight line; it was
+  refused on every frame and the search orbited false leads for ~9 minutes.
+  `banner_frame` now ranges with the size of the frame the detection came
+  from (`AlignToBanner`, `FindReturnBanner`). The search logic is unchanged
+  from V44.
+- Speed: corridor cruise 1.0 m/s and the search's braking allowance
+  (`search_brake_mps2`, default 0.5) come from the simulation-only venue file.
+  The simulated airframe's stop after the search's own hold command was
+  measured at 0.54-0.55 m from 1.0 m/s and 0.69 m from 1.2 m/s in four
+  directions (0.85-1.06 m/s^2; `logs/return_lap_20261020/brake_probe`); 0.8 is
+  used. The search's cap rose from 0.65 to 0.70-0.75 m/s: 1 m/s would overrun
+  the 1.5 m red clearance at the 2.5 m look-ahead. The aircraft keeps 0.8 m/s
+  cruise and 0.5 m/s^2 until its own stop is measured.
+
+Evidence: `logs/return_lap_20261020/manual_test_winchfix` (winch retracted to
+0.2 m, tilt 18.2 deg max; return lap failed on the ranging defect;
+operator-stopped, `INTERRUPTED.txt`) and `manual_test_1mps` (14/14 independent
+checks: both corridors flown through, 0 lane violations, closest obstacle
+0.76 m, closest red 3.45 m, tilt 16.5 deg, drop 0.18 m, payload 0.25 m from
+pad B, 509 s, landed 0.47 m from home; return banner identified from the
+stand-off 70 s into its search). One calm laptop-simulation run; the scripted
+acceptance, field conditions and the aircraft are not re-qualified on it.
+Reduced offline suite on the same source: 2,150 passed, 8 skipped
+(`logs/return_lap_20261020/reduced_suite_final.log`). Receipt:
+`.scratch/return_lap_20261020/receipt.json`.
 
 ## 2. Architecture and source map
 
@@ -998,7 +1094,9 @@ service. The bundle does not install a boot/autostart service.
 
 ### Debian 13 Pi deployment
 
-The destination is `pi5@192.168.0.101`, Debian 13 arm64 on a Pi 5 with 8 GB RAM.
+The destination is `pi5`, Debian 13 arm64 on a Pi 5 with 8 GB RAM. On 19 October
+2026 its measured addresses are Ethernet `192.168.0.104` and Wi-Fi
+`192.168.0.103`; the earlier `192.168.0.101` address was a previous DHCP lease.
 Use the Ubuntu 24.04/Jazzy container route on this OS. Installing Ubuntu ROS
 APT packages directly into Debian would mix distributions. The pinned official
 ROS base image and dependency recipe are in `scripts/pi_runtime/Dockerfile.dependencies`.
@@ -1046,13 +1144,56 @@ runtime without live disarm. The Docker attach process uses `--sig-proxy=false`
 so a refused stop does not forward a kill to the flight container. Power loss
 and FCU failsafe remain separate hardware concerns.
 
-Open `http://192.168.0.101:8899/` and run Connection check. The existing
+Open `http://192.168.0.104:8899/` or `http://192.168.0.103:8899/` and run Connection check. The existing
 drone profile connects automatically; Connections configures another profile
 when required. The measured TELEM3 link is `/dev/ttyAMA2` at 115200,
 BCM4 TX/header7 and BCM5 RX/header29. `/dev/serial0` is the debug/login UART.
 For laptop simulation, use its gateway endpoints instead. Supply organiser
 arena dimensions, the judges' geofence and banner colours through the GCS,
 inspect readiness, then Review start and Confirm Start.
+
+19 October 2026 deployment: the SLAM UI runtime ZIP with SHA256
+`018ae196716af83dc3624aad8adf417655b6e373ceb3749d87bb446a2f139156`
+was installed with all 265 manifest files verified. A fresh native ARM64
+build completed all 15 workspace packages. The active `install` symlink
+selects `install_20261019`; the previous install remains at
+`install_before_20261019`. Both destination services are active and enabled.
+The browser loads `index-BvJeOAWo.js`, and both network addresses delivered
+fresh, disarmed FCU telemetry over WebSocket. No lidar scans or camera device
+were present during this check, so live SLAM and camera operation remain
+unverified on this deployment.
+
+Wi-Fi was restored with a root-private persistent NetworkManager profile
+for `iphone`, with autoconnect enabled and Ethernet preferred. Local gateway
+and GCS access succeeded over Wi-Fi. Public IP and DNS probes failed through
+the upstream network; NTP is enabled but has not synchronized. The Pi clock
+was corrected from the operator computer while the runtime was stopped.
+A final check failed on the absent optional `hwclock` utility after stopping
+the GCS. The GCS was restarted and verified in the browser with live FCU
+telemetry. No reboot occurred, and Wi-Fi persistence across reboot remains
+unverified. Runtime/network backups are under
+`/home/pi5/aerothon-backups/20261019-slam-ui/`; local deployment receipts and
+the service recovery record are under `.scratch/pi_deploy_20261019/`.
+
+Later on 19 October, a subscriber-only observation during the user's manual
+POSHOLD flight confirmed persistent mapping loss. In 35 seconds the observer
+received 339 raw scans at 10.01 Hz and 341 fresh mapping statuses, all Held
+with `insufficient overlap`; it received no `/scan_slam` messages. Capture
+intervals stayed below 0.129 s. The old grid continued to be republished, so
+grid-message frequency was not evidence of accepted mapping scans.
+The deployed mapper source hashes matched the local replay source. Replaying
+these real scans from a fresh local origin accepted 46 scans, then remained
+held for the final 24.48 s. Meanwhile 170 later adjacent scan pairs passed
+the unchanged registration checks. The replay retained reference scan 46;
+alignment failures aged that reference and triggered the stricter recovery
+gate. This reproduces initialization followed by persistent loss of tracking
+and supports investigating reference maintenance/recovery. The first rejection
+of the actual flight preceded the capture, so its original trigger remains
+unconfirmed. No runtime restart, parameter change, flight command or deployed
+source change was made for this observation. It does not qualify mapping for
+flight navigation; current avoidance still consumes `/scan` and FCU pose
+independently. Evidence and the intentionally failing diagnostic replay are
+under `.scratch/pi_deploy_20261019/held_*` and `replay_held.py`.
 
 A local diagnosis of the 19 October manual POSHOLD capture, in which mapping
 initialised and then stayed held, found two causes. First, the C1's
@@ -1361,6 +1502,39 @@ together. Video is not a grade. External overview camera data is evaluator-only.
 Record the source identity, conditions, independent result and playable video.
 Keep interrupted/failed runs unchanged. Original navigation campaigns require
 their own five specified rendered gates; see the campaign CLI/source.
+
+### World maker for hand-flown GCS testing
+
+`tools/world_editor/serve.py` (port 8777, run in WSL; also the `world-maker`
+entry in `.claude/launch.json`) places every arena component and takes the
+arena dimensions as the GCS's own fields (`mission_bt.arena_dimensions`, same
+labels, ranges and units). `world_spec.apply_dimensions` rebuilds the world
+from them: lane length, width and walls; return-lane spacing and side; banner
+size, lower edge and placement (rod-hung); QR sides; red-zone side; and
+obstacle reach at 95% of wall height. Positions stay the operator's. A world
+edited away from its dimensions is refused. Size limits are the GCS field
+ranges (`world_spec.gcs_range`, e.g. corridor width 1-10 m); clearance checks
+still apply, so a 1.8 m lane with half-width obstacles is refused (0.90 m gap).
+Banners carry no wording and red zones built here none either (the white
+border is the GCS red-zone border). Green, orange and red come from the
+editor's HEX fields and print in Gazebo; orange marks the far opening of both
+corridors. **6 organiser points** turns the fence into six draggable points
+P1-P6, listed with latitude/longitude once the simulator is connected. Saving writes the same values as
+GCS preset `World NAME` to `~/.aerothon/dimension_presets.json`.
+**Save & launch simulator** runs the laptop-simulation route for that world:
+`launch_laptop_sim.sh` (Gazebo window, SITL, gateway on 8090) plus the real
+web host serving the GCS on 8899. It also saves a selected, non-autoconnecting
+`World maker simulation` profile in `~/.local/state/aerothon-world-sim`.
+Nothing connects, arms or starts. In the GCS, Connect starts the production
+runtime; the operator then loads and applies the preset and enters the banner
+HEX codes and the geofence. The editor shows those values; geofence lines are
+georeferenced on the FCU home, which is SITL's default site, not Gazebo's
+world origin. Stop disconnects through the web host's disarm gate and refuses
+while armed. The scripted graded run (`run_custom_world.sh`) remains separate.
+The profile selects `sim_gazebo/config/world_sim_venue.yaml`: `venue.yaml`
+plus two simulation-only values, the measured search braking
+(`search_brake_mps2` 0.8) and a 1.0 m/s corridor cruise; a test keeps the
+rest equal to the aircraft's file. Its camera delivers 960 x 540.
 
 ## 9. Hardware qualification
 

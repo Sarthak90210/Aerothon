@@ -43,8 +43,6 @@ import world_spec as W                                  # noqa: E402
 from mission_bt import arena_dimensions as A            # noqa: E402
 
 ZONE_CLEAR_M = 9.0
-OBSTACLE_ALONG_M = 0.35
-OBSTACLE_HEIGHT_FRAC = 0.95         # of the wall height
 
 
 def load_dims(args):
@@ -69,19 +67,9 @@ def obstacles(length, width, wall_height, reach_frac=0.5):
 
     Spaced as the shipped slalom is, 2.4 m apart from 1.4 m in -- not
     squeezed to fit, which closed a 5 m corridor -- so a 5 m corridor gets two
-    and a 10 m one four.
+    and a 10 m one four. Shared with the world editor (world_spec).
     """
-    reach = width * float(reach_frac)
-    v = width / 2.0 - reach / 2.0
-    out, u, side = [], 1.4, 1.0
-    step = 2.4
-    while u <= length - 1.0:
-        out.append({"u": round(u, 3), "v": round(side * v, 3), "w": OBSTACLE_ALONG_M,
-                    "d": round(reach, 3), "h": round(OBSTACLE_HEIGHT_FRAC * wall_height, 3),
-                    "yaw_deg": 0.0})
-        u += step
-        side = -side
-    return out
+    return W.slalom_obstacles(length, width, wall_height, reach_frac)
 
 
 def build(dims, layout, name, colours=None):

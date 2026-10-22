@@ -1,0 +1,86 @@
+# The world-maker LAPTOP SIMULATION's venue file (tools/world_editor/serve.py
+# selects it in the "World maker simulation" profile). It is venue.yaml with
+# two simulation-only values; sim/test_world_sim_venue.py keeps the rest equal.
+# The aircraft keeps mission_bringup/config/venue.yaml.
+#
+#   search_brake_mps2  MEASURED on the simulated airframe, 20 Oct 2026
+#                      (logs/return_lap_20261020/brake_probe): after the
+#                      search's own stop (position re-targeted under a
+#                      DO_CHANGE_SPEED cap) it travelled 0.54-0.55 m from
+#                      1.0 m/s and 0.69 m from 1.2 m/s in four directions,
+#                      0.85-1.06 m/s^2 equivalent. 0.8 is under the worst.
+#   cruise_speed       the corridor navigator's speed, 1.0 m/s (default 0.8).
+#   passage_half_width corridor centre-to-surface clearance, 0.45 m
+#   crossing_strip_m   and the gate crossing's clear strip, 0.9 m (2 x 0.45).
+#                      The user's choice, 20 Oct 2026, to fly world-maker
+#                      worlds with 2 m corridors whose slalom blocks leave 1.0 m
+#                      gaps. The aircraft and the rulebook acceptance keep
+#                      0.70 m: about 5 cm between props and blocks, contact
+#                      risk, SIMULATION ONLY.
+#
+# What the rulebook leaves to the venue and the airframe, in one place.
+# mission2.launch.py loads this (params_file:=...) for the sim and the
+# aircraft alike. The values below are the simulated arena's and the sim
+# airframe's; measure the real ones and set them here before flying.
+# Camera FOV and pad QR size are launch arguments (camera_hfov,
+# target_marker_m) and are not repeated here.
+#
+# Keep the decimal point on metre values (4.0, not 4): ROS 2 refuses an
+# integer for a float parameter and the node will not start.
+
+mission_bt:
+  ros__parameters:
+    # The corridor banner's board, m. Range to the gate is estimated from
+    # its area in pixels. The rulebook gives no size.
+    banner_w_m: 3.7
+    banner_h_m: 1.15
+    # The return lane's centreline relative to the outbound one, m,
+    # port-positive facing out of the corridor.
+    return_lane_offset_m: -4.0
+    # Longest edge of the payload as seen from above, m (rulebook Fig. 1:
+    # 10 x 5 x 5 cm). The drop is confirmed on a blob of about this size.
+    payload_size_m: 0.10
+    # The highest release the line can make with slack for the gravity hook.
+    winch_reach_m: 5.5
+    # Simulation only: the measured stop (see the header).
+    search_brake_mps2: 0.8
+    # Simulation only: gate-crossing strip, m (see the header).
+    crossing_strip_m: 0.9
+    # Simulation only: fixed lawnmower speed, the user's choice. 5.56 m/s
+    # (20 km/h, 20 Oct 2026) averaged 0.92 m/s: detector holds and red-zone
+    # fragments (logs/return_lap_20261020/shipped_fast); 2.0 m/s on 21 Oct
+    # was cut short by a simulator link loss. Back to 20 km/h by the user's
+    # order, 21 Oct: the search still brakes to a hold on stale detections,
+    # the target and confirmed red ground. Disables the stop-short-of-red-
+    # ground guarantee.
+    search_speed_override_mps: 5.56
+
+winch_ctrl:
+  ros__parameters:
+    # The node integrates payout from these; nothing reads the real line
+    # length back. Time the real winch over a known length.
+    payout_rate_mps: 0.30
+    stow_rate_mps: 0.45
+    max_payout_m: 6.0
+    hook: gravity            # gravity | command
+    # backend:=gpio (Pi BTS7960 + N20 encoder) reads travel from the encoder.
+    # MEASURE these on the secured bench; 0 keeps the backend refusing to run.
+    encoder_counts_per_output_rev: 0.0   # quadrature counts per output-shaft turn
+    spool_radius_m: 0.0                  # effective radius over the loaded spool
+    encoder_lower_sign: 1                # -1 if counts fall while lowering
+    drive_duty_pct: 60.0                 # BTS7960 PWM duty for payout and stow
+
+perception_payload:
+  ros__parameters:
+    # The payload's colour, OpenCV HSV (hue 0-180). Default: saturated yellow.
+    hsv_lo: [18, 120, 120]
+    hsv_hi: [38, 255, 255]
+
+velocity_controller:
+  ros__parameters:
+    # Simulation only: corridor speed, m/s (see the header).
+    cruise_speed: 1.0
+    # Simulation only: corridor clearance, m (see the header).
+    passage_half_width: 0.45
+    # Simulation only: lets the planner accept it (the aircraft keeps 0.70).
+    clearance_floor_m: 0.45

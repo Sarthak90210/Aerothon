@@ -34,6 +34,9 @@ INTERFACE
         settled         measurement within tolerance, held long enough
         stale           no read-back within stale_after_s
         age_s           seconds since the last read-back
+        rate_dps        how fast the measured angle is changing, deg/s over
+                        the last rate_window_s of read-backs (null until two
+                        read-backs span rate_min_span_s)
 
     `settled` is the only field a mission stage should gate on. It is false
     until the joint has been MEASURED in position — never inferred from the
@@ -61,6 +64,7 @@ BACKENDS
 
 import json
 import math
+from collections import deque
 
 import rclpy
 from rclpy.node import Node
@@ -95,6 +99,11 @@ NAMED_POSES_DEG = {
     # so the sheet is in frame both squared up and on the return approach.
     # -30 put it on the bottom edge from 5 m up, 5 m out.
     "GROUND": -35.0,
+    # The return-gate search's second tilt for a HUNG board: from the 5 m
+    # look height a board 3-4 m away sits 31-40 deg below the horizon, under
+    # the BANNER frame (shipped_20kmh_r5). ALIGN's angle, but the banner
+    # detector runs in it; ALIGN stays the QR stages' and closed to it.
+    "BANNER_DOWN": -45.0,
 }
 
 
@@ -122,6 +131,11 @@ class CameraCtrl(Node):
         p("startup_pose", "FORWARD")
         p("external_joint_feedback", False)
         p("servo_settle_s", 1.0)            # mavlink, no attitude: time to angle
+        # rate_dps: the read-back's own motion, so a consumer that only needs
+        # a steady, MEASURED angle (not the requested one) can tell a slew
+        # from a mount holding still while the airframe pitches under it.
+        p("rate_window_s", 0.3)
+        p("rate_min_span_s", 0.05)
 
         self.backend = self.get_parameter("backend").value
         self.joint_name = self.get_parameter("joint_name").value
@@ -138,6 +152,7 @@ class CameraCtrl(Node):
         self._target_t = None               # when the current target was set
         self._prev_rad = 0.0                # the target before it
         self._mount_t = None                # last mount attitude from the FC
+        self._readings = deque()            # (t, rad) within rate_window_s
 
         self.create_subscription(String, "/camera/set_pose", self._on_set_pose, 10)
         if self.backend == "sim" or self.external_joint_feedback:
@@ -304,6 +319,10 @@ class CameraCtrl(Node):
             return
         self.actual_rad = rad
         self.last_reading_t = self._now()
+        self._readings.append((self.last_reading_t, rad))
+        window = float(self.get_parameter("rate_window_s").value)
+        while self._readings and self.last_reading_t - self._readings[0][0] > window:
+            self._readings.popleft()
         if self.requested_rad is None:
             # Observe an already-positioned mount without moving it on Connect.
             named = min(NAMED_POSES_DEG, key=lambda k: abs(math.radians(NAMED_POSES_DEG[k])-rad))
@@ -335,6 +354,15 @@ class CameraCtrl(Node):
             return False
         hold = float(self.get_parameter("settle_hold_s").value)
         return (self._now() - self._in_tolerance_since) >= hold
+
+    def rate_dps(self):
+        """|change| of the measured angle over the recent window, deg/s."""
+        if len(self._readings) < 2:
+            return None
+        (t0, a0), (t1, a1) = self._readings[0], self._readings[-1]
+        if t1 - t0 < float(self.get_parameter("rate_min_span_s").value):
+            return None
+        return abs(math.degrees(a1 - a0)) / (t1 - t0)
 
     def is_stale(self):
         if self.last_reading_t is None:
@@ -368,6 +396,7 @@ class CameraCtrl(Node):
             "stale": self.is_stale(),
             "age_s": age,
             "readback": self.readback(),
+            "rate_dps": self.rate_dps(),
         }
         self.pub_state.publish(String(data=json.dumps(payload)))
 

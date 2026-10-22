@@ -214,6 +214,45 @@ class WinchTests(unittest.TestCase):
         self.assertEqual(self.node.fault, "",
                          "stale refusal still reported after it was resolved")
 
+    def test_ground_release_refusal_does_not_block_stow(self):
+        self.stabilise(0.0)
+        self.node.payout = 0.6
+        self.cmd("release")
+        self.assertIn("release refused", self.node.fault)
+        self.cmd("stow")
+        self.advance(3.0)
+        status = self.last()
+        self.assertEqual(status["state"], "IDLE")
+        self.assertEqual(status["fault"], "", "old release refusal blocked safe stow")
+        self.assertFalse(status["release_requested"])
+        self.assertIsNone(status["released"])
+
+    def test_ground_release_refusal_does_not_block_stop(self):
+        self.stabilise(0.0)
+        self.cmd("release")
+        self.assertIn("release refused", self.node.fault)
+        self.cmd("stop")
+        self.assertEqual(self.last()["fault"], "")
+        self.assertEqual(self.node.state, "IDLE")
+        self.assertFalse(self.node.released)
+
+    def test_release_cannot_replace_a_backend_fault_with_a_transient_refusal(self):
+        self.lower_to_ground(4.0)
+        self.node._set_fault("encoder stalled")
+        self.cmd("release")
+        self.node.integrate(0.1)
+        self.assertEqual(self.last()["fault"], "encoder stalled")
+        self.assertEqual(self.node.state, "FAULT")
+        self.assertFalse(self.node.released)
+
+    def test_stop_and_stow_preserve_a_backend_fault(self):
+        for action in ("stop", "stow"):
+            with self.subTest(action=action):
+                self.node._set_fault("encoder stalled")
+                self.cmd(action)
+                self.node.integrate(0.1)
+                self.assertEqual(self.last()["fault"], "encoder stalled")
+
     def test_blockers_are_reported_not_just_the_first(self):
         """The operator should see everything wrong at once."""
         self.node._on_pose(pose(40.0))
@@ -300,6 +339,16 @@ class MavlinkWinchTests(unittest.TestCase):
         self.client = FakeCommandClient()
         self.node.cli_cmd = self.client
         self.node._on_pose(pose(5.0))
+        self.fc_winch(1, 0.30)          # read back from the FC, as MAVROS reports it
+
+    def fc_winch(self, wtype, rate):
+        from rcl_interfaces.msg import ParameterValue
+        self.node.on_fc_winch_params([ParameterValue(type=2, integer_value=wtype),
+                                      ParameterValue(type=3, double_value=rate)])
+
+    def measure(self, metres):
+        self.node.measured_payout = metres
+        self.node._measurement_t = self.node._now()
 
     def tearDown(self):
         self.node.destroy_node()
@@ -327,3 +376,66 @@ class MavlinkWinchTests(unittest.TestCase):
         self.node._on_cmd(String(data="lower"))
         self.assertEqual(self.node.state, "FAULT")
         self.assertEqual(self.client.sent, [])
+
+    # ---- 20 Oct 2026: the hook dragged through the return corridor ---- #
+    # The laptop simulator's FC reeled at WINCH_RATE_MAX 1.0 while the estimate
+    # assumed 0.30; stow by the estimate left 2.6 m out (measured winch joint),
+    # the hook snagged, and the aircraft stalled, tilted and sank.
+
+    def test_lowering_is_refused_until_the_fc_winch_is_read_back(self):
+        self.node.fc_winch = None
+        self.node._on_cmd(String(data="lower"))
+        self.assertEqual(self.node.state, "FAULT")
+        self.assertIn("not read back", self.node.fault)
+        self.assertEqual(self.client.sent, [])
+
+    def test_a_disabled_fc_winch_is_refused(self):
+        self.fc_winch(0, 0.30)          # e.g. WNCH_TYPE set on a 4.5 FC: WINCH_TYPE stays 0
+        self.node._on_cmd(String(data="lower"))
+        self.assertIn("winch disabled", self.node.fault)
+
+    def test_the_estimate_uses_the_fc_rate_not_the_configured_one(self):
+        self.fc_winch(1, 1.0)
+        self.node._on_cmd(String(data="lower"))
+        self.client.sent[-1][1].finish()
+        self.advance(2.0)
+        self.assertAlmostEqual(self.node.payout, 2.0, places=2)
+        self.node._on_cmd(String(data="stow"))
+        self.assertAlmostEqual(self.client.sent[-1][0].param3, -2.0, places=2)
+
+    def test_stow_is_not_reported_while_the_measured_line_is_still_out(self):
+        self.node._on_cmd(String(data="lower"))
+        self.client.sent[-1][1].finish()
+        self.measure(3.4)
+        self.node.integrate(0.1)
+        self.node._on_cmd(String(data="stow"))
+        self.client.sent[-1][1].finish()
+        self.assertAlmostEqual(self.client.sent[-1][0].param3, -3.4, places=2)
+        for _ in range(10):             # the FC reeled in only part of it
+            self.measure(2.6)
+            self.node.integrate(0.1)
+        self.assertEqual(self.node.state, "STOWING")
+        self.assertAlmostEqual(self.node.payout, 2.6)
+
+    def test_a_stalled_stow_is_resent_by_the_measured_length(self):
+        self.node._on_cmd(String(data="stow"))
+        sent = len(self.client.sent)
+        for _ in range(25):             # 2.5 s, no progress
+            self.measure(2.6)
+            self.node.integrate(0.1)
+        self.assertEqual(len(self.client.sent), sent + 1)
+        self.assertAlmostEqual(self.client.sent[-1][0].param3, -2.6, places=2)
+        self.client.sent[-1][1].finish()
+        for m in (2.0, 1.2, 0.5, 0.1):
+            self.measure(m)
+            self.node.integrate(0.5)
+        self.assertEqual(self.node.state, "IDLE")
+        self.assertEqual(self.node.payout, 0.0)
+
+    def test_a_line_that_will_not_come_in_is_a_fault_not_stowed(self):
+        self.node._on_cmd(String(data="stow"))
+        for _ in range(200):            # 20 s, never retracts
+            self.measure(2.6)
+            self.node.integrate(0.1)
+        self.assertEqual(self.node.state, "FAULT")
+        self.assertIn("line not retracted: measured 2.60 m", self.node.fault)

@@ -121,7 +121,7 @@ class Gateway:
         from std_msgs.msg import Float64
         if self.fcu and time.monotonic()-self.param_requested > 5:
             self.param_requested = time.monotonic()
-            for name in ('MNT1_TYPE','WINCH_TYPE',f'SERVO{self.args.camera_channel}_FUNCTION',f'SERVO{self.args.winch_channel}_FUNCTION'):
+            for name in ('MNT1_TYPE','WINCH_TYPE','WINCH_RATE_MAX',f'SERVO{self.args.camera_channel}_FUNCTION',f'SERVO{self.args.winch_channel}_FUNCTION'):
                 msg = self.encoder.param_request_read_encode(self.args.system_id,1,name.encode(),-1)
                 self.udp.sendto(msg.pack(self.encoder),self.fcu)
         pwm = self.last_pwm
@@ -132,7 +132,10 @@ class Gateway:
             self.mount.publish(Float64(data=pitch))
         winch = pwm[self.args.winch_channel-1]
         if 800 <= winch <= 2200:
-            rate = (winch-self.args.winch_neutral)/500*self.args.winch_rate
+            # ArduPilot's PWM winch outputs full deflection at WINCH_RATE_MAX: the
+            # simulated line moves at the FC's own rate, not an independent one.
+            rate = (winch-self.args.winch_neutral)/500*float(
+                self.parameters.get('WINCH_RATE_MAX', self.args.winch_rate))
             self.payout = max(0.0, min(self.args.winch_length, self.payout+rate*dt))
             self.winch.publish(Float64(data=self.payout))
 

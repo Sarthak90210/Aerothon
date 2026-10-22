@@ -462,7 +462,7 @@ class ExecutionNode(Node):
                     self.run.update(
                         state='Failed' if failed else 'Outcome unknown' if unconfirmed_release else 'Completed',
                         reason='Release requested; physical release has no confirming feedback'
-                            if unconfirmed_release else self.mav.abort_reason)
+                            if unconfirmed_release else self.mav.abort_reason if failed else '')
         self.publish()
 
     def on_fcu_state(self, _msg):

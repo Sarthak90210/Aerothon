@@ -113,6 +113,7 @@ class Mav:
         self.banner_reject_counts = {}
         self.banner_board_aspect = 0.0
         self.banner_board_area = 0.0
+        self.banner_image_wh = None   # (w, h) px of the frame the board was in
         self.banner_clipped = False
         self.banner_green = None       # largest green region in view, if any
         self.abort_requested = False
@@ -587,6 +588,8 @@ class Mav:
             # area understates the board, so a range from it reads long.
             box = d.get('board_px')
             iw, ih = (d.get('image_wh') or [1280, 720])[:2]
+            if d.get('image_wh'):
+                self.banner_image_wh = (float(iw), float(ih))
             self.banner_clipped = bool(box) and (
                 box[0] <= 1 or box[1] <= 1 or box[0] + box[2] >= iw - 1
                 or box[1] + box[3] >= ih - 1)
@@ -628,7 +631,9 @@ class Mav:
     # ------------------------------------------------------------------ #
     def _on_scan(self, m):
         # Every consumer -- the square-up, the gate check, the orbit's leg
-        # check -- reads the despeckled scan (scan_geometry.despeckle).
+        # check -- reads the despeckled scan (scan_geometry.despeckle). The
+        # gate check also gets the raw ranges for lone returns at gate depth.
+        self._scan_raw = list(m.ranges)
         m.ranges = despeckle(m.ranges)
         self._scan = m
         self._scan_t = self.node.get_clock().now().nanoseconds / 1e9
@@ -684,6 +689,7 @@ class Mav:
                     "reason": ("no usable lidar scan; refusing to call a gate "
                                "open on a measurement that was never taken")}
         scan = self._scan
+        kw.setdefault("raw_ranges", getattr(self, "_scan_raw", None))
         return gate_opening(scan.angle_min, scan.angle_increment, scan.ranges,
                             bearing_rad, half_width_rad,
                             need_clear_m=need_clear_m,

@@ -97,7 +97,6 @@ PARKED_PAYLOAD_OFFSET = (-1.0, 0.8)
 # about it a spec moves (mission2.sdf hangs it at 2.805 m); the posts grow to
 # carry it.
 BOARD_BOTTOM_M = 2.805
-BOARD_BOTTOM_RANGE_M = (1.8, 4.5)
 # Where the organisers put a banner. They may hang it from a rod between the
 # corridor walls, lay it flat on the ground in front of the mouth with its
 # colour facing the sky, or -- as the three qualification cases do -- both.
@@ -350,11 +349,16 @@ def rect_corners(cx, cy, w, h, yaw=0.0):
 
 def linked_return_pose(spec):
     """Where a linked return corridor sits: beside the outbound lane, to its
-    starboard, its entrance level with the outbound EXIT, pointing back.
+    starboard (or port, with ``side: "left"``), its entrance level with the
+    outbound EXIT, pointing back. ``spacing`` is centre to centre, as the GCS
+    enters it; without one the walls stand LANE_GAP apart.
     (x, y, yaw_deg). For the shipped lanes this is (12, -2, 180)."""
     c, r = spec["corridor"], spec["return_corridor"]
-    spacing = (float(c["width"]) + float(r["width"])) / 2 + 2 * WALL_T + LANE_GAP
-    x, y = _place((float(c["length"]), -spacing), c["x"], c["y"],
+    spacing = r.get("spacing")
+    if spacing is None:
+        spacing = (float(c["width"]) + float(r["width"])) / 2 + 2 * WALL_T + LANE_GAP
+    sign = 1.0 if r.get("side", "right") == "left" else -1.0
+    x, y = _place((float(c["length"]), sign * float(spacing)), c["x"], c["y"],
                   math.radians(c["yaw_deg"]))
     yaw = (float(c["yaw_deg"]) + 180.0 + 180.0) % 360.0 - 180.0
     return round(x, 4), round(y, 4), yaw
@@ -677,6 +681,141 @@ def _check_obstacles(spec, errs, warns):
                          f"(velocity_controller passage_half_width) and will "
                          f"stop in front of it")
 
+# ---- arena dimensions (the GCS fields) ----------------------------------------
+#
+# The operator types the organisers' dimensions into the GCS; the world editor
+# takes the SAME fields (mission_bt.arena_dimensions.FIELDS) and builds the
+# world from them, so the arena flown and the arena the aircraft is told about
+# cannot disagree. Positions stay the person's; sizes come from the fields.
+OBSTACLE_ALONG_M = 0.35
+OBSTACLE_HEIGHT_FRAC = 0.95            # of the wall height
+SLALOM_FIRST_M, SLALOM_STEP_M = 1.4, 2.4
+DIMENSION_TOLERANCE_M = 1e-3
+
+
+def arena_dimensions():
+    """mission_bt.arena_dimensions, importable without a ROS workspace."""
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "src", "aerothon_mission", "mission_bt")
+    if path not in sys.path:
+        sys.path.insert(0, path)
+    from mission_bt import arena_dimensions as A
+    return A
+
+
+def gcs_range(group, key):
+    """The (min, max) the GCS accepts for a dimension field, so a world the
+    GCS can describe is never refused here for its size alone."""
+    for g, k, _label, _default, lo, hi, _used in arena_dimensions().FIELDS:
+        if (g, k) == (group, key):
+            return lo, hi
+    raise KeyError(f"{group}.{key}")
+
+
+def slalom_obstacles(length, width, wall_height, reach_frac=0.5):
+    """Alternating blocks, each reaching ``reach_frac`` of the width from a
+    wall, 2.4 m apart from 1.4 m in (the shipped slalom's spacing)."""
+    reach = width * float(reach_frac)
+    v = width / 2.0 - reach / 2.0
+    out, u, side = [], SLALOM_FIRST_M, 1.0
+    while u <= length - 1.0:
+        out.append({"u": round(u, 3), "v": round(side * v, 3), "w": OBSTACLE_ALONG_M,
+                    "d": round(reach, 3),
+                    "h": round(OBSTACLE_HEIGHT_FRAC * wall_height, 3), "yaw_deg": 0.0})
+        u += SLALOM_STEP_M
+        side = -side
+    return out
+
+
+def apply_dimensions(spec, dims):
+    """``spec`` rebuilt to the GCS dimensions ``dims`` (validated; ValueError
+    names the bad field). Kept from the spec: every position and heading, the
+    obstacles' places along the lane and which wall each stands on, the pads,
+    the zone, the fence and the banner's colours."""
+    d = arena_dimensions().validate(dims)
+    out = normalise(spec)
+    c, b, q, rz = d["corridor"], d["banner"], d["qr"], d["red_zone"]
+    lane = {"length": c["length_m"], "width": c["width_m"],
+            "wall_height": c["wall_height_m"]}
+    out["corridor"].update(lane)
+    r = out["return_corridor"]
+    # The GCS spacing and side only mean anything for side-by-side lanes.
+    r.update(lane, linked=True, spacing=c["spacing_m"], side=c["return_side"])
+    reach = d["obstacle"]["reach_frac"] * c["width_m"]
+    if r.get("obstacles"):
+        for o in r["obstacles"]:
+            o["d"] = round(reach, 3)
+            o["v"] = round(math.copysign(c["width_m"] / 2.0 - reach / 2.0,
+                                         float(o.get("v") or 1.0)), 3)
+            o["h"] = round(OBSTACLE_HEIGHT_FRAC * c["wall_height_m"], 3)
+    else:
+        r["obstacles"] = slalom_obstacles(c["length_m"], c["width_m"],
+                                          c["wall_height_m"], d["obstacle"]["reach_frac"])
+    out["banner"].update({
+        "width_m": b["width_m"], "height_m": b["height_m"],
+        "board_bottom_m": b["suspended_bottom_m"], "placement": b["placement"],
+        # The organisers hang it from a rod between the walls; orange marks
+        # every opening the aircraft must not take.
+        "mount": "rod", "orange": True,
+        # The organisers' banners carry no wording.
+        "lettered": False})
+    out["qr"] = {"start_m": q["start_m"], "target_m": q["target_m"]}
+    for zone in out["red_zones"]:
+        zone["w"] = zone["h"] = rz["side_m"]
+    out["dimensions"] = d
+    # normalise() placed the linked lane before the new sizes; place it again.
+    out["return_corridor"].update(zip(("x", "y", "yaw_deg"), linked_return_pose(out)))
+    return out
+
+
+def _check_dimensions(spec, errs, warns):
+    """A spec carrying GCS dimensions must be the world those dimensions build."""
+    dims = spec.get("dimensions")
+    if dims is None:
+        return
+    try:
+        d = arena_dimensions().validate(dims)
+    except (ValueError, TypeError) as error:
+        errs.append(f"arena dimensions: {error}")
+        return
+    c = d["corridor"]
+    expect = [("outbound corridor length", spec["corridor"]["length"], c["length_m"]),
+              ("outbound corridor width", spec["corridor"]["width"], c["width_m"]),
+              ("outbound corridor wall height", spec["corridor"]["wall_height"], c["wall_height_m"]),
+              ("return corridor length", spec["return_corridor"]["length"], c["length_m"]),
+              ("return corridor width", spec["return_corridor"]["width"], c["width_m"]),
+              ("return corridor wall height", spec["return_corridor"]["wall_height"], c["wall_height_m"]),
+              ("start QR", spec["qr"]["start_m"], d["qr"]["start_m"]),
+              ("target QR", spec["qr"]["target_m"], d["qr"]["target_m"]),
+              ("banner width", spec["banner"]["width_m"], d["banner"]["width_m"]),
+              ("banner height", spec["banner"]["height_m"], d["banner"]["height_m"]),
+              ("hung banner lower edge", spec["banner"]["board_bottom_m"],
+               d["banner"]["suspended_bottom_m"])]
+    expect += [(f"red zone {i} side", max(z["w"], z["h"]), d["red_zone"]["side_m"])
+               for i, z in enumerate(spec["red_zones"], 1)]
+    for what, world, gcs in expect:
+        if abs(float(world) - float(gcs)) > DIMENSION_TOLERANCE_M:
+            errs.append(f"the world's {what} {float(world):g} m differs from the arena "
+                        f"dimension {float(gcs):g} m the GCS will send; apply the dimensions")
+    r = spec["return_corridor"]
+    if not r.get("linked", True):
+        errs.append("with arena dimensions the return corridor stays linked: the GCS "
+                    "spacing and return side place it")
+    elif (abs(float(r.get("spacing", -1.0)) - c["spacing_m"]) > DIMENSION_TOLERANCE_M
+          or r.get("side", "right") != c["return_side"]):
+        errs.append("the return corridor's spacing or side differs from the arena "
+                    "dimensions; apply the dimensions")
+    if spec["banner"].get("placement") != d["banner"]["placement"]:
+        errs.append("the banner placement differs from the arena dimensions")
+    fence = fence_polygon(spec)
+    xs, ys = [p[0] for p in fence], [p[1] for p in fence]
+    extent = sorted((max(xs) - min(xs), max(ys) - min(ys)))
+    hall = sorted((d["hall"]["length_m"], d["hall"]["width_m"]))
+    if extent[0] > hall[0] + 1e-6 or extent[1] > hall[1] + 1e-6:
+        warns.append(f"the geofence spans {extent[1]:.1f} x {extent[0]:.1f} m, larger "
+                     f"than the {hall[1]:g} x {hall[0]:g} m hall in the arena dimensions")
+
+
 def validate(spec):
     """(errors, warnings). An error is a world the mission cannot legally fly
     or the simulator cannot build; a warning is legal but worth a second look.
@@ -697,13 +836,14 @@ def validate(spec):
     if spec["start_target"] not in PAD_LETTERS + ("random",):
         errs.append("start target must be a, b, c, d, e or random")
     bottom = float(spec["banner"]["board_bottom_m"])
-    if not BOARD_BOTTOM_RANGE_M[0] <= bottom <= BOARD_BOTTOM_RANGE_M[1]:
-        errs.append(f"banner board bottom {bottom:g} m is outside "
-                    f"{BOARD_BOTTOM_RANGE_M[0]:g}-{BOARD_BOTTOM_RANGE_M[1]:g} m")
+    lo, hi = gcs_range("banner", "suspended_bottom_m")
+    if not lo <= bottom <= hi:
+        errs.append(f"banner board bottom {bottom:g} m is outside {lo:g}-{hi:g} m")
     b = spec["banner"]
     bw, bh = float(b.get("width_m", BOARD_SIZE_M[0])), float(b.get("height_m", BOARD_SIZE_M[1]))
-    if not (0.5 <= bw <= 6.0 and 0.1 <= bh <= 3.0):
-        errs.append(f"banner {bw:g} x {bh:g} m is outside 0.5-6 x 0.1-3 m")
+    (wlo, whi), (hlo, hhi) = gcs_range("banner", "width_m"), gcs_range("banner", "height_m")
+    if not (wlo <= bw <= whi and hlo <= bh <= hhi):
+        errs.append(f"banner {bw:g} x {bh:g} m is outside {wlo:g}-{whi:g} x {hlo:g}-{hhi:g} m")
     mount = b.get("mount", "posts")
     if mount not in BANNER_MOUNTS:
         errs.append(f"banner mount {mount!r} must be one of " + ", ".join(BANNER_MOUNTS))
@@ -762,8 +902,8 @@ def validate(spec):
     takeoff = takeoff_polygon(spec)
     for name, c in (("outbound corridor", spec["corridor"]),
                     ("return corridor", spec["return_corridor"])):
-        for key, lo, hi in (("length", 4.0, 40.0), ("width", 2.0, 8.0),
-                            ("wall_height", 2.0, 8.0)):
+        for key in ("length", "width", "wall_height"):
+            lo, hi = gcs_range("corridor", key + "_m")
             v = float(c[key])
             if not lo <= v <= hi:
                 errs.append(f"the {name}'s {key.replace('_', ' ')} {v:g} m is "
@@ -776,6 +916,7 @@ def validate(spec):
                         _lane_inset(spec["return_corridor"], 0.05)):
         errs.append("the outbound and return corridors overlap")
     _check_obstacles(spec, errs, warns)
+    _check_dimensions(spec, errs, warns)
     # The mission finds the outbound banner FROM the take-off point (camera
     # sweep, then lidar square-up) and treats a banner beyond 80% of the 12 m
     # lidar range as the far gate. A world that breaks either is legal, but

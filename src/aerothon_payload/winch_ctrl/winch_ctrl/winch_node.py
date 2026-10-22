@@ -53,10 +53,16 @@ class WinchNode(Node):
         p("hover_stable_samples", 5)
         p("publish_rate_hz", 5.0)
         p("stow_rate_mps", 0.45)
-        # backend:=mavlink -- the FC's WNCH_RATE_MAX, at which ArduPilot's
-        # relative-length control actually reels (it ignores the requested
-        # rate). Must equal the parameter loaded on the FC.
+        # backend:=mavlink -- the expected FC WINCH_RATE_MAX, at which
+        # ArduPilot's relative-length control actually reels (it ignores the
+        # requested rate). The estimate uses the value READ BACK from the FC;
+        # lowering is refused until it has been read, and a mismatch is logged.
         p("fc_rate_max_mps", 0.30)
+        # With a measured line (sim joint feedback): a stow that leaves more
+        # than stow_window_m out is re-sent after this long without progress,
+        # at most stow_retries times, then faults instead of reporting stowed.
+        p("stow_stall_s", 2.0)
+        p("stow_retries", 3)
         # HOW THE PAYLOAD LEAVES THE HOOK.
         #   gravity  the team's mechanism: a motor lowers a gravity-assisted
         #            hook that lets go by itself once the payload rests on the
@@ -110,8 +116,17 @@ class WinchNode(Node):
         self.pub_status = self.create_publisher(String, "/winch/status", 10)
 
         self.cli_cmd = None
+        self.cli_param = None
+        self.fc_winch = None         # (WINCH_TYPE, WINCH_RATE_MAX) read from the FC
+        self._param_future = None
+        self._param_t = None
+        self._stow_retries = 0
+        self._stow_progress = None   # (accumulated s, measured m) at last progress
+        self._stow_clock = 0.0
         if self.backend == "mavlink" and _HAVE_MAVROS:
             self.cli_cmd = self.create_client(CommandLong, "/mavros/cmd/command")
+            from rcl_interfaces.srv import GetParameters
+            self.cli_param = self.create_client(GetParameters, "/mavros/param/get_parameters")
         self.pub_gz_payout = None
         self.hook_open = False       # no physical release sensor fitted
         if self.backend == "gazebo":
@@ -185,6 +200,13 @@ class WinchNode(Node):
                 f"(expected one of {VALID_COMMANDS})")
             return
 
+        # A replacement motion/stop intent supersedes a release refusal. On
+        # the bench its altitude interlock can never become true, so retaining
+        # that refusal made safe stow fail and kept flight readiness blocked.
+        # Backend/encoder failures remain latched and visible.
+        if cmd in ("lower", "stow", "stop") and self.fault.startswith("release refused:"):
+            self.fault = ""
+
         if cmd == "stop":
             if self.state == "IDLE" or self.state == "RELEASED":
                 return
@@ -198,6 +220,16 @@ class WinchNode(Node):
             if self.released:
                 self._set_fault("cannot lower: payload already released")
                 return
+            if self.backend == "mavlink":
+                # Without the FC's own reel rate the payout estimate is a guess,
+                # and a stow by that estimate left line hanging below the aircraft.
+                if self.fc_winch is None:
+                    self._set_fault("winch lower refused: FC WINCH_TYPE/WINCH_RATE_MAX not read back")
+                    return
+                if self.fc_winch[0] <= 0 or self.fc_winch[1] <= 0:
+                    self._set_fault(f"winch lower refused: FC winch disabled (WINCH_TYPE {self.fc_winch[0]}, "
+                                    f"WINCH_RATE_MAX {self.fc_winch[1]:g})")
+                    return
             self.state = "LOWERING"
             self._send_backend("lower")
 
@@ -213,6 +245,11 @@ class WinchNode(Node):
             if not ok:
                 # Refuse, loudly. A silent no-op here is how the mission
                 # believed it had delivered when it had not.
+                if self.fault and not self.fault.startswith("release refused:"):
+                    # Do not relabel a hardware fault as a transient refusal:
+                    # integrate() is allowed to clear only the latter.
+                    self.get_logger().warning("release refused: " + "; ".join(blockers))
+                    return
                 self._set_fault("release refused: " + "; ".join(blockers))
                 return
             self.released = True
@@ -226,6 +263,8 @@ class WinchNode(Node):
             if self.state == "STOWING":
                 return
             self.state = "STOWING"
+            self._stow_retries = 0
+            self._stow_progress = None
             self._send_backend("stow")
 
     def _set_fault(self, reason):
@@ -362,6 +401,7 @@ class WinchNode(Node):
         now = self._now()
         dt = max(0.0, now - self._last_tick)
         self._last_tick = now
+        self._request_fc_winch(now)
         self.integrate(dt)
         if self.pub_gz_payout is not None:
             self.pub_gz_payout.publish(Float64(data=float(self.payout)))
@@ -388,12 +428,16 @@ class WinchNode(Node):
             return
         lower_rate = float(self.get_parameter("payout_rate_mps").value)
         stow_rate = float(self.get_parameter("stow_rate_mps").value)
+        measured = self._measured()
+        if measured is not None:
+            self._integrate_line(measured, dt)
+            return
         if self.backend == "mavlink":
             # ArduPilot's length control ignores DO_WINCH's rate and reels at
-            # WNCH_RATE_MAX, both ways; and nothing moves before the FC accepts.
+            # WINCH_RATE_MAX, both ways; and nothing moves before the FC accepts.
             if not getattr(self, "_mav_accepted", False):
                 return
-            lower_rate = stow_rate = float(self.get_parameter("fc_rate_max_mps").value)
+            lower_rate = stow_rate = self.fc_rate_max()
         if self.state == "LOWERING":
             self.payout = min(
                 float(self.get_parameter("max_payout_m").value),
@@ -407,6 +451,87 @@ class WinchNode(Node):
             if self.payout <= 1e-3:
                 self.payout = 0.0
                 self.state = "RELEASED" if self.released else "IDLE"
+
+    def fc_rate_max(self):
+        """The FC's reel rate: read back when known, else the configured one."""
+        if self.fc_winch is not None and self.fc_winch[1] > 0:
+            return float(self.fc_winch[1])
+        return float(self.get_parameter("fc_rate_max_mps").value)
+
+    def _request_fc_winch(self, now):
+        """Read WINCH_TYPE and WINCH_RATE_MAX from the FC (MAVROS parameters),
+        then again every 10 s so a changed parameter is noticed."""
+        if self.cli_param is None or self._param_future is not None:
+            return
+        if self._param_t is not None and now - self._param_t < (10.0 if self.fc_winch else 2.0):
+            return
+        if not self.cli_param.service_is_ready():
+            return
+        from rcl_interfaces.srv import GetParameters
+        self._param_t = now
+        self._param_future = self.cli_param.call_async(
+            GetParameters.Request(names=["WINCH_TYPE", "WINCH_RATE_MAX"]))
+        if self._param_future is not None and hasattr(self._param_future, "add_done_callback"):
+            self._param_future.add_done_callback(self._on_fc_params_reply)
+
+    def _on_fc_params_reply(self, future):
+        self._param_future = None
+        try:
+            values = future.result().values
+        except Exception:  # noqa: BLE001 - try again on the next period
+            return
+        self.on_fc_winch_params(values)
+
+    def on_fc_winch_params(self, values):
+        """rcl ParameterValues for (WINCH_TYPE, WINCH_RATE_MAX); type 0 = unset."""
+        def number(v):
+            return {2: v.integer_value, 3: v.double_value}.get(v.type)
+        if len(values) != 2 or None in (number(values[0]), number(values[1])):
+            return
+        winch = (int(number(values[0])), float(number(values[1])))
+        expected = float(self.get_parameter("fc_rate_max_mps").value)
+        if winch != self.fc_winch and abs(winch[1] - expected) > 0.005:
+            self.get_logger().warning(
+                f"FC WINCH_RATE_MAX {winch[1]:g} m/s differs from fc_rate_max_mps "
+                f"{expected:g}; estimating with the FC's value")
+        self.fc_winch = winch
+
+    def _measured(self, max_age=0.5):
+        """A fresh measured line length (simulation joint), or None."""
+        if self.gpio is not None or self.measured_payout is None or self._measurement_t is None:
+            return None
+        return self.measured_payout if self._now() - self._measurement_t <= max_age else None
+
+    def _integrate_line(self, measured, dt):
+        """The measured line drives the state machine: lowered, at the limit,
+        or stowed only once the line is MEASURED in."""
+        self.payout = measured
+        if self.state == "LOWERING" and self.at_limit():
+            self.state = "AT_LIMIT"
+        if self.state != "STOWING":
+            return
+        window = float(self.get_parameter("stow_window_m").value)
+        if measured <= window:
+            self.payout = 0.0
+            self.state = "RELEASED" if self.released else "IDLE"
+            return
+        # Still out: re-send the stow by the MEASURED length when it stalls.
+        self._stow_clock += dt
+        if self._stow_progress is None or measured < self._stow_progress[1] - 0.02:
+            self._stow_progress = (self._stow_clock, measured)
+            return
+        if self._stow_clock - self._stow_progress[0] < float(self.get_parameter("stow_stall_s").value):
+            return
+        if self._stow_retries >= int(self.get_parameter("stow_retries").value):
+            self._set_fault(f"line not retracted: measured {measured:.2f} m out after "
+                            f"{self._stow_retries} further stow command(s)")
+            return
+        self._stow_retries += 1
+        self._stow_progress = (self._stow_clock, measured)
+        self.get_logger().warning(
+            f"stow stalled with {measured:.2f} m measured out; re-sending stow "
+            f"({self._stow_retries})")
+        self._send_backend("stow")
 
     def _integrate_measured(self):
         """Measured encoder travel drives the same state machine."""
@@ -438,7 +563,10 @@ class WinchNode(Node):
             "measured_payout_m": self.measured_payout,
             "measurement_age_s": None if self._measurement_t is None else max(0.0, self._now()-self._measurement_t),
             "payout_basis": ("measured N20 encoder travel" if self.gpio is not None
+                             else "measured winch joint" if self._measured() is not None
                              else "integrated commanded motor rate; no encoder"),
+            "fc_winch_type": None if self.fc_winch is None else self.fc_winch[0],
+            "fc_rate_max_mps": None if self.fc_winch is None else self.fc_winch[1],
             "released": None,
             "release_requested": self.released,
             "hook": self.get_parameter("hook").value,

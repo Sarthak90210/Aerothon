@@ -85,6 +85,9 @@ class VelocityController(Node):
         p('min_gap_width_deg', 14.0)  # narrower than this is not a way through
         # Hard centre-to-surface clearance, also enforced by LocalPlanner.
         p('passage_half_width', 0.7)
+        # The lowest passage_half_width the planner accepts. 0.70 m (rulebook)
+        # on the aircraft; only a simulation venue file lowers it (>= 0.45).
+        p('clearance_floor_m', 0.7)
         p('airframe_radius', 0.4)
         p('passage_comfort_width', 1.3)
         p('lookahead_m', 5.0)
@@ -103,6 +106,11 @@ class VelocityController(Node):
 
         # Escalation
         p('blocked_ticks_before_backoff', 30)
+        # A few cm inside the clearance in a narrow slot: sidestep back out
+        # along the measured clearance gradient at this speed, for at most
+        # this many ticks per attempt, before it counts as blocked.
+        p('recentre_speed', 0.15)
+        p('recentre_ticks_max', 40)
         p('corridor_open_m', 3.5)         # side clearance meaning "not in a corridor"
         p('corridor_open_ticks', 15)      # sustained open before declaring exit
         p('corridor_enter_ticks', 10)     # sustained ENCLOSED before "inside"
@@ -139,6 +147,7 @@ class VelocityController(Node):
         self._scan_t = None
         self.state = "CRUISE"
         self._blocked = 0
+        self._recentre_ticks = 0
         self._backoff = 0
         self._backoffs_done = 0
         self._last_detail = {}
@@ -169,7 +178,9 @@ class VelocityController(Node):
         self._tf_buffer = self._tf_listener = None
         self._mount_frames = {str(self._g('body_frame'))}
         self._planner = LocalPlanner(float(self._g('passage_half_width')),
-                                     occupied_radius=float(self._g('airframe_radius')))
+                                     occupied_radius=float(self._g('airframe_radius')),
+                                     # unset/0 means the aircraft's 0.70 m
+                                     clearance_floor=float(self._g('clearance_floor_m')) or 0.70)
         self._path_world = []
         self._plan_t = None
         self._open_ticks = 0
@@ -233,6 +244,7 @@ class VelocityController(Node):
             self._alt_motion_fault = ''
             self.state = "CRUISE"
             self._blocked = 0
+            self._recentre_ticks = 0
             self._backoff = 0
             self._backoffs_done = 0
             self._progress_ref = None
@@ -1242,6 +1254,22 @@ class VelocityController(Node):
             self.get_logger().warning(
                 "gap present but no ground covered; treating as blocked")
             gap = None
+
+        recentre = getattr(self._planner, 'recentre', None)
+        if (gap is None and recentre is not None
+                and getattr(self, '_recentre_ticks', 0) < int(self._g('recentre_ticks_max'))):
+            # Inside the clearance by at most RECENTRE_SLACK (narrow slot,
+            # a few cm of drift): sidestep out along the clearance gradient
+            # instead of treating the slot as blocked (shipped_20kmh_r9b).
+            self._recentre_ticks = getattr(self, '_recentre_ticks', 0) + 1
+            self.state = "RECENTRE"
+            speed = float(self._g('recentre_speed'))
+            self._publish(speed * recentre[0], speed * recentre[1], front, 0.0,
+                          {"recovery_reason": "inside clearance; recentring",
+                           "recentre_ticks": self._recentre_ticks})
+            return
+        if gap is not None:
+            self._recentre_ticks = 0
 
         if gap is None:
             self._blocked += 1

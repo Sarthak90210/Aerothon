@@ -56,8 +56,8 @@ from collections import deque
 
 from perception_banner import colours
 from perception_banner.photometry import normalise
-from perception_redzone.georef import (GroundGrid, bbox, footprint,
-                                       ground_point_q)
+from perception_redzone.georef import (GroundGrid, bbox, camera_axes, footprint,
+                                       ground_point_q, rotate_by_quaternion)
 
 from perception_redzone.partial_boundary import partial_boundaries
 
@@ -82,6 +82,13 @@ class RedZoneNode(Node):
         # ---- geometry ----
         p('camera_hfov', 1.0472)
         p('nadir_pitch_tol_rad', 0.35)  # how far off nadir still georeferences
+        # A measured joint (Gazebo, or the sim gateway) is body-relative and
+        # projected with the capture-time attitude, so it need not equal the
+        # REQUESTED angle: an earth-stabilised mount compensating a nose-down
+        # pitch is off its request by the pitch yet measured exactly. What the
+        # projection needs is a fresh reading that is not mid-slew.
+        p('joint_max_age_s', 0.3)
+        p('joint_max_rate_dps', 15.0)
         p('min_altitude_m', 1.5)        # below this the projection is useless
         # ---- accumulation ----
         p('cell_m', 1.0)
@@ -103,6 +110,8 @@ class RedZoneNode(Node):
         # difference smeared the map by metres.
         self._poses = deque(maxlen=400)
         self._cam_pitch = None
+        self._cam_joint = False         # _cam_pitch is a measured body-relative joint
+        self._cam_reason = "camera pose unknown or still moving"
         self._hfov = float(self._g('camera_hfov'))
 
         topic = self._g('image_topic')
@@ -162,17 +171,39 @@ class RedZoneNode(Node):
             d = json.loads(m.data)
         except (ValueError, TypeError):
             return
-        # camera_ctrl reports the angle it has READ BACK from /joint_states,
-        # not the one it commanded. Only a settled pose is worth projecting
-        # through: mid-slew the geometry is a guess.
-        if not d.get("settled", False) or d.get("stale", False):
-            self._cam_pitch = None
-            return
+        # camera_ctrl reports the angle it has READ BACK, not the one it
+        # commanded. Mid-slew the geometry is a guess, so a slewing or old
+        # reading is never projected through.
         angle = d.get("actual_rad")
-        if angle is not None:
-            # camera_ctrl's convention is negative = down (goal.md Q18);
-            # georef takes positive-down.
-            self._cam_pitch = -float(angle)
+        if d.get("readback") == "joint":
+            # Measured body-relative joint: fresh and steady is enough (the
+            # line of sight is checked against the capture-time attitude).
+            age, rate = d.get("age_s"), d.get("rate_dps")
+            if angle is None or d.get("stale", False) or age is None \
+                    or age > float(self._g('joint_max_age_s')):
+                return self._no_camera("camera reading stale")
+            if rate is None or rate > float(self._g('joint_max_rate_dps')):
+                return self._no_camera("camera still moving")
+            self._cam_joint = True
+        else:
+            # Timed or flight-controller mount read-back: unchanged, settled.
+            if not d.get("settled", False) or d.get("stale", False) or angle is None:
+                return self._no_camera("camera pose unknown or still moving")
+            self._cam_joint = False
+        # camera_ctrl's convention is negative = down (goal.md Q18);
+        # georef takes positive-down.
+        self._cam_pitch = -float(angle)
+
+    def _no_camera(self, reason):
+        self._cam_pitch = None
+        self._cam_reason = reason
+
+    def line_of_sight_off_nadir(self, quat):
+        """Angle (rad) between the optical axis and straight down, with the
+        aircraft attitude `quat` (w, x, y, z) applied to the body-relative joint."""
+        optical, _r, _d = camera_axes(self._cam_pitch)
+        _x, _y, z = rotate_by_quaternion(quat, optical)
+        return math.acos(max(-1.0, min(1.0, -z)))
 
     # ------------------------------------------------------------------ #
     def can_georeference(self):
@@ -180,10 +211,12 @@ class RedZoneNode(Node):
         if self._pose is None:
             return False, "no aircraft pose"
         if self._cam_pitch is None:
-            return False, "camera pose unknown or still moving"
+            return False, self._cam_reason
         alt = self._pose[2]
         if alt < float(self._g('min_altitude_m')):
             return False, f"altitude {alt:.1f} m too low to project"
+        if self._cam_joint:
+            return True, ""     # line of sight checked at capture (on_image)
         off_nadir = abs(self._cam_pitch - math.pi / 2)
         if off_nadir > float(self._g('nadir_pitch_tol_rad')):
             return False, (f"camera {math.degrees(off_nadir):.0f} deg off nadir; "
@@ -279,6 +312,11 @@ class RedZoneNode(Node):
         pose = self.pose_at(capture) if capture>0 else None
         if pose is None:
             ok,why = False,'no fresh aircraft pose at camera capture time'
+        elif ok and self._cam_joint:
+            off = self.line_of_sight_off_nadir(pose[4])
+            if off > float(self._g('nadir_pitch_tol_rad')):
+                ok, why = False, (f"camera line of sight {math.degrees(off):.0f} deg "
+                                  "off nadir; view runs to the horizon")
         cnts, frac = [], 0.0
         provisional = []
         if ok:
@@ -299,9 +337,16 @@ class RedZoneNode(Node):
                   "observed": None}
 
         if ok:
-            px, py, pz, yaw, _q = pose
-            fp = footprint((w, h), self._hfov, pz, (px, py), yaw,
-                           self._cam_pitch)
+            px, py, pz, yaw, q = pose
+            if self._cam_joint:
+                # Body-relative joint: the corners need the full attitude too.
+                fp = [ground_point_q(u, v, (w, h), self._hfov, pz, (px, py), q,
+                                     self._cam_pitch)
+                      for u, v in ((0, 0), (w, 0), (w, h), (0, h))]
+                fp = None if None in fp else fp
+            else:
+                fp = footprint((w, h), self._hfov, pz, (px, py), yaw,
+                               self._cam_pitch)
             detail["observed"] = [round(v, 2) for v in bbox(fp)] if fp else None
             # CLEAR is now a real claim: this bounded patch of ground was
             # looked at, and there was no red on it.

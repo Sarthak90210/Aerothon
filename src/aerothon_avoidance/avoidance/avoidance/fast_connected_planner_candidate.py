@@ -14,13 +14,24 @@ from avoidance.local_planner import LocalPlanner
 # and a gap too narrow for it is still flown on the sampling reserve alone.
 TRACKING_RESERVE=.10
 SAMPLING_RESERVE=.025
+# An aircraft at most this far INSIDE the hard clearance is not refused
+# outright: the planner reports the way back out (the measured clearance
+# gradient) and the controller sidesteps along it. World 'shipped''s return
+# slalom leaves a 0.98 m slot against a 2 x 0.45 m requirement, so 4 cm of
+# drift put the aircraft 1 cm inside, and every tick read "aircraft lacks
+# required surface clearance" until the navigator gave up STUCK
+# (shipped_20kmh_r9b). Nothing is flown inside the clearance: the sidestep
+# only ever increases it, and every planned segment is still certified.
+RECENTRE_SLACK=.03
 
 
 class FastConnectedPlanner(LocalPlanner):
     def plan(self, axis_bearing=0.):
         self.path=[]
+        self.recentre=None
         if not self.segment_clear((0,0),(0,0)):
             self.reason='aircraft lacks required surface clearance'
+            self.recentre=self._recentre_direction()
             return []
         straight=(self.lookahead*math.cos(axis_bearing),self.lookahead*math.sin(axis_bearing))
         straight_clear=self.segment_clear((0,0),straight)
@@ -33,7 +44,29 @@ class FastConnectedPlanner(LocalPlanner):
         if straight_clear:
             self.path,self.reason=[(0,0),straight],'connected lidar path'
             return self.path
-        return self._plan_graph(axis_bearing,SAMPLING_RESERVE)
+        path=self._plan_graph(axis_bearing,SAMPLING_RESERVE)
+        if path:
+            return path
+        # A slot narrower than 2 x (clearance + sampling reserve) has no
+        # lattice cell inside the reserve band. Search at the hard clearance
+        # itself; the shortcut pass still certifies every segment against it.
+        return self._plan_graph(axis_bearing,0.)
+
+    def _recentre_direction(self, h=.03):
+        """Unit body-frame direction of increasing clearance when the origin
+        is within RECENTRE_SLACK inside the hard clearance; else None."""
+        here=float(self.distances([(0.,0.)])[0])
+        if not (self.clearance-RECENTRE_SLACK <= here < self.clearance):
+            return None
+        d=self.distances([(h,0.),(-h,0.),(0.,h),(0.,-h)])
+        gx,gy=float(d[0]-d[1]),float(d[2]-d[3])
+        norm=math.hypot(gx,gy)
+        if norm<1e-6:
+            return None
+        ux,uy=gx/norm,gy/norm
+        if float(self.distances([(h*ux,h*uy)])[0])<=here:
+            return None
+        return ux,uy
 
     def _least_clearance(self, start, end):
         samples=np.linspace(start,end,max(2,int(math.dist(start,end)/.05)+2))

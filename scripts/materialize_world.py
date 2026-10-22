@@ -267,9 +267,15 @@ def ground_banner_geometry(wear: int = 0, colour=None,
     return "\n".join(visuals)
 
 
-def red_zone_visuals(width: float, height: float, prefix: str) -> str:
-    """Raised white border and RED ZONE block text over the existing red base."""
-    t = min(width, height) * 0.055
+def red_zone_visuals(width: float, height: float, prefix: str, text: bool = True,
+                     border: float = None) -> str:
+    """Raised white border and RED ZONE block text over the existing red base.
+
+    ``text=False``: the border alone. The organisers' zones carry no wording,
+    and a world built in the world editor prints none. ``border``: its width
+    (the GCS's "Red zone border"), else 5.5% of the shorter side.
+    """
+    t = float(border) if border else min(width, height) * 0.055
     z = 0.066
     visuals = [
         box_visual(f"{prefix}_border_n", f"0 {height/2-t/2:.4f} {z}", f"{width} {t} 0.022", WHITE),
@@ -277,6 +283,8 @@ def red_zone_visuals(width: float, height: float, prefix: str) -> str:
         box_visual(f"{prefix}_border_e", f"{width/2-t/2:.4f} 0 {z}", f"{t} {height} 0.022", WHITE),
         box_visual(f"{prefix}_border_w", f"{-width/2+t/2:.4f} 0 {z}", f"{t} {height} 0.022", WHITE),
     ]
+    if not text:
+        return "\n        ".join(visuals)
     rows = bitmap_runs("RED ZONE")
     cols = len(rows[0])
     cell_x = width * 0.68 / cols
@@ -1048,7 +1056,10 @@ def _replace_in_model(world, model, old, new):
     return world[:i] + block.replace(old, new) + world[j:]
 
 
-def red_zone_model(name, r, prefix):
+def red_zone_model(name, r, prefix, base=None, text=True, border=None):
+    """``base``: the red zone's printed material (the supplied red), or the
+    simulator's own red. ``text``/``border``: as red_zone_visuals."""
+    base = base or RED_BASE_MATERIAL
     w, h = float(r["w"]), float(r["h"])
     yaw = math.radians(float(r.get("yaw_deg", 0.0)))
     return (f'\n    <model name="{name}">\n      <static>true</static>\n'
@@ -1056,8 +1067,8 @@ def red_zone_model(name, r, prefix):
             f'        <collision name="collision"><geometry><box><size>{w:.3f} '
             f'{h:.3f} 0.10</size></box></geometry></collision>\n'
             f'        <visual name="base"><geometry><box><size>{w:.3f} {h:.3f} '
-            f'0.10</size></box></geometry>{RED_BASE_MATERIAL}</visual>\n'
-            f'        {red_zone_visuals(w, h, prefix)}\n'
+            f'0.10</size></box></geometry>{base}</visual>\n'
+            f'        {red_zone_visuals(w, h, prefix, text, border)}\n'
             f'      </link>\n'
             f'      <pose>{float(r["x"]):.3f} {float(r["y"]):.3f} 0.10 0 0 {yaw:.4f}</pose>\n'
             f'    </model>')
@@ -1136,9 +1147,14 @@ def apply_spec(world: str, spec: dict):
                  "restricted_red_zone_south"):
         world = _remove_model(world, name)
     reds, red_text = {}, ""
+    supplied_red = (spec["banner"].get("colours") or {}).get("red")
+    red_base = material(*world_spec.print_colour(supplied_red)) if supplied_red else None
+    red_border = ((spec.get("dimensions") or {}).get("red_zone") or {}).get("border_m")
     for n, rz in enumerate(spec["red_zones"], 1):
         name = f"restricted_red_zone_{n}"
-        red_text += red_zone_model(name, rz, f"red_{n}")
+        # No wording on the organisers' zones; the border the GCS records.
+        red_text += red_zone_model(name, rz, f"red_{n}", red_base, text=False,
+                                   border=red_border)
         reds[name] = [round(float(rz["x"]), 3), round(float(rz["y"]), 3),
                       round(float(rz["w"]), 3), round(float(rz["h"]), 3),
                       round(math.radians(float(rz.get("yaw_deg", 0.0))), 5)]

@@ -124,6 +124,39 @@ class CameraCtrlTests(unittest.TestCase):
         self.assertTrue(st["settled"], f"should have settled: {st}")
         self.assertLess(st["error_deg"], 1.0)
 
+    def fake_clock(self):
+        t = [100.0]
+        self.node._now = lambda: t[0]
+        return t
+
+    def test_rate_is_unknown_until_readings_span_time(self):
+        self.node.request("NADIR")
+        self.fake_clock()
+        self.node._on_joint_states(joint_state(-math.pi / 2))
+        self.node._on_joint_states(joint_state(-math.pi / 2))
+        self.assertIsNone(self.last_state()["rate_dps"])
+
+    def test_a_steady_mount_reads_zero_rate_even_off_its_request(self):
+        # Earth-stabilised mount under a 15 deg nose-down pitch: the joint sits
+        # at -75 deg, off the -90 request, and does not move.
+        self.node.request("NADIR")
+        t = self.fake_clock()
+        for _ in range(10):
+            self.node._on_joint_states(joint_state(math.radians(-75.0)))
+            t[0] += 0.02
+        st = self.last_state()
+        self.assertAlmostEqual(st["rate_dps"], 0.0, places=6)
+        self.assertFalse(st["settled"])     # `settled` keeps its meaning
+
+    def test_a_slew_reads_its_rate(self):
+        self.node.request("NADIR")
+        t = self.fake_clock()
+        for k in range(16):                 # 0 -> -45 deg over 0.30 s
+            self.node._on_joint_states(joint_state(math.radians(-3.0 * k)))
+            t[0] += 0.02
+        # The window keeps the last 0.3 s: 150 deg/s.
+        self.assertAlmostEqual(self.last_state()["rate_dps"], 150.0, delta=5.0)
+
     def test_single_in_tolerance_sample_is_not_enough(self):
         self.node.request("NADIR")
         self.node._on_joint_states(joint_state(-math.pi / 2))

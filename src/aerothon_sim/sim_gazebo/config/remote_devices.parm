@@ -7,8 +7,11 @@ MNT1_DEFLT_MODE 2
 SERVO9_FUNCTION 7
 SERVO9_MIN 1000
 SERVO9_MAX 2000
+# The aircraft's rate (aerothon_hardware.parm) and winch_ctrl's fc_rate_max_mps:
+# at 1.0 the simulated line ran 3.3x faster than the payout estimate, stow left
+# 2.6 m out and the hook dragged through the return corridor (20 Oct 2026).
 WINCH_TYPE 1
-WINCH_RATE_MAX 1.0
+WINCH_RATE_MAX 0.30
 SERVO10_FUNCTION 88
 SERVO10_MIN 1000
 SERVO10_MAX 2000

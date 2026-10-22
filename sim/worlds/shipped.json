@@ -2,74 +2,172 @@
   "schema": "aerothon-world/1",
   "name": "shipped",
   "takeoff": {
-    "x": -1.0,
-    "y": 0.0,
-    "yaw_deg": 0.0
+    "x": -2.5,
+    "y": 0,
+    "yaw_deg": 0
   },
   "corridor": {
-    "x": 2.0,
-    "y": 2.0,
-    "yaw_deg": 0.0
+    "x": 5,
+    "y": 1.5,
+    "yaw_deg": 0,
+    "length": 5,
+    "width": 2,
+    "wall_height": 3.048
+  },
+  "return_corridor": {
+    "linked": true,
+    "x": 10,
+    "y": -2.5,
+    "yaw_deg": -180,
+    "length": 5,
+    "width": 2,
+    "wall_height": 3.048,
+    "obstacles": [
+      {
+        "yaw_deg": 0,
+        "u": 1.4,
+        "v": 0.5,
+        "w": 0.35,
+        "d": 1,
+        "h": 2.896
+      },
+      {
+        "yaw_deg": 0,
+        "u": 3.8,
+        "v": -0.5,
+        "w": 0.35,
+        "d": 1,
+        "h": 2.896
+      }
+    ],
+    "spacing": 4,
+    "side": "right"
   },
   "delivery_zone": {
-    "x": 32.0,
-    "y": 0.0,
-    "w": 40.0,
-    "h": 30.0
+    "x": 32,
+    "y": 0,
+    "w": 40,
+    "h": 30
   },
   "geofence": {
-    "mode": "auto",
-    "margin": 6.0
+    "mode": "polygon",
+    "margin": 6,
+    "vertices": [
+      [
+        -9.5,
+        -16.5
+      ],
+      [
+        17,
+        -23
+      ],
+      [
+        58,
+        -21
+      ],
+      [
+        58.5,
+        18
+      ],
+      [
+        27.5,
+        17.5
+      ],
+      [
+        -4,
+        16
+      ]
+    ]
   },
   "red_zones": [
     {
-      "x": 38.0,
-      "y": 5.0,
-      "w": 10.0,
-      "h": 7.0,
-      "yaw_deg": 0.0
-    },
-    {
-      "x": 29.0,
-      "y": 10.0,
-      "w": 6.0,
-      "h": 4.0,
-      "yaw_deg": 0.0
-    },
-    {
-      "x": 40.0,
-      "y": -11.0,
-      "w": 7.0,
-      "h": 4.0,
-      "yaw_deg": 0.0
+      "yaw_deg": 0,
+      "x": 36.5,
+      "y": 2,
+      "w": 2.524,
+      "h": 2.524
     }
   ],
   "pads": {
     "a": {
-      "x": 21.0,
-      "y": 10.0
+      "x": 47,
+      "y": 10.5
     },
     "b": {
-      "x": 47.0,
-      "y": 10.0
+      "x": 20.5,
+      "y": 11
     },
     "c": {
-      "x": 23.0,
-      "y": 1.0
+      "x": 23,
+      "y": 1
     },
     "d": {
-      "x": 33.0,
-      "y": -10.0
+      "x": 33,
+      "y": -10
     },
     "e": {
-      "x": 45.0,
-      "y": -6.0
+      "x": 45,
+      "y": -6
     }
   },
   "decoys": [],
-  "start_target": "random",
+  "start_target": "a",
   "qr": {
-    "start_m": 2.2,
-    "target_m": 3.0
+    "start_m": 2,
+    "target_m": 3
+  },
+  "banner": {
+    "board_bottom_m": 1.8980000000000001,
+    "placement": "both",
+    "lettered": false,
+    "colours": {
+      "orange": "#EB5A0A"
+    },
+    "width_m": 1.8,
+    "height_m": 1,
+    "mount": "rod",
+    "orange": true
+  },
+  "conditions": {
+    "preset": "calm"
+  },
+  "dimensions": {
+    "corridor": {
+      "length_m": 5,
+      "width_m": 2,
+      "wall_height_m": 3.048,
+      "nav_height_m": 2.4384,
+      "spacing_m": 4,
+      "return_side": "right"
+    },
+    "hall": {
+      "length_m": 80,
+      "width_m": 45,
+      "ceiling_m": 30
+    },
+    "banner": {
+      "width_m": 1.8,
+      "height_m": 1,
+      "border_m": 0.07619999999999999,
+      "suspended_bottom_m": 1.8980000000000001,
+      "placement": "both"
+    },
+    "qr": {
+      "target_m": 3,
+      "start_m": 2,
+      "border_m": 0.07619999999999999
+    },
+    "red_zone": {
+      "side_m": 2.524,
+      "border_m": 0.1524
+    },
+    "payload": {
+      "length_m": 0.1,
+      "width_m": 0.055,
+      "mass_kg": 0.1
+    },
+    "obstacle": {
+      "reach_frac": 0.5
+    }
   }
 }

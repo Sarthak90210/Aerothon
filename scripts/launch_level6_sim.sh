@@ -319,7 +319,7 @@ ROUTER_GCS_PORT="${AEROTHON_ROUTER_GCS_PORT:-$((14552 + SHIFT))}"
 if [[ "${AEROTHON_LAPTOP_SERVICES_ONLY:-0}" == 1 ]]; then
     "${AEROTHON_GATEWAY_PYTHON:-python3}" -m aerothon_runtime.gateway --fcu-udp "$FCU_IN_PORT" \
       --port "${AEROTHON_GATEWAY_PORT:-8090}" --mavlink-port "${AEROTHON_GATEWAY_MAVLINK_PORT:-5762}" \
-      --camera-channel 9 --winch-channel 10 --winch-rate 1.0 &
+      --camera-channel 9 --winch-channel 10 --winch-rate 0.30 &
     PIDS+=($!)
 else
 echo "[1/5] Starting MAVLink Router (FCU in ${FCU_IN_PORT}; MAVROS ${MAVROS_PORT}; GCS -> ${MP_HOST}:${MP_PORT}; port shift ${SHIFT})..."

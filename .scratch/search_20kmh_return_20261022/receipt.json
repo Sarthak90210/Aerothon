@@ -1,0 +1,50 @@
+{
+  "feature": "search_20kmh_return_20261022",
+  "triage": "ready-for-human",
+  "problem": "Operator order (21-22 Oct): fly the lawnmower search at 20 km/h continuously, braking only for a QR. Runs then failed at the outbound gate (DuckUnderBoard centred on the wrong gap and auto-landed), stalled in stop-and-go search, failed the return-banner search (climb to 10 m, wrong tilt, snapped yaw, outbound-banner exclusion, -20 deg camera at corridor height) and stuck in the return slalom.",
+  "scope": [
+    "scan_geometry.gate_opening: adjacent pairs only (a same-depth surface between two fronts splits the opening); despeckle-removed returns at gate depth inside the crossing strip count against clear_m (raw_ranges); mav_commander keeps raw scan for opening_ahead",
+    "mission_tree.LawnmowerSearch: search_speed_override_mps (simulation venue only) flies continuously -- no detector-timing holds, no stop before a red-ground re-plan, no turn in place; QR holds (DecodeHover, match fix) kept",
+    "mission_tree return search: FindReturnBanner and DescendToReturnIdent at corridor_alt with transit_alt corridor_alt (no climb), look_pose FORWARD, ReturnToCorridorMouth standoff 5 m; anticlockwise-then-clockwise sweep order (single reversal, 30 deg steps); second tilt BANNER_DOWN (-45 deg) for a hung board; AlignToBanner bottom-clipped retry looks down",
+    "ramp_yaw: banner sweeps pan at banner_yaw_rate_deg_s (15) instead of snapping (AlignToBanner._settle, FindReturnBanner sweep); stage default unlimited, build_root passes 15",
+    "FindReturnBanner._toward window 0.5-1.25x of the area range (area ranging only overestimates)",
+    "align_to_every_banner hung_pose: return pass searches with a LEVEL camera at corridor height; outbound keeps BANNER",
+    "camera_ctrl BANNER_DOWN -45 pose; banner_node accepts it",
+    "fast_connected_planner_candidate: RECENTRE_SLACK 0.03 -- origin up to 3 cm inside the hard clearance reports a clearance-gradient sidestep instead of a bare refusal; final hard-clearance planning tier (every segment still certified); velocity_controller RECENTRE state (recentre_speed 0.15, recentre_ticks_max 40)",
+    "Earlier uncommitted work in the same tree (20 Oct return lap, winch, GCS, world maker) is committed with it: r10 and the reduced suite ran on this whole tree"
+  ],
+  "tests": {
+    "new_or_changed": [
+      "sim/test_gate_pair_selection.py + sim/fixtures/gate_pair_wall_ends_shipped_20261021.json (recorded r2/2mps/fast scans; failed 4/9 before)",
+      "sim/test_detector_timing.py continuous-sweep cases",
+      "sim/test_return_sweep_efficiency.py (anticlockwise-then-clockwise, pan rate, _second_tilt, _toward near board)",
+      "sim/test_return_down_tilt_retry.py",
+      "sim/test_fail_closed_stages.py built-tree cases (return height/no climb, 15 deg/s pan, level return camera)",
+      "sim/test_return_first_sweep_lead.py, sim/test_return_banner_frame_size.py, sim/test_return_camera_handoff.py updated to the new intended behaviour",
+      "sim/test_narrow_slot_recentre.py (0.98 m slalom slot; old tiers find no path)"
+    ],
+    "reduced_offline_suite": "ALL IN-SCOPE OFFLINE CHECKS PASSED: 2184 passed / 8 skipped (5 deferred strong-gust, 3 empty real-photo corpus), native interfaces 9 passed / 3 skipped, syntax, XML/YAML, GCS frontend build (logs/return_lap_20261020/reduced_suite_20kmh_final.log, ledger offline_scope_20kmh_final.json). An earlier run found 2 gaps (headless BANNER_DOWN pose list, undeclared banner_yaw_rate_deg_s) -- fixed before the final run.",
+    "known_failing_excluded": "sim/test_corridor_stress.py SplitLaneStressTests gusty_crosswind x3: fail identically with the planner change disabled (pre-existing strong-gust failures, AGENTS.md)"
+  },
+  "sim_evidence": {
+    "shipped_20kmh_r10": {
+      "dir": "logs/return_lap_20261020/shipped_20kmh_r10",
+      "result": "Mission COMPLETED; check_track 14/14 PASS",
+      "details": "flight 457.9 s; no red entry (closest 2.61 m); closest obstacle 0.47 m (simulation clearance 0.45 m); max tilt 19.9 deg; drop 0.22 m; payload 0.22 m from pad A; landed 0.48 m from home; search 85 s, 93% moving, mean 2.98 m/s, max 6.38 m/s; return gate 41 s; return corridor 25 s"
+    },
+    "failures_and_interruptions": {
+      "shipped_20kmh": "not flown: Gazebo paused from startup",
+      "shipped_20kmh_r2_r3": "FAILED at outbound gate: wrong gap pair (fixed)",
+      "shipped_20kmh_r4_r5_r6_r7_r8b": "operator-interrupted while iterating on search continuity and the return search",
+      "shipped_20kmh_r9": "not flown: WSL restarted during launch",
+      "shipped_20kmh_r9b": "FAILED: return corridor STUCK at the 0.98 m slalom slot (fixed)"
+    }
+  },
+  "blockers": [
+    "One calm laptop-simulation pass at the simulation venue's 0.45 m clearance; the aircraft keeps 0.70 m and is not re-qualified",
+    "20 km/h search: red detector confirmed 16-20 fragments for one red zone at speed; stop-short-of-red guarantee disabled by the override (simulation only)",
+    "Strong-gust corridor stress cases still fail",
+    "MASTER_DOCUMENTATION.md not updated for these changes"
+  ],
+  "completion": "Committed in two commits (flight/sim/tests + receipts; GCS frontend incl. the declutter session's cleanup); not pushed."
+}

@@ -27,11 +27,11 @@ def test_full_first_sweep_uses_observed_lead_before_second_complete_sweep():
         now[0]+=.2
         captures.pose(now[0],mav.pos(),mav.yaw())
         captures.receive(dict(capture_stamp=now[0],processed_stamp=now[0],identified=False,bearing=0.),now[0])
-        if leaf.phase=='sweep' and leaf.hi<len(leaf.headings):visited.add(leaf.hi)
+        if leaf.phase=='sweep' and leaf.hi<len(leaf.headings):visited.add(round(leaf.headings[leaf.hi],5))
         assert leaf.update() is py_trees.common.Status.RUNNING
         if leaf.phase=='transit':break
         if leaf._second_look_done:break
-    assert visited==set(range(12)), 'initial search retains all twelve headings'
+    assert len(visited)==12, 'initial search retains all twelve headings (anticlockwise, then clockwise)'
     assert leaf.phase=='transit' and leaf._guard_leg, 'whole observed lead waited for second full-circle sweep'
     assert not leaf._second_look_done
     assert not any('identified' in text for text,_ in mav.logs)

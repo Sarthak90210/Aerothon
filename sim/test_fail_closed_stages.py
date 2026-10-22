@@ -2536,6 +2536,41 @@ class BuiltTreeCarriesTheNewBehaviourTests(unittest.TestCase):
     def _of_type(self, name):
         return [s for s in self._stages() if type(s).__name__ == name]
 
+    def test_the_return_banner_is_searched_for_at_the_entry_banner_height(self):
+        """The operator's order, 22 Oct: the return search flew at 5 m and
+        climbed to 10 m between vantages; the entry banner was found and lined
+        up at the corridor altitude. Search there, with no climb, camera level."""
+        find = self._of_type("FindReturnBanner")
+        self.assertEqual(len(find), 1)
+        f = find[0]
+        self.assertEqual(f.alt, self.PARAMS['corridor_alt'])
+        self.assertEqual(f.transit_alt, self.PARAMS['corridor_alt'], "climbs between vantages")
+        self.assertEqual(f.look_pose, "FORWARD")
+        descend = [s for s in self._stages() if s.name == "DescendToReturnIdent"]
+        self.assertEqual(len(descend), 1)
+        self.assertEqual(descend[0]._alt, self.PARAMS['corridor_alt'])
+        mouth = self._of_type("ReturnToCorridorMouth")[0]
+        self.assertEqual(mouth.standoff(), 5.0)
+
+    def test_the_return_board_is_aligned_on_with_a_level_camera(self):
+        """shipped_20kmh_r8b: at corridor height the return alignment switched
+        the camera to BANNER (-20 deg); the board, straight ahead, was cut off
+        at the top, area-ranged ~10 m instead of 4.5 m and refused. The return
+        hung-banner pass looks level; the outbound one (from 5 m) keeps BANNER."""
+        poses = {s.name: s.pose for s in self._of_type("SetCameraPose")}
+        for name in ("CameraBannerSearch", "CameraBannerAgain", "CameraBannerRetry"):
+            self.assertEqual(poses["Return" + name], "FORWARD", name)
+            self.assertEqual(poses["Outbound" + name], "BANNER", name)
+        ret = [a for a in self._of_type("AlignToBanner") if a.search_camera_pose != "GROUND"]
+        self.assertIn("FORWARD", {a.search_camera_pose for a in ret})
+        self.assertIn("BANNER", {a.search_camera_pose for a in ret})
+
+    def test_the_flown_banner_sweeps_pan_instead_of_snapping(self):
+        """22 Oct: each 30 deg step snapped at ~44 deg/s with an overshoot
+        (shipped_20kmh_r6). The flown tree pans at 15 deg/s."""
+        for stage in self._of_type("FindReturnBanner") + self._of_type("AlignToBanner"):
+            self.assertAlmostEqual(stage.yaw_rate, math.radians(15.0), msg=type(stage).__name__)
+
     def test_the_flown_sweep_covers_a_full_turn(self):
         aligns = self._of_type("AlignToBanner")
         self.assertGreaterEqual(len(aligns), 2)

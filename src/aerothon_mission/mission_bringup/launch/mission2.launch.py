@@ -348,7 +348,8 @@ def generate_launch_description():
     # 4. Reactive Obstacle Avoidance Controller
     controller = Node(
         package='avoidance', executable='velocity_controller', output='screen',
-        parameters=[{'scan_topic': scan_topic, 'use_sim_time': use_sim}],
+        # The venue file may set cruise_speed (velocity_controller section).
+        parameters=[params_file, {'scan_topic': scan_topic, 'use_sim_time': use_sim}],
     )
 
     # 5. Autonomous Behavior Tree Mission Executive

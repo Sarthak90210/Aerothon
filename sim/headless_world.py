@@ -167,7 +167,7 @@ BANNER_GROUND_MAX_ASPECT = 16.0
 # perception_banner.banner_node.CAMERA_POSES: the real detector publishes
 # nothing in any other pose, so neither does this one. Without the gate the
 # headless banner was seen in ALIGN, where the real stack is blind.
-BANNER_CAMERA_POSES = ("FORWARD", "BANNER", "GROUND")
+BANNER_CAMERA_POSES = ("FORWARD", "BANNER", "GROUND", "BANNER_DOWN")
 # Banner identity vs total camera severity (sum over the corruptions, plus
 # print wear): logistic, fitted to the REAL detector on the 3 m sim frame,
 # 30 seeds per point -- severity 17 (the worst preset) 30/30, 26 27/30,

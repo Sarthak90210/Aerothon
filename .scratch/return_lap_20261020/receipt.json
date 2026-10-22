@@ -1,0 +1,53 @@
+{
+  "feature": "return_lap_20261020",
+  "triage": "ready-for-human",
+  "problem": "Laptop-simulation (world maker) missions failed the return lap: return-corridor stall and a 44 deg tilt; slow/wrong return-banner search (orbits, perimeter walk, climbs, false leads). User also asked for 1 m/s flight.",
+  "root_causes": {
+    "winch": "SITL WINCH_RATE_MAX 1.0 vs the estimate's 0.30: 'full hook retraction' left 2.6 m of line out (measured winch_joint); the hook snagged in the return corridor. Hardware parm used nonexistent WNCH_* names.",
+    "return_banner": "Mission banner ranging used the configured 1280 px focal; this route's camera is 960 x 540. Return board 6.4 m ahead ranged ~10 m, and FindReturnBanner._toward refused it as the outbound banner (12 deg off the same sight line, 17 m away) on ~15 consecutive complete identified frames. FindReturnBanner/ReturnToCorridorMouth are byte-identical to V44 (780c27b); the defect is the input, not the search logic."
+  },
+  "scope": [
+    "remote_devices.parm / aerothon_hardware.parm: WINCH_TYPE 1, WINCH_RATE_MAX 0.30; gateway reads WINCH_RATE_MAX; launch_level6_sim --winch-rate 0.30",
+    "winch_node: FC WINCH_TYPE/WINCH_RATE_MAX read back (lower refused until known/enabled), estimate at FC rate, measured-line stow with stall re-send (3) then fault",
+    "mission_tree.banner_frame + mav_commander.banner_image_wh: AlignToBanner and FindReturnBanner range with the detection frame's size",
+    "mission_tree search_brake_mps2 (default 0.5) -> detector_timing.search_speed decel",
+    "mission2.launch: velocity_controller receives params_file",
+    "sim_gazebo/config/world_sim_venue.yaml (venue.yaml + search_brake_mps2 0.8 measured, cruise_speed 1.0); world-maker profile selects it",
+    "aircraft venue.yaml, thresholds (0.70 m corridor, 1.50 m red, 900 s) unchanged"
+  ],
+  "tests": {
+    "new": [
+      "sim/test_winch.py: 6 cases (FC read-back gate, disabled winch, FC rate, measured stow, stall re-send, fault)",
+      "sim/test_return_banner_frame_size.py: 3 cases (live failure reproduced without frame size; accepted with it; helper)",
+      "sim/test_detector_timing.py: 2 cases (measured braking raises cap; stop stays short of clearance)",
+      "sim/test_world_sim_venue.py: 4 cases (parity with venue.yaml, values, launch wiring, profile)"
+    ],
+    "affected": "615 passed (all return/banner/alignment/fail-closed/detector tests); winch 30; launch/payload/remote/gpio/pi runtime 62+3+12",
+    "reduced_offline_suite_before_ranging_change": "ALL IN-SCOPE OFFLINE CHECKS PASSED: 2141 passed / 8 skipped (logs/return_lap_20261020/reduced_suite.log)",
+    "reduced_offline_suite_final": "ALL IN-SCOPE OFFLINE CHECKS PASSED: 2150 passed / 8 skipped, native 12, frontend build; same source as manual_test_1mps (logs/return_lap_20261020/reduced_suite_final.log, ledger offline_scope_final.json)"
+  },
+  "measurements": {
+    "brake_probe": "logs/return_lap_20261020/brake_probe: hold-command travel 0.54-0.55 m from 1.0 m/s, 0.69 m from 1.2 m/s, four directions, 7 m, simulated airframe only; equivalent 0.85-1.06 m/s^2"
+  },
+  "sim_evidence": {
+    "manual_test_winchfix": {
+      "dir": "logs/return_lap_20261020/manual_test_winchfix",
+      "status": "operator-interrupted (GCS Stop -> RTL -> disarm) after the return search/alignment failed on the ranging defect",
+      "winch": "peak 4.72 m, measured back to ~0.2 m (was 2.6 m left out)",
+      "grade": "max tilt 18.2 deg, no red entry (3.7 m), geofence ok, outbound 0 violations, drop 0.16 m; return lap not flown (RTL over corridors after Stop)",
+      "note": "first Connect latched 'remote protocol or FCU identity mismatch' (manifest read before the FCU heartbeat); operator Disconnect/Connect recovered"
+    },
+    "manual_test_1mps": {
+      "dir": "logs/return_lap_20261020/manual_test_1mps",
+      "result": "Mission result COMPLETED; check_track 14/14 PASS",
+      "details": "flight 509 s; outbound and return lanes flown through, 0 violations; closest obstacle 0.76 m; closest red 3.45 m; max tilt 16.5 deg; no unexpected mode; drop 0.18 m at 4.9 m; payload 0.25 m from pad B; landed 0.47 m from home; return banner identified from the stand-off ~70 s into RETURN_GATE_SEARCH at (16.2,-6.6) vs true (16.6,-6.6); search cap 0.70-0.75 m/s (366/368 qualified); corridor cruise 1.0 m/s"
+    }
+  },
+  "blockers": [
+    "One calm laptop-simulation pass; scripted acceptance, field conditions and the aircraft are not re-qualified on this source",
+    "Aircraft braking and corridor cruise not measured: aircraft keeps 0.5 m/s^2 and 0.8 m/s",
+    "Search planner still plans with the configured 1280 x 720 image (decode altitude/swath) on the 960 x 540 laptop camera",
+    "Laptop route identity race: Connect before the gateway has the FCU heartbeat latches a mismatch until reconnect (run driver now waits)"
+  ],
+  "completion": "Return lap and 1 m/s corridor pass one full laptop-simulation mission through disarm. Nothing committed."
+}

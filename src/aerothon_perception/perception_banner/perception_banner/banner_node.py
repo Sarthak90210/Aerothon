@@ -67,7 +67,7 @@ from std_msgs.msg import String
 
 # camera_ctrl poses the detector runs in; closed in NADIR/ALIGN, where the
 # delivery search and QR stages look and no banner is ever sought.
-CAMERA_POSES = ("FORWARD", "BANNER", "GROUND")
+CAMERA_POSES = ("FORWARD", "BANNER", "GROUND", "BANNER_DOWN")
 # In the GROUND pose a laid banner must be seen across, not along; see the
 # aspect gate in on_image. Measured on the headless sheet: from beside the
 # corridor (90 deg off-axis) 0.63-0.93, at 45 deg 1.69-3.7, head-on 4.8-10.
