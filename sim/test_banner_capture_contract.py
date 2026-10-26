@@ -108,7 +108,12 @@ class BannerImageContinuityTests(unittest.TestCase):
         self.feed_image(clipped)
         self.assertTrue(self.details[-1]['identified'])
         self.assertTrue(self.details[-1]['text_confirmed'])
-        self.assertTrue(self.details[-1]['rescued_by_text'])
+        # Rescued by the word, or -- since the border's white is capped at
+        # white_v_cap for a panel this bright (field PDF, 25 Oct) -- framed
+        # on every side (measured: 0.63/0.55/0.87/0.87).
+        d = self.details[-1]
+        self.assertTrue(d.get('rescued_by_text') or
+                        (d.get('bordered') and len(d.get('border_sides') or {}) == 4), d)
 
     def test_clipped_color_and_white_blocks_cannot_replace_the_word(self):
         image=np.full((480,640,3),(90,70,55),dtype=np.uint8)

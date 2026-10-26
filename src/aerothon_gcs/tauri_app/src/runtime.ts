@@ -6,7 +6,7 @@ export interface ConnectionProfile {
   camera_device:string; lidar_port:string; lidar_yaw_deg:number; lidar_mirrored:boolean;
   camera_hfov:number; marker_m:number; rc_config:Record<string,unknown>; slam:boolean;
   hardware_reviewed:boolean; delivery_calibration:string;
-  vehicle?:'simulation'|'drone'; winch_backend?:'mavlink'|'gpio'; gcs_host?:string;
+  vehicle?:'simulation'|'drone'; winch_backend?:'mavlink'|'gpio'|'l298n'; gcs_host?:string;
   autoconnect?:boolean; slam_odometry?:'lidar'|'fcu';
 }
 export const vehicleLabel = (p?: ConnectionProfile | null) =>

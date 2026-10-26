@@ -118,12 +118,13 @@ def generate_launch_description():
                                           'rates (SITL/MAVProxy workaround; see '
                                           'VERIFICATION.md 2.2)'),
         DeclareLaunchArgument('winch_backend',
-                              default_value=sim_or('gazebo', 'mavlink'),
+                              default_value=sim_or('gazebo', 'l298n'),
                               description='winch_ctrl backend: gazebo (the Iris '
                                           'winch joint and a detachable payload), '
                                           'sim (sequence only, nothing moves) or '
-                                          'mavlink (MAV_CMD_DO_WINCH) or gpio (Pi BTS7960 + N20 encoder); default '
-                                          'gazebo in sim, mavlink on the aircraft'),
+                                          'mavlink (MAV_CMD_DO_WINCH), gpio (Pi BTS7960 + N20 encoder) or '
+                                          'l298n (Pi L298N, RC channel 6 by hand when no mission runs); default '
+                                          'gazebo in sim, l298n on the aircraft'),
         # The flight sensors (use_sim:=false only). Mount yaw and direction
         # are measured with scripts/check_sensors.py.
         DeclareLaunchArgument('lidar_port', default_value='/dev/ttyUSB0'),
@@ -371,6 +372,10 @@ def generate_launch_description():
             'target_system_id': ParameterValue(LaunchConfiguration('target_system_id'), value_type=int),
             'rc_config': ParameterValue(LaunchConfiguration('rc_config'), value_type=str),
             'delivery_load_calibration': os.environ.get('AEROTHON_DELIVERY_CALIBRATION', '')}])
+    # Transmitter channels even when the FC reports chancount 0 (RC overrides,
+    # e.g. ExpressLRS in MAVLink mode); /mavros/rc/in is then empty.
+    rc_bridge = Node(package='aerothon_runtime', executable='rc_in_bridge', output='screen',
+        parameters=[{'use_sim_time': use_sim}])
     remote = Node(package='aerothon_runtime', executable='remote_devices',
         output='screen', condition=IfCondition(PythonExpression(["bool('", remote_gateway, "')"])),
         parameters=[{'gateway': remote_gateway, 'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
@@ -480,7 +485,7 @@ def generate_launch_description():
     return LaunchDescription(args + [
         rsp_node, mavros, lidar_ld06, lidar_c1, lidar_mount, webcam, camera_exposure,
         qr, banner, redzone, payload, overlay, camera, winch, stream_rates,
-        controller, mission, execution, remote, readiness, aggregator, video, mapping_odometry,
+        controller, mission, execution, rc_bridge, remote, readiness, aggregator, video, mapping_odometry,
         # The Gazebo odometry bridge needs a few seconds to establish odom TF.
         # Activating slam_toolbox before that point leaves its initial scan
         # filter without transforms and delays the first map indefinitely.

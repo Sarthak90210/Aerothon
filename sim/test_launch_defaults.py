@@ -41,7 +41,8 @@ class LaunchDefaultsTests(unittest.TestCase):
     def test_the_aircraft_drives_real_hardware_and_skips_the_desktop(self):
         self.assertEqual(defaults("false"), {
             "rviz": "false", "slam": "false",
-            "winch_backend": "mavlink", "camera_backend": "mavlink"})
+            # The Pi drives the payload motor through an L298N (24 Oct 2026).
+            "winch_backend": "l298n", "camera_backend": "mavlink"})
 
     def test_the_simulator_keeps_its_backends(self):
         self.assertEqual(defaults("true"), {

@@ -115,10 +115,13 @@ test("changed addresses are shared by telemetry and video with no embedded crede
   assert.throws(() => endpoint("http://localhost:8899"));
   assert.throws(() => endpoint("ws://user:password@localhost:8765"));
 });
-test("all twenty-one production arena dimensions and built-in presets validate offline", () => {
-  // Twenty plus the clarified exit-corridor obstacle reach.
-  assert.equal(schema.fields.length, 21);
+test("all twenty-three production arena dimensions and built-in presets validate offline", () => {
+  // Twenty, the clarified exit-corridor obstacle reach, and from the field
+  // PDF (25 Oct) the ground banner's own height and the obstacle height.
+  assert.equal(schema.fields.length, 23);
   assert.ok(schema.fields.some((f) => f.group === "obstacle" && f.key === "reach_frac"));
+  assert.ok(schema.fields.some((f) => f.group === "obstacle" && f.key === "height_m"));
+  assert.ok(schema.fields.some((f) => f.group === "banner" && f.key === "ground_height_m"));
   assert.deepEqual(validateDraft(schema.defaults, schema.fields), []);
   for (const preset of Object.values(schema.presets))
     assert.deepEqual(validateDraft(preset, schema.fields), []);
@@ -131,6 +134,12 @@ test("all twenty-one production arena dimensions and built-in presets validate o
   );
   d.banner.border_m = 1;
   assert.ok(validateDraft(d, schema.fields).some((s) => s.includes("panel")));
+  // The field PDF's 6 ft boards: an 8 ft navigation height puts the lidar
+  // over them (arena_dimensions.validate refuses it too).
+  const field = structuredClone(schema.presets["AeroTHON 2026 Track 1 field (organiser PDF)"]);
+  assert.deepEqual(validateDraft(field, schema.fields), []);
+  field.corridor.nav_height_m = 2.4384;
+  assert.ok(validateDraft(field, schema.fields).some((s) => s.includes("lidar sees the obstacles")));
 });
 test("a blocked start names its reason, and the reason agrees with startAllowed", () => {
   const t = ready();

@@ -5,7 +5,7 @@ import { defaultProfile, api } from './runtime';
 // Choosing the vehicle fills the link it uses; every field stays editable.
 function asVehicle(p: ConnectionProfile, vehicle: 'simulation' | 'drone'): ConnectionProfile {
   return vehicle === 'drone'
-    ? { ...p, vehicle, transport: 'serial', device: '/dev/ttyAMA2', baud: p.baud || 115200, gateway: '', autoconnect:true, slam:true, slam_odometry:'lidar' }
+    ? { ...p, vehicle, transport: 'serial', device: '/dev/ttyAMA0', baud: p.baud || 115200, gateway: '', winch_backend: p.winch_backend ?? 'l298n', autoconnect:true, slam:true, slam_odometry:'lidar' }
     : { ...p, vehicle, transport: 'tcp', port: 5762, hardware_reviewed: false, winch_backend: 'mavlink', autoconnect:false, slam_odometry:'fcu',
         gateway: p.gateway || (p.host ? `http://${p.host}:8090` : '') };
 }
@@ -67,7 +67,7 @@ export default function Connections({ state, refresh }: { state: HostState | nul
         {vehicle === 'simulation' && field('gateway', 'Sensor gateway URL')}
         {vehicle === 'drone' && <>{field('camera_device', 'Camera device')}{field('lidar_port', 'Lidar device')}
           <label>Winch<select value={p.winch_backend ?? 'mavlink'} onChange={e => change('winch_backend', e.target.value)}>
-            <option value="mavlink">FC (DO_WINCH)</option><option value="gpio">Pi GPIO + encoder (needs measured values)</option>
+            <option value="l298n">Pi L298N (RC ch6 by hand)</option><option value="mavlink">FC (DO_WINCH)</option><option value="gpio">Pi GPIO + encoder (needs measured values)</option>
           </select></label>
           <label><input type="checkbox" checked={p.autoconnect !== false} onChange={e => change('autoconnect', e.target.checked)} /> Auto-connect at boot</label></>}
       </div>

@@ -1,0 +1,84 @@
+{
+  "feature": "field_pdf_20261025",
+  "triage": "ready-for-human",
+  "problem": "Apply the organisers' 'AeroTHON 2026 Track 1 Field Properties' PDF (23 Oct 2026, 12 pages, Mission 2 pages 9-12) to the Gazebo world and the GCS, with the operator's reading 'corridor will be 10 feet and banner will be hung till 8 feet'; fly multiple local simulations, fix the gaps, test every GCS feature in this world, then prepare the Pi bundle.",
+  "source_pdf": "C:/Users/sarth/Downloads/AeroTHON 2026_Trak1_Feild_Properties_Dimensions.pdf, sha256 3e9fb5cef3857b67ead5e34eb23155cee5f549e3c38850c9d739cdd8386324dd",
+  "pdf_values": {
+    "corridor": "4 white walls 8 ft high, 22 ft long, 11.5 ft apart (two lanes); page 9 drawing: 3.5 m wide, 10 m long, 'Corridor Height 10 feet'",
+    "boards": "entry arch 11.5 x 1.5 ft green #00B140 + ground 11.5 x 1 ft green at the entry entrance; exit arch 11.5 x 1.5 ft blue #0000FF + ground 11.5 x 1 ft blue at the exit corridor's entrance; 1 in white border on all",
+    "red_zone": "1, ground, 10 x 10 ft #FF0000, 1 in white border",
+    "obstacles": "3 boards on legs in the exit corridor, 3.5 ft wide x 6 ft tall",
+    "qr": "5 in the delivery zone + 1 unique at take-off, 1 x 1 m, no white border, no information encoded",
+    "zone": "40 x 30 m delivery zone (page 9)",
+    "payload": "100 x 50 x 50 mm, 100 +/- 5 g, eye bolt; lowered from 5 m by a controlled pulley and released only on the ground",
+    "not_given": "lane spacing, take-off/zone positions (layout 'subject to change'), hall, navigation height"
+  },
+  "interpretation": "Walls 10 ft (the operator's 'corridor 10 feet', the drawing's corridor height), banner lower edge at 8 ft ('hung till 8 feet'), board 1.5 ft, so 8-9.5 ft. Length 22 ft (the wall specification); the drawing's 10 m is flown as a second world. Navigation height 1.5 m (operator choice): under the 8 ft edge and low enough that the lidar plane (0.0815 m above the body) stays 0.1 m under the 6 ft obstacle tops. Return lap flies to the blue exit banner.",
+  "changes": [
+    "arena_dimensions: fields banner.ground_height_m and obstacle.height_m (old presets fall back to the hung height and 95% of the wall); a navigation height that puts the lidar plane over the obstacles is refused with the fix named; built-in preset 'AeroTHON 2026 Track 1 field (organiser PDF)'; GCS arenaForm mirrors the rule; arenaSchema.json regenerated",
+    "colours: role 'exit' (exit corridor's banner); complete = green + red + (exit or orange); aggregator and readiness use colours.missing; GCS Organiser inputs has Entry/Exit/No-entry/Red fields, blank optional ones are dropped",
+    "perception_banner: /mission/banner_target (latched) selects green (outbound) or exit (return); exit falls back to green when no exit shade; dominant_colour names exit",
+    "mission_tree: SetBannerTarget leaves (outbound green, return exit, home green); execution_node banner test sets green; mav_commander.set_banner_target",
+    "world_spec/materialize_world: exit-coloured return boards, no orange boards when an exit shade is given, GCS banner border, separate ground-board height, QR printed without quiet zone when the GCS QR border is 0, obstacle height from the GCS, corridor_alt mirrors the mission's gate rule with dimensions; organiser_inputs sends no orange with an exit shade; world editor page: exit HEX field, return gate drawn in it, rounded sizes",
+    "scripts/field_pdf_world.py builds sim/worlds/aerothon26_field.json (22 ft lanes, start QR names C) and aerothon26_field_L10.json (10 m lanes, names A)",
+    "after run 1: banner border ring and outline depth from the GCS border (banner_node._border_ring_px), white reference capped at white_v_cap 230 for fully saturated prints, return-gate search and its descent at the entry banner's measured lineup height (AlignToBanner sets mav.banner_lineup_alt; clamped to corridor..search altitude)",
+    "after runs 2-3: AlignToBanner records the lineup height only on hung-board passes (records_lineup), so the ground pass's 1.48 m square-up cannot replace the hung board's 2.59 m; a wide board framed along both long sides passes with its ends dark at the walls (box and outline tests, WIDE_BOARD_ASPECT 2.5); the border's white may also be judged against the light the supplied print is in (white_illum_ratio 0.9 of panel V x 255 / the colour's strongest channel), border test only; laid sheets over the delivery zone drawn on its slab (LAID_ON_ZONE_Z 0.102)",
+    "after run 4: qr_decode retries zbar on an Otsu-thresholded crop of a located marker (a borderless code on the grey-157 take-off pad: plain zbar 0/39 start frames, thresholded 39/39), which also gives the code's own corners; qr_node keeps a start-marker reference only when all four corners are inside the frame (the largest view ran off the top edge and corrupted a quarter of the reference)"
+  ],
+  "runs": [
+    {
+      "dir": "logs/field_pdf_20261025/aerothon26_field_r1",
+      "result": "NOT ACCEPTED - operator stop through the GCS at mission time ~892 s, then runtime return-and-land and recorded disarm",
+      "what_worked": "GCS inputs applied (operator preset of the PDF values; mission logged 'arena dimensions applied' corridor_alt 1.5, banner 3.505 x 0.457); colours exit/green/red; start QR; entry banner identified and squared up (-1.9 deg at 5.0 m, lineup 2.58 m); entry corridor at 1.2 m (DuckUnderBoard's first look was already under the board, so it took 1.6 m as the edge); delivery search matched pad C; payload lowered and delivery inferred (0.30 m image offset); return transit; detector switched to 'exit'",
+      "failure": "return-gate search never identified the blue exit board. Saved frames and the offline detector: border ring 0.03 x board width = about 4x the 1 inch border, so the dark lane below and the walls beside read 0.05-0.25 white (top 0.80, sky); area floor refusals on distant views; the blue take-off pad is an exit-colour candidate (refused by the border test). Search flown at 1.5 m where a level camera loses the board's top at the 5 m stand-off."
+    },
+    {
+      "dir": "logs/field_pdf_20261025/aerothon26_field_r2",
+      "result": "NOT ACCEPTED - operator stop through the GCS at ~660 s in the return-gate search; recorded disarm",
+      "what_worked": "built-in GCS preset applied by name; outbound, search, delivery as run 1",
+      "failure": "return search never identified the exit board: the ground pass's square-up at 1.48 m replaced the hung board's 2.59 m lineup height; on frames, the board's ends are flush with the lane walls (frontal: top 0.56, bottom 0.51, left 0.02, right 0.34)"
+    },
+    {
+      "dir": "logs/field_pdf_20261025/aerothon26_field_r3",
+      "result": "NOT ACCEPTED - operator stop through the GCS in the return alignment; recorded disarm",
+      "what_worked": "FindReturnBanner identified the blue exit banner (~7.3 m) and stood off facing it",
+      "failure": "delivery skipped: the borderless start QR did not decode, and the pattern-only search found no match in two passes at 10 m; at the stand-off the frontal board was refused on every frame (shaded white border V ~202 vs panel V 193 under the 8% rule); the laid exit board was hidden under the zone slab"
+    },
+    {
+      "dir": "logs/field_pdf_20261025/aerothon26_field_r4_pattern",
+      "mode": "AEROTHON_QR_IGNORE_PAYLOADS=1 (pattern only, the PDF's 'scan the pattern of the QR code')",
+      "result": "Mission result DELIVERY_SKIPPED, landed and disarmed. check_track 11/13: PASS no red entry (closest 2.03 m), geofence, both lanes flown through, never above the corridor, tilt 19.6 deg, no failsafe, ceiling, 359.9 s, no obstacle contact (closest 0.58 m), landed 0.27 m from home; FAIL payload released, payload on pad",
+      "what_worked": "first complete return lap in this world: FindReturnBanner identified the blue exit banner from ~7.5 m, hung square-on +0.7 deg at 4.6 m, ground square-on -0.9 deg, DuckUnderBoard at 1.2 m, return corridor through the three 6 ft boards, precision landing on the borderless start QR",
+      "failure": "pattern-only search: pad C was seen and read in 8 frames from ~10 m but scored 0.60-0.66 against the start reference (wrong pads 0.50-0.60); the reference was coarse (zbar never decoded the borderless start code on the pad; the finder corners were a module out) and, at its largest, clipped by the frame edge"
+    },
+    {
+      "dir": "logs/field_pdf_20261025/aerothon26_field_r5_pattern",
+      "mode": "pattern only (AEROTHON_QR_IGNORE_PAYLOADS=1), 22 ft lanes, start names pad C",
+      "result": "Mission result COMPLETED, landed and disarmed. check_track 14/14 PASS",
+      "numbers": "flight 403.9 s; drop 0.24 m; payload 0.27 m from pad C; closest red 7.68 m; closest obstacle 0.64 m; tilt 18.9 deg; landed 0.11 m from home",
+      "notes": "pad C matched by pattern (score 1.0) 33 s into the search, the start reference a 25-module grid; exit banner identified at ~7.8 m"
+    },
+    {
+      "dir": "logs/field_pdf_20261025/aerothon26_field_L10_r6_pattern",
+      "mode": "pattern only, the drawing's 10 m lanes (aerothon26_field_L10), start names pad A",
+      "result": "Mission result COMPLETED, landed and disarmed. check_track 14/14 PASS",
+      "numbers": "flight 419.9 s; drop 0.17 m; payload 0.20 m from pad A; closest red 1.57 m; closest obstacle 0.62 m; tilt 19.8 deg; landed 0.11 m from home"
+    },
+    {
+      "dir": "logs/field_pdf_20261025/aerothon26_field_r7_payload",
+      "mode": "payloads read (default), 22 ft lanes, start names pad C",
+      "result": "Mission result COMPLETED, landed and disarmed. check_track 14/14 PASS",
+      "numbers": "flight 390.8 s; drop 0.27 m; payload 0.27 m from pad C; closest red 7.30 m; closest obstacle 0.68 m; tilt 18.5 deg; landed 0.21 m from home",
+      "notes": "start QR decoded ('decoded AEROTHON2026:M2:TARGET_C') through the thresholded zbar retry"
+    }
+  ],
+  "blockers": [
+    "lane spacing, positions and the 1.5 m navigation height are working values to confirm on the day",
+    "field conditions, gusts and the aircraft not re-qualified; calm laptop simulation only",
+    "no commit; the Pi bundle built but not deployed (the operator ships it)"
+  ],
+  "completion": "Field PDF applied to the GCS and the simulated world; r5-r7 14/14; all GCS testing options completed; bundle built, awaiting the operator's ship",
+  "gcs_campaign": "logs/field_pdf_20261025/gcs_campaign/summary.json: qr, slam, banner, avoidance_route, avoidance_manual, mechanism_lower, mechanism_stow (session1), delivery_here (session2), delivery_gps (session3) all Completed; session2's delivery_gps flew with no payload after delivery_here and is not counted",
+  "offline_suite": "logs/field_pdf_20261025/reduced_suite_final2.log: 2261 passed, 8 skipped (5 deferred strong-gust, 3 empty photo corpus) plus 9 passed/3 skipped; GCS frontend 45/45, typecheck and build; ALL IN-SCOPE OFFLINE CHECKS PASSED",
+  "pi_bundle": "logs/pi-runtime-20261026.zip, 267 files, sha256 d526e79b499970fe103e05907a1614b341d9304e1712b2ee1c9e353452eaa78d, two Markdown documents; .scratch/pi_deploy_20261025/deploy_pi.sh points at it. NOT deployed."
+}

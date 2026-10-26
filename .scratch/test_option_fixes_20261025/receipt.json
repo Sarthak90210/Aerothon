@@ -1,0 +1,32 @@
+{
+  "feature": "test_option_fixes_20261025",
+  "problem": "GCS testing options in simulation (logs/gcs_testing_20261025): Mechanism-only lower never finished, stow reported Completed while still reeling in, and the transmitter test intermittently ended 'Sank below airborne floor' after a previous flight.",
+  "root_cause": [
+    "winch_node: a measured line settled 7 cm short of max_payout_m (5.929 of 6.0 m) and at_limit() needed the full length.",
+    "Mechanism leaf: the first status after a stow command was the pre-command IDLE, accepted as done.",
+    "Pilot leaf: the height target clamped at 1.0 m, the airborne floor itself.",
+    "velocity_controller: the held height integrated FCU vertical velocity from handover with no anchor; against Gazebo truth (session10) it stayed flat while the aircraft climbed 0.15 m in 20 s, FCU z within 3 cm of truth. The same blind drift downward sank sessions 7 and 9 to the floor."
+  ],
+  "change": [
+    "winch_node.py: limit_window_m 0.15 (mirrors stow_window_m) on the measured-line path.",
+    "execution_node.py: Mechanism stow needs payout_estimate_m <= 0.15 (STOWED_M, the winch's stow window); Pilot keeps the target FLOOR_MARGIN_M 0.3 above mav.airborne_floor.",
+    "velocity_controller.py: _blend_alt_anchor pulls the anchor toward FCU z with alt_blend_tau_s 3.0 and rate cap alt_blend_max_rate_mps 0.1; detail adds altitude_motion_anchor_m. User-approved (25 Oct) rewrite of test_corridor_vertical_motion.py's exact no-adoption assertions into: fast jitter negligible, jumps adopted no faster than the cap, slow drift corrected.",
+    "No clearance, floor or guard threshold changed."
+  ],
+  "tests": {
+    "new_or_changed": "sim/test_component_test_leaves.py (6), sim/test_winch.py (+2), sim/test_corridor_vertical_motion.py (+2, 3 assertions revised)",
+    "avoidance_regression": "333 passed, 3 strong-gust SplitLaneStressTests deselected (fail identically on clean HEAD)",
+    "reduced_offline_suite": "logs/gcs_testing_20261025/reduced_suite_fixes.log"
+  },
+  "evidence": {
+    "session9": "before the hold fix: transmitter test Failed 0.86 m < 1.00 m; lower Completed 41 s",
+    "session10": "truth recorded; transmitter Completed; truth/FCU z agree, velocity integral blind; lower Completed; stow (0.02 m threshold) timed out with the line in at 0.077 m",
+    "session11": "all fixes: delivery_here, transmitter (truth 1.12-1.23 m, velocity integral +0.42 m absorbed), lower 39 s, stow 39 s all Completed",
+    "r16": "logs/return_lap_20261020/final_mission_r16: full mission 14/14 with the blended hold; return slot 0.478/0.478 m; flight 454.0 s; payload error 0.24 m; landed 0.30 m from home"
+  },
+  "status": "simulation-verified; uncommitted; not deployed",
+  "blockers": [
+    "Transient winch_actuator readiness refusal a few seconds after a previous task (fail-closed; not changed).",
+    "Simulated aircraft turns on the pad after spawn (180 -> about -92 deg)."
+  ]
+}

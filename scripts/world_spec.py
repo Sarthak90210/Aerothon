@@ -103,8 +103,10 @@ BOARD_BOTTOM_M = 2.805
 BANNER_PLACEMENTS = ("suspended", "ground", "both")
 # The shades are given as HEX before the competition. A spec may carry them so
 # a rendered arena and the detectors agree on what was supplied; empty means
-# the simulator's own printed green.
-BANNER_COLOUR_NAMES = ("green", "orange", "red")
+# the simulator's own printed green. "exit": the exit corridor's boards (blue
+# on the organisers' field PDF), printed at the return lane's entrance in
+# place of green, with no orange no-entry boards (perception_banner.colours).
+BANNER_COLOUR_NAMES = ("green", "orange", "exit", "red")
 # The board the simulator has always flown: 3.7 x 1.15 m on two posts. The
 # organisers' banner is the corridor's width, of unconfirmed height, hung from
 # "a horizontal rod connecting the two corridor walls" -- `mount: rod`, with
@@ -541,9 +543,31 @@ DUCK_MARGIN_M, DUCK_FLOOR_M = 0.6, 1.2
 
 
 def corridor_alt(spec):
-    """The altitude the corridors are flown at under this spec's banner."""
-    bottom = float(spec["banner"]["board_bottom_m"])
-    return max(DUCK_FLOOR_M, bottom - LIDAR_ABOVE_BODY_M - DUCK_MARGIN_M)
+    """The altitude the corridors are flown at under this spec's banner.
+
+    Without GCS dimensions: ducked under the board. With them, the mission's
+    own rule (mission_tree gate_alt, DuckUnderBoard): the navigation height,
+    lowered to half a metre under a hung edge it would otherwise fly into the
+    band just under, and ducked under the board only when the scan plane at
+    that height meets it -- never above the navigation height."""
+    b = spec["banner"]
+    bottom = float(b["board_bottom_m"])
+    ducked = max(DUCK_FLOOR_M, bottom - LIDAR_ABOVE_BODY_M - DUCK_MARGIN_M)
+    dims = spec.get("dimensions")
+    if dims is None:
+        return ducked
+    try:
+        gate = float(arena_dimensions().validate(dims)["corridor"]["nav_height_m"])
+    except (ValueError, TypeError):
+        return ducked
+    if (b.get("placement") or "suspended") == "ground":
+        return gate
+    top = bottom + float(b.get("height_m", BOARD_SIZE_M[1]))
+    if not bottom <= gate + LIDAR_ABOVE_BODY_M <= top and gate > bottom - 0.5:
+        gate = max(1.5, bottom - 0.5)
+    if bottom <= gate + LIDAR_ABOVE_BODY_M <= top:
+        return min(gate, ducked)
+    return gate
 AIRFRAME_BELOW_BODY_M = 0.35 # legs 0.195 m + sag/altitude error below base_link
 PASS_COMFORT_M = 1.6         # the corridor navigator's 1.4 m passage strip + margin
 
@@ -712,16 +736,17 @@ def gcs_range(group, key):
     raise KeyError(f"{group}.{key}")
 
 
-def slalom_obstacles(length, width, wall_height, reach_frac=0.5):
+def slalom_obstacles(length, width, wall_height, reach_frac=0.5, height=None):
     """Alternating blocks, each reaching ``reach_frac`` of the width from a
-    wall, 2.4 m apart from 1.4 m in (the shipped slalom's spacing)."""
+    wall, 2.4 m apart from 1.4 m in (the shipped slalom's spacing).
+    ``height``: the GCS obstacle height, else 95% of the wall."""
     reach = width * float(reach_frac)
     v = width / 2.0 - reach / 2.0
+    h = float(height) if height else OBSTACLE_HEIGHT_FRAC * wall_height
     out, u, side = [], SLALOM_FIRST_M, 1.0
     while u <= length - 1.0:
         out.append({"u": round(u, 3), "v": round(side * v, 3), "w": OBSTACLE_ALONG_M,
-                    "d": round(reach, 3),
-                    "h": round(OBSTACLE_HEIGHT_FRAC * wall_height, 3), "yaw_deg": 0.0})
+                    "d": round(reach, 3), "h": round(h, 3), "yaw_deg": 0.0})
         u += SLALOM_STEP_M
         side = -side
     return out
@@ -747,19 +772,24 @@ def apply_dimensions(spec, dims):
             o["d"] = round(reach, 3)
             o["v"] = round(math.copysign(c["width_m"] / 2.0 - reach / 2.0,
                                          float(o.get("v") or 1.0)), 3)
-            o["h"] = round(OBSTACLE_HEIGHT_FRAC * c["wall_height_m"], 3)
+            o["h"] = round(d["obstacle"]["height_m"], 3)
     else:
         r["obstacles"] = slalom_obstacles(c["length_m"], c["width_m"],
-                                          c["wall_height_m"], d["obstacle"]["reach_frac"])
+                                          c["wall_height_m"], d["obstacle"]["reach_frac"],
+                                          d["obstacle"]["height_m"])
     out["banner"].update({
         "width_m": b["width_m"], "height_m": b["height_m"],
+        "ground_height_m": b["ground_height_m"], "border_m": b["border_m"],
         "board_bottom_m": b["suspended_bottom_m"], "placement": b["placement"],
-        # The organisers hang it from a rod between the walls; orange marks
-        # every opening the aircraft must not take.
-        "mount": "rod", "orange": True,
+        # The organisers hang it from a rod between the walls. Rulebook:
+        # orange marks every opening the aircraft must not take. Field PDF
+        # (an exit shade given): the exit corridor is marked instead, and
+        # there are no orange boards.
+        "mount": "rod", "orange": not (out["banner"].get("colours") or {}).get("exit"),
         # The organisers' banners carry no wording.
         "lettered": False})
-    out["qr"] = {"start_m": q["start_m"], "target_m": q["target_m"]}
+    out["qr"] = {"start_m": q["start_m"], "target_m": q["target_m"],
+                 "border_m": q["border_m"]}
     for zone in out["red_zones"]:
         zone["w"] = zone["h"] = rz["side_m"]
     out["dimensions"] = d

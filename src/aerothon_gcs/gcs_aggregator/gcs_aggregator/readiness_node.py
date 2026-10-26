@@ -39,6 +39,7 @@ from gcs_aggregator.readiness import blocking_reasons, evaluate, is_ready
 # a panel saying "loaded" for a payload perception refuses is worse than
 # no panel at all.
 from perception_banner.colours import validate as validate_colours
+from perception_banner.colours import missing as missing_colours
 from mission_bt.delivery_zone import (ROLE_DELIVERY_ZONE, judges_polygon_role,
                                       parse_boundary, boundary_to_local_zone,
                                       parse_polygon, point_inside_with_margin,
@@ -133,7 +134,7 @@ class Readiness(Node):
         # ArduPilot's EKF health arrives here, not on estimator_status above.
         self.create_subscription(SysStatus, "/mavros/sys_status",
                                  self._on_sys_status, qos_profile_sensor_data)
-        self.create_subscription(RCIn, "/mavros/rc/in", self._on_rc,
+        self.create_subscription(RCIn, "/aerothon/rc/in", self._on_rc,   # rc_in_bridge
                                  qos_profile_sensor_data)
         # scan_mount publishes /scan best-effort; a reliable subscriber
         # never receives it on the aircraft (lidar rate stuck at 0 Hz).
@@ -323,7 +324,7 @@ class Readiness(Node):
             self.obs["banner_colours_reason"] = str(error) or "banner colours are invalid"
             self.obs["banner_colours_value"] = "invalid"
             return
-        missing = sorted({"green", "orange", "red"} - set(supplied))
+        missing = missing_colours(supplied)
         if missing:
             self.obs["banner_colours_valid"] = False
             self.obs["banner_colours_reason"] = (

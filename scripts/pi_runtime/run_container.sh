@@ -32,7 +32,7 @@ if [[ $mode == web ]]; then
 fi
 # The GPIO winch (BTS7960 + N20 encoder) needs the GPIO character devices;
 # granted only when runtime.env selects it, with the devices' own group.
-if [[ ${AEROTHON_WINCH_BACKEND:-mavlink} == gpio ]]; then
+if [[ ${AEROTHON_WINCH_BACKEND:-mavlink} == gpio || ${AEROTHON_WINCH_BACKEND:-mavlink} == l298n ]]; then
     for chip in /dev/gpiochip*; do
         [[ -c $chip ]] || continue
         args+=(--device "$chip" --group-add "$(stat -c %g "$chip")")

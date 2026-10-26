@@ -1,0 +1,69 @@
+{
+ "scope": "Recorded /scan (world 'shipped', 450-beam gpu_lidar, base_scan) in the return slalom approaching block 2's 1.0 m slot. On these scans the committed planner (560da40) took the straight line or the zero-reserve route 0.450-0.457 m from the block; a route keeping the 2.5 cm sampling reserve exists. final_mission_r12/r13 stalled STUCK at this slot.",
+ "frame": "base_scan",
+ "mount_parent": "base_link",
+ "mount_translation_xy": [
+  0.139,
+  -0.002
+ ],
+ "ranges_encoding": "zlib+base64 <u2 millimetres; 0 = no return (decode to +inf)",
+ "pose": "FCU local_position/pose nearest the scan: x, y, yaw_rad (home-local ENU)",
+ "scans": [
+  {
+   "run": "shipped_20kmh_r10",
+   "stamp": 1792629538.698,
+   "pose": [
+    10.2395,
+    -4.905,
+    -2.82166
+   ],
+   "angle_min": -3.1415927410125732,
+   "angle_increment": 0.013993730768561363,
+   "range_min": 0.019999999552965164,
+   "range_max": 12.0,
+   "ranges": "eJzNUv1PzVEY/97Pc57z3Hu7JZWwZqTSdGUlkjuprjBCLA1rZRgbStaWTHkZzctmxmytrE1ESmIIvzDLLL+wNP0g08y8NS+z+KntGs/a/A/OZ8/LOec5zznn+Txfna/Ov3E4whtRGz4jvNXX4yvz/QzrCisKiwx76j3qDXgnewc8NzwVnkWecI94et0d7tPuGneOO8Ud7/a5K107XGflmJRLoQQlIHESsiH70fbbx/am7bANtsnW2XK70q62K2yqzbCxNsJOtVHWY0f5D3/iIf7BfTzIvYpH/Iy7+Y6ikx/yJW7lu9zBLXyVm9XvGpPzfIUvcI/q29zI1zWym5s4wB/MbhM07+gW1dFeWkXp5NAL3MZFHMZ+rEcxAsiAHwkw+On67hp2GQAxmIBYROlqAEmYj4WYhSDyFJuwHZWoQA1O4pxmuYh2PEEfBuH8J+OXbbXbbZId5s98j6t5GcfxF9Nvzpp6c8CsNNkm00w0MI55S4/pOjXSaTpBlVSk1fFTLs2kGIqmEBwawXsM4w0G0KO4j0604AyuoBlNOIp9ip2o1WpUowq7sA7lWIvlKMFWFGEDtqhfoFiKXCzDGuRrFYOYg3lIQzoSkaU6DclIVevHbNVzkamyYmyeo3E56hfo2XyNXapMLFFdqjlK9K4FKFO7GTtUSnAQu5XPI6jHKRzX1zUpK+24jDY8UK5f4jWG8AOv8E0Rqf/zUzJlU5AKaSNV0SE6Q8epjR5SP32hEE0yKdozpabCtJpu89x8MnFcxNu4gd/yKOfaGnvNeiRP9sguWS2LJU1yZJ4Ua8+nS6IkyHSJFZ+kS7SMlyiZINMkRn7bcBknU3QnXpLUJioWSKpkSbZmypZ/7I04n52/CB2qVw=="
+  },
+  {
+   "run": "shipped_20kmh_r10",
+   "stamp": 1792629540.727,
+   "pose": [
+    10.0911,
+    -4.9439,
+    -2.82513
+   ],
+   "angle_min": -3.1415927410125732,
+   "angle_increment": 0.013993730768561363,
+   "range_min": 0.019999999552965164,
+   "range_max": 12.0,
+   "ranges": "eJzNkulL1FEUhue+dzm/mXF0ysw0ywVNy9TyQ4WSFUqFfrANDAnNFqGSIirBMmihDDQLWkwEw6SiRWyZFoRM2sgMGosixAUloxJTJLBpsQ6B/0P3cg7v5Z67Pe/ttXXZxpsO2OtP/iWuENcsl8dvpR/5XXducYY4vY5TjjWOBMc3e6O9wp5vz7SH2getVuuCVW0VWKutOCtPrBOvqY3qaT8V0FrKpViKokDymX4zaLzmkakyDabSHDInzW5TbNabpWaRSTapJtZM/NftZkwP6FE9pIf1ez2oR3Sn7mP1TD/Q7bpDe/VT/ZyjVT/SL/Vt1k90m87SuapJpsl02Y2zyEMIRkWv6BNDHB/FgBgW/cInvosRzp+FgE/8EgoGExCKAARjGuKRgiREIw1zsAzzsA6bkY9tKMF2FOMA9kFYLivBWm7Z/tu2wrhNsy7XR3WmjtekvapOlautKlslKZcakT75RTbLO7JeVsvTsljm/CMWLiNkovyDnxhDJ7rwEC24iWZcwjlU4QTKcRCV2IMdKGUem7ABO5HBnLKQzsxykI0FWIj5iEAyZiAS4UxxKpONxmTEYDriYIEQxHlMBMLNFW64mH0YnNwVHLxiIqbwejfrSNZuTOLqKPYkCLEcMaxjePcEJGImn5aOxexQKvuUyuevxSp2fCPfrxBF7Fkp3+8YanCY4yLuw4MGNOEt+tGBHvwASeI3B8vZcq7MYAZFskyeYSYe2SI/yd9SqhS1ROWqMlWrWlW/8qlEvYupvtPChJkKc89E0xF6TF+ph396OxWKHOGhJ3SVmuguXaEauk+3qJGOs7pMtXSeZ+roAl3j8Q3y0Bt6QQ+omXM3vaJx7z7YBmx/AeFnsKI="
+  },
+  {
+   "run": "final_mission_r12",
+   "stamp": 1792853209.458,
+   "pose": [
+    10.2363,
+    -4.839,
+    -2.5765
+   ],
+   "angle_min": -3.1415927410125732,
+   "angle_increment": 0.013993730768561363,
+   "range_min": 0.019999999552965164,
+   "range_max": 12.0,
+   "ranges": "eJzNUvtPz2EU/n6e8573fL/17WZdaDWNmYy22Gi2jDVhpEgzd1qtTEWlzNAo1wlTixZhCZHN5m6GyGjMdTK3mVqmZObygxaJ8wf4A7xnO+fsec95zt7nvG2uDpf1afVs9yR5ojyd7qfuaneue4t7sTvG/Vva5bZckt1SJMkyVeIkWvos5KF9ZJtsva22lbbMFthiW+hkOYl2nI2xQdbX9vF37uVWfsFv+C2f5it8npv4BJ/jWj7I+7iRq7mct3IZb+ZK3sY7OZdXcwGX8CYu4g28hbO4mEt5l2YlvJErtLKUa3gUPzNVJsH8oQ90ivJoBo2kMOrBddxDA/ZiHVYgDbMRiyhE4ofjQbfT6bxyXjtdTptmX5x+xwuLQADhCEE0RiMGExCvXTORhDyUoEh5jirbMdxBM1z/wYmUl/awTbDBto1PqiKTeQj/NG5+be6bg2a5WWUSzUgzyMD0Ujd9pBa6THVUTusok9IpmabQJIql4RRB/hRMXmJV7BM+ox1P0IoreIDLaMFVHEItjqs/gyocUBXWYxu2qiJrUY6VyFF1lyMfy9QWKbZA/VzVO0ezbKRguiq4BFmYp+hSrUlFssY5WpWKDMxSfJZuZr7erFIkDYXKlYcCZSpBqU5ao1MqdGoN6lGJPajWLdzABVzETd3Ec7xFJ77gG36ByVAIDdUXTaCJagspm/Iph9ZTLe2ns3SLHtAL+kq/KcyMNXEm2xwxDeaiuWs6jMPx+rd2cD2/53A7zdbZazZCZki6TFc/XlJlnP7yGBkjIyRcBkmIRMpAcUmg9FtHSHpsoHglWIwiRU6mM0Cjv4RKgMZQGSaDJUK7/r3HFP8mv2a/FL933mxvgLfRN8M3yLfZ57Gry/UX6T21sQ=="
+  },
+  {
+   "run": "final_mission_r12",
+   "stamp": 1792853211.75,
+   "pose": [
+    10.1488,
+    -4.8837,
+    -2.59984
+   ],
+   "angle_min": -3.1415927410125732,
+   "angle_increment": 0.013993730768561363,
+   "range_min": 0.019999999552965164,
+   "range_max": 12.0,
+   "ranges": "eJzNUwlLFUAQfvvNzs57+rQCI4uKKDSijKKk0w66w9JKU7HDPCoqU9R6FUZJdEeFdAiWqaWSUXYTFFQkSRRdYPd9i1FUKElBzQ/oB7TDfDM7Ows738y+9rzw7A+aHtQzqMV33Jfvi/OJ76P3ofeMt8Qb8CZ4h3jbe9vkmZyU7bJRciRRYqWLdJYQaXXv3V13x112h1yGmWmKXLZKspviklyEi3S9XDfnnLjfLO4Tf+YH/Imv8xO+wbf4Kl/jc1zHp1TruJwP8jGu5KPqHeAaLuPTfIjPcoVGTnA1x3G9nW+NraYCiqRm3EQx8pGKvuiPYHwzn81N88I8N03mrfluXik2mTbzw7Qq/jFB+G3CIOiK3hiEAYjCUIxUTEAi5iEdGQggF0XYjFJ4/tNV5KJcCzfwBuWiDxM/tR/tcVtqV9vZNtp2sj77hh5TI9VTLZXRVlpKqZRA8RRDPagDtaNwCiVLrfiJ93iHR2jEBdShFhVacwl2YRW2YyPyUIg1ykcuspXdJcjBbKQhHimIU5yKiZiGycr5CJXRGIXxGItY9EMMolUHaT96IhJTEK44HAMRgSGYgGHKdZTuBqKHsj9cY9F6MwKT9GwUZqkdjzlIxgwsw2LtawBZ2IRFagPald3Yg0ocQTkOo0ZfexHncQm3tYKn+Ipf+AK/VhdG3WgwDaM4GkeZtIR2Kgt1VEVX6A75bbjtbmNtus2zO+0Je9k22448hnN5Hd/TmZzkCtwN98ElSZWckV2yV2qkWLbJDlmuE79e8qVQCiRd0mSBTn9AFkmKLJQ8WWrmmkzJkpWSrZlbNHeF+mv1n+yQffKvLj4MfRmaGHo/JCWk2V/sD/c3BK8M/u754vkLR2m1qw=="
+  }
+ ]
+}

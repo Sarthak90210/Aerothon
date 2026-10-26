@@ -432,6 +432,27 @@ class MavlinkWinchTests(unittest.TestCase):
         self.assertEqual(self.node.state, "IDLE")
         self.assertEqual(self.node.payout, 0.0)
 
+    # ---- 25 Oct 2026: a bench "lower" never finished in simulation ---- #
+    # The FC's length control settled 7 cm short of the length it was sent
+    # (measured 5.929 of max_payout_m 6.0) and the node stayed LOWERING.
+
+    def test_a_measured_line_settled_just_short_of_the_limit_is_at_the_limit(self):
+        self.node._on_cmd(String(data="lower"))
+        self.client.sent[-1][1].finish()
+        for m in (2.0, 4.0, 5.8, 5.929, 5.929):
+            self.measure(m)
+            self.node.integrate(0.1)
+        self.assertEqual(self.node.state, "AT_LIMIT")
+        self.assertAlmostEqual(self.node.payout, 5.929)
+
+    def test_a_measured_line_well_short_of_the_limit_is_still_lowering(self):
+        self.node._on_cmd(String(data="lower"))
+        self.client.sent[-1][1].finish()
+        for m in (2.0, 4.0, 5.5):
+            self.measure(m)
+            self.node.integrate(0.1)
+        self.assertEqual(self.node.state, "LOWERING")
+
     def test_a_line_that_will_not_come_in_is_a_fault_not_stowed(self):
         self.node._on_cmd(String(data="stow"))
         for _ in range(200):            # 20 s, never retracts

@@ -125,6 +125,10 @@ class VelocityController(Node):
         # (correctly) aborted. The loop has to be closed.
         p('alt_hold_gain', 0.8)       # m/s of vz per metre of error
         p('max_vz', 0.6)              # ceiling on the correction
+        # The held height follows FCU vertical velocity, pulled toward the
+        # FCU altitude with this time constant and rate cap (_blend_alt_anchor).
+        p('alt_blend_tau_s', 3.0)
+        p('alt_blend_max_rate_mps', 0.1)
         # Compare measured world velocity with the lagged command response.
         # Keep the observer in world coordinates as aircraft yaw changes.
         # These response/filter settings have simulation evidence; hardware
@@ -344,10 +348,34 @@ class VelocityController(Node):
         # z was thrown away here, which is why "hold altitude" could never be
         # more than a comment: the controller did not know its own altitude.
         self._alt = float(m.pose.position.z)
+        self._blend_alt_anchor(previous_t)
         q = m.pose.orientation
         self._yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
                                1.0 - 2.0 * (q.y * q.y + q.z * q.z))
         self._pose_history.append((self._pose_t,*self._pos,self._yaw,(q.x,q.y,q.z,q.w)))
+
+    def _blend_alt_anchor(self, previous_t):
+        """Pull the held height's anchor toward the FCU altitude, slowly.
+
+        The integral of FCU vertical velocity alone missed slow real motion:
+        against Gazebo truth it stayed flat while the aircraft climbed 0.15 m
+        in 20 s, with the FCU altitude within 3 cm of truth throughout; the
+        same blind drift, downward, sank the transmitter test onto the
+        airborne floor (gcs_testing_20261025 sessions 9-10). Velocity still
+        carries fast motion; a first-order pull with alt_blend_tau_s, capped
+        at alt_blend_max_rate_mps, follows the FCU altitude's slow content, so
+        barometer jitter and jumps are adopted only gradually.
+        """
+        if (not self.enabled or self._alt_motion_origin is None or self._alt_motion_fault
+                or previous_t is None or not math.isfinite(self._alt)):
+            return
+        tau = float(self._g('alt_blend_tau_s'))
+        dt = self._pose_t - previous_t
+        if tau <= 0 or not 0 < dt <= 3*float(self._g('stale_scan_s')):
+            return
+        error = self._alt - (self._alt_motion_origin + self._alt_motion_displacement)
+        cap = float(self._g('alt_blend_max_rate_mps'))*dt
+        self._alt_motion_origin += max(-cap, min(cap, error*min(1.0, dt/tau)))
 
     def _velocity_fresh(self):
         return (not self._velocity_fault and not self._alt_motion_fault
@@ -922,7 +950,7 @@ class VelocityController(Node):
         output = desired-compensation+feedback
         return float(output[0]),float(output[1])
 
-    def _publish(self, vx, vy, front, bearing, extra):
+    def _publish(self, vx, vy, front, bearing, extra, recentre=False):
         computation_started = self._now()
         budget = float(self._g('motion_computation_budget_s'))
         if not math.isfinite(budget) or budget < 0:
@@ -1005,6 +1033,10 @@ class VelocityController(Node):
                     nxt = point+velocity*dt
                     trajectory.append(nxt.copy())
                     point = nxt
+                if recentre:
+                    # The sidestep out of the clearance band has its own,
+                    # narrower certificate; nothing else uses it.
+                    return self._planner.recentre_clear(trajectory)
                 return self._planner.polyline_clear(trajectory)
             def motion_clear(command):
                 # A response mismatch may masquerade as helpful disturbance.
@@ -1117,9 +1149,10 @@ class VelocityController(Node):
                   "hold_alt_m": (None if self._hold_alt is None
                                  else round(self._hold_alt, 2)),
                   "alt_m": (None if self._alt is None else round(self._alt, 2)),
-                  "altitude_motion_basis": ('FCU vertical displacement from handover'
+                  "altitude_motion_basis": ('FCU vertical displacement from handover, blended toward FCU altitude'
                       if self._alt_motion_origin is not None else 'pose-only; no FCU motion anchor'),
                   "altitude_motion_displacement_m": self._alt_motion_displacement,
+                  "altitude_motion_anchor_m": self._alt_motion_origin,
                   "altitude_motion_fault": self._alt_motion_fault,
                   "backoffs": self._backoffs_done,
                   "disturbance_estimate_valid": bool(fresh and self._response_known),
@@ -1266,7 +1299,7 @@ class VelocityController(Node):
             speed = float(self._g('recentre_speed'))
             self._publish(speed * recentre[0], speed * recentre[1], front, 0.0,
                           {"recovery_reason": "inside clearance; recentring",
-                           "recentre_ticks": self._recentre_ticks})
+                           "recentre_ticks": self._recentre_ticks}, recentre=True)
             return
         if gap is not None:
             self._recentre_ticks = 0

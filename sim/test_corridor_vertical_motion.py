@@ -1,4 +1,12 @@
-"""Physical altitude hold follows real FCU displacement, not barometer jitter."""
+"""Physical altitude hold follows real FCU displacement, not barometer jitter.
+
+25 Oct 2026 (gcs_testing_20261025 sessions 9-10, against Gazebo truth): the
+integral of FCU vertical velocity alone stayed flat while the aircraft really
+climbed 0.15 m in 20 s, the FCU altitude within 3 cm of truth throughout; the
+same blind drift downward sank the transmitter test onto the airborne floor.
+The anchor is now pulled slowly toward the FCU altitude (_blend_alt_anchor):
+fast jitter stays negligible, a jump is adopted no faster than the rate cap,
+and slow drift the velocity integral misses is corrected."""
 import math
 import pytest
 from geometry_msgs.msg import PoseStamped,TwistStamped
@@ -20,17 +28,45 @@ def enable(c):
 
 def test_stationary_baro_wander_cannot_issue_vertical_travel(controller):
     c,_=controller;enable(c)
+    cap=float(c._g('alt_blend_max_rate_mps'))
     for t,z in [(1.1,3.1),(1.2,2.1),(1.3,3.4)]:
         observe(c,t,z,0.);c._on_hold_alt(Float32(data=2.64))
-        assert c._alt_correction()==pytest.approx(0.,abs=1e-6)
-        assert c._alt_motion_origin==2.64 and c._alt_motion_displacement==0.
+        # A jump is adopted no faster than the rate cap.
+        assert abs(c._alt_motion_origin-2.64)<=cap*(t-1.)+1e-9
+        assert abs(c._alt_correction())<=float(c._g('alt_hold_gain'))*cap*(t-1.)+1e-9
+        assert c._alt_motion_displacement==0.
+
+
+def test_sustained_fast_jitter_stays_negligible(controller):
+    c,_=controller;enable(c)
+    for i in range(1,401):                           # 20 s of +/-0.4 m at 10 rad/s
+        t=1.+i*.05
+        observe(c,t,2.64+.4*math.sin(t*10),0.);c._on_hold_alt(Float32(data=2.64))
+        assert abs(c._alt_motion_origin-2.64)<.05
+    assert abs(c._alt_correction())<.04
+
+
+def test_slow_drift_the_velocity_integral_misses_is_corrected(controller):
+    c,_=controller;enable(c)
+    for i in range(1,401):                           # FCU altitude sinks 3 cm/s, vz reads 0
+        t=1.+i*.05
+        observe(c,t,2.64-.03*(t-1.),0.);c._on_hold_alt(Float32(data=2.64))
+    z=2.64-.03*(t-1.)
+    held=c._alt_motion_origin+c._alt_motion_displacement
+    assert abs(held-z)<=.03*float(c._g('alt_blend_tau_s'))+.02   # lags by about drift x tau
+    assert c._alt_correction()>.3                                 # climbing back, not holding the sink
 
 
 def test_signed_vertical_motion_gets_an_opposing_correction(controller):
     c,_=controller;enable(c)
     observe(c,1.1,3.,-.4);observe(c,1.2,3.3,-.4)
     assert c._alt_motion_displacement==pytest.approx(-.06)
-    assert c._alt_correction()==pytest.approx(.048,abs=1e-6)
+    # The high baro readings move the anchor at most the rate cap over 0.2 s;
+    # the measured sink still gets its climb (0.048 with no blend at all).
+    cap=float(c._g('alt_blend_max_rate_mps'))*.2
+    assert 0.<=c._alt_motion_origin-2.64<=cap+1e-9
+    assert c._alt_correction()==pytest.approx(.8*(2.64-(c._alt_motion_origin-.06)),abs=1e-6)
+    assert c._alt_correction()>=.048-.8*cap-1e-9>0.
     before=c._alt_motion_displacement;observe(c,1.2,3.5,-99.)
     assert c._alt_motion_displacement==before
 
@@ -96,4 +132,6 @@ def test_a_brief_capture_gap_is_bridged_and_motion_resumes(controller):
     observe(c,t,3.4,-.2)                           # baro jumps; FCU vz steady
     assert not c._alt_motion_fault and c._velocity_fresh()
     assert c._alt_motion_displacement==pytest.approx(-.01-.2*(t-1.1),abs=1e-6)   # ramp from enable, then the bridged gap
-    assert c._alt_motion_origin==2.64              # baro never adopted
+    # The baro jump is never taken as displacement, and the anchor moves no
+    # faster than the blend's rate cap.
+    assert abs(c._alt_motion_origin-2.64)<=float(c._g('alt_blend_max_rate_mps'))*(t-1.1)+1e-9

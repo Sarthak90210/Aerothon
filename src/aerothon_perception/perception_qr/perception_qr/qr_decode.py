@@ -62,12 +62,43 @@ class QrDecoder:
         quad = self.locate(bgr)
         if quad is None:
             return [], None
-        found = self._opencv_crop(bgr, quad)
+        found = (self._zbar_binarised(bgr, quad) if pyzbar is not None else []) \
+            or self._opencv_crop(bgr, quad)
         return (found, None) if found else ([], quad)
 
     @staticmethod
+    def _zbar_binarised(bgr, quad, margin=0.25):
+        """zbar on the located marker's crop, thresholded to black and white.
+
+        A code printed with NO white border (the organisers' field PDF, 23 Oct
+        2026: "no white borders, just the QR code") lying on a mid-grey
+        ground -- the take-off pad, grey ~157 -- has nothing light round its
+        finder patterns for zbar's own edge finder: rendered, zbar read 0 of
+        39 start-scan frames as they came and all 39 after an Otsu threshold,
+        which puts the ground on the light side. Decoding also returns the
+        code's own corners, so its pattern is read off the right grid; the
+        finder search's corners were a module out and gave only a coarse
+        reading (field world run 4)."""
+        h, w = bgr.shape[:2]
+        side = float(np.ptp(quad, axis=0).max())
+        x0, y0 = np.maximum((quad.min(axis=0) - margin * side).astype(int), 0)
+        x1, y1 = (quad.max(axis=0) + margin * side).astype(int)
+        crop = bgr[y0:min(h, y1), x0:min(w, x1)]
+        if crop.size == 0:
+            return []
+        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        out = []
+        for payload, pts in QrDecoder._zbar_gray(binary):
+            out.append((payload, pts + np.float32([x0, y0])))
+        return out
+
+    @staticmethod
     def _zbar(bgr):
-        gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+        return QrDecoder._zbar_gray(cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY))
+
+    @staticmethod
+    def _zbar_gray(gray):
         out = []
         for r in pyzbar.decode(gray, symbols=_QR):
             pts = np.float32([(p.x, p.y) for p in r.polygon])

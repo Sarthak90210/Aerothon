@@ -1,0 +1,34 @@
+{
+  "feature": "pi_deploy_20261025",
+  "triage": "ready-for-human",
+  "destination": "pi5 at 192.168.137.148 (laptop Windows hotspot, Wi-Fi only), freshly flashed Debian 13 trixie arm64 on the 58 GB SD card; host key ED25519 SHA256:jz8v4aicVfo4ysmWWKhrCBuTO7kf2tCDCAEyljeOEFk (trusted on the operator's word after flashing). An earlier flash the same morning (192.168.0.104, key SHA256:CN7D5qh5...) was abandoned after it reset under build load.",
+  "root_steps_by_operator": "aerothon_setup_root.sh (docker.io 26.1.5, pi5 in docker group, dtparam=uart0=on with config.txt.bak-aerothon-20261025) then reboot; install_services.sh (aerothon-router + aerothon-gcs enabled and started). Passwordless sudo was not configured.",
+  "bundle": "logs/pi-runtime-20261025d.zip sha256 64750bd24b254a37458ab62de062f8c7f31bf139fdc56a94971f3fa25c13b4bc, 267/267 manifest files verified into /home/pi5/aerothon_ws and rebuilt (14 packages, one core); working tree on base 560da40 (uncommitted): red-zone delivery-zone filter, return-slot fixes, L298N winch + RC ch5, SERVO5 camera, test-option fixes, RC bridge, lowering direction -1, channel-5 middle-first guard",
+  "bundle_history": [
+    "20261025b bacec0c6e68f355779a8025dc5c58712acf35824f36995424bf1b733d08604bc: first install on this flash",
+    "20261025c 38c029d268b0443e9466ff4a26356120165c149edba9c2157f8614f2d7bcef0a: rc_in_bridge publishes /aerothon/rc/in from RC_CHANNELS (FC reports chancount 0 with live values: ExpressLRS MAVLink on SERIAL2); winch, execution and readiness read it",
+    "20261025d 64750bd24b254a37458ab62de062f8c7f31bf139fdc56a94971f3fa25c13b4bc: hand drive waits for channel 5 in the middle after startup, a mission or a lost radio",
+    "20261025e a69a06b6199213917f816712b4d8159e6415694b3b7f05351e1b654125c39392: venue rc_manual_channel 6 (operator: RC6 is a three-position switch), GCS label and FC notes; reduced suite 2232 passed, 8 skipped (reduced_suite_rc6.log). deployed to pi5 at 192.168.0.102 (piwifi; same host key). FC: RC6_OPTION 0, TUNE 0, FLTMODE_CH 7, RC6 1000/1500/2000. Live test: winch followed RC6 every time once the middle was seen (low -1, middle 0, high 1, within about 1 s); the operator reported it all working"
+  ],
+  "resets": "four Pi resets on 25 Oct (13:33, about 15:25, two more on piwifi with unsynced clock), the last two with the motor idle or just after a hand drive; kernel at boot: 'hwmon hwmon3: Undervoltage detected!' then 'Voltage normalised'; throttled=0x50000 after each recent boot. Each reset restarts the runtime and hand drive waits for the middle again.",
+  "rc_findings": "RC_CHANNELS from sysid 1 compid 1 only, ~4.5 Hz, chancount 0, rssi 255. With 20261025c channel 5 became visible and the switch, left at LOW, lowered the line unattended when the runtime connected (estimate 0 -> 5.73 m at 0.3 m/s, about 19 s) until rc_low_us/rc_high_us were set out of reach at runtime. The Pi then reset (up 0 min, throttled=0x0 afterwards) with the motor already stopped; the runtime auto-connected and drove again until the bands were re-parked. A Pi-local rc_manual_channel 0 hold was added to venue.yaml and removed by 20261025d.",
+  "offline_suite": "reduced scope on the 20261025d tree: 2230 passed, 8 skipped (5 deferred strong-gust, 3 empty photo corpus) plus 9 passed/3 skipped; ALL IN-SCOPE OFFLINE CHECKS PASSED, logs/gcs_testing_20261025/reduced_suite_rcguard.log. The earlier _rcbridge run (1 failed: world_sim_venue parity) ran while files were being edited and is not counted.",
+  "lidar_driver": "sllidar_ros2 34300099fadfc772965962dec837bf436706188f (LD06 driver not installed; C1 fitted)",
+  "images": "aerothon-dependencies:20261014 and aerothon-runtime:20261014 built on the Pi (legacy builder, --cpuset-cpus 0,1); colcon 14 packages at one core",
+  "check_pi_runtime": "all PASS except ldlidar_stl_ros2 (first install)",
+  "runtime_env": "AEROTHON_FCU_DEVICE=/dev/ttyAMA0, 115200, AEROTHON_WINCH_BACKEND=l298n",
+  "gcs_profile": "'vehicle' (drone, serial /dev/ttyAMA0 115200, camera /dev/video0, lidar /dev/ttyUSB0, slam true, winch l298n, autoconnect true); runtime Running on it after 20261025d, reconnected through /api/connect",
+  "router": "1 FCU active on /dev/ttyAMA0, MAVROS attached; Mission Planner connected as a GCS endpoint earlier on this flash",
+  "motor": "L298N channel B: ENB BCM18 (header 12), IN3 BCM23 (16), IN4 BCM24 (18). IN3 high wound the line in, so l298n_lower_direction -1 (IN4 lowers). Whether the IN4 lower pulse paid the line out is not yet confirmed by the operator.",
+  "power": "throttled=0x0 through the builds after the CPU caps; resets at 13:33 (motor stopped, throttled=0x0 after) and about 15:25 on 25 Oct (throttled=0x50000 after: undervoltage and throttling since boot); no persistent journal, so the cause of each is not recorded; the supply remains marginal",
+  "reboot_verification": "boot of about 15:25, 25 Oct: aerothon-router active at 4.19 s, NetworkManager 8.71 s, docker 17.52 s, aerothon-gcs 17.52 s (monotonic); runtime Running on 'vehicle' with no connection error and no operator Connect; router 1 FCU, 1 MAVROS, 1 GCS (Mission Planner) endpoints active, GCS datagrams flowing, 0 FC writes timed out; winch IDLE, rc_manual 0, rc_manual_ready false, motor pins 18/23/24 low",
+  "channel_5": "during the operator's flips on 20261025d only 1000 and 2000 us were seen (never a middle value) and rc_manual stayed 0: a two-position switch, so the middle-first guard never readies hand drive",
+  "blockers": [
+    "Channel 5 hand drive: the switch is two-position (1000/2000 only); hand drive needs a three-position switch on channel 5, or a different two-position behaviour (operator's choice).",
+    "Operator confirmation that lowering (IN4) pays the line out.",
+    "Camera and lidar not checked on this flash.",
+    "SERVO5 endpoints and the FC SERIALn for UART0 still need the bench.",
+    "Source not committed."
+  ],
+  "completion": "Deployed 20261025d; runtime auto-connected to the drone profile; motor stopped"
+}

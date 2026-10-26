@@ -23,6 +23,16 @@ SAMPLING_RESERVE=.025
 # (shipped_20kmh_r9b). Nothing is flown inside the clearance: the sidestep
 # only ever increases it, and every planned segment is still certified.
 RECENTRE_SLACK=.03
+# The lattice has a row every `resolution` across the axis, placed relative
+# to wherever the aircraft happens to be. The return slalom's 1.0 m slot
+# leaves a 5 cm band at the sampling reserve, so whether a row falls inside
+# it was chance: when none did, the route fell to the zero-reserve tier and
+# was flown hugging the block corner at the hard clearance, where lidar
+# noise put the aircraft inside it (final_mission_r12/r13 STUCK at x=9.94;
+# r10 passed the same slot on a lattice that happened to fit). Retrying the
+# sampling-reserve tier on a lattice shifted half a cell across the axis
+# guarantees a row in any band at least one cell wide.
+HALF_CELL_RETRY=True
 
 
 class FastConnectedPlanner(LocalPlanner):
@@ -41,12 +51,20 @@ class FastConnectedPlanner(LocalPlanner):
         path=self._plan_graph(axis_bearing,TRACKING_RESERVE)
         if path:
             return path
-        if straight_clear:
-            self.path,self.reason=[(0,0),straight],'connected lidar path'
-            return self.path
+        # A route that keeps the sampling reserve beats the straight line at
+        # the bare hard clearance: in the return slot the straight line ran
+        # along the block at 0.45 m and lidar noise put the aircraft inside
+        # it (final_mission_r12/r13).
         path=self._plan_graph(axis_bearing,SAMPLING_RESERVE)
         if path:
             return path
+        if HALF_CELL_RETRY:
+            path=self._plan_graph(axis_bearing,SAMPLING_RESERVE,lateral_shift=self.resolution/2)
+            if path:
+                return path
+        if straight_clear:
+            self.path,self.reason=[(0,0),straight],'connected lidar path'
+            return self.path
         # A slot narrower than 2 x (clearance + sampling reserve) has no
         # lattice cell inside the reserve band. Search at the hard clearance
         # itself; the shortcut pass still certifies every segment against it.
@@ -68,11 +86,28 @@ class FastConnectedPlanner(LocalPlanner):
             return None
         return ux,uy
 
+    def recentre_clear(self, points):
+        """Certificate for the recentre sidestep's predicted motion only.
+
+        The full certificate needs the hard clearance at every sample,
+        including the start, which an aircraft inside it cannot meet: every
+        sidestep, hold and back-off was zeroed and drift carried the aircraft
+        further in until the navigator gave up STUCK (final_mission_r12).
+        The sidestep is held to the band it was planned in instead: no sample
+        below the clearance minus RECENTRE_SLACK, and it must end with more
+        clearance than it starts with.
+        """
+        points=np.asarray(points,dtype=float).reshape(-1,2)
+        if self.recentre is None or len(points)<2 or not np.isfinite(points).all():
+            return False
+        start,end=self.distances([points[0],points[-1]])
+        return bool(end>start and self.polyline_clear(points,self.clearance-RECENTRE_SLACK))
+
     def _least_clearance(self, start, end):
         samples=np.linspace(start,end,max(2,int(math.dist(start,end)/.05)+2))
         return float(self.distances(samples).min())
 
-    def _plan_graph(self, axis_bearing, reserve):
+    def _plan_graph(self, axis_bearing, reserve, lateral_shift=0.):
         self.path=[]
         step=self.resolution
         n=int(self.lookahead/step)
@@ -81,9 +116,13 @@ class FastConnectedPlanner(LocalPlanner):
         rotation=np.array([[math.cos(axis_bearing),math.sin(axis_bearing)],
                            [-math.sin(axis_bearing),math.cos(axis_bearing)]])
         xy=ij*step @ rotation
+        origin=n*side+n
+        if lateral_shift:
+            # Every cell but the aircraft's own moves across the axis.
+            xy=xy+lateral_shift*np.array([-math.sin(axis_bearing),math.cos(axis_bearing)])
+            xy[origin]=0.
         distances=self.distances(xy)
         free=self.known(xy) & (distances>=self.clearance+reserve) & (ij[:,0]*step>=-.3)
-        origin=n*side+n
         free[origin]=True
         cost=1.+.10/np.maximum(.05,distances-self.clearance)**2
         ids=np.arange(side*side).reshape(side,side)

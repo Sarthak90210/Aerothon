@@ -88,11 +88,30 @@ def box_collision(name: str, pose: str, size: str) -> str:
             f'<size>{size}</size></box></geometry></collision>')
 
 
+def strip_quiet_zone(matrix: list[list[bool]]) -> list[list[bool]]:
+    """The code without its all-white margin rows and columns."""
+    rows = [i for i, r in enumerate(matrix) if any(r)]
+    cols = [j for j in range(len(matrix[0])) if any(r[j] for r in matrix)]
+    if not rows or not cols:
+        return matrix
+    return [r[cols[0]:cols[-1] + 1] for r in matrix[rows[0]:rows[-1] + 1]]
+
+
 def qr_visuals(matrix: list[list[bool]], size: float, prefix: str,
-               wear: int = 0) -> str:
-    """White plate plus horizontally merged black QR module runs."""
+               wear: int = 0, border_m: float = None) -> str:
+    """White plate plus horizontally merged black QR module runs.
+
+    ``border_m`` None: the stored matrix, quiet zone included, fills ``size``.
+    Given (the GCS's "QR white border"): the code itself, quiet zone removed,
+    fills ``size`` less that border on each side -- with 0, the field PDF's
+    "no white borders (just the QR code)" print, finder patterns at the edge."""
+    if border_m is not None:
+        matrix = strip_quiet_zone(matrix)
+        code = max(0.05, size - 2.0 * float(border_m))
+    else:
+        code = size
     n = len(matrix)
-    cell = size / n
+    cell = code / n
     plate, ink = worn(PRINT_WHITE, wear), worn(PRINT_BLACK, wear)
     visuals = [box_visual(f"{prefix}_white_plate", "0 0 0", f"{size} {size} 0.04", plate)]
     idx = 0
@@ -106,8 +125,8 @@ def qr_visuals(matrix: list[list[bool]], size: float, prefix: str,
             while col < n and modules[col]:
                 col += 1
             run = col - start
-            x = -size / 2 + (start + run / 2) * cell
-            y = size / 2 - (row + 0.5) * cell
+            x = -code / 2 + (start + run / 2) * cell
+            y = code / 2 - (row + 0.5) * cell
             visuals.append(box_visual(
                 f"{prefix}_black_{idx}", f"{x:.6f} {y:.6f} 0.026",
                 f"{run * cell:.6f} {cell:.6f} 0.012", ink))
@@ -151,8 +170,12 @@ def banner_geometry(wear: int = 0,
                     bottom: float = world_spec.BOARD_BOTTOM_M,
                     lettered: bool = False,
                     colour=None, width: float = 3.7, height: float = 1.15,
-                    rod: bool = False, prefix: str = "banner") -> str:
+                    rod: bool = False, prefix: str = "banner",
+                    border: float = None) -> str:
     """The banner panel, as both a visual and a SOLID.
+
+    ``border``: the white border's width (the GCS's "Banner border"; the
+    field PDF's 1 inch), else the organisers' earlier 3 inches.
 
     NO TEXT BY DEFAULT
 
@@ -187,13 +210,13 @@ def banner_geometry(wear: int = 0,
         box_collision(f"{prefix}_board_collision", f"0 0 {center_z:.4f}", size),
         box_visual(f"{prefix}_board", f"0 0 {center_z:.4f}", size, green),
     ]
-    if (width, height) == (3.7, 1.15):
+    if (width, height) == (3.7, 1.15) and border is None:
         # The measured board's frame, unchanged so its evidence still holds.
         frame = ((0.50, "0.022 3.48 0.07"), (1.705, "0.022 0.07 1.07"))
         (fz, fz_size), (fy, fy_size) = frame
     else:
-        # The organisers' 3-inch border on a banner of any size.
-        t = 3 * 0.0254
+        # The organisers' border on a banner of any size.
+        t = 3 * 0.0254 if border is None else float(border)
         fz, fz_size = height / 2 - t / 2, f"0.022 {width:.4f} {t:.4f}"
         fy, fy_size = width / 2 - t / 2, f"0.022 {t:.4f} {height:.4f}"
     # Raised white frame on both faces.
@@ -235,7 +258,8 @@ def banner_geometry(wear: int = 0,
 
 def ground_banner_geometry(wear: int = 0, colour=None,
                            width: float = 3.7, depth: float = 1.15,
-                           x0: float = 0.0, prefix: str = "ground_banner") -> str:
+                           x0: float = 0.0, prefix: str = "ground_banner",
+                           border: float = None, z: float = 0.012) -> str:
     """The banner laid flat in front of the corridor, colour facing the sky.
 
     The organisers may ground-mount a banner instead of hanging it: "laid flat
@@ -251,9 +275,12 @@ def ground_banner_geometry(wear: int = 0, colour=None,
     panel = worn(colour or PRINT_GREEN, wear)
     white = worn(PRINT_WHITE, wear)
     t = min(width, depth) * 0.024          # 3 inches on a corridor-width banner
-    if (width, depth) != (3.7, 1.15):
-        t = 3 * 0.0254                     # the organisers' border, any size
-    z = 0.012                              # lying on the surface, not sunk in
+    if (width, depth) != (3.7, 1.15) or border is not None:
+        # The organisers' border, any size: 3 inches, or the GCS's border.
+        t = 3 * 0.0254 if border is None else float(border)
+    # Lying on the surface, not sunk in: `z` 0.012 on bare ground, or on top
+    # of the delivery zone's 0.08 m slab and its boundary lines where the
+    # sheet lies on the zone (LAID_ON_ZONE_Z).
     visuals = [
         box_visual(f"{prefix}_panel", f"{x0:.3f} 0 {z}",
                    f"{depth:.3f} {width:.3f} 0.008", panel),
@@ -549,23 +576,44 @@ def main() -> None:
     banner_colours = (spec["banner"].get("colours") or {}) if spec else {}
     green_print = (world_spec.print_colour(banner_colours.get("green"))
                    if banner_colours.get("green") else PRINT_GREEN)
-    hung = (banner_geometry(cond["wear"]["banner"], bottom, lettered, green_print,
-                            width=bw, height=bh, rod=rod)
-            if placement in ("suspended", "both") else "")
-    laid = (ground_banner_geometry(cond["wear"]["banner"], green_print,
-                                   width=bw, depth=bh, x0=laid_banner_x0(bh))
-            if placement in ("ground", "both") else "")
+    # The exit corridor's boards (field PDF: blue) at the return lane's
+    # entrance; without an exit shade they are green, as the rulebook has it.
+    exit_print = (world_spec.print_colour(banner_colours["exit"])
+                  if banner_colours.get("exit") else green_print)
+    # GCS dimensions: the border (1 inch on the field PDF) and the ground
+    # board's own height (1 ft there, under a 1.5 ft hung one).
+    dimensioned = bool(spec) and bool(spec.get("dimensions"))
+    border = (float(spec["banner"]["border_m"])
+              if dimensioned and "border_m" in spec["banner"] else None)
+    gh = float(spec["banner"].get("ground_height_m") or bh) if spec else bh
+    qr_border = (float(spec["qr"]["border_m"])
+                 if dimensioned and "border_m" in spec["qr"] else None)
+
+    def hung_board(colour):
+        return (banner_geometry(cond["wear"]["banner"], bottom, lettered, colour,
+                                width=bw, height=bh, rod=rod, border=border)
+                if placement in ("suspended", "both") else "")
+
+    def laid_board(colour, lane):
+        return (ground_banner_geometry(cond["wear"]["banner"], colour, width=bw,
+                                       depth=gh, x0=laid_banner_x0(gh), border=border,
+                                       z=laid_sheet_z(spec, lane, gh, bw) if spec else 0.012)
+                if placement in ("ground", "both") else "")
+    hung = hung_board(green_print)
+    laid = laid_board(green_print, spec["corridor"] if spec else None)
     print(f"BANNER PLACEMENT: {placement}"
           + ("" if lettered else "; no lettering (organiser clarification)"))
     replacements = {
         "@QR_START_VISUALS@": qr_visuals(start_matrix, args.start_qr_size,
-                                        "start_qr", cond["wear"]["qr"]),
+                                        "start_qr", cond["wear"]["qr"], qr_border),
         **{f"@QR_TARGET_{l.upper()}_VISUALS@": qr_visuals(
             matrices[f"qr_target_{l}.png"], args.target_qr_size, f"target_{l}",
-            cond["wear"]["qr"]) for l in "abcde"},
+            cond["wear"]["qr"], qr_border) for l in "abcde"},
         "@AEROTHON_BANNER_GEOMETRY@": "\n        ".join(
             x for x in (hung,) if x),
+        RETURN_BANNER_TOKEN: hung_board(exit_print),
         LAID_BANNER_TOKEN: laid,
+        RETURN_LAID_TOKEN: laid_board(exit_print, spec["return_corridor"] if spec else None),
         "@BANNER_POST_H@": f"{post_h:g}",
         "@BANNER_POST_Z@": f"{post_h / 2:g}",
         "@GREEN_DECOY_VISUALS@": green_decoy_visuals(),
@@ -577,7 +625,8 @@ def main() -> None:
     # number, including none), so their tokens may legitimately be gone.
     optional = ({"@RED_ZONE_MAIN_VISUALS@", "@RED_ZONE_NW_VISUALS@",
                  "@RED_ZONE_SOUTH_VISUALS@", "@GREEN_DECOY_VISUALS@"}
-                if spec is not None else set()) | {LAID_BANNER_TOKEN}
+                if spec is not None else set()) | {LAID_BANNER_TOKEN, RETURN_LAID_TOKEN,
+                                                   RETURN_BANNER_TOKEN}
     for token, geometry in replacements.items():
         if token not in world:
             if token in optional:
@@ -592,7 +641,8 @@ def main() -> None:
         orange_print = (world_spec.print_colour(banner_colours["orange"])
                         if banner_colours.get("orange") else PRINT_ORANGE)
         world = _append_models(world, orange_banner_models(
-            spec, cond["wear"]["banner"], orange_print, placement, bottom, bw, bh, rod))
+            spec, cond["wear"]["banner"], orange_print, placement, bottom, bw, bh, rod,
+            ground_height=gh, border=border))
     world = world.replace("@SIM_GAZEBO_ASSET_URI@", runtime_assets.as_uri())
     args.output.write_text(world, encoding="utf-8")
 
@@ -942,6 +992,30 @@ def _box(name, pose, size, material, collide=True):
 # for both lanes alike -- which the banner models, the return one turned 180
 # degrees, cannot say.
 LAID_BANNER_TOKEN = "@AEROTHON_LAID_BANNER@"
+# A laid sheet over the delivery zone lies ON it: the zone slab's top is
+# 0.08 m and its white boundary lines' 0.10 m. At the ground's 0.012 m the
+# field PDF's exit board -- laid at the exit corridor's mouth, where the
+# zone begins -- was hidden under both (field world run 3, return stand-off).
+LAID_ON_ZONE_Z = 0.102
+
+
+def laid_sheet_z(spec, lane, depth, width):
+    """The height a lane's laid sheet is drawn at: on the zone if it lies
+    over it, else on the ground."""
+    if not spec:
+        return 0.012
+    yaw = math.radians(float(lane["yaw_deg"]))
+    x0 = laid_banner_x0(depth)
+    sheet = [world_spec._place((x0 + dx, dy), float(lane["x"]), float(lane["y"]), yaw)
+             for dx, dy in ((-depth / 2, -width / 2), (depth / 2, -width / 2),
+                            (depth / 2, width / 2), (-depth / 2, width / 2))]
+    zx0, zx1, zy0, zy1 = world_spec.zone_rect(spec)
+    # The boundary lines are 0.2 m wide on the zone's edge.
+    zone = [(zx0 - 0.1, zy0 - 0.1), (zx1 + 0.1, zy0 - 0.1), (zx1 + 0.1, zy1 + 0.1), (zx0 - 0.1, zy1 + 0.1)]
+    return LAID_ON_ZONE_Z if world_spec.polygons_overlap(sheet, zone) else 0.012
+# The return lane's own boards, so they can carry the exit shade.
+RETURN_LAID_TOKEN = "@AEROTHON_RETURN_LAID_BANNER@"
+RETURN_BANNER_TOKEN = "@AEROTHON_RETURN_BANNER_GEOMETRY@"
 LAID_GAP_M = 0.15
 
 
@@ -953,7 +1027,8 @@ def laid_banner_x0(depth=1.15):
 PRINT_ORANGE = ((0.72, 0.27, 0.02), (0.92, 0.35, 0.04))
 
 
-def orange_banner_models(spec, wear, colour, placement, bottom, width, height, rod):
+def orange_banner_models(spec, wear, colour, placement, bottom, width, height, rod,
+                         ground_height=None, border=None):
     """ORANGE at every opening the aircraft must not use.
 
     The organisers: the exit corridor carries an orange banner at the opening
@@ -973,11 +1048,13 @@ def orange_banner_models(spec, wear, colour, placement, bottom, width, height, r
         parts = []
         if placement in ("suspended", "both"):
             parts.append(banner_geometry(wear, bottom, False, colour, width=width,
-                                         height=height, rod=rod, prefix="orange"))
+                                         height=height, rod=rod, prefix="orange",
+                                         border=border))
         if placement in ("ground", "both"):
-            parts.append(ground_banner_geometry(wear, colour, width=width, depth=height,
-                                                x0=-laid_banner_x0(height),
-                                                prefix="orange_ground"))
+            depth = ground_height or height
+            parts.append(ground_banner_geometry(wear, colour, width=width, depth=depth,
+                                                x0=-laid_banner_x0(depth),
+                                                prefix="orange_ground", border=border))
         body = "\n        ".join(parts)
         out += (f'\n    <model name="{name}">\n      <static>true</static>\n'
                 f'      <link name="gate">\n        {body}\n      </link>\n'
@@ -985,7 +1062,8 @@ def orange_banner_models(spec, wear, colour, placement, bottom, width, height, r
     return out
 
 
-def lane_model(name, c, floor_material, obstacles=(), laid=False):
+def lane_model(name, c, floor_material, obstacles=(), laid=False,
+               laid_token=LAID_BANNER_TOKEN):
     """One corridor: floor, two walls and any obstacles, in its own frame.
 
     Origin at the lane's banner end, +x down the lane, centred on y = 0 --
@@ -1011,7 +1089,7 @@ def lane_model(name, c, floor_material, obstacles=(), laid=False):
             f"{math.radians(float(o.get('yaw_deg', 0.0))):.4f}",
             f"{float(o['w']):.3f} {float(o['d']):.3f} {h:.3f}", OBSTACLE_MATERIAL))
     if laid:
-        parts.append(LAID_BANNER_TOKEN)
+        parts.append(laid_token)
     body = "\n        ".join(parts)
     return (f'\n    <model name="{name}">\n      <static>true</static>\n'
             f'      <link name="lane">\n        {body}\n      </link>\n'
@@ -1122,11 +1200,15 @@ def apply_spec(world: str, spec: dict):
                                       laid=laid)
                            + lane_model("corridor_return", r,
                                         ORANGE_FLOOR if coloured else NEUTRAL_FLOOR,
-                                        r.get("obstacles") or [], laid=laid))
+                                        r.get("obstacles") or [], laid=laid,
+                                        laid_token=RETURN_LAID_TOKEN))
     world, _ = _set_pose(world, "forward_aerothon_banner", c["x"], c["y"], cyaw)
     # The return banner faces the zone, i.e. back up its own lane.
     world, _ = _set_pose(world, "return_aerothon_banner", r["x"], r["y"],
                          ryaw + math.pi)
+    # Its own geometry token, so it can be printed in the exit shade.
+    world = _replace_in_model(world, "return_aerothon_banner",
+                              "@AEROTHON_BANNER_GEOMETRY@", RETURN_BANNER_TOKEN)
 
     # ---- delivery zone and its painted boundary, any size ---- #
     z = spec["delivery_zone"]

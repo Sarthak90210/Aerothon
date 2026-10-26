@@ -2548,7 +2548,10 @@ class BuiltTreeCarriesTheNewBehaviourTests(unittest.TestCase):
         self.assertEqual(f.look_pose, "FORWARD")
         descend = [s for s in self._stages() if s.name == "DescendToReturnIdent"]
         self.assertEqual(len(descend), 1)
-        self.assertEqual(descend[0]._alt, self.PARAMS['corridor_alt'])
+        # The lineup height once AlignToBanner measures one (test_field_pdf_arena);
+        # the corridor altitude until then.
+        self.assertEqual(descend[0].target_alt(), self.PARAMS['corridor_alt'])
+        self.assertEqual(f.search_alt(), self.PARAMS['corridor_alt'])
         mouth = self._of_type("ReturnToCorridorMouth")[0]
         self.assertEqual(mouth.standoff(), 5.0)
 

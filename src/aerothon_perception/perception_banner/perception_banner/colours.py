@@ -23,6 +23,33 @@ and it replaces the two hand-written red bands that used to be hard-coded.
 
 import numpy as np
 
+# WHICH BANNER MEANS WHAT. green: the entry corridor's banner, flown to on the
+# outbound lap. exit: the exit corridor's banner, flown to on the return lap
+# -- the organisers' field PDF (23 Oct 2026) hangs and lays BLUE (#0000FF)
+# boards at the exit corridor and green ones at the entry. orange: the
+# earlier rulebook reading, green at both corridors' entrances and orange at
+# the openings not to take; without an exit shade the return lap looks for
+# green. red: the restricted zone.
+NAMES = ('green', 'orange', 'exit', 'red')
+
+
+def missing(supplied):
+    """What a colour configuration still lacks before flight: green and red,
+    and either the exit banner (field PDF) or the orange no-entry banner
+    (rulebook). Empty when complete."""
+    have = {name for name, value in (supplied or {}).items() if value}
+    out = [name for name in ('green', 'red') if name not in have]
+    if not have & {'exit', 'orange'}:
+        out.append('exit (or orange)')
+    return out
+
+
+def return_banner(supplied):
+    """The colour the return lap's banner carries: the exit shade when the
+    operator gave one, else green (rulebook: green marks the corridor for the
+    current direction of travel)."""
+    return 'exit' if (supplied or {}).get('exit') else 'green'
+
 # The green band this replaces was hue 35-85 in OpenCV units, i.e. the
 # simulated banner's hue (71) plus or minus 25. Keeping that width means a
 # supplied colour equal to the rendered one accepts exactly what it used to.
@@ -116,7 +143,7 @@ def validate(supplied):
     than ignored: a colour the aircraft silently drops is worse than one it
     rejects out loud, because the operator believes it was taken.
     """
-    known = ('green', 'orange', 'red')
+    known = NAMES
     if not isinstance(supplied, dict) or not supplied:
         raise ValueError('banner colours must be a non-empty mapping')
     unknown = sorted(set(supplied) - set(known))

@@ -22,6 +22,7 @@ from rclpy.node import Node
 from rclpy.clock import Clock, ClockType
 # One definition of a valid colour, shared with the detectors.
 from perception_banner.colours import validate as validate_colours
+from perception_banner.colours import missing as missing_colours
 # ...and of the arena's dimensions, shared with mission_bt.
 from mission_bt import arena_dimensions
 from mission_bt.delivery_zone import parse_polygon
@@ -1033,7 +1034,7 @@ class Aggregator(Node):
                     return "rejected", str(error)
                 if self.state['mission'].get('armed'):
                     return 'rejected', 'banner colours can only change while disarmed'
-                missing = sorted({"green", "orange", "red"} - set(colours))
+                missing = missing_colours(colours)
                 if missing:
                     return "rejected", (
                         f"no shade supplied for the {', '.join(missing)} banner")

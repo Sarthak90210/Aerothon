@@ -8,4 +8,5 @@ setup(name='aerothon_runtime', version='0.1.0', packages=find_packages(),
           'web_host = aerothon_runtime.web:main',
           'execution_node = aerothon_runtime.execution_node:main',
           'remote_devices = aerothon_runtime.remote_devices:main',
+          'rc_in_bridge = aerothon_runtime.rc_in_bridge:main',
           'laptop_gateway = aerothon_runtime.gateway:main']})

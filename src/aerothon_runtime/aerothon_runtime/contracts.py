@@ -82,10 +82,10 @@ def profile(value, *, require_gateway=True):
     # Which winch the real drone has: the FC's DO_WINCH output, or the Pi's
     # own BTS7960 + N20 encoder. The simulated vehicle's gateway is MAVLink.
     winch = p.get('winch_backend') or 'mavlink'
-    if winch not in {'mavlink', 'gpio'}:
-        raise ValueError('winch backend must be mavlink or gpio')
-    if winch == 'gpio' and vehicle != 'drone':
-        raise ValueError('the GPIO winch is on the real drone only')
+    if winch not in {'mavlink', 'gpio', 'l298n'}:
+        raise ValueError('winch backend must be mavlink, gpio or l298n')
+    if winch in ('gpio', 'l298n') and vehicle != 'drone':
+        raise ValueError('the Pi GPIO winch is on the real drone only')
     p['winch_backend'] = winch
     if require_gateway and vehicle == 'simulation' and not gateway:
         raise ValueError('a simulated vehicle requires the laptop sensor gateway')

@@ -37,6 +37,14 @@ winch_ctrl:
     spool_radius_m: 0.0                  # effective radius over the loaded spool
     encoder_lower_sign: 1                # -1 if counts fall while lowering
     drive_duty_pct: 60.0                 # BTS7960 PWM duty for payout and stow
+    # backend:=l298n: 1 lowers on IN1/IN3 high, -1 on IN2/IN4 high. Bench,
+    # 25 Oct 2026 (channel B: ENB/IN3/IN4 on header 12/16/18): IN3 high wound
+    # the line in, so lowering is IN4.
+    l298n_lower_direction: -1
+    # Hand drive needs a stop in the middle: channel 5 on this transmitter is
+    # a two-position switch (1000/2000 us only), RC6 a three-position one
+    # (operator, 25 Oct 2026). FC: RC6_OPTION 0 and TUNE 0, or RC6 also acts there.
+    rc_manual_channel: 6
 
 perception_payload:
   ros__parameters:

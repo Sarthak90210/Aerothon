@@ -277,6 +277,29 @@ class Takeoff(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.RUNNING
 
 
+class SetBannerTarget(py_trees.behaviour.Behaviour):
+    """Tell the banner detector which lap's banner to look for.
+
+    "green" on the outbound lap; "exit" on the return lap, where the field
+    PDF (23 Oct 2026) marks the exit corridor with BLUE boards. The detector
+    falls back to green when the operator supplied no exit shade (the
+    rulebook reading: green marks the corridor for the current direction).
+    One tick; a double without the call (headless tests) is left alone.
+    """
+
+    def __init__(self, name, mav, lap):
+        super().__init__(name)
+        self.mav = mav
+        self.lap = lap
+
+    def update(self):
+        setter = getattr(self.mav, "set_banner_target", None)
+        if callable(setter):
+            setter(self.lap)
+        self.feedback_message = f"banner target {self.lap}"
+        return py_trees.common.Status.SUCCESS
+
+
 class SetCameraPose(py_trees.behaviour.Behaviour):
     """Command a named camera pose and WAIT until the joint is measured there.
 
@@ -472,9 +495,13 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                  orbit_step_rad=math.radians(45.0), orbit_vantages=7,
                  orbit_min_radius_m=5.0, fence_margin_m=2.0,
                  ring_radius_m=5.0, arc_step_rad=math.radians(20.0),
-                 radial_step_m=5.0):
+                 radial_step_m=5.0, records_lineup=False):
         super().__init__("AlignToBanner")
         self.mav = mav
+        # A HUNG-board pass: its square-on height is the lineup height the
+        # return gate is searched at. Not a ground-sheet pass, which squares
+        # up afterwards at corridor height (field world run 2, 25 Oct).
+        self.records_lineup = bool(records_lineup)
         self.redzone_clearance_m = float(redzone_clearance_m)
         # ---- WHICH banner: the near one ---- #
         # Both gates carry the same banner. From the takeoff pad the RETURN
@@ -2571,6 +2598,11 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 f"square on: {math.degrees(alpha):+.1f} deg, "
                 f"{standoff:.1f} m")
             self.mav.board_face_t = self.clock()
+            # Where the hung banner was lined up: the return gate is searched
+            # for at this height (the operator's order, 22 Oct), not at a
+            # corridor altitude that sits under it.
+            if self.records_lineup:
+                self.mav.banner_lineup_alt = float(self.mav.alt())
             return py_trees.common.Status.SUCCESS
         self.feedback_message = (f"holding square "
                                  f"{self._stable}/{self.stable_frames}")
@@ -5377,8 +5409,14 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
                  orbit_min_radius_m=5.0, fence_margin_m=2.0,
                  orbit_alt_m=3.0, zone_side_m=3.0, transit_alt=10.0,
                  look_pose="FORWARD", camera_timeout_s=6.0,
-                 corridor_length_m=None, yaw_rate_rad_s=math.inf):
+                 corridor_length_m=None, yaw_rate_rad_s=math.inf,
+                 search_alt=None):
         super().__init__("FindReturnBanner")
+        # `search_alt`: a callable giving the height the whole search flies
+        # and looks at, read when the stage starts (the entry banner's
+        # measured lineup height); it replaces alt, transit_alt and
+        # orbit_alt_m. None keeps those three as given.
+        self.search_alt = search_alt
         # Sweep turns pan at this rate (ramp_yaw), the board looked for on
         # the way round, instead of snapping 30 deg and bouncing back.
         self.yaw_rate = float(yaw_rate_rad_s)
@@ -5436,6 +5474,9 @@ class FindReturnBanner(py_trees.behaviour.Behaviour):
 
     # ---- plan ---------------------------------------------------------------
     def initialise(self):
+        if callable(self.search_alt):
+            a = float(self.search_alt())
+            self.alt = self.transit_alt = self.orbit_alt_m = a
         self.router.reset()
         self.phase = "lower"
         x, y = self.mav.pos()[:2]
@@ -7057,7 +7098,7 @@ def align_to_every_banner(mav, clock, p, label, hung_pose="BANNER", **extra):
     # the board is straight ahead -- at -20 deg there it was cut off at the
     # top edge, area-ranged ~10 m instead of 4.5 m and refused as "beyond the
     # 9.6 m a gate in front of the aircraft can be" (shipped_20kmh_r8b).
-    hung_view = dict(search_camera_pose=hung_pose)
+    hung_view = dict(search_camera_pose=hung_pose, records_lineup=True)
 
     # A laid sheet is only visible looking down: the ground pass searches,
     # and recovers, in GROUND rather than levelling the camera at a board.
@@ -7242,6 +7283,19 @@ def build_root(mav, node, p):
         plane = gate_alt + 0.0815                  # the LD06 above the body
         if not bottom <= plane <= top and gate_alt > bottom - 0.5:
             gate_alt = max(1.5, bottom - 0.5)
+    # THE RETURN GATE IS LOOKED FOR WHERE THE ENTRY BANNER WAS LINED UP (the
+    # operator's order, 22 Oct). That was the corridor altitude while the
+    # navigation height put the scan plane through a hung board; the field
+    # PDF's 1.5 m navigation height sits 1 m under its 8 ft edge, and from
+    # there a level camera loses the board's top at the 5 m stand-off. The
+    # lineup height AlignToBanner measured, kept between the corridor and
+    # search altitudes; the corridor altitude until one is measured.
+    def return_ident_alt():
+        lined_up = getattr(mav, "banner_lineup_alt", None)
+        if not isinstance(lined_up, (int, float)) or not math.isfinite(lined_up):
+            return float(p['corridor_alt'])
+        return max(float(p['corridor_alt']), min(float(lined_up), float(p['search_alt'])))
+
     # The crossing runs from the stand-off, up to half the lidar's range
     # out, through the gate: capped at the corridor length alone, a 5 m
     # corridor refused a crossing measured at 5.6 m (clarified arena).
@@ -7299,6 +7353,7 @@ def build_root(mav, node, p):
     mission = py_trees.composites.Sequence(name="Mission", memory=True)
     mission.add_children([
         WaitForMissionStart(mav),
+        SetBannerTarget("BannerTargetOutbound", mav, "green"),
         # Both organiser inputs are pre-flight requirements: no delivery-zone
         # boundary or no enforced arena geofence, no arming.
         RequireDeliveryZone(mav, clearance_m=zone_clearance),
@@ -7405,6 +7460,9 @@ def build_root(mav, node, p):
                               ident_alt=p['corridor_alt'], standoff_m=5.0,
                               clearance_m=p.get('redzone_clearance', 1.5),
                               lane_offset_m=p.get('return_lane_offset_m', -4.0)),
+        # The return corridor's banner: the exit shade where the organisers
+        # gave one (blue, field PDF), else green.
+        SetBannerTarget("BannerTargetReturn", mav, "exit"),
         SetCameraPose("CameraBannerReturn", mav, "FORWARD"),
         # RULEBOOK, "Corridor Entry Detection Return Lap": the banner must be
         # detected and the aircraft aligned again for the return lap. This is
@@ -7431,7 +7489,7 @@ def build_root(mav, node, p):
         # The operator's order, 22 Oct: search for the return banner at the
         # height the ENTRY banner was found and lined up at -- the corridor
         # altitude, the board straight ahead of a level camera -- not 5 m.
-        ClimbInPlace("DescendToReturnIdent", mav, p['corridor_alt']),
+        ClimbInPlace("DescendToReturnIdent", mav, return_ident_alt),
         # WHERE the return corridor is, found with the camera. Beside the
         # outbound lane (the rulebook drawing) it is identified from the
         # stand-off on the first look; anywhere else, the aircraft searches
@@ -7450,7 +7508,8 @@ def build_root(mav, node, p):
                          banner_h_m=p.get('banner_h_m', 1.15),
                          orbit_alt_m=p['corridor_alt'],
                          corridor_length_m=p.get('gate_advance_m'),
-                         yaw_rate_rad_s=math.radians(p.get('banner_yaw_rate_deg_s', 15.0))),
+                         yaw_rate_rad_s=math.radians(p.get('banner_yaw_rate_deg_s', 15.0)),
+                         search_alt=return_ident_alt),
         # Search can bracket the camera at a distant vantage, then approach
         # the gate. Restore the alignment view and wait for measured joint
         # settlement before reusing the near-view detector. AlignToBanner
@@ -7467,6 +7526,7 @@ def build_root(mav, node, p):
                     exclusions=lambda: mav.exclusions),
         Corridor("ReturnCorridor", mav, forward=False,
                  alt=lambda: return_duck.alt or p['corridor_alt']),
+        SetBannerTarget("BannerTargetHome", mav, "green"),
         # Reach the derived acquisition height before descent. Take-off
         # altitude can be below the camera's tracking floor, which otherwise
         # makes the first descent tick commit without ever observing home.
@@ -7834,6 +7894,9 @@ STATE_NAMES = {
     "AlignToBanner": "BANNER_ALIGN",
     "Corridor": "CORRIDOR_NAV",
     "RequireDeliveryZone": "PREFLIGHT", "UploadArenaFence": "PREFLIGHT",
+    # Which banner the detector looks for (SetBannerTarget), one tick each.
+    "BannerTargetOutbound": "PREFLIGHT", "BannerTargetReturn": "CAMERA_BANNER",
+    "BannerTargetHome": "RETURN",
     "BackToScanAlt": "BANNER_ALIGN",
     "EnterDeliveryZone": "ENTER_ZONE", "ClimbToSweep": "ENTER_ZONE",
     "CenterOnTarget": "CENTER_TARGET", "DescendToDecode": "SEARCH_QR",

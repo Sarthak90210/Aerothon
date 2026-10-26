@@ -4,7 +4,7 @@ schema: aerothon-hardware-wiring/1
 flight_controller: CUAV X7+
 camera_tilt:
   control_owner: camera_ctrl_via_mavros
-  ardupilot_output: 9  # User-confirmed SERVO9; check physical connector.
+  ardupilot_output: 5  # Operator, 24 Oct 2026: SERVO5 / MAIN OUT 5 (was SERVO9).
   servo_function: 7  # Mount pitch; actual angle/PWM calibration is pending.
   connection_confirmed_by_user: true
   hardware_measured: false
@@ -12,7 +12,19 @@ winch:
   motor: N20 12V 60RPM micro metal gear motor with encoder
   product_url: https://robu.in/product/n20-12v-60rpm-micro-metal-gear-motor-with-encoder/
   recommended_connection: Pi through an H-bridge with compatible encoder GPIO
-  current_backend: mavlink  # gpio is selectable once the values below are measured.
+  current_backend: l298n  # Operator, 24 Oct 2026: Pi drives an L298N, no encoder.
+  l298n:  # winch_ctrl backend:=l298n defaults (BCM / physical header pin).
+    # Operator, 25 Oct 2026: wired to the L298N's channel B (ENB, IN3, IN4,
+    # motor on OUT3/OUT4); the node's ena/in1/in2 parameters drive these.
+    ena_gpio_bcm: 18   # header 12 -> ENB (jumper removed); enable / PWM
+    in1_gpio_bcm: 23   # header 16 -> IN3
+    in2_gpio_bcm: 24   # header 18 -> IN4
+    avoided_gpio_bcm: [4, 5, 14, 15]  # FC UARTs
+    # high (>=1800 us) IN1/IN3, low (<=1200 us) IN2/IN4, middle stop; ignored in a
+    # mission. RC6, a three-position switch: ch5 is two-position (25 Oct 2026).
+    rc_manual_channel: 6
+    # Bench 25 Oct: IN3 high wound the line in; venue.yaml l298n_lower_direction -1.
+    lower_direction_verified: true
   encoder_backend_implemented: true  # Software only; bench-unverified.
   user_supplied_wire_functions:
     red: motor_terminal_1

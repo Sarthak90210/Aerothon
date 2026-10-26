@@ -3,18 +3,17 @@
 # AFTER aerothon_failsafe.parm, then reboot. Copter 4.5.
 #
 # Without these the stack's MAVLink commands are accepted and do nothing:
-# camera_ctrl's MAV_CMD_DO_MOUNT_CONTROL needs a mount, winch_ctrl's
-# MAV_CMD_DO_WINCH needs a winch, and MAVROS needs the port it is wired to.
+# camera_ctrl's MAV_CMD_DO_MOUNT_CONTROL needs a mount on the camera servo's
+# output, and MAVROS needs the port it is wired to.
 #
-# CHANNELS ARE WIRING. The user confirmed SERVO9 for camera tilt on CUAV X7+.
-# Check its physical output connector. SERVO10 below remains proposed PWM
-# winch wiring, NOT confirmed N20 motor support. The current winch node has
-# no Pi GPIO/encoder backend. See hardware_wiring.yaml for pending connections.
+# CHANNELS ARE WIRING (operator, 24 Oct 2026): the webcam tilt servo is on
+# SERVO5 (MAIN OUT 5). The payload motor is driven by the Pi (BTS7960/H-bridge
+# on Pi GPIO, winch_ctrl backend:=gpio), so the FC has no winch output.
 
-# Companion link: Pi 5 UART on TELEM2 at 921600 baud, MAVLink 2
-# (mission2.launch.py fcu_url:=/dev/ttyAMA0:921600).
-SERIAL2_PROTOCOL 2
-SERIAL2_BAUD 921
+# Companion link: Pi 5 UART0 (GPIO14/15) at 115200, MAVLink 2. Set the FC
+# port the Pi is wired to: SERIALn_PROTOCOL 2 and SERIALn_BAUD 115 for that
+# port. Not set here -- the port number is wiring, and a wrong baud here
+# would cut the link that works.
 
 # Camera tilt: a hobby servo as mount 1, pitch only, commanded over MAVLink.
 # The stack's poses run from -90 (NADIR) to 0 (FORWARD); the joint allows +30.
@@ -22,18 +21,19 @@ MNT1_TYPE 1
 MNT1_PITCH_MIN -90
 MNT1_PITCH_MAX 30
 MNT1_DEFLT_MODE 2
-SERVO9_FUNCTION 7
-# Calibrate SERVO9_MIN / SERVO9_MAX so the commanded angles are the real
+SERVO5_FUNCTION 7
+# The former camera output is released.
+SERVO9_FUNCTION 0
+# Calibrate SERVO5_MIN / SERVO5_MAX so the commanded angles are the real
 # ones: command NADIR and FORWARD from the GCS and check with a protractor
 # (MASTER_DOCUMENTATION.md, camera tilt calibration).
 
-# Winch: PWM-driven, no encoder. ArduPilot's relative-length control reels
-# at WINCH_RATE_MAX whatever rate DO_WINCH asks for, so this must equal
-# winch_ctrl's fc_rate_max_mps (0.30): at 1.0 the line ran 3.3x faster than
-# the payout estimate and stow left line out.
-# Copter 4.5 names these WINCH_* (libraries/AP_Winch, group "WINCH"); the
-# earlier WNCH_* lines matched no parameter, leaving the winch type and rate
-# at their defaults. winch_ctrl now reads WINCH_RATE_MAX back before lowering.
-WINCH_TYPE 1
-WINCH_RATE_MAX 0.30
-SERVO10_FUNCTION 88
+# Winch: the Pi drives the payload motor directly; no FC winch.
+WINCH_TYPE 0
+SERVO10_FUNCTION 0
+
+# RC channel 6, a three-position switch, commands the payload motor by hand
+# when no autonomous mission runs (winch_ctrl rc_manual_channel 6, read through
+# rc_in_bridge on /aerothon/rc/in). Channel 6 must do nothing on the FC: keep
+# RC6_OPTION 0 and TUNE 0 (in-flight tuning knob), and FLTMODE_CH off 6 (this
+# aircraft, 25 Oct 2026: FLTMODE_CH 7; channel 5 is a two-position switch).

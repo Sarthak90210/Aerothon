@@ -62,6 +62,21 @@ def _latched_qos(depth: int = 1) -> QoSProfile:
     )
 
 
+def inside_delivery_zone(rectangles, zone):
+    """Red rectangles [x0, x1, y0, y1] that touch the supplied delivery zone.
+
+    Restricted zones lie inside the delivery zone, so red seen outside it is
+    not one: in r11 (24 Oct 2026) a tilted 20 km/h frame confirmed two boxes
+    short of the zone and the gate advance refused its destination. With no
+    supplied zone every rectangle is kept.
+    """
+    if zone is None:
+        return list(rectangles)
+    x0, x1, y0, y1 = (float(v) for v in zone[:4])
+    return [r for r in rectangles
+            if r[0] <= x1 and r[1] >= x0 and r[2] <= y1 and r[3] >= y0]
+
+
 class Mav:
     def __init__(self, node: Node):
         self.node = node
@@ -298,6 +313,11 @@ class Mav:
         self.pub_winch = node.create_publisher(String, '/winch/cmd', qos)
         self.pub_result = node.create_publisher(String, '/mission/result', _latched_qos())
         self.pub_camera_pose = node.create_publisher(String, '/camera/set_pose', 10)
+        # Which banner perception looks for: "green" outbound, "exit" on the
+        # return lap (the field PDF's blue exit-corridor boards). Latched.
+        self.pub_banner_target = node.create_publisher(String, '/mission/banner_target',
+                                                       _latched_qos())
+        self.banner_target = None
 
         # Corridor navigator feedback: exit is DETECTED, not assumed from a
         # hardcoded x threshold (geometry audit A6/A10).
@@ -1185,6 +1205,13 @@ class Mav:
     def set_target(self, s):
         self.pub_target.publish(String(data=s))
 
+    def set_banner_target(self, lap):
+        """"green" (outbound) or "exit" (return lap) for the banner detector."""
+        if lap not in ("green", "exit"):
+            raise ValueError(f"banner target {lap!r} is not green or exit")
+        self.banner_target = lap
+        self.pub_banner_target.publish(String(data=lap))
+
     def winch(self, cmd):
         self.pub_winch.publish(String(data=cmd))   # "lower" | "release" | "stow"
 
@@ -1446,9 +1473,13 @@ class Mav:
                         provisional.append(values)
         except (KeyError, TypeError, ValueError):
             provisional = []
+        zone = getattr(self, "delivery_zone_local", None)
+        confirmed = inside_delivery_zone(confirmed, zone)
+        provisional = inside_delivery_zone(provisional, zone)
         self.provisional_exclusions = provisional
         self.confirmed_exclusions = confirmed
         self.exclusions = confirmed + provisional
+
 
     def _on_qr_detail(self,m):
         try:

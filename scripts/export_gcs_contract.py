@@ -15,7 +15,11 @@ def contract():
     return {
         'fields': [dict(zip(('group', 'key', 'label', 'default', 'min', 'max', 'used_by'), field))
                    for field in module.FIELDS],
-        'defaults': module.defaults(), 'presets': module.BUILTIN_PRESETS,
+        # Validated, as the aggregator serves them: a preset written before a
+        # field existed carries that field's fallback, so the offline editor
+        # loads it complete (ground banner height, obstacle height).
+        'defaults': module.defaults(),
+        'presets': {name: module.validate(dims) for name, dims in module.BUILTIN_PRESETS.items()},
         'placements': module.PLACEMENTS, 'return_sides': module.RETURN_SIDES,
     }
 

@@ -129,7 +129,7 @@ class SlalomTraverseTests(unittest.TestCase):
 
     def fly(self, x, y, yaw, goal_x, dt=0.05, max_t=120.0, drift=None,
             corrupt=None, scan_delay_s=0.0, vel_tau_s=VEL_TAU_S,world_rotation_rad=0.0,
-            command_delay_s=0.0):
+            command_delay_s=0.0, mount=None):
         """Fly until x < goal_x; fail on contact or timeout.
 
         The hooks are the real world the plain loop leaves out
@@ -137,10 +137,23 @@ class SlalomTraverseTests(unittest.TestCase):
         the airframe does not command (wind the position controller has not
         yet rejected), `corrupt(ranges)` degrades each scan, `scan_delay_s`
         delivers each scan that much after it was taken, and `vel_tau_s` is
-        how sluggishly the airframe follows a velocity setpoint.
+        how sluggishly the airframe follows a velocity setpoint. `mount`
+        (x, y) puts the lidar there in the body frame, published in
+        base_scan with that static transform, as on the aircraft (0.139 m
+        ahead): the controller's masked rear sector then hides the strip
+        beside the body centre.
         """
         rects = WALLS + BLOCKS
         self.node.set_parameters([Parameter('vel_command_delay_s',value=float(command_delay_s))])
+        if mount is not None:
+            from geometry_msgs.msg import TransformStamped
+            from tf2_ros import Buffer
+            link = TransformStamped()
+            link.header.frame_id, link.child_frame_id = 'base_link', 'base_scan'
+            link.transform.translation.x, link.transform.translation.y = map(float, mount)
+            link.transform.rotation.w = 1.0
+            self.node._tf_buffer = Buffer()
+            self.node._tf_buffer.set_transform_static(link, 'test_lidar_mount')
         closest = float("inf")
         t = 0.0
         self.node._now = lambda: t
@@ -169,7 +182,12 @@ class SlalomTraverseTests(unittest.TestCase):
             velocity.twist.linear.y=sn*(wvx+dx)+cs*(wvy+dy)
             self.node._on_velocity(velocity)
             if t >= next_scan:
-                scan = scan_at(x, y, yaw, rects)
+                if mount is None:
+                    scan = scan_at(x, y, yaw, rects)
+                else:
+                    scan = scan_at(x + math.cos(yaw)*mount[0] - math.sin(yaw)*mount[1],
+                                   y + math.sin(yaw)*mount[0] + math.cos(yaw)*mount[1], yaw, rects)
+                    scan.header.frame_id = 'base_scan'
                 scan.header.stamp.sec = int(t)
                 scan.header.stamp.nanosec = int((t-int(t))*1e9)
                 if corrupt is not None:

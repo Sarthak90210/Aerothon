@@ -558,6 +558,87 @@ Reduced offline suite on the same source: 2,150 passed, 8 skipped
 (`logs/return_lap_20261020/reduced_suite_final.log`). Receipt:
 `.scratch/return_lap_20261020/receipt.json`.
 
+### 25-26 October 2026: organisers' Track 1 field properties PDF
+
+Source: "AeroTHON 2026 Track 1 Field Properties" (organisers' PDF of 23 Oct,
+12 pages; Mission 2 on pages 9-12; SHA-256 `3e9fb5ce...6324dd`), with the
+operator's reading "corridor will be 10 feet and banner will be hung till 8
+feet". As applied:
+
+- Corridors: two lanes of white-screen walls 22 ft long and 11.5 ft apart,
+  10 ft high; the drawing's 10 m length is flown as a second world.
+- Boards: entry arch 11.5 x 1.5 ft **green #00B140** with its lower edge at
+  8 ft, and a green 11.5 x 1 ft board on the ground at the entry; the same
+  pair in **blue #0000FF** at the exit corridor's entrance on the zone side;
+  1 in white borders; no orange boards.
+- Red zone: one, 10 x 10 ft #FF0000, 1 in border. Exit corridor: three
+  3.5 x 6 ft boards on legs. QR: five 1 m codes in the 40 x 30 m zone and one
+  at take-off, **no white border**, nothing encoded for the mission. Payload
+  100 x 50 x 50 mm, 100 g, lowered from 5 m.
+- Not given, and entered as working values to confirm on the day: lane
+  spacing 5 m, hall 70 x 45 m, navigation height 1.5 m (under the 8 ft edge,
+  and low enough that the lidar stays on the 6 ft boards).
+
+GCS: built-in preset **AeroTHON 2026 Track 1 field (organiser PDF)**; new
+fields Ground banner height and Obstacle height; the obstacle visibility rule
+(section 4); colour roles with the Exit corridor banner (section 4).
+
+Gaps the field exposed and what changed (flight logic: perception, mission):
+
+- Return lap colour: the return search and alignment now look for the exit
+  shade (`/mission/banner_target`), green outbound; orange is optional.
+- Board identity: the border ring and outline depth follow the GCS border
+  (1 in, 0.7% of the board's width, against the 3% ring sized for 3 in); a
+  corridor-width board framed along both long sides passes with its ends
+  dark at the walls (`WIDE_BOARD_ASPECT` 2.5); the border's white may be
+  judged against the light the supplied print is in (`white_illum_ratio` 0.9;
+  a #0000FF panel read V 193 beside a V 202 border), border test only.
+- Return search height: at the entry banner's measured lineup height from
+  the hung-board pass only, clamped to corridor..search altitude (it had
+  flown at 1.5 m, the board's top out of a level camera's frame).
+- Borderless QR: zbar retries on an Otsu-thresholded crop of a located code
+  (on the grey-157 pad, 0 of 39 start frames decoded as they came, 39 of 39
+  thresholded), which also gives the code's own corners; a start-marker
+  reference is kept only when wholly in frame.
+- Simulator: exit-coloured return boards; 1 in borders; QR printed without
+  its quiet zone; ground board 1 ft; obstacle height from the GCS; laid
+  sheets on the zone drawn on its slab (`scripts/materialize_world.py`);
+  `scripts/field_pdf_world.py` builds `sim/worlds/aerothon26_field.json` and
+  `aerothon26_field_L10.json`.
+
+Evidence, laptop-simulation route, calm, inputs entered through the GCS
+(`logs/field_pdf_20261025/`, receipt `.scratch/field_pdf_20261025/receipt.json`):
+runs r1-r4 were stopped or skipped delivery and drove the fixes above
+(`INTERRUPTED.txt` in each stopped run). On the final flight source, graded by
+`sim/check_track.py`:
+
+| Run | World, QR mode | Result | Flight | Drop / payload | Closest red / obstacle | Landed |
+|---|---|---|---|---|---|---|
+| r5 | 22 ft lanes, pad C, pattern only | 14/14 | 403.9 s | 0.24 / 0.27 m | 7.68 / 0.64 m | 0.11 m |
+| r6 | 10 m lanes, pad A, pattern only | 14/14 | 419.9 s | 0.17 / 0.20 m | 1.57 / 0.62 m | 0.11 m |
+| r7 | 22 ft lanes, pad C, payloads read | 14/14 | 390.8 s | 0.27 / 0.27 m | 7.30 / 0.68 m | 0.21 m |
+
+Pattern only is `AEROTHON_QR_IGNORE_PAYLOADS=1` (the PDF's "scan the
+pattern of the QR code"). The corridors were flown at 1.2 m: DuckUnderBoard's
+first look is already under the 8 ft edge and drops its 0.6 m margin. The
+winch drop (descent, lowering, release, retraction) took 151-177 s and the
+search 33-70 s. Three calm simulated runs; field
+conditions, gusts and the aircraft are not re-qualified on them. After r5-r7
+only the GCS state names of the three SetBannerTarget leaves (they had read
+IDLE) and the offline editor's preset export (validated presets, as the
+aggregator serves them) changed; no decision logic.
+
+Every GCS testing option was run in the same world, each started as the
+operator's Start does, flight options from the take-off pad
+(`logs/field_pdf_20261025/gcs_campaign/summary.json`): QR and SLAM (live
+output, stopped), banner (green entry banner identified, square on -2.1 deg at
+4.8 m), waypoint avoidance (through the entry corridor on its centreline at
+1.5 m into the zone), transmitter avoidance (simulated sticks, operator stop),
+mechanism lower and stow, deliver here (start QR, 0.20 m image offset) and GPS
+delivery (pad C, 0.45 m image offset). The GPS delivery counts from its own
+session: run after deliver here it flew with no payload and correctly refused
+to confirm a drop.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch
@@ -723,10 +804,15 @@ the mission reports the operator's values applied; it shows the applied QR
 side and corridor length/height. Without it the aircraft would fly launch
 defaults (a 2.2 m QR instead of the organisers' 1 m). Simulator scripts that
 hand the mission its arena as launch values, with no GCS preset, set
-`AEROTHON_REQUIRE_ARENA_DIMENSIONS=0` and the item reads WAIVED. The 21
-fields cover corridor, hall, banner, QR, red zone, payload and the exit-
-corridor obstacle reach (fraction of corridor width, organisers' "about
-half"). Fields marked "rec." are recorded for the operator only. Input
+`AEROTHON_REQUIRE_ARENA_DIMENSIONS=0` and the item reads WAIVED. The 23
+fields cover corridor, hall, banner (including the ground board's own
+height), QR, red zone, payload and the exit-corridor obstacles' reach
+(fraction of corridor width) and height. A navigation height that puts the
+lidar plane (0.0815 m over the body) less than 0.1 m under the obstacle tops
+is refused with the largest acceptable height named: the aircraft would fly
+the corridor without seeing them. Built-in preset **AeroTHON 2026 Track 1
+field (organiser PDF)** holds the 23 Oct field PDF's values (section 1).
+Fields marked "rec." are recorded for the operator only. Input
 units are converted to the aircraft schema; the tree is rebuilt from accepted
 dimensions. Fields not used by an algorithm are labelled. The simulated
 operator uses this same WebSocket path, not world-truth injection.
@@ -814,8 +900,16 @@ SLAM node. It leaves upstream binaries, scan matching, flight pose and clearance
 checks intact. One traversing ray marks observed free cells for the display
 mapper; the resulting occupancy map is not a flight-clearance input.
 Camera view tabs do not move the camera; explicit camera tilt is reviewed.
-Before flight, enter green, orange and red as `#RRGGBB` in Organiser inputs,
-then review Apply banner colours while disarmed. All three are required.
+Before flight, enter the banner and red-zone shades as `#RRGGBB` in Organiser
+inputs, then review Apply colours while disarmed. Roles
+(`perception_banner/colours.py`): **Entry corridor banner** (green, flown to
+on the outbound lap), **Exit corridor banner** (the return lap's banner; the
+field PDF's blue `#0000FF`), **No-entry banner** (the earlier rulebook
+reading's orange at openings not to take; blank when there is none) and
+**Red zone**. Green and red are required, and one of exit or orange. With an
+exit shade the mission tells the detector which lap it is on
+(`/mission/banner_target`: green outbound, exit from the return search to the
+end of the return corridor); without one the return lap looks for green.
 The applied values appear in telemetry. Banner and restricted-zone masks,
 including clipped-zone evidence, derive their hue ranges from these values;
 missing values do not use fixed fallback bands or establish a clear zone.
@@ -1516,9 +1610,14 @@ edited away from its dimensions is refused. Size limits are the GCS field
 ranges (`world_spec.gcs_range`, e.g. corridor width 1-10 m); clearance checks
 still apply, so a 1.8 m lane with half-width obstacles is refused (0.90 m gap).
 Banners carry no wording and red zones built here none either (the white
-border is the GCS red-zone border). Green, orange and red come from the
-editor's HEX fields and print in Gazebo; orange marks the far opening of both
-corridors. **6 organiser points** turns the fence into six draggable points
+border is the GCS red-zone border). Green, exit, orange and red come from the
+editor's HEX fields and print in Gazebo. With an exit shade (field PDF) the
+exit corridor's hung and laid boards print in it and there are no orange
+boards; without one, orange marks the far opening of both corridors. With
+GCS dimensions the banner border, the laid board's own height (Ground banner
+height), the obstacle height and the QR white border follow the fields (QR
+border 0: the code printed without its quiet zone). A laid sheet over the
+delivery zone is drawn on the zone's slab. **6 organiser points** turns the fence into six draggable points
 P1-P6, listed with latitude/longitude once the simulator is connected. Saving writes the same values as
 GCS preset `World NAME` to `~/.aerothon/dimension_presets.json`.
 **Save & launch simulator** runs the laptop-simulation route for that world:

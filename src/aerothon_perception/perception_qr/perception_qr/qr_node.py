@@ -48,6 +48,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 import cv2
+import numpy as np
 from cv_bridge import CvBridge
 from geometry_msgs.msg import PoseStamped, Vector3
 from sensor_msgs.msg import CameraInfo, Image
@@ -168,7 +169,13 @@ class QrNode(Node):
         better = held is None or (
             (seen.kind == "modules") > (held.kind == "modules")) or (
             seen.kind == held.kind and marker_px > self._reference_px)
-        if not self.target and better:
+        # ...and only a marker wholly in frame. The largest view of the start
+        # scan was one running off the top edge: its missing quarter read as
+        # solid dark, and pad C scored 0.81 against its own start code
+        # (field world run 4).
+        h, w = frame.shape[:2]
+        inside = bool(np.all((quad >= 2.0) & (quad <= np.float32([w - 3.0, h - 3.0]))))
+        if not self.target and better and inside:
             self._reference, self._reference_px = seen, marker_px
             self.get_logger().info(
                 f"start marker pattern captured ({marker_px:.0f} px)")

@@ -1,0 +1,22 @@
+{
+  "feature": "pi_deploy_20261023",
+  "triage": "ready-for-human",
+  "destination": "pi5 at 192.168.137.212 (hotspot), Debian 13 trixie arm64, fresh OS on 114.6 GB USB drive; host key ED25519 SHA256:gndEQ9pPRIEh66jguWZdv8mXQYV8cuySIdtqR1sAF1s",
+  "boot": "EEPROM BOOT_ORDER 0xf461 -> 0xf14 (USB first, SD fallback), applied and confirmed after reboot",
+  "uart": "dtparam=uart0=on (GPIO14/15, /dev/ttyAMA0) per operator wiring; uart2-pi5 overlay also present but unused; config.txt backups config.txt.bak-aerothon, config.txt.bak-uart0; runtime.env AEROTHON_FCU_DEVICE=/dev/ttyAMA0 115200 (backup runtime.env.bak-ttyAMA2)",
+  "bundle": "logs/pi-runtime-20261022.zip sha256 fb7cdfb47f7c6a3a3ac6e87f66d54f2b71400371c43f88eedf1eac9d53d02487, 265/265 manifest files verified, no simulation packages; source commit 560da40",
+  "images": "docker.io 26.1.5; aerothon-dependencies:20261014 and aerothon-runtime:20261014 built on the Pi from scripts/pi_runtime",
+  "workspace": "/home/pi5/aerothon_ws, 14 packages built in the runtime container; sllidar_ros2 at 34300099fadfc772965962dec837bf436706188f",
+  "check_pi_runtime": "all PASS except ldlidar_stl_ros2 (LD06 driver not installed; C1 fitted)",
+  "services": "aerothon-router + aerothon-gcs enabled; boot: router 4.2 s, network 8.1 s, docker and GCS 15.2 s",
+  "telemetry": "router: 1 FCU active, ~150 pkt/s routed, 1 GCS endpoint active (laptop Mission Planner on UDP 14550); LAN broadcast 192.168.137.255:14550",
+  "blockers": [
+    "Flight source not qualified for a real mission (see .scratch/search_20kmh_return_20261022/receipt.json)",
+    "Camera and lidar not checked on this deployment",
+    "Connections.tsx and runtime.env changes not committed"
+  ],
+  "completion": "Deployed, routing, GCS auto-connects to the drone profile",
+  "gcs_profile": "Auto-connect drone profile 'vehicle' (serial /dev/ttyAMA0 115200, camera /dev/video0, lidar /dev/ttyUSB0, slam true, winch mavlink, autoconnect true) selected in ~/.local/state/aerothon/connection-selection.json. The GCS had created it with Connections.tsx's default /dev/ttyAMA2, and the router follows ~/.aerothon/vehicle_connection.json, so from 23:16 the router had 0 FCU; fixed by disconnect -> save device /dev/ttyAMA0 -> connect: router 1 FCU, 1 MAVROS, 1 GCS endpoint.",
+  "gcs_update": "Connections.tsx default drone device /dev/ttyAMA2 -> /dev/ttyAMA0; rebuilt (index-CxBcSNzB.js), 45/45 frontend tests; copied into ~/aerothon_ws/gcs (previous in gcs.bak). The gcs files no longer match the bundle manifest.",
+  "reboot_verification": "Reboot after the profile fix: router started 4.5 s (before network 8.6 s, docker and GCS 17.2 s); router 1 FCU, 1 MAVROS, 1 GCS endpoint (Mission Planner), ~500 pkt/s; GCS runtime Running on profile 'vehicle' (/dev/ttyAMA0), telemetry fresh, no connection error -- with no operator Connect."
+}

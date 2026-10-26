@@ -66,6 +66,25 @@ const fenceGeo = (pts: [number, number][]) =>
           },
         ],
       };
+// Banner roles (perception_banner/colours.py): green marks the entry
+// corridor, exit the exit corridor the return lap takes (blue on the field
+// PDF), orange the rulebook's no-entry boards. Green and red are required,
+// and one of exit or orange.
+type Colours = { green: string; exit: string; orange: string; red: string };
+const COLOUR_LABELS: Record<keyof Colours, string> = {
+  green: "Entry corridor banner (green)",
+  exit: "Exit corridor banner (return lap)",
+  orange: "No-entry banner (orange, if any)",
+  red: "Red zone",
+};
+const HEX = /^#[0-9a-fA-F]{6}$/;
+const suppliedColours = (c: Colours) =>
+  Object.fromEntries(Object.entries(c).filter(([, v]) => v.trim() !== ""));
+const coloursReady = (c: Colours) =>
+  HEX.test(c.green) &&
+  HEX.test(c.red) &&
+  (HEX.test(c.exit) || HEX.test(c.orange)) &&
+  Object.values(suppliedColours(c)).every((v) => HEX.test(v));
 const boundary = (text: string) =>
   text
     .trim()
@@ -118,6 +137,7 @@ export default function App() {
     [mapReady, setMapReady] = useState(false);
   const [colours, setColours] = useState({
     green: "",
+    exit: "",
     orange: "",
     red: "",
   });
@@ -971,19 +991,19 @@ export default function App() {
             >
               Set target
             </button>
-            {(["green", "orange", "red"] as const).map((name) => (
+            {(["green", "exit", "orange", "red"] as const).map((name) => (
               <Field
                 key={name}
-                label={name === "red" ? "Red zone" : `${name[0].toUpperCase()}${name.slice(1)} banner`}
+                label={COLOUR_LABELS[name]}
                 text={colours[name]}
-                placeholder="#RRGGBB"
+                placeholder={name === "exit" || name === "orange" ? "#RRGGBB or blank" : "#RRGGBB"}
                 change={(shade) => setColours({ ...colours, [name]: shade })}
               />
             ))}
             <button
-              disabled={!fcu || busy || t?.mission.armed !== false || !Object.values(colours).every(c => /^#[0-9a-fA-F]{6}$/.test(c))}
+              disabled={!fcu || busy || t?.mission.armed !== false || !coloursReady(colours)}
               onClick={() =>
-                reviewedSend("set_banner_colours", { colours }, true)
+                reviewedSend("set_banner_colours", { colours: suppliedColours(colours) }, true)
               }
             >
               Apply colours

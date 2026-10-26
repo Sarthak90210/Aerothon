@@ -37,6 +37,11 @@ FIELDS = (
     ("banner", "width_m", "Banner width", 3.7, 0.3, 10.0, "range to the banner"),
     ("banner", "height_m", "Banner height", 1.15, 0.2, 5.0, "range to the banner"),
     ("banner", "border_m", "Banner border", 3 * INCH, 0.0, 0.5, None),
+    # The field PDF (23 Oct 2026) gives the hung arch board 1.5 ft and the
+    # board on the ground 1 ft. Ground boards are ranged by where the ray to
+    # them meets the ground, not by their size, so this one is recorded (and
+    # builds the simulated board); omitted, it is the hung banner's height.
+    ("banner", "ground_height_m", "Ground banner height", 1.15, 0.1, 5.0, None),
     ("banner", "suspended_bottom_m", "Hung banner lower edge", 2.805, 0.5, 8.0,
      "the height the square-up scans the hung banner at"),
     ("qr", "target_m", "Target QR side", 2.2, 0.2, 5.0,
@@ -56,9 +61,18 @@ FIELDS = (
     # records the organisers' figure and builds the simulated slalom.
     ("obstacle", "reach_frac", "Obstacle reach, fraction of corridor width",
      0.5, 0.1, 0.9, None),
+    # The lidar is one plane at the corridor altitude: an obstacle whose top
+    # is under it is not seen. The field PDF's boards are 6 ft tall; omitted,
+    # 95% of the wall height (the simulated slalom's).
+    ("obstacle", "height_m", "Obstacle height", 3.42, 0.3, 8.0,
+     "the navigation height must keep the lidar on the obstacles"),
 )
 PLACEMENTS = ("suspended", "ground", "both")
 RETURN_SIDES = ("right", "left")
+# The scan plane above the body (mission_tree: the LD06 0.0815 m over
+# base_link), and how far under an obstacle's top it must stay to see it.
+LIDAR_ABOVE_BODY_M = 0.0815
+OBSTACLE_SCAN_MARGIN_M = 0.1
 
 
 def defaults():
@@ -95,6 +109,15 @@ def validate(supplied):
             if key not in known[group]:
                 raise ValueError(f"unknown dimension {group}.{key}")
             out[group][key] = value
+    # Fields added after presets were saved follow the field they used to
+    # share: a preset without them builds and checks the same arena as before.
+    if "ground_height_m" not in (supplied.get("banner") or {}):
+        out["banner"]["ground_height_m"] = out["banner"]["height_m"]
+    if "height_m" not in (supplied.get("obstacle") or {}):
+        try:
+            out["obstacle"]["height_m"] = round(0.95 * float(out["corridor"]["wall_height_m"]), 4)
+        except (TypeError, ValueError):
+            pass                                  # the range check below names it
     for group, key, label, _default, lo, hi, _ in FIELDS:
         value = out[group][key]
         if isinstance(value, bool):
@@ -119,8 +142,20 @@ def validate(supplied):
     if c["spacing_m"] < c["width_m"]:
         raise ValueError("corridor spacing must be at least the corridor width")
     if out["banner"]["border_m"] * 2 >= min(out["banner"]["width_m"],
-                                            out["banner"]["height_m"]):
+                                            out["banner"]["height_m"],
+                                            out["banner"]["ground_height_m"]):
         raise ValueError("banner border leaves no coloured panel")
+    # The corridor is flown at the navigation height or lower (the gate
+    # crossing only ducks). Above it, the scan plane passes over obstacles
+    # shorter than it and the navigator steers round nothing.
+    plane = c["nav_height_m"] + LIDAR_ABOVE_BODY_M
+    see_below = out["obstacle"]["height_m"] - OBSTACLE_SCAN_MARGIN_M
+    if plane > see_below:
+        raise ValueError(
+            f"navigation height {c['nav_height_m']:.2f} m puts the lidar at "
+            f"{plane:.2f} m, over the {out['obstacle']['height_m']:.2f} m "
+            f"obstacles: it would not see them. Enter a navigation height of "
+            f"{see_below - LIDAR_ABOVE_BODY_M:.2f} m or less")
     return out
 
 
@@ -182,5 +217,29 @@ BUILTIN_PRESETS = {
         "red_zone": {"side_m": 5 * FT, "border_m": 0.5 * FT},
         "payload": {"length_m": 0.10, "width_m": 0.055, "mass_kg": 0.10},
         "obstacle": {"reach_frac": 0.5},
+    },
+    # "AeroTHON 2026 Track 1 Field Properties" (organisers' PDF, 23 Oct
+    # 2026), Mission 2, with the operator's 25 Oct reading: corridor 10 ft
+    # high, banner hung down to 8 ft. Walls 22 ft long and 11.5 ft apart;
+    # arch boards 11.5 x 1.5 ft, ground boards 11.5 x 1 ft, 1 in white
+    # border; QR 1 m with no white border; red zone 10 x 10 ft, 1 in border;
+    # three 3.5 x 6 ft boards on legs in the exit corridor; payload
+    # 100 x 50 x 50 mm, 100 g. NOT GIVEN, entered here as working values to
+    # measure on the day: lane spacing (5 m centre to centre), the hall
+    # (70 x 45 m round take-off, lanes and the 40 x 30 m zone, outdoors) and the navigation
+    # height -- 1.5 m, under the 8 ft banner edge and low enough for the
+    # lidar to stay on the 6 ft boards.
+    "AeroTHON 2026 Track 1 field (organiser PDF)": {
+        **defaults(),
+        "corridor": {"length_m": 22 * FT, "width_m": 11.5 * FT, "wall_height_m": 10 * FT,
+                     "nav_height_m": 1.5, "spacing_m": 5.0, "return_side": "right"},
+        "hall": {"length_m": 70.0, "width_m": 45.0, "ceiling_m": 30.0},
+        "banner": {"width_m": 11.5 * FT, "height_m": 1.5 * FT, "border_m": 1 * INCH,
+                   "ground_height_m": 1 * FT, "suspended_bottom_m": 8 * FT,
+                   "placement": "both"},
+        "qr": {"target_m": 1.0, "start_m": 1.0, "border_m": 0.0},
+        "red_zone": {"side_m": 10 * FT, "border_m": 1 * INCH},
+        "payload": {"length_m": 0.10, "width_m": 0.05, "mass_kg": 0.10},
+        "obstacle": {"reach_frac": round(3.5 / 11.5, 4), "height_m": 6 * FT},
     },
 }

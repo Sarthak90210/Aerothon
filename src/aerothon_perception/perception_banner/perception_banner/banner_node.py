@@ -77,7 +77,21 @@ GROUND_MAX_ASPECT = 16.0
 GROUND_POSE_DEPRESSION_DEG = 35.0
 
 
+def search_colour(node):
+    """The banner colour this lap flies to: the exit shade on the return lap
+    (/mission/banner_target "exit") when the operator supplied one, else
+    green. Reads only `_colours` and `_target`, so detector doubles work."""
+    supplied = getattr(node, '_colours', None) or {}
+    if getattr(node, '_target', 'green') == 'exit':
+        return colours.return_banner(supplied)
+    return 'green'
+
+
 class BannerNode(Node):
+    # Wider than this (in the image), a board's ends may meet the corridor
+    # walls: framed along both long sides is enough (_identify_box). The
+    # field PDF's board is 7.7:1; seen at 60 deg off its face, 3.8:1.
+    WIDE_BOARD_ASPECT = 2.5
     def __init__(self):
         super().__init__('perception_banner')
         p = self.declare_parameter
@@ -147,6 +161,10 @@ class BannerNode(Node):
         p('white_s_max', 110)          # absolute ceiling, likewise
         p('white_v_ratio', 1.08)       # ...but mainly: brighter than the board
         p('white_s_ratio', 0.55)       # ...and much less saturated than it
+        p('white_v_cap', 230)          # ...unless the board is already this bright
+        # ...or as bright as the light the supplied print is in (see
+        # _border_v_min). Border test only.
+        p('white_illum_ratio', 0.9)
         # Lettering DARKER than the board -- the arena's own gate has grey
         # letters on green. Same saturation test, other side of the board.
         p('dark_v_ratio', 0.85)        # ...or markedly darker than it
@@ -226,6 +244,12 @@ class BannerNode(Node):
         # shades still receives them.
         self.create_subscription(
             String, '/mission/banner_colours', self._on_banner_colours,
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        # Which banner the mission is flying to: "green" (outbound) or "exit"
+        # (return lap). Latched; until the mission says, green.
+        self._target = 'green'
+        self.create_subscription(
+            String, '/mission/banner_target', self._on_banner_target,
             QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         # The banner's size, as the operator entered it at the GCS and the
         # mission applied it: the area floor is derived from it.
@@ -315,11 +339,11 @@ class BannerNode(Node):
         bands = self.colour_ranges(name)
         mask = colours.mask(hsv, bands)
         supplied = getattr(self, '_colours', None) or {}
-        if allow_clipped and supplied.get(name or 'green'):
+        if allow_clipped and supplied.get(name or search_colour(self)):
             # Clipping green shifts a green board toward cyan.
             # Keep these pixels available to the word reader. They cannot
             # satisfy the structural board-color check below.
-            selected = name or 'green'
+            selected = name or search_colour(self)
             channel = 2-int(np.argmax(colours.parse_hex(supplied[selected])))
             expanded = colours.mask(hsv, colours.separated_ranges(selected, supplied))
             clipped = (frame[:, :, channel] == 255) & (expanded > 0)
@@ -346,14 +370,30 @@ class BannerNode(Node):
         # corridor beside it. A mask that took either let the gate search
         # align on the orange banner and fly into the wrong corridor. With a
         # green supplied, orange is never a candidate; it is still named by
-        # dominant_colour when asked about a panel.
-        if supplied.get('green'):
-            return colours.separated_ranges('green', supplied)
+        # dominant_colour when asked about a panel. On the return lap of the
+        # field PDF's arena the corridor to take carries the EXIT shade (blue)
+        # instead, and green is then the one never to align on.
+        target = search_colour(self)
+        if supplied.get(target):
+            return colours.separated_ranges(target, supplied)
         out = []
         for key in ('green', 'orange'):
             if supplied.get(key):
                 out.extend(colours.separated_ranges(key, supplied))
         return out
+
+    def search_colour(self):
+        return search_colour(self)
+
+    def _on_banner_target(self, msg):
+        target = str(msg.data).strip().lower()
+        if target not in ('green', 'exit'):
+            self.get_logger().warn(f"banner target {target!r} refused; keeping {self._target}")
+            return
+        if target != self._target:
+            self._target = target
+            self.get_logger().info(f"banner target -> {target} "
+                                   f"(searching {self.search_colour()})")
 
     def dominant_colour(self, panel):
         """Which supplied banner colour this panel mostly is, if any.
@@ -367,7 +407,7 @@ class BannerNode(Node):
             return "", 0.0
         hsv = cv2.cvtColor(panel, cv2.COLOR_BGR2HSV)
         best, best_frac = "", 0.0
-        for name in ('green', 'orange'):
+        for name in ('green', 'orange', 'exit'):
             bands = self.colour_ranges(name)
             if not bands:
                 continue
@@ -406,7 +446,16 @@ class BannerNode(Node):
             return
         self.set_parameters([Parameter('banner_width_m', value=w),
                              Parameter('banner_height_m', value=h)])
-        self.get_logger().info(f"banner size from the GCS -> {w:.2f} x {h:.2f} m")
+        # The white border's own width (field PDF: 1 inch), so the ring and
+        # the outline test sample the band that is printed, not 3 inches.
+        try:
+            border = float(banner.get('border_m'))
+        except (TypeError, ValueError):
+            border = None
+        if border is not None and 0.0 < border < 0.5 * h:
+            self.border_m = border
+        self.get_logger().info(f"banner size from the GCS -> {w:.2f} x {h:.2f} m"
+                               + (f", border {border * 100:.1f} cm" if border else ""))
 
     def identity(self, frame, bbox):
         """(is_banner, reason, stats, board_bbox) for the green region at `bbox`.
@@ -534,7 +583,8 @@ class BannerNode(Node):
         roi = frame[y:y + bh, x:x + bw]
         if roi.size == 0:
             return None
-        _, colour, _, v_min, s_max, _ = self._board_reference(roi)
+        hsv_roi, colour, _, v_min, s_max, _ = self._board_reference(roi)
+        v_min = self._border_v_min(hsv_roi, colour, v_min)
         # The OUTLINE takes the panel's hue at any brightness: a post's shadow
         # across the sheet otherwise cut the outline through the panel, and
         # the samples "outside" that edge fell on shadowed green, not border.
@@ -608,6 +658,14 @@ class BannerNode(Node):
         if len(failed) == 1 and len(observed) - 1 >= 3:
             info["outline_shadowed_edge"] = failed[0]
             failed = []
+        # The ends of a corridor-width board meet the walls (see _identify_box):
+        # both LONG edges framed, only short ones dark.
+        long_edges = sorted(range(4), key=lambda i: -lengths[i])[:2]
+        if (failed and max(lengths) >= self.WIDE_BOARD_ASPECT * short
+                and all(i in observed and observed[i] >= floor for i in long_edges)
+                and all(int(f.split()[1]) not in long_edges for f in failed)):
+            info["outline_ends_at_walls"] = failed
+            failed = []
         if failed:
             return False, f"no white border ({', '.join(failed)})", info
         if len(observed) == 2 and set(observed) not in ({0, 2}, {1, 3}):
@@ -643,7 +701,8 @@ class BannerNode(Node):
         info = {"identity_path": "border"}
         if roi.size == 0:
             return False, "empty roi", info, bbox
-        _, colour, _, v_min, s_max, _ = self._board_reference(roi)
+        hsv_roi, colour, _, v_min, s_max, _ = self._board_reference(roi)
+        v_min = self._border_v_min(hsv_roi, colour, v_min)
         if np.count_nonzero(colour) == 0:
             return False, "no banner colour in the region", info, bbox
 
@@ -676,8 +735,7 @@ class BannerNode(Node):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         sat, val = hsv[:, :, 1], hsv[:, :, 2]
         white = (val >= v_min) & (sat <= s_max)
-        ring = max(2, int(round(float(self._g('border_frac'))
-                                * max(board[2], board[3]))))
+        ring = self._border_ring_px(board)
         bx, by, bwd, bhd = board
         sides = {
             "top": white[max(0, by - ring):by, bx:bx + bwd],
@@ -696,6 +754,17 @@ class BannerNode(Node):
                 failed.append(f"{name} {frac:.2f}")
         info["border_ring_px"] = ring
         info["border_sides"] = observed
+        # THE ENDS OF A CORRIDOR-WIDTH BOARD MEET THE WALLS. The field PDF's
+        # arch board is 11.5 ft wide between walls 11.5 ft apart: its end
+        # borders are flush with the walls' grey ends (field world run 2,
+        # frontal view: top 0.56, bottom 0.51, left 0.02, right 0.34). A wide
+        # board framed along BOTH long sides is a framed board; the floor
+        # between two white walls is framed on its ends only and stays out.
+        if (failed and bwd >= self.WIDE_BOARD_ASPECT * bhd
+                and {"top", "bottom"} <= set(observed)
+                and all(n.split()[0] in ("left", "right") for n in failed)):
+            info["border_ends_at_walls"] = failed
+            failed = []
         if len(observed) < int(self._g('min_border_sides')):
             return (False,
                     f"only {len(observed)} border side(s) in frame, need "
@@ -710,6 +779,56 @@ class BannerNode(Node):
                     f"a patch run into a frame corner, not a banner", info, board)
         info["bordered"] = True
         return True, "", info, board
+
+    def _border_v_min(self, hsv_roi, board, v_min):
+        """The border's white, judged OUTSIDE the panel: brighter than the
+        board, as for lettering -- or as bright as the light the panel is in.
+
+        HSV value is a pixel's strongest channel. A print whose strongest
+        channel is already full (the field PDF's #0000FF) reads its whole
+        illumination as V, and white beside it, lit the same, is barely
+        brighter: rendered, panel V 193 and border V 202 at the return
+        stand-off, under the 8% `white_v_ratio` asks (field world run 3,
+        refused on every frame). The operator gave the print's colour, so
+        the light is the panel's V over that colour's strongest channel, and
+        white is anything over `white_illum_ratio` of it (and S <= s_max).
+        A pixel passing either test is white. For the greens (#07A03D,
+        #00B140) the light comes out near 255 and only the old test can pass;
+        grey floors and walls (under ~0.7 of the light) fail both. A print at
+        V 255 in sun leaves nothing brighter, hence `white_v_cap`. Not for
+        lettering INSIDE a panel: white blocks on a clipped board must not
+        pass for a word (test_banner_capture_contract)."""
+        v = float(v_min)
+        supplied = (getattr(self, '_colours', None) or {}).get(search_colour(self))
+        if supplied and np.count_nonzero(board):
+            peak = max(colours.parse_hex(supplied))
+            if peak > 0:
+                v_board = float(np.median(hsv_roi[:, :, 2][board > 0]))
+                light = min(255.0, v_board * 255.0 / peak)
+                v = min(v, float(self._g('white_illum_ratio')) * light)
+        return max(float(self._g('white_v_min')),
+                   min(v, float(self._g('white_v_cap'))))
+
+    def _border_ring_px(self, board):
+        """How deep a ring to sample outside the panel for its white border.
+
+        Without the border's width from the GCS: `border_frac` of the
+        board's long side, sized for the earlier 3-inch border (about 2% of a
+        corridor-width board). With it: the printed border's depth on the
+        board's SHORT side -- a hung board's height, a laid one's depth, both
+        foreshortened like the border -- plus a pixel for blur. The field
+        PDF's 1 inch on an 11.5 x 1.5 ft board is 0.7% of its width, so the
+        width-scaled ring was about four times the border and mostly the dark
+        lane behind it: field world run 1 (25 Oct) read 0.05-0.25 white below
+        and beside the exit board on every saved return-search frame.
+        """
+        border_m = getattr(self, "border_m", None)
+        if border_m is None:
+            return max(2, int(round(float(self._g('border_frac'))
+                                    * max(board[2], board[3]))))
+        height_m = max(0.1, float(self._g('banner_height_m')))
+        depth = min(board[2], board[3]) * float(border_m) / height_m
+        return max(2, int(round(depth + 1.0)))
 
     @staticmethod
     def _rank(ok, info, expected_letters=8):

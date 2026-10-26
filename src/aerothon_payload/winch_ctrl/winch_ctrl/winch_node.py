@@ -9,6 +9,10 @@ component, and this node has no simulator-truth subscription.
 Hardware uses MAV_CMD_DO_WINCH, or with backend:=gpio the Pi drives the
 BTS7960 directly and MEASURES travel from the N20 quadrature encoder
 (gpio_winch.py); payout is then measured line movement, not an estimate.
+With backend:=l298n the Pi drives an L298N (l298n.py) with no encoder; payout
+is the timed estimate. An RC switch (rc_manual_channel; 6, a three-position
+switch, on the aircraft) then also drives it by hand (high one way, low the
+other, middle stop) whenever no autonomous mission is running.
 Repeated motion intents are idempotent; stop sends rate-control zero, not
 another full-length movement.
 
@@ -32,6 +36,14 @@ try:
     _HAVE_MAVROS = True
 except ImportError:
     _HAVE_MAVROS = False
+try:
+    from mavros_msgs.msg import RCIn
+except ImportError:
+    RCIn = None
+
+# Mission states in which no autonomous flight is running (mission_tree
+# IDLE_STATES plus a finished abort): the RC hand switch may drive the motor only then.
+MISSION_IDLE_STATES = frozenset({"", "IDLE", "WAITING", "COMPLETED", "FAILED", "ABORTED"})
 
 MAV_CMD_DO_WINCH = 42600
 WINCH_RELAXED, WINCH_RELATIVE_LENGTH_CONTROL, WINCH_RATE_CONTROL = 0, 1, 2
@@ -43,7 +55,7 @@ class WinchNode(Node):
     def __init__(self, **kwargs):
         super().__init__("winch_ctrl", **kwargs)
         p = self.declare_parameter
-        p("backend", "sim")                  # sim | gazebo | mavlink | gpio
+        p("backend", "sim")                  # sim | gazebo | mavlink | gpio | l298n
         p("payout_rate_mps", 0.30)           # line speed
         p("max_payout_m", 6.0)               # spool capacity
         p("ground_clearance_m", 0.25)        # payload considered down within this
@@ -90,6 +102,29 @@ class WinchNode(Node):
         p("encoder_lower_sign", 1)
         p("stall_timeout_s", 0.6)
         p("stow_window_m", 0.15)
+        # A measured line within this of max_payout_m is at the limit, as one
+        # within stow_window_m of home is stowed: the FC's length control
+        # settles short of the length it was sent (SITL: 5.929 of 6.0 m), and
+        # a bench "lower" stayed LOWERING for ever (gcs_testing_20261025).
+        p("limit_window_m", 0.15)
+        # backend:=l298n -- the team's L298N (bench-tested 24 Oct 2026): ENA,
+        # IN1, IN2 as BCM pins (not 4/5/14/15: FC UARTs). lower_direction 1
+        # lowers on IN1 (the test's "forward"), -1 on IN2: check on the bench.
+        p("l298n_ena", 18)
+        p("l298n_in1", 23)
+        p("l298n_in2", 24)
+        p("l298n_duty_pct", 100.0)
+        p("l298n_lower_direction", 1)
+        # RC switch by hand (backend:=l298n; venue.yaml selects channel 6, a
+        # three-position switch, on the aircraft): at or above rc_high_us spins
+        # IN1 ("forward"), at or below rc_low_us IN2; the middle and a lost
+        # or stale radio stop it. Ignored completely during a mission. After
+        # startup, a mission or a lost radio the switch must be seen in the
+        # middle first (aircraft, 25 Oct: a switch left at LOW lowered at boot).
+        p("rc_manual_channel", 5)
+        p("rc_high_us", 1800)
+        p("rc_low_us", 1200)
+        p("rc_timeout_s", 0.5)
 
         self.backend = self.get_parameter("backend").value
         self.measured_payout = None
@@ -134,6 +169,18 @@ class WinchNode(Node):
         self.gpio = None
         if self.backend == "gpio":
             self._enable_gpio()
+        self.motor = None
+        self._rc = None              # (channels, receipt time) from /aerothon/rc/in
+        self._mission_state = ""
+        self.manual = 0              # RC hand drive in effect: 1, -1 or 0
+        self.rc_ready = False        # hand switch seen in the middle since startup/mission/lost radio
+        if self.backend == "l298n":
+            self._enable_l298n()
+            if RCIn is not None:
+                # rc_in_bridge: the FC's channels even with chancount 0 (ExpressLRS
+                # in MAVLink mode), where /mavros/rc/in is empty.
+                self.create_subscription(RCIn, "/aerothon/rc/in", self._on_rc, qos_profile_sensor_data)
+            self.create_subscription(String, "/mission/state", self._on_mission_state, 10)
 
         self.create_timer(1.0 / float(self.get_parameter("publish_rate_hz").value),
                           self._tick)
@@ -163,7 +210,86 @@ class WinchNode(Node):
             self.gpio = None
             self._set_fault(f"gpio winch unavailable: {error}")
 
+    def _enable_l298n(self, driver=None):
+        from winch_ctrl.l298n import L298NDriver
+        g = lambda n: self.get_parameter(n).value  # noqa: E731
+        try:
+            self.motor = driver or L298NDriver(
+                g("gpio_chip"), g("l298n_ena"), g("l298n_in1"), g("l298n_in2"),
+                g("pwm_hz"), g("l298n_duty_pct"))
+        except Exception as error:  # noqa: BLE001 - no lgpio, busy pins, bad wiring
+            self.motor = None
+            self._set_fault(f"l298n winch unavailable: {error}")
+
+    def _on_rc(self, msg):
+        self._rc = (list(msg.channels), self._now())
+
+    def _on_mission_state(self, msg):
+        self._mission_state = str(msg.data).split(":")[0].strip()
+
+    def mission_active(self):
+        return self._mission_state not in MISSION_IDLE_STATES
+
+    def rc_manual_direction(self):
+        """1 (IN1), -1 (IN2) or 0 from the RC hand switch. 0 during a mission, for
+        a middle stick, for a missing or stale radio, and until the switch has
+        been seen in the middle since startup, the last mission or the last
+        lost radio: a switch left at either end never starts the motor."""
+        band = self._rc_band()
+        if band is None:
+            self.rc_ready = False
+            return 0
+        if band == 0:
+            self.rc_ready = True
+        return band if self.rc_ready else 0
+
+    def _rc_band(self):
+        """1 high, -1 low, 0 middle; None for a mission, a missing, stale or
+        failsafe radio, or no such channel."""
+        if self.mission_active() or self._rc is None:
+            return None
+        channels, t = self._rc
+        if self._now() - t > float(self.get_parameter("rc_timeout_s").value):
+            return None
+        i = int(self.get_parameter("rc_manual_channel").value) - 1
+        if not 0 <= i < len(channels):
+            return None
+        us = int(channels[i])
+        if us < 900:
+            return None
+        if us >= int(self.get_parameter("rc_high_us").value):
+            return 1
+        if us <= int(self.get_parameter("rc_low_us").value):
+            return -1
+        return 0
+
+    def _sync_l298n(self, dt):
+        """Drive the L298N for the winch state, else for the RC hand switch."""
+        if self.motor is None:
+            return
+        lower = 1 if int(self.get_parameter("l298n_lower_direction").value) >= 0 else -1
+        want = 0
+        self.manual = 0
+        if self.state == "LOWERING":
+            want = lower
+        elif self.state == "STOWING":
+            want = -lower
+        elif self.state != "FAULT":
+            self.manual = self.rc_manual_direction()
+            want = self.manual
+            if self.manual:
+                # Hand drive moves the line too: keep the estimate honest.
+                if self.manual == lower:
+                    self.payout = min(float(self.get_parameter("max_payout_m").value),
+                                      self.payout + float(self.get_parameter("payout_rate_mps").value) * dt)
+                else:
+                    self.payout = max(0.0, self.payout - float(self.get_parameter("stow_rate_mps").value) * dt)
+        if want != self.motor.direction:
+            self.motor.drive(want)
+
     def destroy_node(self):
+        if getattr(self, "motor", None) is not None:
+            self.motor.close()
         if getattr(self, "gpio", None) is not None:
             self.gpio.close()
         super().destroy_node()
@@ -273,6 +399,15 @@ class WinchNode(Node):
         self.get_logger().error(f"winch fault: {reason}")
 
     def _send_backend(self, action):
+        if self.backend == "l298n":
+            if self.motor is None:
+                if action in ("lower", "stow"):
+                    self._set_fault(self.fault or "l298n winch unavailable")
+                return
+            lower = 1 if int(self.get_parameter("l298n_lower_direction").value) >= 0 else -1
+            # A gravity hook has no release actuator: release only stops the reel.
+            self.motor.drive({"lower": lower, "stow": -lower}.get(action, 0))
+            return
         if self.backend == "gpio":
             if self.gpio is None:
                 if action != "stop":
@@ -403,6 +538,8 @@ class WinchNode(Node):
         self._last_tick = now
         self._request_fc_winch(now)
         self.integrate(dt)
+        if self.backend == "l298n":
+            self._sync_l298n(dt)
         if self.pub_gz_payout is not None:
             self.pub_gz_payout.publish(Float64(data=float(self.payout)))
         self.publish_status()
@@ -506,7 +643,8 @@ class WinchNode(Node):
         """The measured line drives the state machine: lowered, at the limit,
         or stowed only once the line is MEASURED in."""
         self.payout = measured
-        if self.state == "LOWERING" and self.at_limit():
+        limit = float(self.get_parameter("max_payout_m").value)
+        if self.state == "LOWERING" and measured >= limit - float(self.get_parameter("limit_window_m").value):
             self.state = "AT_LIMIT"
         if self.state != "STOWING":
             return
@@ -562,6 +700,9 @@ class WinchNode(Node):
             "payout_estimate_m": round(self.payout, 3),
             "measured_payout_m": self.measured_payout,
             "measurement_age_s": None if self._measurement_t is None else max(0.0, self._now()-self._measurement_t),
+            "rc_manual": getattr(self, "manual", 0),
+            "rc_manual_ready": getattr(self, "rc_ready", False),
+            "mission_active": self.mission_active() if self.backend == "l298n" else None,
             "payout_basis": ("measured N20 encoder travel" if self.gpio is not None
                              else "measured winch joint" if self._measured() is not None
                              else "integrated commanded motor rate; no encoder"),

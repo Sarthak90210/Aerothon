@@ -13,6 +13,15 @@ from scipy.spatial import cKDTree
 # The lowest floor a simulation venue may set (airframe radius 0.4 m + 5 cm);
 # the aircraft's floor is the rulebook 0.70 m (clearance_floor default).
 SIMULATION_CLEARANCE_FLOOR_M = 0.45
+# Half-width of the body-to-sensor link counted as observed. The nose lidar
+# cannot see its own airframe behind it (the masked rear sector), so the
+# strip beside the body centre was never observed and no sideways step of
+# more than 2.5 cm could be certified: in the return slot the aircraft sat
+# 1 cm inside the clearance, its 3 cm way out refused every tick, until it
+# gave up STUCK (final_mission_r12/r13). 5 cm either side of the link is
+# inside the central airframe itself, which no external surface can occupy.
+# Wider blind sideways travel stays refused.
+BODY_LINK_HALFWIDTH_M = 0.05
 
 
 class LocalPlanner:
@@ -72,7 +81,7 @@ class LocalPlanner:
         xy = np.linspace(start, end, n)
         return self._clear_samples(xy)
 
-    def _clear_samples(self, xy):
+    def _clear_samples(self, xy, limit=None):
         """Prove clearance between samples without taxing a stationary origin.
 
         Distance to fixed observed returns is 1-Lipschitz. For an interval
@@ -80,18 +89,21 @@ class LocalPlanner:
         a lower bound throughout that interval. Subdivide only ambiguous
         intervals, keeping the original observation checks and hard limit.
         A bounded refinement that cannot prove clearance remains blocked.
+        `limit` replaces the hard clearance only for a caller that has its
+        own narrower certificate (the recentre sidestep).
         """
+        limit = self.clearance if limit is None else float(limit)
         xy = np.asarray(xy, dtype=float).reshape(-1, 2)
         if len(xy) < 2 or not np.isfinite(xy).all() or not self.known(xy).all():
             return False
         distances = self.distances(xy)
-        if (distances < self.clearance).any():
+        if (distances < limit).any():
             return False
         a, b = xy[:-1], xy[1:]
         da, db = distances[:-1], distances[1:]
         for _ in range(10):
             length = np.linalg.norm(b-a, axis=1)
-            certified = (da+db-length)/2 >= self.clearance
+            certified = (da+db-length)/2 >= limit
             if certified.all():
                 return True
             a, b = a[~certified], b[~certified]
@@ -100,13 +112,13 @@ class LocalPlanner:
             if not self.known(midpoint).all():
                 return False
             dm = self.distances(midpoint)
-            if (dm < self.clearance).any():
+            if (dm < limit).any():
                 return False
             a, b = np.concatenate((a, midpoint)), np.concatenate((midpoint, b))
             da, db = np.concatenate((da, dm)), np.concatenate((dm, db))
         return False
 
-    def polyline_clear(self, points):
+    def polyline_clear(self, points, limit=None):
         """Batch the identical samples used by each segment certificate."""
         points = np.asarray(points, dtype=float).reshape(-1, 2)
         if len(points) < 2 or not np.isfinite(points).all():
@@ -114,7 +126,7 @@ class LocalPlanner:
         samples = [np.linspace(a, b, max(2, int(math.dist(a, b)/0.05)+2))
                    for a, b in zip(points, points[1:])]
         xy = np.concatenate(samples)
-        return self._clear_samples(xy)
+        return self._clear_samples(xy, limit)
 
     def known(self, xy):
         """Observed rays plus the narrow occupied link to the mounted sensor.
@@ -129,7 +141,7 @@ class LocalPlanner:
         fraction = np.clip(xy @ self.sensor_origin/max(length2,1e-12),0,1)
         link_distance = np.linalg.norm(xy-fraction[:,None]*self.sensor_origin,axis=1)
         occupied = ((np.linalg.norm(xy,axis=1)<self.occupied_radius) &
-                    (link_distance<0.025))
+                    (link_distance<BODY_LINK_HALFWIDTH_M))
         return self.observed(xy) | occupied
 
     def plan(self, axis_bearing=0.0):

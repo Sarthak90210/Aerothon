@@ -74,6 +74,11 @@ class Route(py_trees.behaviour.Behaviour):
 
 
 class Pilot(py_trees.behaviour.Behaviour):
+    # The stick may not take the height target onto the airborne floor the
+    # takeoff armed: a target clamped at 1.0 m, the floor itself, ended the
+    # transmitter test on a 6 cm sag (gcs_testing_20261025 session 2).
+    FLOOR_MARGIN_M = 0.3
+
     def __init__(self, owner, height):
         super().__init__('TransmitterAvoidance')
         self.owner, self.height = owner, height
@@ -93,7 +98,8 @@ class Pilot(py_trees.behaviour.Behaviour):
             owner.takeover('transmitter takeover switch')
             return S.RUNNING
         now = time.monotonic()
-        self.height = max(1., min(owner.params['search_alt'], self.height+p['climb']*min(.2, now-self.previous)))
+        lowest = (getattr(owner.mav, 'airborne_floor', None) or 1.) + self.FLOOR_MARGIN_M
+        self.height = max(lowest, min(owner.params['search_alt'], self.height+p['climb']*min(.2, now-self.previous)))
         self.previous = now
         owner.external_intent(Vector3(x=p['forward'],y=p['left'],z=p['yaw']), self.height)
         return S.RUNNING
@@ -105,6 +111,9 @@ class Mechanism(py_trees.behaviour.Behaviour):
         self.mav, self.action, self.sent = mav, action, False
 
     STATUS_TIMEOUT_S = 3.0
+    # The winch's stow_window_m: a measured line settles a few cm out (SITL
+    # 0.077 m) and the winch reports it stowed within this.
+    STOWED_M = 0.15
 
     def update(self):
         if not self.sent:
@@ -133,6 +142,11 @@ class Mechanism(py_trees.behaviour.Behaviour):
         expected = {'lower': {'AT_LIMIT','AT_GROUND'}, 'stow': {'IDLE','RELEASED'},
                     'release': {'RELEASED'}, 'stop': {'IDLE','RELEASED'}}
         if state.get('state') not in expected[self.action]:
+            return S.RUNNING
+        # IDLE is also the state before the winch has acted on the command:
+        # a stow reported Completed 2 s after Start while the line was still
+        # 5.7 m out and reeling in (gcs_testing_20261025). Stowed means in.
+        if self.action == 'stow' and float(state.get('payout_estimate_m') or 0.0) > self.STOWED_M:
             return S.RUNNING
         if self.mav.node.remote and self.action in {'lower','stow'}:
             measured = state.get('measured_payout_m')
@@ -185,7 +199,8 @@ class ExecutionNode(Node):
         self.create_subscription(Bool, '/mission_ready', lambda m: setattr(self,'ready',m.data), 10)
         self.create_subscription(String, '/devices/status', self.device_status, 10)
         self.create_subscription(State, '/mavros/state', self.on_fcu_state, qos_profile_sensor_data)
-        self.create_subscription(RCIn, '/mavros/rc/in', self.on_rc, qos_profile_sensor_data)
+        # rc_in_bridge: /mavros/rc/in is empty when the FC reports chancount 0.
+        self.create_subscription(RCIn, '/aerothon/rc/in', self.on_rc, qos_profile_sensor_data)
         # Only the arrival time matters here. Raw delivery skips deserializing
         # each 1280x720 frame, which cost ~0.45 of a Pi 5 core at 30 Hz (16 Oct).
         for typ,topic,key,raw in [(Image,'/image_raw','camera',True),(LaserScan,'/scan','lidar',False)]:
@@ -371,7 +386,10 @@ class ExecutionNode(Node):
         elif task.startswith('avoidance_'):
             leaves.append(Pilot(self,height) if task == 'avoidance_manual' else Route(self,p['waypoints'],height,True))
         elif task == 'banner':
-            leaves.extend([production.SetCameraPose('CameraBannerTest',mav,'BANNER'),
+            # The entry banner: a mission stopped on its return lap leaves the
+            # detector latched on the exit shade.
+            leaves.extend([production.SetBannerTarget('BannerTargetTest',mav,'green'),
+                           production.SetCameraPose('CameraBannerTest',mav,'BANNER'),
                            production.AlignToBanner(mav, clock=production._node_clock(self),
                                hfov_rad=self.params['camera_hfov'], image_width_px=self.params['image_width_px'],
                                banner_w_m=self.params['banner_w_m'],banner_h_m=self.params['banner_h_m'],

@@ -33,6 +33,15 @@ this run accepted or weaken its threshold. The next functional issues are
 field clearance diagnosis and the Pi GPIO/encoder winch backend, separate
 from the completed documentation/cleanup/video scope.
 
+On 25-26 October the organisers' Track 1 field properties PDF was applied
+(master guide section 1, "25-26 October 2026"): GCS preset "AeroTHON 2026
+Track 1 field (organiser PDF)", blue exit-corridor banner role ("exit"),
+borderless 1 m QR codes, 6 ft exit-lane boards with the navigation-height
+rule, and worlds `sim/worlds/aerothon26_field*.json`. Calm laptop-simulation
+runs r5-r7 passed 14/14 on one source; field conditions are not
+re-qualified, and lane spacing, positions and the 1.5 m navigation height
+are working values for the day.
+
 On 15 October the organiser clarifications were applied (master guide
 section 1, "15 October 2026"). Final source `188aacd0...` passed the full
 reduced offline suite and two calm rendered acceptances 22/22: pattern-only

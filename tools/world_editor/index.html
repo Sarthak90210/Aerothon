@@ -186,9 +186,11 @@
 
     <h2>Banners</h2>
     <div class="row" id="colourRow"></div>
-    <p class="muted">The organisers give these as HEX. Green marks each corridor's entry, orange
-      every opening the aircraft must not take (the far end of both corridors), red the restricted
-      zones. Gazebo prints these; the same codes go into the GCS. Relaunch to see a change in Gazebo.</p>
+    <p class="muted">The organisers give these as HEX. Green marks the entry corridor, red the
+      restricted zones. Exit (field PDF, 23 Oct: blue #0000FF): the exit corridor's boards, and no
+      orange boards. Leave exit blank for the rulebook reading: green at both entries, orange at
+      every opening the aircraft must not take. Gazebo prints these; the same codes go into the
+      GCS. Relaunch to see a change in Gazebo.</p>
     <label class="muted" id="orangeWrap"><input id="orangeOn" type="checkbox"> orange no-entry banners</label>
 
     <h2>Checks <span id="checkSrc" class="muted"></span></h2>
@@ -562,6 +564,8 @@ function qrTex(seed, letter) {
 const SIM_COLOURS = { green: "#07A03D", orange: "#EB5A0A", red: "#C4161C" };
 function colourOf(name) { return ((spec.banner || {}).colours || {})[name] || SIM_COLOURS[name]; }
 function hexInt(h) { return parseInt(String(h).replace("#", ""), 16); }
+// Sizes in the object list: metres to the millimetre (feet convert to long decimals).
+function m3(v) { return +(+v).toFixed(3); }
 const redTexCache = {};
 function redTex(hex) {
   return redTexCache[hex] ??= canvasTex(512, 256, (g, w, h) => {
@@ -610,13 +614,16 @@ function rebuild() {
     }
     if (bn.placement !== "suspended") { const sh = flat(bh, bw, colour, 0.03); sh.position.set(x + outward * (bh / 2 + 0.2), 0, 0.03); g.add(sh); }
   }
-  function lane(c, floor, text) {
+  function lane(c, floor, text, isReturn) {
     const g = new THREE.Group(), L = +c.length, Wd = +c.width, H = +c.wall_height;
     const f = flat(L, Wd, floor, 0.02); f.position.set(L / 2, 0, 0.02); g.add(f);
     const wy = Wd / 2 + WALL_T / 2;
     for (const y of [wy, -wy]) g.add(box(L + 0.2, WALL_T, H, 0xdfe5ec, [L / 2, y, H / 2], 0.55));
-    // Green where the aircraft enters; orange at the far opening it must not use.
-    gate(g, 0, hexInt(colourOf("green")), Wd, -1);
+    // Green where the aircraft enters the entry corridor; the exit corridor's
+    // entrance carries the exit shade when one is given (field PDF), else
+    // green; orange at the far openings only without an exit shade.
+    const exit = isReturn && colourOf("exit");
+    gate(g, 0, hexInt(exit || colourOf("green")), Wd, -1);
     if (bn.orange) gate(g, L, hexInt(colourOf("orange")), Wd, 1);
     g.add(label(text, 0xffffff, 0.9, [L / 2, 0, 0.05]));
     g.position.set(c.x, c.y, 0); g.rotation.z = rad(c.yaw_deg);
@@ -625,7 +632,7 @@ function rebuild() {
   world.add(tag(lane(s.corridor, 0x07ad47, "OUT →"), "corridor", ""));
   if (isSel("corridor")) world.add(selRing(corridorPoly(s)));
   {
-    const r = s.return_corridor, g = lane(r, 0xff6a0d, r.linked ? "RETURN → (linked)" : "RETURN →");
+    const r = s.return_corridor, g = lane(r, 0xff6a0d, r.linked ? "RETURN → (linked)" : "RETURN →", true);
     world.add(tag(g, "return", ""));
     if (isSel("return")) world.add(selRing(returnPoly(s)));
     // Obstacles are their own pickables so each can be dragged.
@@ -799,11 +806,11 @@ const $ = id => document.getElementById(id);
 function objectRows() {
   const r = spec.return_corridor;
   const rows = [["takeoff", "", "Take-off area", "#2280d2"],
-    ["corridor", "", `Outbound corridor  (${spec.corridor.length}×${spec.corridor.width} m)`, "#07ad47"],
-    ["return", "", `Return corridor  (${r.length}×${r.width} m${r.linked ? ", linked" : ""})`, "#ff6a0d"]];
-  (r.obstacles || []).forEach((o, i) => rows.push(["obst", i, `  Obstacle ${i + 1}  (${o.w}×${o.d}×${o.h} m)`, "#111111"]));
+    ["corridor", "", `Outbound corridor  (${m3(spec.corridor.length)}×${m3(spec.corridor.width)} m)`, "#07ad47"],
+    ["return", "", `Return corridor  (${m3(r.length)}×${m3(r.width)} m${r.linked ? ", linked" : ""})`, "#ff6a0d"]];
+  (r.obstacles || []).forEach((o, i) => rows.push(["obst", i, `  Obstacle ${i + 1}  (${m3(o.w)}×${m3(o.d)}×${m3(o.h)} m)`, "#111111"]));
   rows.push(["zone", "", "Delivery zone", "#8fcf6a"]);
-  spec.red_zones.forEach((r, i) => rows.push(["red", i, `Red zone ${i + 1}  (${r.w}×${r.h} m)`, "#e01414"]));
+  spec.red_zones.forEach((r, i) => rows.push(["red", i, `Red zone ${i + 1}  (${m3(r.w)}×${m3(r.h)} m)`, "#e01414"]));
   for (const l of PADS) if (spec.pads[l]) rows.push(["pad", l, `Pad ${l.toUpperCase()}${spec.start_target === l ? "  ★ target" : ""}`, "#ffffff"]);
   spec.decoys.forEach((d, i) => rows.push(["decoy", i, `Decoy ${i + 1}`, "#0b8f3a"]));
   if (spec.geofence.mode === "polygon") spec.geofence.vertices.forEach((v, i) => rows.push(["fencev", i, `Fence vertex ${i + 1}`, "#ff7a00"]));
@@ -948,13 +955,19 @@ $("fenceSix").onclick = () => {
 function renderColours() {
   const row = $("colourRow"); if (row.dataset.sig === JSON.stringify([spec.banner?.colours, spec.banner?.orange, !!dims()])) return;
   row.dataset.sig = JSON.stringify([spec.banner?.colours, spec.banner?.orange, !!dims()]); row.innerHTML = "";
-  for (const name of ["green", "orange", "red"]) {
+  for (const name of ["green", "exit", "orange", "red"]) {
     const w = document.createElement("label"); w.className = "colour";
-    const pick = document.createElement("input"); pick.type = "color"; pick.value = colourOf(name).toLowerCase();
-    const text = document.createElement("input"); text.type = "text"; text.value = colourOf(name).toUpperCase(); text.maxLength = 7;
+    const pick = document.createElement("input"); pick.type = "color"; pick.value = (colourOf(name) || "#0000ff").toLowerCase();
+    const text = document.createElement("input"); text.type = "text"; text.value = (colourOf(name) || "").toUpperCase(); text.maxLength = 7;
+    if (name === "exit") text.placeholder = "blank";
     const set = hex => {
-      if (!/^#[0-9a-fA-F]{6}$/.test(hex)) { text.classList.add("e"); return; }
-      pushUndo(); spec.banner = { ...(spec.banner || {}) }; spec.banner.colours = { ...(spec.banner.colours || {}), [name]: hex.toUpperCase() };
+      const colours = { ...((spec.banner || {}).colours || {}) };
+      if (name === "exit" && hex === "") delete colours.exit;          // the rulebook reading
+      else if (!/^#[0-9a-fA-F]{6}$/.test(hex)) { text.classList.add("e"); return; }
+      else colours[name] = hex.toUpperCase();
+      pushUndo(); spec.banner = { ...(spec.banner || {}), colours };
+      // world_spec.apply_dimensions: no orange boards on a field with an exit shade.
+      if (dims()) spec.banner.orange = !colours.exit;
       changed();
     };
     pick.oninput = () => { text.value = pick.value.toUpperCase(); };
@@ -962,9 +975,12 @@ function renderColours() {
     text.onchange = () => set(text.value.trim());
     w.append(pick, text, name); row.append(w);
   }
-  // With arena dimensions the organisers' rule applies: orange at every other opening.
-  $("orangeOn").checked = !!(spec.banner?.orange || dims()); $("orangeOn").disabled = !!dims();
-  $("orangeWrap").title = dims() ? "Always on with arena dimensions (the organisers' rule)" : "";
+  // With arena dimensions the organisers' rule applies: orange at every other
+  // opening, unless an exit shade marks the exit corridor (field PDF).
+  const exitGiven = !!colourOf("exit");
+  $("orangeOn").checked = !!(spec.banner?.orange || (dims() && !exitGiven)); $("orangeOn").disabled = !!dims();
+  $("orangeWrap").title = dims() ? (exitGiven ? "Off: the exit shade marks the exit corridor (field PDF)"
+                                             : "Always on with arena dimensions (the organisers' rule)") : "";
 }
 $("orangeOn").onchange = e => { pushUndo(); spec.banner = { ...(spec.banner || {}), orange: e.target.checked }; changed(); };
 
