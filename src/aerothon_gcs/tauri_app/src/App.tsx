@@ -25,6 +25,8 @@ import {
 import Connections from "./Connections";
 import ArenaDimensions from "./ArenaDimensions";
 import LidarCalibration from "./LidarCalibration";
+import CameraCalibration from "./CameraCalibration";
+import WinchCalibration from "./WinchCalibration";
 import Slam, { type Grid, type MapPose } from "./LidarView";
 import { decodeGrid } from "./lidarGeometry";
 import coverage from "./satelliteCoverage.json";
@@ -115,7 +117,9 @@ export default function App() {
     [error, setError] = useState("");
   const [settings, setSettings] = useState(false),
     [arenaOpen, setArenaOpen] = useState(false),
-    [lidarOpen, setLidarOpen] = useState(false);
+    [lidarOpen, setLidarOpen] = useState(false),
+    [cameraCalOpen, setCameraCalOpen] = useState(false),
+    [winchCalOpen, setWinchCalOpen] = useState(false);
   const [task, setTask] = useState("mission"),
     [action, setAction] = useState("stow"),
     [height, setHeight] = useState(5);
@@ -377,6 +381,8 @@ export default function App() {
     if (danger) {
       setArenaOpen(false);
       setLidarOpen(false);
+      setCameraCalOpen(false);
+      setWinchCalOpen(false);
       setReview({ cmd, args, label: `${cmd.replace(/_/g, " ")}${args.mode ? ` ${args.mode}` : ""}` });
     } else void perform(cmd, args);
   };
@@ -534,6 +540,8 @@ export default function App() {
           </span>
           <button onClick={() => setArenaOpen(true)}>Arena</button>
           <button onClick={() => setLidarOpen(true)}>Lidar cal</button>
+          <button onClick={() => setCameraCalOpen(true)}>Camera cal</button>
+          <button onClick={() => setWinchCalOpen(true)}>Winch cal</button>
           <button onClick={() => setSettings(!settings)}>Connections</button>
           <button
             aria-label="Switch theme"
@@ -1170,6 +1178,22 @@ export default function App() {
           connected={fcu}
           send={reviewedSend}
           onClose={() => setLidarOpen(false)}
+        />
+      )}
+      {cameraCalOpen && (
+        <CameraCalibration
+          S={t}
+          connected={fcu}
+          send={reviewedSend}
+          onClose={() => setCameraCalOpen(false)}
+        />
+      )}
+      {winchCalOpen && (
+        <WinchCalibration
+          S={t}
+          connected={fcu}
+          send={reviewedSend}
+          onClose={() => setWinchCalOpen(false)}
         />
       )}
     </div>

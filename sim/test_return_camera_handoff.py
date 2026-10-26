@@ -23,7 +23,9 @@ def handoff():
         and mav.camera_state['stale'] is False and abs(mav.camera_state['actual_rad'])<1e-6)
     mav.camera_state_summary=lambda:str(mav.camera_state)
     tree=build_root(mav,MagicMock(),dict(fixtures.BuiltTreeCarriesTheNewBehaviourTests.PARAMS))
-    mission=next(n for n in tree.children if n.name=='Mission')
+    # The return search and alignment sit in the ReturnGate selector's
+    # sequence (skipped only when red ground covers every stand-off).
+    mission=next(n for n in tree.iterate() if n.name=='ReturnGateAlign')
     first=next(i for i,n in enumerate(mission.children) if n.name=='FindReturnBanner')
     # The return gate is one selector over the hung, ground and fallback
     # passes; its first pass is the hung view, LEVEL at corridor height (r8b).

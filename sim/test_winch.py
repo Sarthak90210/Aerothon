@@ -371,6 +371,39 @@ class MavlinkWinchTests(unittest.TestCase):
         self.assertEqual(self.node.state, "FAULT")
         self.assertIn("refused DO_WINCH lower", self.node.fault)
 
+    # ---- 26 Oct 2026: r15/r16, an ACK that never came ---- #
+    # MAVROS answered success false, result 0 (it stopped waiting for the
+    # COMMAND_ACK); the FC reported lowering 45 ms later. It was raised as a
+    # refusal and the mission failed into RTL.
+
+    def test_an_unacknowledged_lower_is_accepted_once_the_measured_line_moves(self):
+        self.measure(1.2)
+        self.node._on_cmd(String(data="lower"))
+        self.client.sent[-1][1].finish(success=False, result=0)
+        self.assertEqual(self.node.state, "LOWERING", "no answer was taken as a refusal")
+        self.measure(1.3)
+        self.node.integrate(0.1)
+        self.assertEqual(self.node.state, "LOWERING")
+        self.assertTrue(self.node._mav_accepted)
+        self.assertIsNone(self.node._unacked)
+
+    def test_an_unacknowledged_lower_with_a_still_line_is_a_fault(self):
+        self.measure(1.2)
+        self.node._on_cmd(String(data="lower"))
+        self.client.sent[-1][1].finish(success=False, result=0)
+        action, t0, start = self.node._unacked
+        self.node._unacked = (action, t0 - 4.0, start)
+        self.measure(1.21)
+        self.node.integrate(0.1)
+        self.assertEqual(self.node.state, "FAULT")
+        self.assertIn("did not acknowledge DO_WINCH lower", self.node.fault)
+
+    def test_without_a_measured_line_no_answer_is_still_a_fault(self):
+        self.node._on_cmd(String(data="lower"))
+        self.client.sent[-1][1].finish(success=False, result=0)
+        self.assertEqual(self.node.state, "FAULT")
+        self.assertIn("refused DO_WINCH lower", self.node.fault)
+
     def test_an_unsent_command_is_a_fault(self):
         self.client.ready = False
         self.node._on_cmd(String(data="lower"))

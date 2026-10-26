@@ -13,6 +13,15 @@ With backend:=l298n the Pi drives an L298N (l298n.py) with no encoder; payout
 is the timed estimate. An RC switch (rc_manual_channel; 6, a three-position
 switch, on the aircraft) then also drives it by hand (high one way, low the
 other, middle stop) whenever no autonomous mission is running.
+
+WINCH LIMITS (backend:=l298n). The GCS calibrates where the line stops: the
+operator opens a calibration (/winch/calibration {"action": "begin"}), which
+lifts the limits for the hand switch, winds the line up to where it should
+stop and marks it ("set_min"), pays it out to where it should stop and marks
+that with the line length measured there ("set_max", "length_m"). The mark
+becomes the limit for hand drive, the mechanism tests and the mission's
+lower, and the run time between the marks gives the line speed both ways.
+It is saved to `limits_file` with the line position, so a restart keeps both.
 Repeated motion intents are idempotent; stop sends rate-control zero, not
 another full-length movement.
 
@@ -24,6 +33,8 @@ Delivery confirmation belongs to the onboard camera/load observer.
 
 import json
 import math
+import os
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -75,6 +86,9 @@ class WinchNode(Node):
         # at most stow_retries times, then faults instead of reporting stowed.
         p("stow_stall_s", 2.0)
         p("stow_retries", 3)
+        # A DO_WINCH MAVROS stopped waiting on (success false, result 0) is
+        # taken as accepted if the measured line moves its way within this.
+        p("unacked_motion_s", 3.0)
         # HOW THE PAYLOAD LEAVES THE HOOK.
         #   gravity  the team's mechanism: a motor lowers a gravity-assisted
         #            hook that lets go by itself once the payload rests on the
@@ -125,6 +139,13 @@ class WinchNode(Node):
         p("rc_high_us", 1800)
         p("rc_low_us", 1200)
         p("rc_timeout_s", 0.5)
+        # Winch limits calibrated at the GCS (backend:=l298n); "" keeps none.
+        p("limits_file", "")
+        p("calibration_timeout_s", 600.0)    # an open calibration lifts the limits
+        # The mission releases from no higher than the line less this
+        # (mission_tree WinchDrop), and winch_ctrl from no lower than
+        # min_release_alt_m: a shorter line cannot deliver.
+        p("min_calibrated_payout_m", 1.5)
 
         self.backend = self.get_parameter("backend").value
         self.measured_payout = None
@@ -158,6 +179,7 @@ class WinchNode(Node):
         self._stow_retries = 0
         self._stow_progress = None   # (accumulated s, measured m) at last progress
         self._stow_clock = 0.0
+        self._unacked = None         # (action, node time, measured m): see _on_mav_reply
         if self.backend == "mavlink" and _HAVE_MAVROS:
             self.cli_cmd = self.create_client(CommandLong, "/mavros/cmd/command")
             from rcl_interfaces.srv import GetParameters
@@ -174,6 +196,13 @@ class WinchNode(Node):
         self._mission_state = ""
         self.manual = 0              # RC hand drive in effect: 1, -1 or 0
         self.rc_ready = False        # hand switch seen in the middle since startup/mission/lost radio
+        self.limit = None            # calibrated {max_payout_m, line_speed_mps, stroke_s, saved_at}
+        self.limit_source = "max_payout_m parameter (not calibrated)"
+        self.cal_until = None        # an open calibration's end, node time
+        self.cal_zeroed = False      # wound-up marked in this calibration
+        self.cal_run_s = 0.0         # net lowering run time since that mark
+        self.cal_reason = ""
+        self._saved_payout = None
         if self.backend == "l298n":
             self._enable_l298n()
             if RCIn is not None:
@@ -181,6 +210,8 @@ class WinchNode(Node):
                 # in MAVLink mode), where /mavros/rc/in is empty.
                 self.create_subscription(RCIn, "/aerothon/rc/in", self._on_rc, qos_profile_sensor_data)
             self.create_subscription(String, "/mission/state", self._on_mission_state, 10)
+            self._load_limits()
+        self.create_subscription(String, "/winch/calibration", self._on_calibration, 10)
 
         self.create_timer(1.0 / float(self.get_parameter("publish_rate_hz").value),
                           self._tick)
@@ -268,6 +299,9 @@ class WinchNode(Node):
         if self.motor is None:
             return
         lower = 1 if int(self.get_parameter("l298n_lower_direction").value) >= 0 else -1
+        if self.calibrating() and (self.mission_active() or self._now() >= self.cal_until):
+            self._end_calibration("a mission started" if self.mission_active()
+                                  else "the calibration timed out")
         want = 0
         self.manual = 0
         if self.state == "LOWERING":
@@ -276,16 +310,173 @@ class WinchNode(Node):
             want = -lower
         elif self.state != "FAULT":
             self.manual = self.rc_manual_direction()
-            want = self.manual
             if self.manual:
                 # Hand drive moves the line too: keep the estimate honest.
-                if self.manual == lower:
-                    self.payout = min(float(self.get_parameter("max_payout_m").value),
-                                      self.payout + float(self.get_parameter("payout_rate_mps").value) * dt)
+                step = self.line_speed() * dt
+                if self.calibrating():
+                    # Limits lifted: the operator is finding where they go.
+                    self.cal_run_s += dt if self.manual == lower else -dt
+                    self.payout += step if self.manual == lower else -step
+                elif self.manual == lower:
+                    if self.limit and self.payout >= self.max_payout():
+                        self.manual = 0          # at the calibrated paid-out limit
+                    else:
+                        self.payout = min(self.max_payout(), self.payout + step)
+                elif self.limit and self.payout <= 0.0:
+                    self.manual = 0              # at the calibrated wound-up limit
                 else:
-                    self.payout = max(0.0, self.payout - float(self.get_parameter("stow_rate_mps").value) * dt)
+                    self.payout = max(0.0, self.payout - step)
+            want = self.manual
         if want != self.motor.direction:
             self.motor.drive(want)
+            if want == 0:
+                self._save_position()
+
+    # ------------------------------------------------------------------ #
+    # winch limits (backend:=l298n)
+    # ------------------------------------------------------------------ #
+    def max_payout(self):
+        """The paid-out limit: calibrated at the GCS, else the parameter."""
+        if self.limit:
+            return float(self.limit["max_payout_m"])
+        return float(self.get_parameter("max_payout_m").value)
+
+    def line_speed(self):
+        """Line speed both ways on the L298N: one motor at one duty. Timed
+        between the calibration marks once there are some."""
+        if self.limit:
+            return float(self.limit["line_speed_mps"])
+        return float(self.get_parameter("payout_rate_mps").value)
+
+    def calibrating(self):
+        return self.cal_until is not None
+
+    def _limits_path(self):
+        path = str(self.get_parameter("limits_file").value or "")
+        return os.path.expanduser(path) if path else ""
+
+    def _load_limits(self):
+        path = self._limits_path()
+        if not path:
+            return
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            limit = self._valid_limit(data["limit"])
+            position = float(data.get("position_m", 0.0))
+            if not math.isfinite(position) or not 0.0 <= position <= limit["max_payout_m"]:
+                raise ValueError(f"saved position {position} m is outside the limits")
+        except FileNotFoundError:
+            return
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            self.get_logger().warning(f"saved winch limits ignored: {error}")
+            self.cal_reason = f"saved limits ignored: {error}"
+            return
+        self.limit, self.payout = limit, position
+        self._saved_payout = position
+        self.limit_source = f"saved calibration ({path})"
+
+    def _valid_limit(self, limit):
+        out = {k: float(limit[k]) for k in ("max_payout_m", "line_speed_mps", "stroke_s")}
+        if not all(math.isfinite(v) and v > 0 for v in out.values()):
+            raise ValueError("winch limits must be positive numbers")
+        if out["max_payout_m"] < float(self.get_parameter("min_calibrated_payout_m").value):
+            raise ValueError(f"a {out['max_payout_m']:.2f} m line cannot deliver")
+        out["saved_at"] = limit.get("saved_at")
+        return out
+
+    def _save_position(self, force=False):
+        """Keep the line position with the limits: the estimate starts from it
+        after a restart instead of assuming the line is wound up."""
+        path = self._limits_path()
+        if not (path and self.limit) or (not force and self._saved_payout is not None
+                                         and abs(self._saved_payout - self.payout) < 0.005):
+            return True
+        try:
+            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+            tmp = path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump({"limit": self.limit, "position_m": round(max(0.0, self.payout), 4)},
+                          f, allow_nan=False)
+            os.replace(tmp, path)
+        except OSError as error:
+            self.get_logger().warning(f"winch position not saved: {error}")
+            self.cal_reason = f"not saved: {error}"
+            return False
+        self._saved_payout = self.payout
+        return True
+
+    def _on_calibration(self, msg):
+        try:
+            data = json.loads(msg.data)
+            action = str(data.get("action", ""))
+        except (ValueError, AttributeError):
+            self.cal_reason = "refused: not a calibration request"
+            return
+        self.cal_reason = self.calibrate(action, data.get("length_m"))
+        if self.cal_reason:
+            self.get_logger().warning(f"winch calibration {action}: {self.cal_reason}")
+
+    def calibrate(self, action, length_m=None):
+        """One calibration step; "" when done, else why it was refused."""
+        if self.backend != "l298n":
+            return f"refused: winch limits are calibrated on the L298N backend, not {self.backend}"
+        if action == "end":
+            if self.calibrating():
+                self._end_calibration("")
+            return ""
+        if self.mission_active():
+            return "refused: a mission is running"
+        if self.state in ("LOWERING", "STOWING", "FAULT"):
+            return f"refused: the winch is {self.state}"
+        if action == "begin":
+            self.cal_until = self._now() + float(self.get_parameter("calibration_timeout_s").value)
+            self.cal_zeroed, self.cal_run_s = False, 0.0
+            self.get_logger().info("winch calibration open: hand drive limits lifted")
+            return ""
+        if not self.calibrating():
+            return "refused: start a calibration first"
+        if action == "set_min":
+            self.payout, self.cal_run_s, self.cal_zeroed = 0.0, 0.0, True
+            if self.state in ("AT_LIMIT", "AT_GROUND"):
+                self.state = "RELEASED" if self.released else "IDLE"
+            self.get_logger().info("winch wound-up limit marked")
+            return ""
+        if action != "set_max":
+            return f"refused: unknown calibration step {action!r}"
+        if not self.cal_zeroed:
+            return "refused: mark the wound-up limit first"
+        try:
+            length = float(length_m)
+        except (TypeError, ValueError):
+            return "refused: enter the line length measured at the paid-out limit"
+        if self.cal_run_s <= 1.0:
+            return "refused: pay the line out from the wound-up mark first"
+        try:
+            limit = self._valid_limit({"max_payout_m": length, "line_speed_mps": length / self.cal_run_s,
+                                       "stroke_s": self.cal_run_s,
+                                       "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
+        except ValueError as error:
+            return f"refused: {error}"
+        previous = (self.limit, self.payout, self.limit_source)
+        self.limit, self.payout = limit, length
+        self.limit_source = "GCS calibration"
+        if not self._save_position(force=True):
+            self.limit, self.payout, self.limit_source = previous
+            return "refused: " + self.cal_reason
+        self.get_logger().info(f"winch paid-out limit {length:.2f} m, {limit['stroke_s']:.1f} s "
+                               f"of motor run, {limit['line_speed_mps']:.3f} m/s")
+        return ""
+
+    def _end_calibration(self, reason):
+        self.cal_until = None
+        if self.limit:
+            self.payout = max(0.0, min(self.payout, self.max_payout()))
+            self._save_position()
+        else:
+            self.payout = max(0.0, self.payout)
+        self.cal_reason = reason
+        self.get_logger().info("winch calibration closed" + (f": {reason}" if reason else ""))
 
     def destroy_node(self):
         if getattr(self, "motor", None) is not None:
@@ -430,13 +621,14 @@ class WinchNode(Node):
             return
         self._mav_gen = getattr(self, "_mav_gen", 0) + 1
         self._mav_accepted = False
+        self._unacked = None
         gen = self._mav_gen
         req = CommandLong.Request()
         req.command = MAV_CMD_DO_WINCH
         req.param1 = 1.0                                   # instance
         if action == "lower":
             req.param2 = float(WINCH_RELATIVE_LENGTH_CONTROL)
-            req.param3 = max(0.0, float(self.get_parameter("max_payout_m").value) - self.payout)
+            req.param3 = max(0.0, self.max_payout() - self.payout)
             req.param4 = float(self.get_parameter("payout_rate_mps").value)
         elif action == "stow":
             req.param2 = float(WINCH_RELATIVE_LENGTH_CONTROL)
@@ -464,6 +656,17 @@ class WinchNode(Node):
         if reply is not None and reply.success and int(reply.result) == 0:
             self._mav_accepted = True
             return
+        if (reply is not None and not reply.success and int(reply.result) == 0
+                and action in ("lower", "stow") and self._measured() is not None):
+            # MAVROS gives up waiting for the COMMAND_ACK with success false
+            # and result 0, ACCEPTED's code: no answer, not a refusal. In r15
+            # and r16 (26 Oct) the simulator's FC reported lowering 45 ms after
+            # this was raised as a refusal and the mission failed into RTL.
+            # With the line measured, its motion decides (integrate()).
+            self._unacked = (action, self._now(), self._measured())
+            self.get_logger().warning(f"DO_WINCH {action}: no acknowledgement from the "
+                                      f"FC; watching the measured line")
+            return
         if action in ("lower", "stow"):
             self._set_fault(f"flight controller refused DO_WINCH {action} ({why})")
         else:
@@ -481,7 +684,7 @@ class WinchNode(Node):
         return self.payout >= (self._alt - clear)
 
     def at_limit(self):
-        return self.payout >= float(self.get_parameter("max_payout_m").value)
+        return self.payout >= self.max_payout()
 
     def release_ok(self):
         """Return (ok, blockers). Every precondition is reported, not just the
@@ -563,8 +766,14 @@ class WinchNode(Node):
         if self.backend == "gpio":
             self._integrate_measured()
             return
+        if self._unacked is not None and self._check_unacked():
+            return
         lower_rate = float(self.get_parameter("payout_rate_mps").value)
         stow_rate = float(self.get_parameter("stow_rate_mps").value)
+        if self.backend == "l298n":
+            # One motor at one duty both ways: a stow timed at the faster
+            # stow_rate_mps stopped with a third of the line still out.
+            lower_rate = stow_rate = self.line_speed()
         measured = self._measured()
         if measured is not None:
             self._integrate_line(measured, dt)
@@ -577,7 +786,7 @@ class WinchNode(Node):
             lower_rate = stow_rate = self.fc_rate_max()
         if self.state == "LOWERING":
             self.payout = min(
-                float(self.get_parameter("max_payout_m").value),
+                self.max_payout(),
                 self.payout + lower_rate * dt)
             if self.at_limit():
                 self.state = "AT_LIMIT"
@@ -588,6 +797,28 @@ class WinchNode(Node):
             if self.payout <= 1e-3:
                 self.payout = 0.0
                 self.state = "RELEASED" if self.released else "IDLE"
+
+    def _check_unacked(self):
+        """An unacknowledged DO_WINCH: accepted once the measured line moves
+        its way, a fault if it has not within unacked_motion_s. True if it
+        faulted."""
+        action, t0, start = self._unacked
+        measured = self._measured()
+        moved = None if measured is None else (
+            measured - start if action == "lower" else start - measured)
+        if moved is not None and moved >= 0.05:
+            self._unacked = None
+            self._mav_accepted = True
+            self.get_logger().info(f"DO_WINCH {action}: unacknowledged, but the measured "
+                                   f"line moved {moved:.2f} m its way; taken as accepted")
+            return False
+        wait = float(self.get_parameter("unacked_motion_s").value)
+        if self._now() - t0 >= wait:
+            self._unacked = None
+            self._set_fault(f"flight controller did not acknowledge DO_WINCH {action} "
+                            f"and the measured line did not move in {wait:.0f} s")
+            return True
+        return False
 
     def fc_rate_max(self):
         """The FC's reel rate: read back when known, else the configured one."""
@@ -643,7 +874,7 @@ class WinchNode(Node):
         """The measured line drives the state machine: lowered, at the limit,
         or stowed only once the line is MEASURED in."""
         self.payout = measured
-        limit = float(self.get_parameter("max_payout_m").value)
+        limit = self.max_payout()
         if self.state == "LOWERING" and measured >= limit - float(self.get_parameter("limit_window_m").value):
             self.state = "AT_LIMIT"
         if self.state != "STOWING":
@@ -705,7 +936,16 @@ class WinchNode(Node):
             "mission_active": self.mission_active() if self.backend == "l298n" else None,
             "payout_basis": ("measured N20 encoder travel" if self.gpio is not None
                              else "measured winch joint" if self._measured() is not None
+                             else "motor run time at the calibrated line speed; no encoder" if self.limit
                              else "integrated commanded motor rate; no encoder"),
+            "limit_m": round(self.max_payout(), 3),
+            "limits": None if not self.limit else dict(self.limit, source=self.limit_source),
+            "calibration": {
+                "active": self.calibrating(), "zeroed": self.cal_zeroed,
+                "run_s": round(self.cal_run_s, 2),
+                "remaining_s": (None if not self.calibrating()
+                                else round(max(0.0, self.cal_until - self._now()), 1)),
+                "reason": self.cal_reason},
             "fc_winch_type": None if self.fc_winch is None else self.fc_winch[0],
             "fc_rate_max_mps": None if self.fc_winch is None else self.fc_winch[1],
             "released": None,

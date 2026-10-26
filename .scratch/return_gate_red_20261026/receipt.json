@@ -1,0 +1,34 @@
+{
+  "feature": "return_gate_red_20261026",
+  "triage": "ready-for-human",
+  "problem": "Field world r9 (red square at world (15.0, -2.5), 4.8 m out on the return lane's axis): ReturnToCorridorMouth refused 'destination lies inside 1 confirmed red zone', the mission failed and the FC's RTL flew at 15 m over the red zone and the corridor (9/14). Operator: 'Fix the r9 red-zone return stand-off gap, rerun the r9 world and the regressions, then we ship.'",
+  "diagnosis": "r11 re-flew the r9 world with /percep/redzone/detail recorded: 19 confirmed 1 m cells (19 m2 for a 9.3 m2 square), inflated 1 m by the detector, merged and inflated 1.5 m by the router -> one keep-out x 15.5..24.5, y -9.5..0.5 (home-local), 1.8 m from the return face at x 13.7. Every stand-off ReturnToCorridorMouth tries (3-5 m out, 2 m either side) and every AlignToBanner square-up range (3.3 m and more) lay on it; the recorded exit is 2.3 m past the face. No legal camera alignment existed. No margin was reduced.",
+  "change": [
+    "ReturnToCorridorMouth.face_entry: when no stand-off is clear, the face = outbound gate (outbound_banner_xy) + corridor length along gate_heading, across by the lane offset; entry = farthest of 2.5..1.2 m in front of it kept 0.25 m off the keep-out; flown round the red zone at transit height; SUCCESS only once facing down the lane (5 deg). Sets mav.return_gate_blocked / return_entry / return_entry_sector_rad; reset at initialise and whenever a stand-off is clear",
+    "ReturnGateBlocked + ReturnGate selector: the return DescendToReturnIdent, FindReturnBanner and alignment passes are skipped only when blocked, with a warning 'return gate NOT identified or aligned with the camera'",
+    "DuckUnderBoard(return_lap=True) widens its lidar sector to atan((lane/2 + 0.5)/distance) + 3 deg in that case (both wall ends ~50 deg off the nose at 1.5 m; within 35 deg the gate read a metre deep, into the lane's first board)",
+    "STATE_NAMES ReturnGateBlocked -> RETURN_TRANSIT; test_fail_closed_stages.gate_stage_names flattens the new selector like DeliverySearch",
+    "winch_ctrl (mavlink backend): an unanswered DO_WINCH lower/stow (MAVROS success false, result 0) is accepted once the measured line moves 0.05 m its way within unacked_motion_s 3 s, else a fault; without a measured line still a refusal (r15, r16 and return_lap_20261020/final_mission_r14 failed into RTL on it; the FC reported lowering 45 ms after the fault)"
+  ],
+  "tests": "sim/test_return_gate_red_blocked.py (11): r11 keep-out reproduced, face entry 1.5 m out and clear, routed not straight, faces the lane before SUCCESS, clear stand-off unchanged, red to the face and unknown face still refuse, skip leaf, sector only on the return crossing when blocked, synthetic lane scan (35 deg misses the wall ends from 1.5 m, widened reads gate 1.5 m centred), tree order; sim/test_winch.py: 3 unanswered-command cases",
+  "evidence": {
+    "r11": "logs/field_pdf_20261025/aerothon26_field_red_near_c_r11_data: pre-fix source, same failure and RTL; red exclusions recorded",
+    "r12": "logs/field_pdf_20261025/aerothon26_field_red_near_c_r12_fix: face entry (15.2, -4.5) 1.7 m out, sector +-56 deg, edge measured, gap 3.6 m, gate 1.42 m, advance 2.02 m, return lane through, COMPLETED, delivery 0.17 m, landed 0.07 m; check_track 13/14 - red-zone entry in SEARCH_QR at t=174 s (first lane south over the square 4.4 m from its start at the simulator's fixed 5.56 m/s search_speed_override_mps, which disables the stop-short-of-red guarantee; r9 passed 0.57 m and r11 1.69 m from it). The aircraft venue.yaml has no override.",
+    "regressions": {
+      "r13 field 22 ft (return-fix source)": "14/14, 344.0 s, drop 0.23 m",
+      "r14 field 10 m lanes (return-fix source)": "14/14, 410.9 s, drop 0.22 m; mission state ended COMPLETED (execution_node fix)",
+      "r15 red beside pad C (return-fix source)": "7/14: unanswered DO_WINCH lower -> fault -> RTL; closest red 2.48 m before it",
+      "r15b red beside pad C (return-fix source)": "14/14, 346.9 s, drop 0.20 m, closest red 2.48 m",
+      "r16 r9 world paced search (return-fix source)": "6/14: unanswered DO_WINCH lower -> RTL entered the red zone at 14.7 m; the paced search had planned round the square from its start",
+      "r16b r9 world paced search (final source)": "14/14, 511.9 s, drop 0.18 m, closest red 2.40 m, face entry 1.5 m out, sector +-59 deg, gate 1.33 m",
+      "r17 field 22 ft payloads read (final source)": "14/14, 356.9 s, drop 0.23 m, decoded AEROTHON2026:M2:TARGET_C"
+    }
+  },
+  "blockers": [
+    "simulator-only 20 km/h search override can cross red near the corridor exit before it is confirmed (r12)",
+    "a mission failing late still hands over to the FC's RTL, which flies straight home at altitude",
+    "Pi not reachable from this laptop's network (172.16.16.36)"
+  ],
+  "status": "implemented; simulated r12, r16b, r17 on the final source; offline suite passed; committed with this receipt",
+  "offline_suite": "logs/field_pdf_20261025/reduced_suite_return_gate2.log: 2304 passed, 8 skipped (deferred), ledger offline_scope_return_gate2.json; ALL IN-SCOPE OFFLINE CHECKS PASSED. The run before it (reduced_suite_return_gate.log) failed 5 on the new ReturnGate selector's state name and a test that looked for FindReturnBanner among the Mission's direct children; both fixed (STATE_NAMES, test parent)"
+}

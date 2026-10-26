@@ -639,6 +639,97 @@ delivery (pad C, 0.45 m image offset). The GPS delivery counts from its own
 session: run after deliver here it flew with no payload and correctly refused
 to confirm a drop.
 
+**26 October, watched runs, red zone near the target pad.** After commit
+`e5b7e07` the operator watched full runs with the Gazebo window open (pattern
+only, pad C; r8 was started from the GCS Start button):
+
+| Run | Red zone (world centre) | Result | Flight | Drop | Closest red | Landed |
+|---|---|---|---|---|---|---|
+| r8 | field world, (36.0, 4.0) | 14/14 | 387.9 s | 0.24 m | 7.65 m | 0.34 m |
+| r9 | (15.0, -2.5), 4 m west of pad C | **9/14** | 308.0 s | 0.20 m | entered at 15 m | 0.10 m |
+| r10 | (21.0, 2.0), 2 m north of pad C | 14/14 | 368.0 s | 0.20 m | 2.32 m | 0.07 m |
+
+r9 (`sim/worlds/aerothon26_field_red_near_c.json`) confirmed the red zone
+mid-search, re-planned round it four times and delivered 0.20 m from pad C,
+then failed: the red square lies on the return lane's axis 4.8 m from its
+mouth, so every return stand-off ReturnToCorridorMouth tries (3-5 m out, 2 m
+either side, outside the 1.5 m clearance round the camera's red boxes) was
+on red ground, and the mission refused "destination lies inside 1 confirmed
+red zone". The FC then flew RTL at 15 m straight home over the red zone and
+the corridor (red entry, return lane, ceiling, failsafe mode: 5 checks).
+Fixed the same day (below). r10 (`aerothon26_field_red_by_c.json`) routed its search and
+return round the same square beside pad C. r10 flew the calibration changes
+below with no calibration saved (output = angle; `mavlink` winch in the
+simulator), before the `execution_node` fix, which no full run has flown yet.
+
+The same day: GCS Camera cal and Winch cal (section 6); `execution_node` now
+publishes COMPLETED on `/mission/state` when a landed mission completes (it
+recorded it without publishing, so the state stayed LAND: disarmed-only GCS
+reviews and RC6 hand drive stayed locked until reconnect); disarmed in
+Gazebo, the simulated airframe's rotors keep turning at about 18 rad/s with
+rotor_3 against its controller's sign while the FC sends 1100 us (zero
+command), so the model creeps counter-clockwise on the ground, about 0.6
+deg/s of simulated time (simulator vehicle model only; the real aircraft's
+props do not turn disarmed).
+
+**Return gate with red ground in front of it (r11, r12).** r11 flew the r9
+world again with `/percep/redzone/detail` recorded: the confirmed cells (19
+m2 for the 9.3 m2 square), the detector's 1 m inflation, merging and the
+1.5 m clearance made one keep-out x 15.5..24.5, y -9.5..0.5 (home-local),
+reaching to 1.8 m of the return face at x 13.7. Every point AlignToBanner
+can square up from (3.3 m and more out) lay on it, so no legal camera
+alignment existed; no margin was reduced. Now, when every return stand-off
+is on red, ReturnToCorridorMouth enters the lane from the clear strip at its
+face: the face is the outbound gate plus the corridor length along the
+lidar-measured gate axis, across by the lane spacing (the recorded exit is
+2.3 m past it); the entry is the farthest point 1.2-2.5 m in front of it
+kept 0.25 m off the keep-out, reached round the red zone at transit height,
+facing down the lane. `ReturnGateBlocked` then skips the camera search and
+alignment and logs "return gate NOT identified or aligned with the camera"
+(the return-lap banner task is lost, not faked); the return DuckUnderBoard
+widens its lidar sector to see both wall ends from that close
+(atan((lane/2 + 0.5)/distance) + 3 deg), and measures the edge, gap and
+clearance as always; GateAdvance and the corridor follow unchanged. With a
+stand-off clear, nothing changes. Red up to the face still refuses.
+
+r12, the r9 world on that source: entry (15.2, -4.5), 1.7 m out; sector +-56
+deg; board edge measured, a 3.6 m gap, gate 1.42 m, advance 2.02 m; return
+lane flown through, landed 0.07 m from home, delivery 0.17 m: **13/14**. The
+failed check is a red-zone entry in the SEARCH at t = 174 s: the sweep's
+first lane runs south over the square 4.4 m from where it starts, at the
+simulator's fixed 5.56 m/s (`search_speed_override_mps`, which disables the
+stop-short-of-red guarantee; red was confirmed a second too late). r9 passed
+0.57 m from it and r11 1.69 m. The aircraft's `venue.yaml` sets no override:
+its search is paced on the detectors.
+
+Regressions (pattern only unless noted, graded by `sim/check_track.py`):
+
+| Run | World | Source | Result | Flight | Drop | Closest red |
+|---|---|---|---|---|---|---|
+| r13 | field, 22 ft lanes | return fix | 14/14 | 344.0 s | 0.23 m | 7.66 m |
+| r14 | field, 10 m lanes | return fix | 14/14 | 410.9 s | 0.22 m | 2.04 m |
+| r15 | red beside pad C | return fix | 7/14, winch ACK | 236.5 s | 0.18 m | 2.48 m |
+| r15b | red beside pad C | return fix | 14/14 | 346.9 s | 0.20 m | 2.48 m |
+| r16 | r9 world, paced search | return fix | 6/14, winch ACK | 170.3 s | 0.18 m | entered in RTL |
+| r16b | r9 world, paced search | final | 14/14 | 511.9 s | 0.18 m | 2.40 m |
+| r17 | field, 22 ft lanes, payloads read | final | 14/14 | 356.9 s | 0.23 m | 7.95 m |
+
+r15 and r16 failed on "flight controller refused DO_WINCH lower (result
+0)": MAVROS stops waiting for the COMMAND_ACK with success false and result
+0, ACCEPTED's code, and the FC reported lowering 45 ms after the fault (also
+`logs/return_lap_20261020/final_mission_r14`). The mission failed and RTL
+flew over the red zone and the corridor. `winch_ctrl` (mavlink backend) now
+takes an unanswered lower or stow as accepted once the measured line moves
+0.05 m its way within `unacked_motion_s` 3 s, a fault otherwise; with no
+measured line it is still a refusal, and the aircraft's L298N sends no
+DO_WINCH. In r16, paced on the detectors, the search was planned round the
+red square from its start ("avoiding 4 red zone(s)"); its only entry was the
+RTL's climb-out at 14.7 m. r16b, the r9 world paced as the aircraft flies, on
+the final source: search round the square, return lane entered from its face
+(1.5 m out, sector +-59 deg, gate 1.33 m), 14/14 in 511.9 s. r13-r15b flew
+the source before the winch change, which only the unanswered-command path
+uses.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch
@@ -1364,6 +1455,31 @@ degrees. Fresh mount attitude is preferred. `readback=timed` assumes the
 requested angle after the delay; it proves neither movement nor FC command
 acceptance. Observe each pose and measure worst-move settlement.
 
+Since the operator's 24 Oct wiring the tilt servo is on SERVO5 (MAIN OUT 5,
+`SERVO5_FUNCTION 7` in `aerothon_hardware.parm`). The FC maps a mount pitch
+command linearly onto SERVO5_MIN..MAX across -90..+30 degrees; nothing tells
+it whether that PWM puts the camera at that angle. **GCS Camera cal**
+(26 Oct 2026) records it, disarmed:
+
+1. Send Forward, 45 degrees down or Straight down. The aircraft sends what it
+   believes that pose is (through the calibration in force, if any).
+2. Look at the camera itself and nudge the output (-5/-1/+1/+5 degrees) until
+   it is exactly at one of the three poses.
+3. Press "This is ..." for the pose it is really at; the output sent is
+   recorded for that pose. Repeat until all three are recorded.
+4. Apply. `camera_ctrl` (`tilt_calibration.py`) saves the three points to
+   `camera_tilt.json` in the measured-state directory and sends every angle
+   through them: each pose gets its recorded output, the others (banner -20,
+   ground -35) the straight line through the neighbouring poses. The outputs
+   must run one way from down to forward (a reversed servo is accepted);
+   two poses at one output, or outputs outside -90..+30, are refused. A pose
+   out of reach within that range needs SERVO5_MIN/MAX widened on the FC.
+   `/camera/pose_state` reports `output_deg` and `calibrated`; a mount
+   attitude read back from the FC (the output it was sent) is turned back
+   into the camera angle through the same points. Clear saved returns to
+   output = angle. Software-tested (`sim/test_gcs_calibrations.py`); not yet
+   performed on the aircraft.
+
 ### N20 motor and encoder
 
 Selected motor: [N20 12 V 60 RPM with encoder](https://robu.in/product/n20-12v-60rpm-micro-metal-gear-motor-with-encoder/).
@@ -1436,6 +1552,47 @@ Measure the radius/travel over the loaded spool. Do not copy simulated
 Adding an encoder backend is a functional task separate from cleanup. Shaft ticks
 need counts/turn, direction, spool diameter/layering, full-stow reference and
 travel limits before conversion to line length. They do not prove release.
+
+### L298N payload motor, RC6 hand drive and winch limits
+
+The aircraft flies `winch_ctrl` backend `l298n` (`winch_ctrl/l298n.py`,
+bench-tested 24-25 Oct): the Pi drives ENA/IN1/IN2 (channel B: ENB/IN3/IN4 on
+header 12/16/18; `l298n_lower_direction -1`, lowering on IN4). There is no
+encoder: line out is motor run time times the line speed.
+
+RC channel 6, a three-position switch, drives the motor by hand (high one
+way, low the other, middle stop) only while no mission runs; channel 5 on
+this transmitter has two positions and no stop. After startup, a mission or
+a lost radio the switch must be seen in the middle before it drives at all
+(25 Oct: a switch left at an end lowered the line at boot). **During an
+autonomous mission the switch is ignored completely; fly with it in the
+middle**, so it neither drives the motor before Start nor waits for the
+middle again afterwards. On the FC channel 6 must do nothing: `RC6_OPTION 0`,
+`TUNE 0`, `FLTMODE_CH` not 6.
+
+**GCS Winch cal** (26 Oct 2026) sets where the line stops, on the props-off
+bench, disarmed:
+
+1. Start calibration. For up to 10 minutes RC6 hand drive ignores the limits.
+2. Wind the line in with RC6 to where it should stop, switch to the middle,
+   Set wound-up limit here (line out = 0).
+3. Pay it out with RC6 to where it should stop, switch to the middle,
+   measure the line, enter it and Set paid-out limit here. The run time
+   between the two marks gives the line speed, used both ways.
+4. Finish. A mission starting closes the calibration too.
+
+The paid-out mark replaces `max_payout_m`; it and the wound-up mark bound
+RC6 hand drive, Testing -> Mechanism and the mission's lower and stow, and
+WinchDrop releases from no higher than the line less 0.5 m (the venue's 5.5 m
+reach on a 6 m spool). A line shorter than 1.5 m is refused. Limits and the
+line position are kept in `winch_limits.json` in the measured-state
+directory; the position is saved at every stop, so a restart does not assume
+the line is wound in. Before a calibration hand drive is unlimited, as
+before. Without an encoder the estimate drifts with load and repeated jogs:
+mark wound-up again whenever the hook is home. Uncalibrated, the L298N stows
+at `payout_rate_mps`: the 0.45 m/s `stow_rate_mps` estimate stopped an
+equal-speed motor with a third of the line out. Software-tested
+(`sim/test_gcs_calibrations.py`); not yet performed on the aircraft.
 
 ### Sensors and mechanism
 

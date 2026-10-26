@@ -1,0 +1,50 @@
+{
+  "feature": "gcs_calibrations_20261026",
+  "triage": "ready-for-human",
+  "problem": "Before shipping to the Pi the operator asked for (1) a webcam tilt servo calibration: the code cannot assume which servo output gives which angle, so trigger a pose, observe the camera, select the pose it is really at (up/forward, 45 deg, down); (2) delivery motor minimum/maximum: wind up as far as wanted and select as minimum, wind down as far as wanted and select as maximum, applied to both manual (RC6) and autonomous winch control. Questions: RC6 switch position for autonomous flight; any manual PID tuning on the Pi; Gazebo airframe yaws CCW on the ground while disarmed; real drone reported 'Yaw imbalance 40%'. Also asked: place the red zone close to the delivery QR and watch the drone avoid it.",
+  "scope": "camera_ctrl, winch_ctrl (l298n backend), mission_bt WinchDrop reach, gcs_aggregator, web host allowlist, GCS frontend (Camera cal, Winch cal), mission2.launch.py, execution_node terminal state; master guide sections 1 and 6; AGENTS.md",
+  "changes": [
+    "camera_ctrl/tilt_calibration.py: three observed poses FORWARD 0 / ALIGN -45 / NADIR -90 -> recorded mount pitch outputs (-90..+30); piecewise linear through neighbours, extended past the ends; validation (all three, one direction, >= 2 deg apart, in range); reversed servo accepted",
+    "camera_ctrl_node: output_deg = calibration(requested angle) or a raw jog (/camera/calibration/jog); /camera/calibration applies and saves calibration_file, /camera/calibration/applied latched; mount attitude read back through the inverse; pose_state output_deg and calibrated",
+    "winch_node (l298n): /winch/calibration begin/set_min/set_max(length_m)/end; calibration lifts RC6 limits for calibration_timeout_s 600; set_max needs the measured line, >= 1.5 m, gives line_speed = length / run time; limits and position saved to limits_file; calibrated limits bound RC6 hand drive, mechanism tests and mission lower/stow; uncalibrated l298n stows at payout_rate_mps (one motor speed both ways; the 0.45 m/s stow estimate left a third of the line out); status limit_m, limits, calibration",
+    "mission_tree WinchDrop.reach(): min(winch_reach_m, calibrated line - 0.5 m)",
+    "mission2.launch.py: calibration_file and limits_file in AEROTHON_DEVICE_STATE_DIR (or ~/.aerothon)",
+    "aggregator: camera_cal (pose, nudge, mark, apply, clear, reset) and winch_cal (begin, set_min, set_max, end), disarmed and no execution running; camera_ctrl exec_depend",
+    "web.py allowlist camera_cal, winch_cal; GCS CameraCalibration.tsx, WinchCalibration.tsx, header buttons, types, runtime.ts review gate",
+    "execution_node: publishes COMPLETED on /mission/state when a landed mission completes (it recorded COMPLETED without publishing; the state stayed LAND, locking disarmed-only GCS reviews and RC6 hand drive until reconnect; found when Camera cal Apply's Confirm stayed disabled after r10)"
+  ],
+  "answers": {
+    "rc6_for_autonomous": "Middle. winch_ctrl ignores the switch completely while a mission runs; before Start an end position drives the motor by hand, and after a mission/startup/lost radio it must be seen in the middle before it drives again.",
+    "pid_on_pi": "None. The only PID tuning in the repository is the simulator's src/aerothon_sim/sim_gazebo/config/aerothon_quad.parm (SITL only). aerothon_hardware.parm has no ATC_ values and nothing on the Pi writes PIDs to the FC; the real FC flies whatever is on it.",
+    "gazebo_ccw_yaw": "Measured after r10, disarmed on the ground: true yaw -0.926 -> -0.672 rad in 53 s wall (~0.6 deg/s sim). FC sends 1100 us (= servo_min, zero command) yet rotor_0/1/3 turn at +18 rad/s and rotor_2 at -18 rad/s; rotor_3 is against its -816 multiplier, so the unbalanced reaction turns the model. Simulator vehicle model only.",
+    "yaw_imbalance_40": "ArduCopter crash_check.cpp: in flight, the low-passed yaw-rate integrator holding > 75% of ATC_RAT_YAW_IMAX (or at it); the number is the I term as a percentage of yaw output. A constant yaw torque on the airframe: motor tilt/twisted arms, a prop of the wrong direction/pitch, a weak motor or ESC. Not fixed by gains; check motor verticality, props and per-motor outputs (RCOU) in the log."
+  },
+  "evidence": {
+    "commit_before": "e5b7e07 pushed to origin/main",
+    "runs": [
+      {
+        "dir": "logs/field_pdf_20261025/aerothon26_field_r8_watched",
+        "result": "14/14, flight 387.9 s, drop 0.24 m, closest red 7.65 m, landed 0.34 m; started from the GCS Start button by the operator; source e5b7e07"
+      },
+      {
+        "dir": "logs/field_pdf_20261025/aerothon26_field_red_near_c_r9_watched",
+        "result": "9/14 FAIL: red confirmed and search re-planned 4 times, delivery 0.20 m; ReturnToCorridorMouth 'destination (21.0, -4.1) lies inside 1 confirmed red zone' -> FC RTL at 15 m over the red zone and corridor; landed 0.10 m, disarmed; source e5b7e07"
+      },
+      {
+        "dir": "logs/field_pdf_20261025/aerothon26_field_red_by_c_r10_watched",
+        "result": "14/14, flight 368.0 s, drop 0.20 m, closest red 2.32 m, landed 0.07 m; calibration source (uncommitted at the time, worktree.diff), no calibration saved; before the execution_node COMPLETED fix, which no full run has flown"
+      }
+    ],
+    "gcs_in_simulator": "After r10, reconnected on the fixed execution_node: Camera cal straight down sent -90, nudged +5 +5, recorded -80; forward 0, 45 -45; applied (review confirmed); straight down then sent -80; saved to ~/.local/state/aerothon-world-sim/devices/camera_tilt.json; cleared again. Winch cal Start refused in the simulator: 'winch limits are calibrated on the L298N backend, not mavlink'.",
+    "tests": "sim/test_gcs_calibrations.py (28 tests) and one in sim/test_real_path_wiring.py; logs/field_pdf_20261025/reduced_suite_calibrations2.log: 2290 passed, 8 skipped (deferred), ledger logs/field_pdf_20261025/offline_scope_calibrations.json; frontend 45/45, tsc, vite build; ALL IN-SCOPE OFFLINE CHECKS PASSED. The first attempt (reduced_suite_calibrations.log) ran no Python tests: the ledger guard refused the 12 Oct logs/offline_reduced_scope.json, left in place",
+    "final_suite": "logs/field_pdf_20261025/reduced_suite_return_gate2.log: 2304 passed, 8 skipped (deferred), ledger offline_scope_return_gate2.json; ALL IN-SCOPE OFFLINE CHECKS PASSED. The run before it (reduced_suite_return_gate.log) failed 5 on the new ReturnGate selector's state name and a test that looked for FindReturnBanner among the Mission's direct children; both fixed (STATE_NAMES, test parent)"
+  },
+  "blockers": [
+    "Both calibrations are software-tested and exercised in the simulator only; not yet performed on the aircraft",
+    "Open functional gap (r9): red zone on the return axis near the corridor mouth leaves no clear return stand-off; mission ends in RTL over red and corridor",
+    "Simulator airframe creeps CCW disarmed (rotor_3); simulator-only",
+    "Not deployed to the Pi; bundle to rebuild after commit"
+  ],
+  "status": "implemented and offline-tested; simulated in the GCS (camera); committed with this receipt; not deployed",
+  "completion": "Calibrations and terminal-state fix implemented and tested; r8 and r10 14/14, r9 exposed the return stand-off gap"
+}

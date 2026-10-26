@@ -196,6 +196,8 @@ export function reviewAllowed(
   if (
     [
       "lidar_cal_apply",
+      "camera_cal",
+      "winch_cal",
       "set_banner_colours",
       "set_geofence",
       "set_delivery_zone",

@@ -38,6 +38,7 @@ from std_msgs.msg import String, Bool, Float64, UInt32
 
 import websockets
 
+from camera_ctrl import tilt_calibration
 from gcs_aggregator import lidar_calibration
 from gcs_aggregator.sensor_metrics import SensorMetric
 
@@ -236,6 +237,16 @@ class Aggregator(Node):
             String, "/mission/lidar_mount", zone_qos)
         self.create_subscription(String, "/mission/lidar_mount/applied",
                                  self._on_lidar_mount_applied, zone_qos)
+        # CAMERA TILT AND WINCH LIMIT CALIBRATION. The operator watches the
+        # camera and the line; camera_ctrl and winch_ctrl apply and keep what
+        # is recorded here, and say what is in force.
+        self._camera_cal_output = None    # the last output this page sent
+        self.create_subscription(String, "/camera/pose_state", self._on_camera_pose, q)
+        self.create_subscription(String, "/camera/calibration/applied",
+                                 self._on_camera_cal_applied, zone_qos)
+        self.pub_camera_cal = self.create_publisher(String, "/camera/calibration", zone_qos)
+        self.pub_camera_jog = self.create_publisher(String, "/camera/calibration/jog", q)
+        self.pub_winch_cal = self.create_publisher(String, "/winch/calibration", q)
         self.declare_parameter("dimension_presets_file", os.path.expanduser(
             "~/.aerothon/dimension_presets.json"))
         self._presets_path = self.get_parameter("dimension_presets_file").value
@@ -313,6 +324,10 @@ class Aggregator(Node):
                           "body_nearest": None,
                           "captures": {"ahead": None, "port": None},
                           "result": None, "applied": None},
+            # Camera tilt calibration: the outputs recorded for each pose
+            # this session, and the calibration camera_ctrl has in force.
+            "camera_cal": {"draft": {}, "applied": None},
+            "camera_pose": None,
             # Everything scanned, decoded, identified or refused, in the order
             # it first happened. The operator asked for "a list of everything
             # that has been detected/decoded", with matches tagged; rejections
@@ -1044,6 +1059,10 @@ class Aggregator(Node):
             elif cmd in ("lidar_cal_capture", "lidar_cal_reset", "lidar_cal_apply",
                          "lidar_cal_geometry", "lidar_cal_background"):
                 return self._lidar_cal_command(cmd, args)
+            elif cmd == "camera_cal":
+                return self._camera_cal_command(args)
+            elif cmd == "winch_cal":
+                return self._winch_cal_command(args)
             elif cmd == "set_arena_dimensions":
                 # Refused in the air here AND in mission_bt: the leaves take
                 # their dimensions when the tree is built, on the ground.
@@ -1158,6 +1177,110 @@ class Aggregator(Node):
             return "rejected", res.get("reason") or "the captures do not agree"
         self.pub_lidar_mount.publish(String(data=json.dumps(res, separators=(",", ":"))))
         return "accepted", ""
+
+    # ---- camera tilt and winch limit calibration ---------------------------
+    def _on_camera_pose(self, m):
+        try:
+            self.state["camera_pose"] = dict(json.loads(m.data), received=time.monotonic())
+        except (ValueError, TypeError):
+            pass
+
+    def _on_camera_cal_applied(self, m):
+        try:
+            self.state["camera_cal"]["applied"] = json.loads(m.data)
+        except ValueError:
+            pass
+
+    def _calibration_refusal(self):
+        if self.state["mission"].get("armed"):
+            return "calibrate on the ground, disarmed"
+        if (self.state.get("execution") or {}).get("state") in {"Submitted", "Accepted", "Running"}:
+            return "an execution is running"
+        return ""
+
+    def _camera_output_now(self, max_age_s=1.0):
+        pose = self.state.get("camera_pose") or {}
+        output = pose.get("output_deg")
+        if output is None or time.monotonic() - pose.get("received", -1e9) > max_age_s:
+            return None
+        return float(output)
+
+    def _camera_cal_command(self, args):
+        """Send a pose, nudge the output, record which pose the camera is
+        really at, then apply. The operator judges the angle by eye: nothing
+        on the aircraft measures it."""
+        refusal = self._calibration_refusal()
+        if refusal:
+            return "rejected", refusal
+        cal = self.state["camera_cal"]
+        action = str(args.get("action", ""))
+        if action == "pose":
+            pose = str(args.get("pose", "")).upper()
+            if pose not in tilt_calibration.POSES:
+                return "rejected", f"unknown pose {pose!r}"
+            self._camera_cal_output = None
+            self.pub_camera_pose.publish(String(data=pose))
+        elif action == "nudge":
+            base = self._camera_cal_output
+            if base is None:
+                base = self._camera_output_now()
+            if base is None:
+                return "rejected", "no live camera output yet; send a pose first"
+            try:
+                delta = float(args.get("delta_deg"))
+            except (TypeError, ValueError):
+                return "rejected", "nudge needs delta_deg"
+            if not math.isfinite(delta) or abs(delta) > 30:
+                return "rejected", "nudge by at most 30 deg"
+            self._camera_cal_output = tilt_calibration.clamp_output(base + delta)
+            self.pub_camera_jog.publish(String(data=f"{self._camera_cal_output:.2f}"))
+        elif action == "mark":
+            pose = str(args.get("pose", "")).upper()
+            if pose not in tilt_calibration.POSES:
+                return "rejected", f"unknown pose {pose!r}"
+            output = self._camera_output_now()
+            if output is None:
+                return "rejected", "no live camera output; is camera_ctrl running?"
+            if self._camera_cal_output is not None and abs(output - self._camera_cal_output) > 0.05:
+                return "rejected", "the last nudge has not reached the camera yet; try again"
+            cal["draft"] = dict(cal["draft"], **{pose: round(output, 2)})
+        elif action == "apply":
+            try:
+                points = tilt_calibration.validate(cal["draft"])
+            except ValueError as error:
+                return "rejected", str(error)
+            self.pub_camera_cal.publish(String(data=json.dumps(
+                {"points": points, "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")},
+                separators=(",", ":"))))
+        elif action == "clear":
+            cal["draft"] = {}
+            self.pub_camera_cal.publish(String(data=json.dumps({"points": None})))
+        elif action == "reset":
+            cal["draft"] = {}
+        else:
+            return "rejected", f"unknown camera calibration step {action!r}"
+        return "accepted", ""
+
+    def _winch_cal_command(self, args):
+        """Open a calibration, mark wound up, mark paid out with the measured
+        line, close. The RC hand switch moves the line; winch_ctrl reports
+        each step's outcome on /winch/status (calibration.reason)."""
+        action = str(args.get("action", ""))
+        if action not in {"begin", "set_min", "set_max", "end"}:
+            return "rejected", f"unknown winch calibration step {action!r}"
+        refusal = self._calibration_refusal()
+        if refusal and action != "end":
+            return "rejected", refusal
+        request = {"action": action}
+        if action == "set_max":
+            try:
+                request["length_m"] = float(args.get("length_m"))
+            except (TypeError, ValueError):
+                return "rejected", "enter the line length measured at the paid-out limit"
+            if not math.isfinite(request["length_m"]) or request["length_m"] <= 0:
+                return "rejected", "the line length must be a positive number of metres"
+        self.pub_winch_cal.publish(String(data=json.dumps(request)))
+        return "accepted", "sent to winch_ctrl; its status reports the outcome"
 
     # ---- arena-dimension presets ------------------------------------------
     def _operator_presets(self):

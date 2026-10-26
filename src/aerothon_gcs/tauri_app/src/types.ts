@@ -36,6 +36,22 @@ export interface Telemetry {
     measurement_age_s?: number | null;
     state?: string;
     release_requested?: boolean;
+    payout_basis?: string;
+    rc_manual?: number;
+    rc_manual_ready?: boolean;
+    // winch_ctrl's limits (calibrated at Winch cal, else max_payout_m).
+    limit_m?: number;
+    limits?: { max_payout_m: number; line_speed_mps: number; stroke_s: number;
+               saved_at?: string | null; source: string } | null;
+    calibration?: { active: boolean; zeroed: boolean; run_s: number;
+                    remaining_s: number | null; reason: string };
+  };
+  // camera_ctrl's /camera/pose_state: output_deg is what the servo is sent.
+  camera_pose?: { requested: string; output_deg: number | null; calibrated: boolean;
+                  settled: boolean; readback: string } | null;
+  camera_cal?: {
+    draft: Record<string, number>;
+    applied: { points: Record<string, number> | null; source: string; reason: string } | null;
   };
   detector_rates?: Record<
     string,

@@ -3554,7 +3554,8 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
                  hfov_rad=1.0472, clock=None, max_steps=12,
                  crossing_margin_m=0.6, obstacle_margin_m=0.4,
                  board_memory_s=30.0, recentre_m=0.25, max_recentres=4,
-                 probe_up_m=0.9, banner_bottom_m=None, crossing_strip_m=1.5):
+                 probe_up_m=0.9, banner_bottom_m=None, crossing_strip_m=1.5,
+                 return_lap=False):
         # The margins must fit the gap between the posts and the first
         # obstacle behind them. On the shipped arena the return lane's first
         # slalom block stands 1.2 m past the return gate; 1.0 + 0.75 m could
@@ -3591,6 +3592,12 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         self.banner_bottom_m = (None if banner_bottom_m is None
                                 else float(banner_bottom_m))
         self.clock = clock or time.monotonic
+        # The return lap's crossing: from the lane face, when red ground kept
+        # the alignment off (ReturnToCorridorMouth.face_entry), the wall ends
+        # stand ~50 deg off the nose; outside a 35 deg sector the gate read a
+        # metre deep, into the lane's first board.
+        self.return_lap = bool(return_lap)
+        self._half_width = self.sector_half_width
         self._reset()
 
     def _reset(self):
@@ -3608,6 +3615,13 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         self._reset()
+        self._half_width = self.sector_half_width
+        wide = getattr(self.mav, "return_entry_sector_rad", None)
+        if (self.return_lap and isinstance(getattr(self.mav, "return_gate_blocked", None), str)
+                and isinstance(wide, (int, float)) and wide > self.sector_half_width):
+            self._half_width = float(wide)
+            self.mav.log(f"DuckUnderBoard: crossing from the lane face; lidar "
+                         f"sector +-{math.degrees(wide):.0f} deg to see both wall ends")
         # The square-up just fitted the board's face on the lidar, in the
         # bearing the camera identified the banner on: the board HAS been
         # seen. Without this the transition had to be witnessed here, and
@@ -3693,7 +3707,7 @@ class DuckUnderBoard(py_trees.behaviour.Behaviour):
         strip = ({} if self.crossing_strip_m == 1.5
                  else {"corridor_m": self.crossing_strip_m})
         opening = self.mav.opening_ahead(self._sector(),
-                                         self.sector_half_width,
+                                         self._half_width,
                                          need_clear_m=0.0, **strip)
         here = self.mav.alt()
         centre = opening.get("centre_m")
@@ -5195,14 +5209,31 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
     means the corridor stage never ran.
     """
 
+    # RED GROUND IN FRONT OF THE RETURN LANE (field world r9/r11, 26 Oct).
+    # A 10 ft red square 4.8 m out on the return lane's axis: with the
+    # detector's cells, its 1 m inflation and the 1.5 m clearance, red ground
+    # reached to 1.8 m of the corridor face, and every point the return gate
+    # can be squared up from (3.3 m and more out) lay on it. The mission
+    # failed and the FC's RTL flew over the zone and the corridor. The lane
+    # is then entered from the clear strip at its face: these distances in
+    # front of it, largest first, kept this far off the keep-out.
+    ENTRY_BACKS_M = tuple(round(2.5 - 0.1 * k, 2) for k in range(14))   # 2.5 .. 1.2
+    ENTRY_MARGIN_M = 0.25
+    FACE_TOL_RAD = math.radians(5.0)
+
     def __init__(self, mav, alt=3.0, tol=0.8, standoff_m=None,
                  camera_pitch_rad=math.radians(20.0), banner_centre_m=3.38,
                  clearance_m=DEFAULT_CLEARANCE_M, ident_alt=None,
-                 lane_offset_m=-4.0):
+                 lane_offset_m=-4.0, corridor_length_m=None, lane_width_m=3.5):
         super().__init__("ReturnToCorridorMouth")
         self.mav = mav
         self.alt = alt
         self.lane_offset_m = float(lane_offset_m)   # see return_mouth()
+        # The corridor's length and lane width (the banner spans the lane),
+        # for the face entry below; None: no face entry.
+        self.corridor_length_m = (None if corridor_length_m is None
+                                  else float(corridor_length_m))
+        self.lane_width_m = float(lane_width_m)
         # The standoff is for where the banner will be LOOKED AT from, not
         # where this leg flies. The leg transits at 10 m but the return banner
         # is identified from 5 m; sizing the standoff for 10 m put the aircraft
@@ -5224,6 +5255,15 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
         self.router.reset()
         self._standoff_key = None
         self._standoff_pt = None
+        self._set_blocked(None)
+
+    def _set_blocked(self, reason, entry=None, sector_rad=None):
+        """What the return gate's later stages read: why the camera
+        alignment is skipped (None: it is not), where the lane is entered and
+        the lidar sector that sees both wall ends from there."""
+        self.mav.return_gate_blocked = reason
+        self.mav.return_entry = entry
+        self.mav.return_entry_sector_rad = sector_rad
 
     def return_mouth(self, exit_pose):
         """(x, y, facing yaw) of the RETURN lane's mouth, from the outbound exit.
@@ -5312,6 +5352,7 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
 
         nominal = at(back, 0.0)
         blocks = routing_obstacles(ex, self.router.clearance_m)
+        self._set_blocked(None)
         if not blocks:
             return nominal
 
@@ -5334,7 +5375,45 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
                                  f"({p[0]:.1f}, {p[1]:.1f}), {b:.1f} m out "
                                  f"and {s:+.1f} m across the approach")
                 return p
+        entry = self.face_entry(blocks)
+        if entry is not None:
+            p, d, sector = entry
+            reason = (f"red ground covers every return stand-off 3-5 m out "
+                      f"(nominal ({nominal[0]:.1f}, {nominal[1]:.1f}))")
+            if self._standoff_pt is None or math.dist(p, self._standoff_pt) > 0.1:
+                self.mav.log(f"{reason}; entering the return lane from "
+                             f"({p[0]:.1f}, {p[1]:.1f}), {d:.1f} m in front of "
+                             f"its face, on the lidar without the camera "
+                             f"alignment", warn=True)
+            self._set_blocked(reason, (p[0], p[1], tyaw), sector)
+            return p
         return nominal
+
+    def face_entry(self, blocks):
+        """((x, y), distance, lidar half-width) in front of the return lane's
+        face, on clear ground; None if there is none or no face is known.
+
+        The face is the outbound gate plus the corridor's length along the
+        gate's lidar-measured axis, across by the lane offset: the recorded
+        exit is where the walls dropped out of the scan, 2.3 m past the face
+        (r11). From this close the wall ends stand wide of the nose, so the
+        crossing's lidar sector is widened to see both, with room for 0.5 m
+        of lateral error and not so wide that the next lane's wall end joins."""
+        h = getattr(self.mav, "gate_heading", None)
+        b = getattr(self.mav, "outbound_banner_xy", None)
+        if h is None or b is None or self.corridor_length_m is None:
+            return None
+        L, off = self.corridor_length_m, self.lane_offset_m
+        fx = b[0] + L * math.cos(h) - off * math.sin(h)
+        fy = b[1] + L * math.sin(h) + off * math.cos(h)
+        m = self.ENTRY_MARGIN_M
+        for d in self.ENTRY_BACKS_M:
+            p = (fx + d * math.cos(h), fy + d * math.sin(h))
+            if not any(x0 - m <= p[0] <= x1 + m and y0 - m <= p[1] <= y1 + m
+                       for x0, x1, y0, y1 in blocks):
+                sector = math.atan2(0.5 * self.lane_width_m + 0.5, d) + math.radians(3.0)
+                return p, d, min(sector, math.radians(70.0))
+        return None
 
     def update(self):
         pose = self.mav.corridor_exit_pose
@@ -5355,8 +5434,38 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
                                  crab_yaw(self.mav, (tx, ty), tyaw))
         if status is BLOCKED:
             return _blocked(self, self.router)
+        if status is ARRIVED and isinstance(getattr(self.mav, "return_gate_blocked", None), str):
+            # The lane is crossed on the heading held here (DuckUnderBoard,
+            # GateAdvance): face down it before handing over.
+            off = math.atan2(math.sin(self.mav.yaw() - tyaw), math.cos(self.mav.yaw() - tyaw))
+            if abs(off) > self.FACE_TOL_RAD:
+                self.feedback_message = (f"facing down the return lane "
+                                         f"({math.degrees(off):+.0f} deg off)")
+                return py_trees.common.Status.RUNNING
         return (py_trees.common.Status.SUCCESS if status is ARRIVED
                 else py_trees.common.Status.RUNNING)
+
+
+class ReturnGateBlocked(py_trees.behaviour.Behaviour):
+    """SUCCESS when ReturnToCorridorMouth found red ground on every point the
+    return gate can be searched and squared up from, so the camera search and
+    alignment are skipped and the lane is crossed on the lidar from its face.
+    FAILURE otherwise: the gate is searched and aligned as always."""
+
+    def __init__(self, mav):
+        super().__init__("ReturnGateBlocked")
+        self.mav = mav
+
+    def update(self):
+        reason = getattr(self.mav, "return_gate_blocked", None)
+        if not isinstance(reason, str) or not reason:
+            return py_trees.common.Status.FAILURE
+        entry = self.mav.return_entry
+        self.mav.log(f"return gate NOT identified or aligned with the camera: "
+                     f"{reason}; crossing from ({entry[0]:.1f}, {entry[1]:.1f}) "
+                     f"on the lidar", warn=True)
+        self.feedback_message = "return gate alignment skipped: red ground"
+        return py_trees.common.Status.SUCCESS
 
 
 class FindReturnBanner(py_trees.behaviour.Behaviour):
@@ -6310,6 +6419,22 @@ class WinchDrop(py_trees.behaviour.Behaviour):
         self._last_offset = None            # (ox, oy, alt, tick)
         self.observer = None
 
+    # The venue's 5.5 m reach on the 6 m spool: the line less this is the
+    # highest release a calibrated line can make with slack for the hook.
+    REACH_MARGIN_M = 0.5
+
+    def reach(self):
+        """The highest release: winch_reach_m, or less when the line's
+        paid-out limit was calibrated shorter at the GCS (winch_ctrl)."""
+        limits = (getattr(self.mav, "winch_status", None) or {}).get("limits") or {}
+        try:
+            line = float(limits.get("max_payout_m"))
+        except (TypeError, ValueError):
+            return self.winch_reach_m
+        if not math.isfinite(line) or line <= 0:
+            return self.winch_reach_m
+        return min(self.winch_reach_m, line - self.REACH_MARGIN_M)
+
     def tracking_floor(self):
         """The altitude below which the whole pad cannot fit in frame.
 
@@ -6351,7 +6476,10 @@ class WinchDrop(py_trees.behaviour.Behaviour):
                                          self.hfov, self.payload_size_m)
         floor = self.tracking_floor()
         self.servo_alt = max(self.drop_alt, floor)
-        self.release_alt = min(self.servo_alt, self.winch_reach_m)
+        self.release_alt = min(self.servo_alt, self.reach())
+        if self.reach() < self.winch_reach_m:
+            self.mav.log(f"the line was calibrated to {self.reach() + self.REACH_MARGIN_M:.2f} m; "
+                         f"releasing from no higher than {self.reach():.2f} m")
         self._held_from = None
         if self.servo_alt > self.drop_alt:
             self.mav.log(
@@ -7305,7 +7433,15 @@ def build_root(mav, node, p):
                                    crossing_strip_m=p.get('crossing_strip_m', 1.5))
     return_duck = DuckUnderBoard(mav, need_clear_m=crossing_cap_m, clock=clock,
                                  banner_bottom_m=p.get('banner_bottom_m'),
-                                 crossing_strip_m=p.get('crossing_strip_m', 1.5))
+                                 crossing_strip_m=p.get('crossing_strip_m', 1.5),
+                                 return_lap=True)
+
+    def return_gate(*align):
+        gate = py_trees.composites.Selector(name="ReturnGate", memory=True)
+        sequence = py_trees.composites.Sequence(name="ReturnGateAlign", memory=True)
+        sequence.add_children(list(align))
+        gate.add_children([ReturnGateBlocked(mav), sequence])
+        return gate
     landing = PrecisionDescent(
         mav, start_alt=p['takeoff_alt'],
         commit_alt=p.get('land_commit_alt', 1.5),
@@ -7459,7 +7595,9 @@ def build_root(mav, node, p):
         ReturnToCorridorMouth(mav, alt=p['search_alt'],
                               ident_alt=p['corridor_alt'], standoff_m=5.0,
                               clearance_m=p.get('redzone_clearance', 1.5),
-                              lane_offset_m=p.get('return_lane_offset_m', -4.0)),
+                              lane_offset_m=p.get('return_lane_offset_m', -4.0),
+                              corridor_length_m=p.get('gate_advance_m'),
+                              lane_width_m=p.get('banner_w_m', 3.5)),
         # The return corridor's banner: the exit shade where the organisers
         # gave one (blue, field PDF), else green.
         SetBannerTarget("BannerTargetReturn", mav, "exit"),
@@ -7489,34 +7627,38 @@ def build_root(mav, node, p):
         # The operator's order, 22 Oct: search for the return banner at the
         # height the ENTRY banner was found and lined up at -- the corridor
         # altitude, the board straight ahead of a level camera -- not 5 m.
-        ClimbInPlace("DescendToReturnIdent", mav, return_ident_alt),
-        # WHERE the return corridor is, found with the camera. Beside the
-        # outbound lane (the rulebook drawing) it is identified from the
-        # stand-off on the first look; anywhere else, the aircraft searches
-        # the zone's edge for it. See FindReturnBanner.
-        # The whole return-gate search stays at that corridor height: no
-        # climb to search_alt between vantages (22 Oct: it climbed to 10 m for
-        # a 3 m hop and came back down), the camera level first, as the entry
-        # banner was lined up, then the BANNER tilt.
-        FindReturnBanner(mav, alt=p['corridor_alt'], clock=clock,
-                         transit_alt=p['corridor_alt'], look_pose="FORWARD",
-                         hfov_rad=p.get('camera_hfov', 1.0472),
-                         image_width_px=p.get('image_width_px', 1280),
-                         near_range_m=0.8 * p.get('lidar_range_m', 12.0),
-                         clearance_m=p.get('redzone_clearance', 1.5),
-                         banner_w_m=p.get('banner_w_m', 3.7),
-                         banner_h_m=p.get('banner_h_m', 1.15),
-                         orbit_alt_m=p['corridor_alt'],
-                         corridor_length_m=p.get('gate_advance_m'),
-                         yaw_rate_rad_s=math.radians(p.get('banner_yaw_rate_deg_s', 15.0)),
-                         search_alt=return_ident_alt),
-        # Search can bracket the camera at a distant vantage, then approach
-        # the gate. Restore the alignment view and wait for measured joint
-        # settlement before reusing the near-view detector. AlignToBanner
-        # retains its bounded level-camera retry for low gate-height views.
-        # Corridor height: the board is straight ahead of a level camera.
-        *align_to_every_banner(mav, clock, p, "Return", hung_pose="FORWARD",
-                               alt_floor_m=gate_alt),
+        # Searched and squared up with the camera unless red ground covers
+        # every point that could be done from (ReturnGateBlocked).
+        return_gate(
+            ClimbInPlace("DescendToReturnIdent", mav, return_ident_alt),
+            # WHERE the return corridor is, found with the camera. Beside the
+            # outbound lane (the rulebook drawing) it is identified from the
+            # stand-off on the first look; anywhere else, the aircraft searches
+            # the zone's edge for it. See FindReturnBanner.
+            # The whole return-gate search stays at that corridor height: no
+            # climb to search_alt between vantages (22 Oct: it climbed to 10 m for
+            # a 3 m hop and came back down), the camera level first, as the entry
+            # banner was lined up, then the BANNER tilt.
+            FindReturnBanner(mav, alt=p['corridor_alt'], clock=clock,
+                             transit_alt=p['corridor_alt'], look_pose="FORWARD",
+                             hfov_rad=p.get('camera_hfov', 1.0472),
+                             image_width_px=p.get('image_width_px', 1280),
+                             near_range_m=0.8 * p.get('lidar_range_m', 12.0),
+                             clearance_m=p.get('redzone_clearance', 1.5),
+                             banner_w_m=p.get('banner_w_m', 3.7),
+                             banner_h_m=p.get('banner_h_m', 1.15),
+                             orbit_alt_m=p['corridor_alt'],
+                             corridor_length_m=p.get('gate_advance_m'),
+                             yaw_rate_rad_s=math.radians(p.get('banner_yaw_rate_deg_s', 15.0)),
+                             search_alt=return_ident_alt),
+            # Search can bracket the camera at a distant vantage, then approach
+            # the gate. Restore the alignment view and wait for measured joint
+            # settlement before reusing the near-view detector. AlignToBanner
+            # retains its bounded level-camera retry for low gate-height views.
+            # Corridor height: the board is straight ahead of a level camera.
+            *align_to_every_banner(mav, clock, p, "Return", hung_pose="FORWARD",
+                                   alt_floor_m=gate_alt),
+        ),
         ClimbInPlace("DescendToReturnCorridor", mav, p['corridor_alt']),
         SetCameraPose("CameraForwardForReturn", mav, "FORWARD"),
         return_duck,
@@ -7904,6 +8046,7 @@ STATE_NAMES = {
     "RestoreNavigationSpeed": "RETURN_TRANSIT",
     "ReturnToCorridorMouth": "RETURN_TRANSIT",
     "DescendToReturnIdent": "RETURN_TRANSIT",
+    "ReturnGateBlocked": "RETURN_TRANSIT",
     "FindReturnBanner": "RETURN_GATE_SEARCH",
     "DuckUnderBoard": "GATE_CROSSING", "GateAdvance": "GATE_CROSSING",
     "DescendToCorridorAlt": "GATE_CROSSING",
@@ -7912,6 +8055,7 @@ STATE_NAMES = {
     "PrecisionDescent": "LAND",
     "LawnmowerSearch": "SEARCH_QR", "WinchDrop": "WINCH_DROP",
     "DeliverySearch": "SEARCH_QR", "DeliveryFind": "SEARCH_QR",
+    "ReturnGate": "RETURN_TRANSIT", "ReturnGateAlign": "RETURN_TRANSIT",
     "SkipDeliveryAndReturn": "DELIVERY_SKIPPED",
     "DropUnlessSkipped": "WINCH_DROP", "DeliverySkipped": "WINCH_DROP",
     "ReturnCorridor": "RETURN_CORRIDOR",

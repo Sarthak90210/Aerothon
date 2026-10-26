@@ -464,7 +464,11 @@ class ExecutionNode(Node):
                 elif self.mav.mission_complete and not self.mav.state.armed:
                     self.release_control()
                     self.run.update(state='Completed',disarmed=True)
+                    # Published here: publish() skips a value already recorded,
+                    # and /mission/state stayed at LAND after a landed mission
+                    # (GCS calibrations and RC6 hand drive locked, 26 Oct).
                     self.last_state['value'] = 'COMPLETED'
+                    self.state_pub.publish(String(data='COMPLETED'))
                 if self.tree and production.apply_pending_reset(self.tree.root, self.mav) is not None:
                     if self.run['state'] not in TERMINAL:
                         self.takeover('pilot or FCU intervention')

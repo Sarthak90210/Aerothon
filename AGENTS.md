@@ -40,7 +40,15 @@ borderless 1 m QR codes, 6 ft exit-lane boards with the navigation-height
 rule, and worlds `sim/worlds/aerothon26_field*.json`. Calm laptop-simulation
 runs r5-r7 passed 14/14 on one source; field conditions are not
 re-qualified, and lane spacing, positions and the 1.5 m navigation height
-are working values for the day.
+are working values for the day. On 26 October GCS Camera cal (tilt servo
+output per observed pose) and Winch cal (L298N wound-up/paid-out limits,
+RC6 in the middle for autonomous flight) were added, software-tested only.
+A red zone on the return axis near the corridor mouth (r9) left no clear
+return stand-off and the mission ended in RTL over it; the lane is now
+entered from the clear strip at its face on the lidar, with the camera
+alignment skipped and logged (r12 13/14: the remaining fault is the
+simulator-only 20 km/h search override crossing the square before it was
+confirmed).
 
 On 15 October the organiser clarifications were applied (master guide
 section 1, "15 October 2026"). Final source `188aacd0...` passed the full

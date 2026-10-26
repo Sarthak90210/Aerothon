@@ -60,17 +60,33 @@ BACKENDS
                       commanded, and pose_state says so: readback "timed".
     Same topic interface either way, so the mission tree does not care which
     airframe it is flying.
+
+TILT CALIBRATION (tilt_calibration.py)
+    The angle the mission asks for is not the output sent: a recorded
+    calibration maps it to the output that puts THIS servo at that angle.
+    The GCS records one with the operator watching the camera:
+
+    sub   /camera/calibration/jog      std_msgs/String   a raw output, degrees
+    sub   /camera/calibration          std_msgs/String   {"points": {pose: output}}
+                                                         or {"points": null} to clear
+    pub   /camera/calibration/applied  std_msgs/String   JSON, latched
+
+    A calibration is saved to `calibration_file` and loaded at startup.
+    pose_state adds `output_deg` (what was sent) and `calibrated`.
 """
 
 import json
 import math
+import os
 from collections import deque
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
+from rclpy.qos import DurabilityPolicy, QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64, String
+
+from camera_ctrl import tilt_calibration
 
 try:
     from mavros_msgs.msg import GimbalDeviceAttitudeStatus
@@ -136,6 +152,8 @@ class CameraCtrl(Node):
         # from a mount holding still while the airframe pitches under it.
         p("rate_window_s", 0.3)
         p("rate_min_span_s", 0.05)
+        # The recorded tilt calibration; "" keeps none (output = angle).
+        p("calibration_file", "")
 
         self.backend = self.get_parameter("backend").value
         self.joint_name = self.get_parameter("joint_name").value
@@ -153,7 +171,15 @@ class CameraCtrl(Node):
         self._prev_rad = 0.0                # the target before it
         self._mount_t = None                # last mount attitude from the FC
         self._readings = deque()            # (t, rad) within rate_window_s
+        self.calibration = None             # {pose: output deg}, or None
+        self.calibration_source = "none recorded"
+        self._raw_output = None             # a calibration jog's output, deg
 
+        latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.pub_cal_applied = self.create_publisher(String, "/camera/calibration/applied", latched)
+        self._load_calibration()
+        self.create_subscription(String, "/camera/calibration", self._on_calibration, latched)
+        self.create_subscription(String, "/camera/calibration/jog", self._on_jog, 10)
         self.create_subscription(String, "/camera/set_pose", self._on_set_pose, 10)
         if self.backend == "sim" or self.external_joint_feedback:
             self.create_subscription(JointState, "/joint_states",
@@ -213,10 +239,17 @@ class CameraCtrl(Node):
 
         new_rad = math.radians(deg)
         self._explicit_request = True
-        if self.requested_rad is not None and \
+        if self.requested_rad is not None and self._raw_output is None and \
                 abs(new_rad - self.requested_rad) < 1e-6 and name == self.requested_name:
             return                                  # already commanding this
 
+        self._raw_output = None
+        self._target(name, new_rad)
+        self.get_logger().info(f"camera pose -> {name} ({deg:.1f} deg, "
+                               f"output {self.output_deg():.1f} deg)")
+        self._send()
+
+    def _target(self, name, new_rad):
         self.requested_name = name
         self._prev_rad = self.requested_rad if self.requested_rad is not None else 0.0
         self.requested_rad = new_rad
@@ -229,8 +262,15 @@ class CameraCtrl(Node):
         # Timed readback starts only once the FC has accepted THIS target.
         self._cmd_gen = getattr(self, '_cmd_gen', 0) + 1
         self._accepted_t = None
-        self.get_logger().info(f"camera pose -> {name} ({deg:.1f} deg)")
-        self._send()
+
+    def output_deg(self):
+        """What goes to the servo: a jog's raw output, or the requested angle
+        through the calibration."""
+        if self._raw_output is not None:
+            return self._raw_output
+        if self.requested_rad is None:
+            return None
+        return tilt_calibration.output_for(math.degrees(self.requested_rad), self.calibration)
 
     def _send(self):
         if self.requested_rad is None:
@@ -239,8 +279,86 @@ class CameraCtrl(Node):
             if not self._send_mavlink():
                 return          # not sent: try again next tick, not in 1 s
         else:
-            self.pub_cmd.publish(Float64(data=float(self.requested_rad)))
+            self.pub_cmd.publish(Float64(data=math.radians(self.output_deg())))
         self._last_command_t = self._now()
+
+    # ------------------------------------------------------------------ #
+    # tilt calibration
+    # ------------------------------------------------------------------ #
+    def _on_jog(self, msg):
+        """A raw output from the calibration page: sent as it is, so the
+        operator can find the output that puts the camera at a pose."""
+        try:
+            output = tilt_calibration.clamp_output(float(msg.data))
+        except ValueError:
+            self.get_logger().warning(f"camera jog '{msg.data}' is not a number of degrees")
+            return
+        self._explicit_request = True
+        self._raw_output = output
+        self._target("CALIBRATION",
+                     math.radians(tilt_calibration.angle_for(output, self.calibration)))
+        self.get_logger().info(f"camera calibration output -> {output:.1f} deg")
+        self._send()
+
+    def _load_calibration(self):
+        path = self._calibration_path()
+        if not path:
+            self._report_calibration("")
+            return
+        try:
+            with open(path, encoding="utf-8") as f:
+                self.calibration = tilt_calibration.validate(json.load(f).get("points"))
+            self.calibration_source = f"saved calibration ({path})"
+        except FileNotFoundError:
+            pass
+        except (OSError, ValueError, AttributeError, TypeError) as error:
+            self.get_logger().warning(f"saved camera calibration ignored: {error}")
+            self._report_calibration(f"saved calibration ignored: {error}")
+            return
+        self._report_calibration("")
+
+    def _calibration_path(self):
+        path = str(self.get_parameter("calibration_file").value or "")
+        return os.path.expanduser(path) if path else ""
+
+    def _on_calibration(self, msg):
+        """Apply a calibration from the GCS now, and keep it."""
+        try:
+            data = json.loads(msg.data)
+            raw = data.get("points")
+            points = None if raw is None else tilt_calibration.validate(raw)
+        except (ValueError, AttributeError, TypeError) as error:
+            self.get_logger().warning(f"camera calibration refused: {error}")
+            self._report_calibration(f"refused: {error}")
+            return
+        path = self._calibration_path()
+        reason = ""
+        if path:
+            try:
+                os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+                tmp = path + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump({"points": points, "saved_at": data.get("saved_at")}, f, allow_nan=False)
+                os.replace(tmp, path)
+            except OSError as error:
+                reason = f"applied, not saved: {error}"
+        else:
+            reason = "applied, not saved: no calibration_file"
+        self.calibration = points
+        self.calibration_source = "GCS calibration" if points else "cleared at the GCS"
+        self.get_logger().info(f"camera calibration -> {points}")
+        self._report_calibration(reason)
+        if self.requested_rad is not None and self._raw_output is None:
+            # The same angle now needs a different output.
+            self._in_tolerance_count, self._in_tolerance_since = 0, None
+            self._cmd_gen = getattr(self, '_cmd_gen', 0) + 1
+            self._accepted_t = None
+            self._send()
+
+    def _report_calibration(self, reason):
+        self.pub_cal_applied.publish(String(data=json.dumps({
+            "points": self.calibration, "source": self.calibration_source,
+            "reason": reason}, separators=(",", ":"))))
 
     def _send_mavlink(self):
         """True when a command went out. Its reply is checked: with timed
@@ -250,7 +368,7 @@ class CameraCtrl(Node):
             return False
         req = CommandLong.Request()
         req.command = MAV_CMD_DO_MOUNT_CONTROL
-        req.param1 = float(math.degrees(self.requested_rad))   # pitch, degrees
+        req.param1 = float(self.output_deg())                  # pitch, degrees
         req.param2 = 0.0                                       # roll
         req.param3 = 0.0                                       # yaw
         req.param7 = float(MAV_MOUNT_MODE_MAVLINK_TARGETING)
@@ -292,10 +410,12 @@ class CameraCtrl(Node):
 
     def _on_mount_status(self, msg):
         """Pitch from the flight controller's mount attitude (up positive,
-        so down is negative, as here)."""
+        so down is negative, as here). A servo mount reports the output it
+        was sent, so the calibration turns it back into the camera's angle."""
         q = msg.q
         self._mount_t = self._now()
-        self._observe(math.asin(max(-1.0, min(1.0, 2.0 * (q.w * q.y - q.z * q.x)))))
+        output = math.degrees(math.asin(max(-1.0, min(1.0, 2.0 * (q.w * q.y - q.z * q.x)))))
+        self._observe(math.radians(tilt_calibration.angle_for(output, self.calibration)))
 
     def readback(self):
         if self.backend == "sim" or self.external_joint_feedback:
@@ -397,6 +517,8 @@ class CameraCtrl(Node):
             "age_s": age,
             "readback": self.readback(),
             "rate_dps": self.rate_dps(),
+            "output_deg": self.output_deg(),
+            "calibrated": self.calibration is not None,
         }
         self.pub_state.publish(String(data=json.dumps(payload)))
 

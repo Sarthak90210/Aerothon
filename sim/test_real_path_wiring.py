@@ -265,6 +265,16 @@ class MissionStateEndsWithTheRun(unittest.TestCase):
             self.assertEqual(node.last_state['value'], final)
             self.assertEqual(node.state_pub.publish.call_args.args[0].data, final)
 
+    def test_a_landed_mission_ends_the_mission_state(self):
+        # The tick records COMPLETED before publish() runs; /mission/state
+        # stayed at LAND after r10 (26 Oct), locking calibrations and RC6.
+        import inspect
+        from aerothon_runtime import execution_node
+        source = inspect.getsource(execution_node.ExecutionNode)
+        branch = source[source.index("self.run.update(state='Completed',disarmed=True)"):]
+        branch = branch[:branch.index("if self.tree and production.apply_pending_reset")]
+        self.assertIn("self.state_pub.publish(String(data='COMPLETED'))", branch)
+
     def test_running_and_unknown_outcomes_keep_the_stage(self):
         for state in ('Running', 'Outcome unknown'):
             node = self.execution(state, 'RETURN')

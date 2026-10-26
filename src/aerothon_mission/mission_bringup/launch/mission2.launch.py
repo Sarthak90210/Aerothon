@@ -262,9 +262,14 @@ def generate_launch_description():
     # conditional — LaunchConfiguration is an object, so `'sim' if use_sim
     # else 'mavlink'` is always truthy and would silently select the Gazebo
     # backend on real hardware. It is an explicit argument instead.
+    # Operator calibrations from the GCS (camera tilt, winch limits) live with
+    # the other measured state: /home/pi5/.aerothon on the aircraft, the
+    # world maker's own directory in the laptop simulation.
+    measured_state = os.environ.get('AEROTHON_DEVICE_STATE_DIR', os.path.expanduser('~/.aerothon'))
     camera = Node(
         package='camera_ctrl', executable='camera_ctrl_node', output='screen',
         parameters=[{'backend': LaunchConfiguration('camera_backend'),
+                     'calibration_file': os.path.join(measured_state, 'camera_tilt.json'),
                      'external_joint_feedback': ParameterValue(PythonExpression(["bool('", remote_gateway, "')"]), value_type=bool),
                      'joint_name': PythonExpression(["'camera_pitch' if '", remote_gateway, "' else 'webcam_pitch_joint'"]),
                      'startup_pose': PythonExpression(["'' if '", managed, "'.lower() == 'true' else 'FORWARD'"]),
@@ -277,6 +282,7 @@ def generate_launch_description():
         package='winch_ctrl', executable='winch_node', output='screen',
         parameters=[params_file,
                     {'backend': LaunchConfiguration('winch_backend'),
+                     'limits_file': os.path.join(measured_state, 'winch_limits.json'),
                      'external_joint_feedback': ParameterValue(PythonExpression(["bool('", remote_gateway, "')"]), value_type=bool),
                      'use_sim_time': use_sim}],
     )
