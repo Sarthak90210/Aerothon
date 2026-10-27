@@ -85,7 +85,7 @@ def test_a_reversed_servo_is_still_a_calibration():
 
 @pytest.mark.parametrize("data,why", [
     ({"FORWARD": 0, "ALIGN": -45}, "no output recorded for NADIR"),
-    ({"FORWARD": 0, "ALIGN": -45, "NADIR": -95}, "outside the mount"),
+    ({"FORWARD": 0, "ALIGN": -45, "NADIR": -95}, "outside the"),
     ({"FORWARD": 0, "ALIGN": -45, "NADIR": -45.5}, "same output"),
     ({"FORWARD": 0, "ALIGN": -60, "NADIR": -40}, "one direction"),
     ({"FORWARD": 0, "ALIGN": -45, "NADIR": -90, "UP": 30}, "unknown pose"),
@@ -126,7 +126,8 @@ def test_a_saved_calibration_is_loaded_and_every_pose_goes_out_through_it(tmp_pa
         assert node.sent[-1] == pytest.approx(6 + (-38 - 6) * 20 / 45)
         node._tick()
         assert node.state_json["calibrated"] is True
-        assert node.state_json["output_deg"] == pytest.approx(node.sent[-1])
+        assert node.state_json["output"] == pytest.approx(node.sent[-1])
+        assert node.state_json["output_unit"] == "deg"
     finally:
         node.destroy_node()
 
@@ -137,7 +138,7 @@ def test_a_jog_sends_the_raw_output_and_a_pose_request_returns_to_the_calibratio
         node.request("NADIR")
         node._on_jog(String(data="-84.5"))
         assert node.sent[-1] == pytest.approx(-84.5)
-        assert node.output_deg() == pytest.approx(-84.5)
+        assert node.output() == pytest.approx(-84.5)
         node._on_jog(String(data="-120"))                  # past the mount
         assert node.sent[-1] == pytest.approx(T.OUTPUT_MIN_DEG)
         node.request("NADIR")                              # same pose again: sent again
@@ -182,6 +183,119 @@ def test_a_servo_mount_reading_its_output_back_settles_at_the_real_angle(tmp_pat
         assert node.is_settled()
     finally:
         node.destroy_node()
+
+
+# ------------------------------------------- camera_ctrl, the servo itself
+# The aircraft (27 Oct 2026): no mount, the tilt servo on FC SERVO5, its pulse
+# width set by the Pi with MAV_CMD_DO_SET_SERVO; the receiver's channel 6
+# tilts it through the Pi when no mission runs.
+SERVO_MEASURED = {"FORWARD": 1820.0, "ALIGN": 1490.0, "NADIR": 1120.0}
+
+
+def servo_camera(tmp_path, **params):
+    from test_winch import FakeCommandClient
+    node = camera(tmp_path, backend="mavlink", fc_output="servo", rc_tilt_channel=6, **params)
+    node.cli_cmd = FakeCommandClient()
+    node.servo = lambda: [(int(r.param1), r.param2) for r, _ in node.cli_cmd.sent if r.command == 183]
+    return node
+
+
+def test_the_pi_sets_the_servo_pulse_on_output_5(tmp_path):
+    node = servo_camera(tmp_path)
+    try:
+        for pose, pwm in (("FORWARD", 1500.0), ("ALIGN", 1250.0), ("NADIR", 1000.0)):
+            node.request(pose)
+            assert node.servo()[-1] == (5, pwm), pose
+        assert not [r for r, _ in node.cli_cmd.sent if r.command == 205], "no mount command"
+        node._tick()
+        assert node.state_json["output_unit"] == "us"
+        assert (node.state_json["output_min"], node.state_json["output_max"]) == (800.0, 2200.0)
+    finally:
+        node.destroy_node()
+
+
+def test_a_microsecond_calibration_drives_the_servo_and_a_degree_one_is_refused(tmp_path):
+    (tmp_path / "camera_tilt.json").write_text(json.dumps({"points": MEASURED}))
+    node = servo_camera(tmp_path)
+    try:
+        node._load_calibration()                     # reported again, now captured
+        assert node.calibration is None and "calibrate again" in node.applied[-1]["reason"]
+        node._on_calibration(String(data=json.dumps({"points": SERVO_MEASURED})))
+        assert node.applied[-1]["unit"] == "us" and node.applied[-1]["reason"] == ""
+        node.request("NADIR")
+        assert node.servo()[-1] == (5, 1120.0)
+        node.request("BANNER")                       # -20 deg: between forward and 45 down
+        assert node.servo()[-1][1] == pytest.approx(round(1820 + (1490 - 1820) * 20 / 45))
+        node._on_jog(String(data="3000"))
+        assert node.servo()[-1] == (5, 2200.0), "a jog stays inside servo_pwm_min..max"
+    finally:
+        node.destroy_node()
+    saved = json.loads((tmp_path / "camera_tilt.json").read_text())
+    assert saved["unit"] == "us" and saved["points"] == SERVO_MEASURED
+
+
+def test_the_receiver_tilts_the_camera_when_no_mission_runs(tmp_path):
+    node = servo_camera(tmp_path)
+    try:
+        node._on_rc(FakeRC(1500, 1700))
+        node._tick()
+        assert node.servo()[-1] == (5, 1700.0), "the receiver's channel 6 passed through"
+        node.request("NADIR")                        # Camera cal or the mission
+        assert node.servo()[-1] == (5, 1000.0)
+        node._on_rc(FakeRC(1500, 1710))
+        node._tick()
+        assert node.servo()[-1] == (5, 1000.0), "a stick left where it was does not undo it"
+        node._on_rc(FakeRC(1500, 1300))
+        node._tick()
+        assert node.servo()[-1] == (5, 1300.0), "moving the stick takes the camera back"
+        node._on_mission_state(String(data="SEARCH_QR"))
+        node._on_rc(FakeRC(1500, 1900))
+        node._tick()
+        assert node.servo()[-1] == (5, 1300.0), "the receiver is ignored during a mission"
+    finally:
+        node.destroy_node()
+
+
+def test_a_stale_or_absent_receiver_moves_nothing(tmp_path):
+    node = servo_camera(tmp_path)
+    try:
+        node._on_rc(FakeRC(1500, 1700))
+        node._rc = (node._rc[0], node._now() - 5.0)
+        node._tick()
+        assert node.servo() == []
+        node._on_rc(FakeRC(1500, 0))                 # failsafe / no signal
+        node._tick()
+        assert node.servo() == []
+    finally:
+        node.destroy_node()
+
+
+def test_nudges_and_the_calibration_follow_the_servo_microseconds(aggregator):
+    a = aggregator
+    a._on_camera_pose(String(data=json.dumps({"output": 1500.0, "output_unit": "us",
+                                              "output_min": 800.0, "output_max": 2200.0})))
+    assert a._dispatch("camera_cal", {"action": "nudge", "delta": 50}) == ("accepted", "")
+    assert sent(a.pub_camera_jog)[-1] == "1550.00"
+    assert a._dispatch("camera_cal", {"action": "nudge", "delta": 400})[0] == "rejected"
+    a.state["camera_cal"]["draft"] = dict(SERVO_MEASURED)
+    assert a._dispatch("camera_cal", {"action": "apply"}) == ("accepted", "")
+    assert sent(a.pub_camera_cal)[-1]["points"] == SERVO_MEASURED
+    a.state["camera_cal"]["draft"] = {"FORWARD": 1500.0, "ALIGN": 1495.0, "NADIR": 1100.0}
+    assert "same output" in a._dispatch("camera_cal", {"action": "apply"})[1]
+
+
+def test_the_aircraft_venue_drives_servo_5_from_the_pi():
+    import yaml
+    config = os.path.join(ROOT, "src", "aerothon_mission", "mission_bringup", "config")
+    camera_params = yaml.safe_load(open(os.path.join(config, "venue.yaml")))["camera_ctrl"]["ros__parameters"]
+    assert camera_params["fc_output"] == "servo" and camera_params["servo_channel"] == 5
+    assert camera_params["rc_tilt_channel"] == 6
+    parm = open(os.path.join(config, "aerothon_hardware.parm"), encoding="utf-8").read()
+    assert "\nSERVO5_FUNCTION 0\n" in parm and "\nMNT1_TYPE 0\n" in parm
+    sim_venue = yaml.safe_load(open(os.path.join(ROOT, "src", "aerothon_sim", "sim_gazebo", "config",
+                                                 "world_sim_venue.yaml")))
+    assert sim_venue["camera_ctrl"]["ros__parameters"]["fc_output"] == "mount", \
+        "the simulator keeps its SITL mount"
 
 
 # ---------------------------------------------------------------- winch_ctrl
@@ -373,7 +487,7 @@ def aggregator(tmp_path):
 
 
 def camera_output(agg, deg):
-    agg._on_camera_pose(String(data=json.dumps({"output_deg": deg, "requested": "NADIR"})))
+    agg._on_camera_pose(String(data=json.dumps({"output": deg, "requested": "NADIR"})))
 
 
 def sent(publisher):

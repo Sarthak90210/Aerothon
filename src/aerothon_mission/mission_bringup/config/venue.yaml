@@ -46,6 +46,21 @@ winch_ctrl:
     # (operator, 25 Oct 2026). FC: RC6_OPTION 0 and TUNE 0, or RC6 also acts there.
     rc_manual_channel: 6
 
+camera_ctrl:
+  ros__parameters:
+    # The camera tilt servo on FC SERVO5, its pulse width set by the Pi with
+    # MAV_CMD_DO_SET_SERVO (operator, 27 Oct 2026: no mount; a servo mount
+    # added the FC's lean compensation and level calibration). FC:
+    # SERVO5_FUNCTION 0, or the FC overwrites the Pi's pulse every loop.
+    fc_output: servo
+    servo_channel: 5
+    servo_pwm_min: 800           # widen if Camera cal cannot reach a pose
+    servo_pwm_max: 2200
+    # The receiver tilts the camera through the Pi when no mission runs
+    # (operator: channel 6, which was SERVO5_FUNCTION 56's passthrough). The
+    # winch's hand drive is on channel 6 too (winch_ctrl rc_manual_channel).
+    rc_tilt_channel: 6
+
 perception_payload:
   ros__parameters:
     # The payload's colour, OpenCV HSV (hue 0-180). Default: saturated yellow.

@@ -46,12 +46,15 @@ export interface Telemetry {
     calibration?: { active: boolean; zeroed: boolean; run_s: number;
                     remaining_s: number | null; reason: string };
   };
-  // camera_ctrl's /camera/pose_state: output_deg is what the servo is sent.
-  camera_pose?: { requested: string; output_deg: number | null; calibrated: boolean;
+  // camera_ctrl's /camera/pose_state: output is what the servo is sent, in
+  // mount degrees or (the Pi driving the servo itself) microseconds.
+  camera_pose?: { requested: string; output: number | null; output_unit?: "deg" | "us";
+                  output_min?: number; output_max?: number; calibrated: boolean;
                   settled: boolean; readback: string } | null;
   camera_cal?: {
     draft: Record<string, number>;
-    applied: { points: Record<string, number> | null; source: string; reason: string } | null;
+    applied: { points: Record<string, number> | null; unit?: "deg" | "us";
+               source: string; reason: string } | null;
   };
   detector_rates?: Record<
     string,

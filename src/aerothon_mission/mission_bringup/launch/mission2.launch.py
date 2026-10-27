@@ -266,9 +266,12 @@ def generate_launch_description():
     # the other measured state: /home/pi5/.aerothon on the aircraft, the
     # world maker's own directory in the laptop simulation.
     measured_state = os.environ.get('AEROTHON_DEVICE_STATE_DIR', os.path.expanduser('~/.aerothon'))
+    # The venue file says how the FC output is driven (camera_ctrl fc_output:
+    # the aircraft's tilt servo is set by the Pi, the simulator keeps a mount).
     camera = Node(
         package='camera_ctrl', executable='camera_ctrl_node', output='screen',
-        parameters=[{'backend': LaunchConfiguration('camera_backend'),
+        parameters=[params_file,
+                    {'backend': LaunchConfiguration('camera_backend'),
                      'calibration_file': os.path.join(measured_state, 'camera_tilt.json'),
                      'external_joint_feedback': ParameterValue(PythonExpression(["bool('", remote_gateway, "')"]), value_type=bool),
                      'joint_name': PythonExpression(["'camera_pitch' if '", remote_gateway, "' else 'webcam_pitch_joint'"]),

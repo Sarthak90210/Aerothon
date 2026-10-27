@@ -1,0 +1,27 @@
+{
+  "feature": "pi_deploy_20261027",
+  "triage": "ready-for-human",
+  "problem": "Operator, 27 Oct 2026: 'remove any stale code base and put this' -- ship bundle pi-runtime-20261026b.zip (source ac75470) to the Pi at 192.168.137.193 (laptop hotspot).",
+  "destination": "pi5@192.168.137.193; SSH host key ED25519 SHA256:jz8v4aicVfo4ysmWWKhrCBuTO7kf2tCDCAEyljeOEFk (the known Pi key), added to known_hosts for this address",
+  "before": "workspace from the 25 Oct install; three crash dumps (core.1519, core.1548, core.5098, ~940 MB) in the workspace root; /home/pi5/.aerothon holds vehicle_connection.json only. The Pi dropped off the hotspot ~1 min after the first boot (runtime autoconnecting) and was back after a power cycle; throttled=0x0 on each boot.",
+  "steps": [
+    "runtime disconnected through the web supervisor (/api/disconnect: Stopped, autoconnect suspended) before copying, to take the boot load off",
+    "bundle and deploy_pi.sh copied to /home/pi5/.local/state/aerothon/deploy_20261027; sha256 1b000092...f6ca45d3 verified on the Pi",
+    "deploy_pi.sh --list-stale: 8 stale files (old hashed GCS assets gcs/assets/Graphs-CachfRn5/DllG3Q2R.js(.gz), index-CqYY1cN6/cAKtHha6.js(.gz)), 11 __pycache__ directories; no stale source or scripts",
+    "deploy_pi.sh (nohup): backups before_20261027T005834.tar.gz sha256 2c6e79b8...d73a1d4 and deploy_before_20261027T005834.tar.gz sha256 e0c7d3f7...dd73a1d4c; 268 manifest files installed and digest-verified, 23 changed, 8 stale removed with the caches; crash dumps moved to deploy_20261027/crash_dumps (not deleted); launchers unchanged; measured runtime.env unchanged (AEROTHON_FCU_DEVICE /dev/ttyAMA0, 115200, AEROTHON_WINCH_BACKEND l298n)",
+    "clean rebuild of the 13 local packages (build/install/log removed; the C1 driver's kept), one core, inside aerothon-runtime:20261014: 14 packages finished in 39.1 s",
+    "runtime reconnected to the 'vehicle' profile: Running, fresh"
+  ],
+  "verified": [
+    "served GCS index-CTuMb_Ge.js contains 'Camera tilt calibration', 'Winch limits', 'Set paid-out limit here'",
+    "/winch/status from the new winch_ctrl: limit_m 6.0, limits null, calibration fields, rc_manual_ready false until RC6 is seen in the middle",
+    "/camera/pose_state carries output_deg and calibrated false; /camera/calibration/applied: none recorded"
+  ],
+  "blockers": [
+    "no FCU: MAVROS connected false, router '0 FCU endpoints', on the unchanged /dev/ttyAMA0 115200 link; operator, 27 Oct: expected, the Pi is on the bench without the FC. The FCU link and readiness on this install are not yet verified",
+    "Camera cal and Winch cal not yet performed on the aircraft",
+    "Pi power: dropped off once ~1 min after boot during runtime autoconnect"
+  ],
+  "camera_tilt_fc": "27 Oct, FC connected: Camera cal reached the Pi and camera_ctrl sent DO_MOUNT_CONTROL, refused result 4 (MNT1_TYPE 0). The operator set MNT1_TYPE 1 (rebooted), MNT1_PITCH_MIN -90, MNT1_PITCH_MAX 20, MNT1_DEFLT_MODE 3; commands then accepted, but SERVO5_FUNCTION stayed 56 (RCIN6 passthrough, the winch's RC6 switch), so output 5 followed RC6. On the operator's yes, SERVO5_FUNCTION set to 7 through MAVROS (disarmed, connected), read back 7 after a forced pull of 1298 parameters. Receiver tilt channel (RCx_OPTION 213) not yet chosen; webcam absent from USB; Pi undervoltage (throttled 0x50000).",
+  "status": "deployed and rebuilt; runtime running; FC connected; SERVO5_FUNCTION 7 set for Camera cal"
+}

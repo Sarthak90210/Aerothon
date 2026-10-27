@@ -57,6 +57,7 @@ class VenueFileTests(unittest.TestCase):
     NODES = {
         "mission_bt": "src/aerothon_mission/mission_bt/mission_bt/mission_tree.py",
         "winch_ctrl": "src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py",
+        "camera_ctrl": "src/aerothon_perception/camera_ctrl/camera_ctrl/camera_ctrl_node.py",
         "perception_payload": ("src/aerothon_perception/perception_redzone/"
                                "perception_redzone/payload_node.py"),
     }

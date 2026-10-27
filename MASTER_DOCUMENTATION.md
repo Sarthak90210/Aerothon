@@ -1455,30 +1455,49 @@ degrees. Fresh mount attitude is preferred. `readback=timed` assumes the
 requested angle after the delay; it proves neither movement nor FC command
 acceptance. Observe each pose and measure worst-move settlement.
 
-Since the operator's 24 Oct wiring the tilt servo is on SERVO5 (MAIN OUT 5,
-`SERVO5_FUNCTION 7` in `aerothon_hardware.parm`). The FC maps a mount pitch
-command linearly onto SERVO5_MIN..MAX across -90..+30 degrees; nothing tells
-it whether that PWM puts the camera at that angle. **GCS Camera cal**
-(26 Oct 2026) records it, disarmed:
+The tilt servo is on SERVO5 (MAIN OUT 5) and **the Pi sets its pulse width
+itself** with `MAV_CMD_DO_SET_SERVO` (27 Oct 2026; `camera_ctrl`
+`fc_output: servo` in `venue.yaml`). The FC must leave the output free:
+`SERVO5_FUNCTION 0`, no mount (`aerothon_hardware.parm`). Two FC set-ups
+failed on the aircraft first: `SERVO5_FUNCTION 56` (RC6 passthrough) rewrote
+the output from the receiver every loop and `MNT1_TYPE 0` refused every
+mount command (result 4); then a servo mount (`MNT1_TYPE 1`) compensated an
+attitude the FC read as 31 deg nose-up on the bench and squeezed forward /
+45 / down into 1529 / 1202 / 1100 us. Driving the pulse directly keeps the
+FC's lean compensation and level calibration out of the camera.
+
+The receiver still tilts the camera: `camera_ctrl` passes `rc_tilt_channel`
+(channel 6, the operator's) through to the servo whenever no mission runs,
+once the stick or switch has moved since the Pi last commanded the camera
+(a Camera cal pose or the end of a mission is not undone by a stick left
+where it was). During a mission the receiver is ignored. **Channel 6 is also
+the winch's hand drive** (`winch_ctrl rc_manual_channel`): moving it tilts the
+camera and runs the winch together.
+
+Uncalibrated, forward is 1500 us and each degree down 5.56 us less (straight
+down 1000 us), within `servo_pwm_min..max` (800..2200 us). **GCS Camera cal**
+records the real pulse widths, disarmed:
 
 1. Send Forward, 45 degrees down or Straight down. The aircraft sends what it
    believes that pose is (through the calibration in force, if any).
-2. Look at the camera itself and nudge the output (-5/-1/+1/+5 degrees) until
+2. Look at the camera itself and nudge the output (-50/-10/+10/+50 us) until
    it is exactly at one of the three poses.
-3. Press "This is ..." for the pose it is really at; the output sent is
+3. Press "This is ..." for the pose it is really at; the pulse width sent is
    recorded for that pose. Repeat until all three are recorded.
-4. Apply. `camera_ctrl` (`tilt_calibration.py`) saves the three points to
-   `camera_tilt.json` in the measured-state directory and sends every angle
-   through them: each pose gets its recorded output, the others (banner -20,
-   ground -35) the straight line through the neighbouring poses. The outputs
-   must run one way from down to forward (a reversed servo is accepted);
-   two poses at one output, or outputs outside -90..+30, are refused. A pose
-   out of reach within that range needs SERVO5_MIN/MAX widened on the FC.
-   `/camera/pose_state` reports `output_deg` and `calibrated`; a mount
-   attitude read back from the FC (the output it was sent) is turned back
-   into the camera angle through the same points. Clear saved returns to
-   output = angle. Software-tested (`sim/test_gcs_calibrations.py`); not yet
-   performed on the aircraft.
+4. Apply. `camera_ctrl` (`tilt_calibration.py`) saves the three points, in
+   us, to `camera_tilt.json` in the measured-state directory and sends every
+   angle through them: each pose gets its recorded output, the others
+   (banner -20, ground -35) the straight line through the neighbouring
+   poses. The outputs must run one way from down to forward (a reversed servo
+   is accepted); two poses within 10 us, or outside the pulse range, are
+   refused; a calibration recorded in mount degrees is ignored. A pose out of
+   reach needs `servo_pwm_min/max` widened. `/camera/pose_state` reports
+   `output`, `output_unit` and the range. Clear saved returns to the
+   uncalibrated line.
+
+The simulator keeps the SITL mount (`fc_output: mount`, degrees, the joint
+read back). Software-tested (`sim/test_gcs_calibrations.py`); not yet
+performed on the aircraft.
 
 ### N20 motor and encoder
 

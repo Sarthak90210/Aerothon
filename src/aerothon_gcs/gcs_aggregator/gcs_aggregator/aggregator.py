@@ -1200,10 +1200,18 @@ class Aggregator(Node):
 
     def _camera_output_now(self, max_age_s=1.0):
         pose = self.state.get("camera_pose") or {}
-        output = pose.get("output_deg")
+        output = pose.get("output")
         if output is None or time.monotonic() - pose.get("received", -1e9) > max_age_s:
             return None
         return float(output)
+
+    def _camera_output_range(self):
+        """(lo, hi, unit) camera_ctrl reports: mount degrees, or the servo's
+        microseconds when the Pi drives the servo itself."""
+        pose = self.state.get("camera_pose") or {}
+        return (float(pose.get("output_min", tilt_calibration.OUTPUT_MIN_DEG)),
+                float(pose.get("output_max", tilt_calibration.OUTPUT_MAX_DEG)),
+                str(pose.get("output_unit", "deg")))
 
     def _camera_cal_command(self, args):
         """Send a pose, nudge the output, record which pose the camera is
@@ -1226,13 +1234,14 @@ class Aggregator(Node):
                 base = self._camera_output_now()
             if base is None:
                 return "rejected", "no live camera output yet; send a pose first"
+            lo, hi, unit = self._camera_output_range()
             try:
-                delta = float(args.get("delta_deg"))
+                delta = float(args.get("delta", args.get("delta_deg")))
             except (TypeError, ValueError):
-                return "rejected", "nudge needs delta_deg"
-            if not math.isfinite(delta) or abs(delta) > 30:
-                return "rejected", "nudge by at most 30 deg"
-            self._camera_cal_output = tilt_calibration.clamp_output(base + delta)
+                return "rejected", "nudge needs delta"
+            if not math.isfinite(delta) or abs(delta) > 0.25 * (hi - lo):
+                return "rejected", f"nudge by at most {0.25 * (hi - lo):g} {unit}"
+            self._camera_cal_output = tilt_calibration.clamp_output(base + delta, lo, hi)
             self.pub_camera_jog.publish(String(data=f"{self._camera_cal_output:.2f}"))
         elif action == "mark":
             pose = str(args.get("pose", "")).upper()
@@ -1245,8 +1254,9 @@ class Aggregator(Node):
                 return "rejected", "the last nudge has not reached the camera yet; try again"
             cal["draft"] = dict(cal["draft"], **{pose: round(output, 2)})
         elif action == "apply":
+            lo, hi, unit = self._camera_output_range()
             try:
-                points = tilt_calibration.validate(cal["draft"])
+                points = tilt_calibration.validate(cal["draft"], lo, hi, unit=unit)
             except ValueError as error:
                 return "rejected", str(error)
             self.pub_camera_cal.publish(String(data=json.dumps(

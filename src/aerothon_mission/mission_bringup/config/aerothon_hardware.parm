@@ -15,18 +15,16 @@
 # port. Not set here -- the port number is wiring, and a wrong baud here
 # would cut the link that works.
 
-# Camera tilt: a hobby servo as mount 1, pitch only, commanded over MAVLink.
-# The stack's poses run from -90 (NADIR) to 0 (FORWARD); the joint allows +30.
-MNT1_TYPE 1
-MNT1_PITCH_MIN -90
-MNT1_PITCH_MAX 30
-MNT1_DEFLT_MODE 2
-SERVO5_FUNCTION 7
+# Camera tilt: a hobby servo on SERVO5 whose pulse width the Pi sets with
+# MAV_CMD_DO_SET_SERVO (operator, 27 Oct 2026; camera_ctrl fc_output servo).
+# No mount: the output must be free, or the FC overwrites the Pi's pulse
+# every loop (56, RC6 passthrough, did). The receiver still tilts the camera
+# through the Pi (camera_ctrl rc_tilt_channel). GCS Camera cal records the
+# pulse width for forward, 45 deg and straight down.
+MNT1_TYPE 0
+SERVO5_FUNCTION 0
 # The former camera output is released.
 SERVO9_FUNCTION 0
-# Calibrate SERVO5_MIN / SERVO5_MAX so the commanded angles are the real
-# ones: command NADIR and FORWARD from the GCS and check with a protractor
-# (MASTER_DOCUMENTATION.md, camera tilt calibration).
 
 # Winch: the Pi drives the payload motor directly; no FC winch.
 WINCH_TYPE 0

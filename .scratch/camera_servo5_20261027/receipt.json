@@ -1,0 +1,26 @@
+{
+  "feature": "camera_servo5_20261027",
+  "triage": "ready-for-human",
+  "problem": "On the aircraft (27 Oct 2026) Camera cal could not move the camera tilt servo on FC SERVO5. Operator: 'there is no mount on the fc, the servo is connected to servo output 5' ... 'i dont want all of this can the pi not just control the servo output 5' ... 'do the code change'; receiver tilt channel: 6.",
+  "diagnosis": [
+    "Camera cal reached the Pi; camera_ctrl's MAV_CMD_DO_MOUNT_CONTROL was refused with result 4 (FAILED): MNT1_TYPE 0",
+    "SERVO5_FUNCTION 56 (RCIN6 passthrough): ArduPilot rewrites a passthrough output from the receiver every loop (SRV_Channel_aux.cpp), so nothing the Pi sends can hold",
+    "after the operator set MNT1_TYPE 1 and SERVO5_FUNCTION 7 (set from the Pi on request): the servo mount compensates attitude; the FC read the airframe 31 deg nose-up on the bench (roll 1.6), so forward / 45 / down came out 1529 / 1202 / 1100 us (measured from SERVO_OUTPUT_RAW)"
+  ],
+  "change": [
+    "camera_ctrl fc_output 'servo': MAV_CMD_DO_SET_SERVO on servo_channel 5, pulse in servo_pwm_min..max (800..2200); uncalibrated forward 1500 us, 5.56 us less per degree down; mount status not subscribed",
+    "receiver passthrough: rc_tilt_channel (6) from /aerothon/rc/in onto the servo while no mission runs, once it has moved rc_takeover_us (30) since the Pi last commanded; ignored during a mission, stale or failsafe",
+    "tilt_calibration: output range and unit passed in (deg for a mount, us for the servo); a calibration file carries its unit and one in the other unit is ignored",
+    "pose_state: output, output_unit, output_min, output_max (output_deg removed); aggregator nudges (delta) and apply validate in the reported unit and range; GCS Camera cal shows us and nudges -50/-10/+10/+50 us",
+    "launch: camera_ctrl reads the venue file; venue.yaml camera_ctrl: fc_output servo, servo_channel 5, servo_pwm_min 800, servo_pwm_max 2200, rc_tilt_channel 6; the simulator's venue keeps the SITL mount",
+    "aerothon_hardware.parm: MNT1_TYPE 0, SERVO5_FUNCTION 0"
+  ],
+  "tests": "sim/test_gcs_calibrations.py: DO_SET_SERVO on output 5 with no mount command, us calibration and a degree one refused, jog clamped to 2200, receiver hand-over (passes through, Pi command holds against a stick left still, moving the stick takes over, ignored in a mission, stale/failsafe ignored), aggregator us nudges and validation, venue/parm wiring; test_launch_defaults declares camera_ctrl's venue keys; test_world_sim_venue: the simulator replaces camera_ctrl fc_output (mount) and rc_tilt_channel (0), every other key still the aircraft's. Reduced suite logs/field_pdf_20261025/reduced_suite_servo5b.log: 2310 passed, 8 skipped, ALL IN-SCOPE OFFLINE CHECKS PASSED (the run before failed only test_world_sim_venue, fixed)",
+  "fc_changes": "SERVO5_FUNCTION 56 -> 7 set from the Pi on the operator's yes (27 Oct); to become 0 with this deploy. MNT1_TYPE 1 / MNT1_PITCH_MIN -90 / MAX 20 / DEFLT_MODE 3 were the operator's; with SERVO5_FUNCTION 0 they drive nothing",
+  "blockers": [
+    "receiver channel 6 is also winch_ctrl's hand drive: moving it tilts the camera and runs the winch together (operator to choose)",
+    "FC reads the airframe 31 deg nose-up on the bench: level calibration or mounting to check before flight",
+    "webcam absent from the Pi's USB; Pi undervoltage (throttled 0x50000)"
+  ],
+  "status": "implemented, offline suite passed; committed; deploying"
+}

@@ -127,9 +127,12 @@ unreachable, so that bundle is not deployed.
 
 ## Hardware context
 
-The user identified CUAV X7+ and confirmed ArduPilot `SERVO9` for camera tilt.
-The existing assignment is `SERVO9_FUNCTION 7`, mount pitch. Confirm the
-physical connector, supply, direction, PWM endpoints and measured travel.
+The user identified CUAV X7+. The camera tilt servo is on SERVO5 and, since
+27 October, the Pi sets its pulse width directly (`MAV_CMD_DO_SET_SERVO`,
+`camera_ctrl fc_output: servo`, FC `SERVO5_FUNCTION 0`, no mount); the
+receiver's channel 6 tilts it through the Pi when no mission runs, and the
+winch's hand drive shares channel 6. Camera cal records microseconds per
+pose. Confirm direction, endpoints and measured travel on the aircraft.
 `readback=timed` assumes settlement; it does not prove motion or FC acceptance.
 
 Selected winch: Robu N20 12 V 60 RPM with encoder, linked in the master guide.

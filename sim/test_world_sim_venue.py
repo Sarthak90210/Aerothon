@@ -21,6 +21,10 @@ SIM_ONLY = {("mission_bt", "search_brake_mps2"), ("mission_bt", "crossing_strip_
             ("velocity_controller", "cruise_speed"),
             ("velocity_controller", "passage_half_width"),
             ("velocity_controller", "clearance_floor_m")}
+# Aircraft values the simulation must replace: its SITL flight controller has a
+# camera mount on the Gazebo joint (the aircraft's Pi drives SERVO5 itself,
+# 27 Oct 2026), and it has no receiver to pass through.
+SIM_REPLACES = {("camera_ctrl", "fc_output"): "mount", ("camera_ctrl", "rc_tilt_channel"): 0}
 
 
 def params(path):
@@ -33,7 +37,9 @@ class WorldSimVenueTests(unittest.TestCase):
 
     def test_only_the_measured_sim_values_differ_from_the_aircraft_venue(self):
         aircraft, sim = params(VENUE), params(SIM_VENUE)
-        self.assertEqual({k: v for k, v in sim.items() if k not in SIM_ONLY}, aircraft)
+        self.assertEqual({k: sim[k] for k in SIM_REPLACES}, SIM_REPLACES)
+        self.assertEqual({k: v for k, v in sim.items() if k not in SIM_ONLY | set(SIM_REPLACES)},
+                         {k: v for k, v in aircraft.items() if k not in SIM_REPLACES})
         self.assertEqual(set(sim) - set(aircraft), SIM_ONLY)
 
     def test_sim_values_are_floats_in_range(self):

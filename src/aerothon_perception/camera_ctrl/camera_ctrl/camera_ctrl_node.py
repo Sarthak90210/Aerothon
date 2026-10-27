@@ -66,13 +66,29 @@ TILT CALIBRATION (tilt_calibration.py)
     calibration maps it to the output that puts THIS servo at that angle.
     The GCS records one with the operator watching the camera:
 
-    sub   /camera/calibration/jog      std_msgs/String   a raw output, degrees
+    sub   /camera/calibration/jog      std_msgs/String   a raw output
     sub   /camera/calibration          std_msgs/String   {"points": {pose: output}}
                                                          or {"points": null} to clear
     pub   /camera/calibration/applied  std_msgs/String   JSON, latched
 
     A calibration is saved to `calibration_file` and loaded at startup.
-    pose_state adds `output_deg` (what was sent) and `calibrated`.
+    pose_state adds `output` (what was sent), `output_unit` (deg or us), the
+    output's range and `calibrated`.
+
+THE SERVO ITSELF (backend:=mavlink, fc_output:=servo; the aircraft, 27 Oct)
+    No mount on the FC: the tilt servo sits on an FC output (`servo_channel`,
+    SERVO5) whose SERVOn_FUNCTION is 0, and the Pi sets its pulse width with
+    MAV_CMD_DO_SET_SERVO. Outputs are microseconds within servo_pwm_min..max;
+    uncalibrated, forward is servo_pwm_forward and each degree down
+    servo_pwm_per_deg less. The FC's lean compensation and level calibration
+    play no part (a servo mount on this aircraft read it 31 deg nose-up on
+    the bench and squeezed the three poses into the bottom of the travel).
+
+    The receiver keeps its say: `rc_tilt_channel` (read from /aerothon/rc/in)
+    is passed through to the servo whenever no mission runs -- once the stick
+    or switch has moved since the Pi last commanded the camera, so a Camera
+    cal pose or the end of a mission is not undone by a stick left where it
+    was. During a mission the receiver is ignored.
 """
 
 import json
@@ -82,7 +98,8 @@ from collections import deque
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
+from rclpy.qos import (DurabilityPolicy, QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,
+                       qos_profile_sensor_data)
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64, String
 
@@ -94,9 +111,17 @@ try:
     _HAVE_MAVROS = True
 except ImportError:                       # sim-only installs
     _HAVE_MAVROS = False
+try:
+    from mavros_msgs.msg import RCIn
+except ImportError:
+    RCIn = None
 
 MAV_CMD_DO_MOUNT_CONTROL = 205
+MAV_CMD_DO_SET_SERVO = 183
 MAV_MOUNT_MODE_MAVLINK_TARGETING = 2
+# Mission states in which no autonomous flight runs (winch_ctrl's list): the
+# receiver may move the camera only then.
+MISSION_IDLE_STATES = frozenset({"", "IDLE", "WAITING", "COMPLETED", "FAILED", "ABORTED"})
 
 NAMED_POSES_DEG = {
     "FORWARD": 0.0,
@@ -154,6 +179,17 @@ class CameraCtrl(Node):
         p("rate_min_span_s", 0.05)
         # The recorded tilt calibration; "" keeps none (output = angle).
         p("calibration_file", "")
+        # backend:=mavlink: "mount" sends MAV_CMD_DO_MOUNT_CONTROL to an FC
+        # mount; "servo" sets an FC output's pulse width (see THE SERVO ITSELF).
+        p("fc_output", "mount")
+        p("servo_channel", 5)
+        p("servo_pwm_min", 800)
+        p("servo_pwm_max", 2200)
+        p("servo_pwm_forward", 1500.0)
+        p("servo_pwm_per_deg", 500.0 / 90.0)
+        p("rc_tilt_channel", 0)             # receiver channel for the tilt; 0 = none
+        p("rc_takeover_us", 30)             # stick movement that takes the camera back
+        p("rc_timeout_s", 0.5)
 
         self.backend = self.get_parameter("backend").value
         self.joint_name = self.get_parameter("joint_name").value
@@ -171,9 +207,12 @@ class CameraCtrl(Node):
         self._prev_rad = 0.0                # the target before it
         self._mount_t = None                # last mount attitude from the FC
         self._readings = deque()            # (t, rad) within rate_window_s
-        self.calibration = None             # {pose: output deg}, or None
+        self.calibration = None             # {pose: output}, or None
         self.calibration_source = "none recorded"
-        self._raw_output = None             # a calibration jog's output, deg
+        self._raw_output = None             # a jog's or the receiver's output
+        self._rc = None                     # (channels, receipt time)
+        self._rc_hold = None                # receiver value when the Pi last commanded
+        self._mission_state = ""
 
         latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.pub_cal_applied = self.create_publisher(String, "/camera/calibration/applied", latched)
@@ -195,10 +234,17 @@ class CameraCtrl(Node):
                     "backend=mavlink but mavros_msgs is unavailable")
             else:
                 self.cli_cmd = self.create_client(CommandLong, "/mavros/cmd/command")
-                self.create_subscription(
-                    GimbalDeviceAttitudeStatus,
-                    "/mavros/gimbal_control/device/attitude_status",
-                    self._on_mount_status, _sensor_qos())
+                if not self.servo_output():
+                    self.create_subscription(
+                        GimbalDeviceAttitudeStatus,
+                        "/mavros/gimbal_control/device/attitude_status",
+                        self._on_mount_status, _sensor_qos())
+        if self.servo_output() and int(self.get_parameter("rc_tilt_channel").value) > 0:
+            if RCIn is not None:
+                # rc_in_bridge: the FC's channels even with chancount 0.
+                self.create_subscription(RCIn, "/aerothon/rc/in", self._on_rc,
+                                         qos_profile_sensor_data)
+            self.create_subscription(String, "/mission/state", self._on_mission_state, 10)
 
         rate = float(self.get_parameter("publish_rate_hz").value)
         self.create_timer(1.0 / rate, self._tick)
@@ -244,9 +290,10 @@ class CameraCtrl(Node):
             return                                  # already commanding this
 
         self._raw_output = None
+        self._rc_hold = self._rc_value()
         self._target(name, new_rad)
         self.get_logger().info(f"camera pose -> {name} ({deg:.1f} deg, "
-                               f"output {self.output_deg():.1f} deg)")
+                               f"output {self.output():.1f} {self.output_unit()})")
         self._send()
 
     def _target(self, name, new_rad):
@@ -263,24 +310,107 @@ class CameraCtrl(Node):
         self._cmd_gen = getattr(self, '_cmd_gen', 0) + 1
         self._accepted_t = None
 
-    def output_deg(self):
-        """What goes to the servo: a jog's raw output, or the requested angle
-        through the calibration."""
+    def servo_output(self):
+        """The Pi sets the servo's pulse width itself (THE SERVO ITSELF)."""
+        return self.backend == "mavlink" and self.get_parameter("fc_output").value == "servo"
+
+    def output_unit(self):
+        return "us" if self.servo_output() else "deg"
+
+    def output_limits(self):
+        if self.servo_output():
+            return (float(self.get_parameter("servo_pwm_min").value),
+                    float(self.get_parameter("servo_pwm_max").value))
+        return tilt_calibration.OUTPUT_MIN_DEG, tilt_calibration.OUTPUT_MAX_DEG
+
+    def _points(self):
+        """The calibration, or for the servo the uncalibrated straight line."""
+        if self.calibration or not self.servo_output():
+            return self.calibration
+        forward = float(self.get_parameter("servo_pwm_forward").value)
+        per_deg = float(self.get_parameter("servo_pwm_per_deg").value)
+        return {pose: forward + per_deg * angle for pose, angle in tilt_calibration.POSES.items()}
+
+    def output(self):
+        """What goes to the servo: a jog's or the receiver's raw output, or
+        the requested angle through the calibration."""
         if self._raw_output is not None:
             return self._raw_output
         if self.requested_rad is None:
             return None
-        return tilt_calibration.output_for(math.degrees(self.requested_rad), self.calibration)
+        return tilt_calibration.output_for(math.degrees(self.requested_rad), self._points(),
+                                           *self.output_limits())
 
     def _send(self):
         if self.requested_rad is None:
             return
         if self.backend == "mavlink":
-            if not self._send_mavlink():
+            sent = self._send_set_servo() if self.servo_output() else self._send_mavlink()
+            if not sent:
                 return          # not sent: try again next tick, not in 1 s
         else:
-            self.pub_cmd.publish(Float64(data=math.radians(self.output_deg())))
+            self.pub_cmd.publish(Float64(data=math.radians(self.output())))
         self._last_command_t = self._now()
+
+    # ------------------------------------------------------------------ #
+    # the receiver (fc_output:=servo, rc_tilt_channel)
+    # ------------------------------------------------------------------ #
+    def _on_rc(self, msg):
+        self._rc = (list(msg.channels), self._now())
+
+    def _on_mission_state(self, msg):
+        self._mission_state = str(msg.data).split(":")[0].strip()
+
+    def mission_active(self):
+        return self._mission_state not in MISSION_IDLE_STATES
+
+    def _rc_value(self):
+        """The tilt channel's fresh, valid pulse width, or None."""
+        ch = int(self.get_parameter("rc_tilt_channel").value)
+        if ch <= 0 or self._rc is None:
+            return None
+        channels, t = self._rc
+        if self._now() - t > float(self.get_parameter("rc_timeout_s").value):
+            return None
+        if not 0 < ch <= len(channels) or not 900 <= int(channels[ch - 1]) <= 2200:
+            return None
+        return int(channels[ch - 1])
+
+    def _rc_passthrough(self):
+        """The receiver's tilt channel onto the servo while no mission runs,
+        once it has moved since the Pi last commanded the camera."""
+        if not self.servo_output() or self.mission_active():
+            return
+        rc = self._rc_value()
+        if rc is None:
+            return
+        if self._rc_hold is not None:
+            if abs(rc - self._rc_hold) < int(self.get_parameter("rc_takeover_us").value):
+                return
+            self._rc_hold = None
+            self.get_logger().info(f"camera tilt from the receiver (channel "
+                                   f"{self.get_parameter('rc_tilt_channel').value})")
+        output = tilt_calibration.clamp_output(rc, *self.output_limits())
+        if self._raw_output is not None and self.requested_name == "RC" and \
+                abs(output - self._raw_output) < 5:
+            return
+        self._raw_output = output
+        self._target("RC", math.radians(tilt_calibration.angle_for(output, self._points())))
+        self._send()
+
+    def _send_set_servo(self):
+        """MAV_CMD_DO_SET_SERVO: the servo output's pulse width, microseconds."""
+        if self.cli_cmd is None or not self.cli_cmd.service_is_ready():
+            return False
+        req = CommandLong.Request()
+        req.command = MAV_CMD_DO_SET_SERVO
+        req.param1 = float(int(self.get_parameter("servo_channel").value))
+        req.param2 = float(round(self.output()))
+        gen = getattr(self, '_cmd_gen', 0)
+        future = self.cli_cmd.call_async(req)
+        if future is not None and hasattr(future, 'add_done_callback'):
+            future.add_done_callback(lambda f, gen=gen: self._on_command_reply(f, gen))
+        return True
 
     # ------------------------------------------------------------------ #
     # tilt calibration
@@ -289,16 +419,20 @@ class CameraCtrl(Node):
         """A raw output from the calibration page: sent as it is, so the
         operator can find the output that puts the camera at a pose."""
         try:
-            output = tilt_calibration.clamp_output(float(msg.data))
+            output = tilt_calibration.clamp_output(float(msg.data), *self.output_limits())
         except ValueError:
-            self.get_logger().warning(f"camera jog '{msg.data}' is not a number of degrees")
+            self.get_logger().warning(f"camera jog '{msg.data}' is not a number")
             return
         self._explicit_request = True
         self._raw_output = output
+        self._rc_hold = self._rc_value()
         self._target("CALIBRATION",
-                     math.radians(tilt_calibration.angle_for(output, self.calibration)))
-        self.get_logger().info(f"camera calibration output -> {output:.1f} deg")
+                     math.radians(tilt_calibration.angle_for(output, self._points())))
+        self.get_logger().info(f"camera calibration output -> {output:.1f} {self.output_unit()}")
         self._send()
+
+    def _validate(self, points):
+        return tilt_calibration.validate(points, *self.output_limits(), unit=self.output_unit())
 
     def _load_calibration(self):
         path = self._calibration_path()
@@ -307,7 +441,14 @@ class CameraCtrl(Node):
             return
         try:
             with open(path, encoding="utf-8") as f:
-                self.calibration = tilt_calibration.validate(json.load(f).get("points"))
+                saved = json.load(f)
+            # A calibration recorded for the other output means nothing here:
+            # mount degrees are not the servo's microseconds.
+            if saved.get("points") is not None and saved.get("unit", "deg") != self.output_unit():
+                raise ValueError(f"recorded in {saved.get('unit', 'deg')}, this output "
+                                 f"is in {self.output_unit()}; calibrate again")
+            if saved.get("points") is not None:
+                self.calibration = self._validate(saved["points"])
             self.calibration_source = f"saved calibration ({path})"
         except FileNotFoundError:
             pass
@@ -326,7 +467,7 @@ class CameraCtrl(Node):
         try:
             data = json.loads(msg.data)
             raw = data.get("points")
-            points = None if raw is None else tilt_calibration.validate(raw)
+            points = None if raw is None else self._validate(raw)
         except (ValueError, AttributeError, TypeError) as error:
             self.get_logger().warning(f"camera calibration refused: {error}")
             self._report_calibration(f"refused: {error}")
@@ -338,7 +479,8 @@ class CameraCtrl(Node):
                 os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
                 tmp = path + ".tmp"
                 with open(tmp, "w", encoding="utf-8") as f:
-                    json.dump({"points": points, "saved_at": data.get("saved_at")}, f, allow_nan=False)
+                    json.dump({"points": points, "unit": self.output_unit(),
+                               "saved_at": data.get("saved_at")}, f, allow_nan=False)
                 os.replace(tmp, path)
             except OSError as error:
                 reason = f"applied, not saved: {error}"
@@ -357,8 +499,8 @@ class CameraCtrl(Node):
 
     def _report_calibration(self, reason):
         self.pub_cal_applied.publish(String(data=json.dumps({
-            "points": self.calibration, "source": self.calibration_source,
-            "reason": reason}, separators=(",", ":"))))
+            "points": self.calibration, "unit": self.output_unit(),
+            "source": self.calibration_source, "reason": reason}, separators=(",", ":"))))
 
     def _send_mavlink(self):
         """True when a command went out. Its reply is checked: with timed
@@ -368,7 +510,7 @@ class CameraCtrl(Node):
             return False
         req = CommandLong.Request()
         req.command = MAV_CMD_DO_MOUNT_CONTROL
-        req.param1 = float(self.output_deg())                  # pitch, degrees
+        req.param1 = float(self.output())                      # pitch, degrees
         req.param2 = 0.0                                       # roll
         req.param3 = 0.0                                       # yaw
         req.param7 = float(MAV_MOUNT_MODE_MAVLINK_TARGETING)
@@ -491,6 +633,7 @@ class CameraCtrl(Node):
         return (self._now() - self.last_reading_t) > stale_after
 
     def _tick(self):
+        self._rc_passthrough()
         if self.backend == "mavlink" and self.readback() == "timed":
             self._observe_timed()
         # Keep re-issuing until the joint is measured in position. The Gazebo
@@ -517,7 +660,10 @@ class CameraCtrl(Node):
             "age_s": age,
             "readback": self.readback(),
             "rate_dps": self.rate_dps(),
-            "output_deg": self.output_deg(),
+            "output": self.output(),
+            "output_unit": self.output_unit(),
+            "output_min": self.output_limits()[0],
+            "output_max": self.output_limits()[1],
             "calibrated": self.calibration is not None,
         }
         self.pub_state.publish(String(data=json.dumps(payload)))
