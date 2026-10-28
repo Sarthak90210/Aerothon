@@ -44,7 +44,8 @@
     "motor_pins": "only winch_ctrl (one process, backend l298n, BCM 18/23/24) uses lgpio",
     "fc": "outputs 1-4 motors (33-36); SERVO5_FUNCTION 58 (RC8 passthrough) took output 5 back from the Pi; MNT1_TYPE 7 with no mount output; RC6_OPTION 0, no RCIN6 output, FLTMODE_CH 7, TUNE 0"
   },
-  "fc_changes": "29 Oct ~03:24 IST, FC disarmed, through the router (deploy_20261027b/fc_set_params.py): SERVO5_FUNCTION 58 -> 0, MNT1_TYPE 7 -> 0, both read back (logs/rc6_winch_20261029/fc_set_servo5_0.log). MNT1_TYPE takes effect at the next FC boot",
+  "fc_changes": "29 Oct 03:20:44 IST, FC disarmed, through the router (deploy_20261027b/fc_set_params.py): SERVO5_FUNCTION 58 -> 0, MNT1_TYPE 7 -> 0, both read back (logs/rc6_winch_20261029/fc_set_servo5_0.log). MNT1_TYPE takes effect at the next FC boot",
   "servo5_verified": "servo5_hold_check.py inside the runtime (logs/rc6_winch_20261029/servo5_hold_check.log): before, output 5 held RC8's last 2011 us; poses through camera_ctrl /camera/set_pose: ALIGN 1590, NADIR 1000, FORWARD 2050 us, each read on /mavros/rc/out channel 5 unchanged for 3 s (60 samples at 20 Hz). The first FORWARD was not resent (camera_ctrl already at FORWARD). Left at FORWARD",
-  "records": "aerothon_hardware.parm and hardware_wiring.yaml back to SERVO5_FUNCTION 0 (58 recorded earlier on 29 Oct); venue.yaml comment (values unchanged); guide and AGENTS; test_gcs_calibrations checks SERVO5_FUNCTION 0 in both records"
+  "records": "aerothon_hardware.parm and hardware_wiring.yaml back to SERVO5_FUNCTION 0 (58 recorded earlier on 29 Oct); venue.yaml comment (values unchanged); guide and AGENTS; test_gcs_calibrations checks SERVO5_FUNCTION 0 in both records",
+  "deployed_records": "29 Oct 03:23:48 IST: pi-runtime-20261029c.zip (sha256 5c466f65...cd041a, source d478094) by deploy_pi_f.sh, records only: AGENTS.md, MASTER_DOCUMENTATION.md, aerothon_hardware.parm, hardware_wiring.yaml, venue.yaml (comments); SOURCE VERIFIED 268 files, 5 changed; runtime not restarted (Running, fresh)"
 }
