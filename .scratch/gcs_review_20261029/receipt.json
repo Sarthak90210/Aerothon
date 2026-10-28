@@ -11,8 +11,9 @@
   ],
   "tests": "sim/test_gcs_calibrations.py test_a_calibration_window_confirms_its_reviewed_commands_over_itself (source-level: there is no React component harness, so the live check is the browser on the Pi); GCS node tests 45 passed, tsc, vite build; calibration/contract/field-PDF tests 77 passed",
   "reduced_suite": "logs/gcs_review_20261029/reduced_suite.log (29 Oct, started after the last source edit): Python 2307 passed, 8 skipped, 4 failed; native ROS 9 passed/3 skipped; syntax, XML/YAML, frontend build ok. The four failures are load-bound and outside the change: banner detector camera-rate timing (293 ms vs 100 ms per frame), BannerEnvelope every-corruption (no detail published), and two test_qualification_offline_scope collections that hit their 30 s subprocess timeout. Rerun alone on an idle WSL: 4 passed (rerun_four_failures.log).",
+  "live_check": "29 Oct, laptop simulation (world maker, aerothon26_field, World maker simulation profile, disarmed; built GCS index-noRR-Y6Q.js from this source): Camera cal recorded forward 0.0, 45 down -44.0, straight down -90.0 deg (SITL mount, degrees); Apply kept the window open and opened 'Apply camera calibration: forward 0.0 deg, 45 down -44.0 deg, straight down -90.0 deg' over it; Confirm -> 'In force: forward 0.0, 45 -44.0, down -90.0 deg, GCS calibration'. Clear saved -> 'Clear the saved camera calibration' over the window; Confirm -> 'No calibration recorded, cleared at the GCS' (simulator state restored). Command results showed over the window. Simulator stopped through the world maker. The servo (microsecond) path on the aircraft is not exercised by the simulator.",
   "flight_source": "unchanged",
-  "status": "implemented; reduced suite recorded; committed; not yet deployed",
+  "status": "implemented; reduced suite recorded; live-checked in laptop simulation; committed; not yet deployed",
   "blockers": [
     "a redeploy restarts the runtime and drops an unapplied Camera cal draft held in the aggregator"
   ]
