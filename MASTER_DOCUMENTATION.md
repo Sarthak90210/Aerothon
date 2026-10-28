@@ -943,6 +943,15 @@ datagrams no larger than 1200 bytes. Previously each tiny read became another
 Wi-Fi broadcast, congesting the LAN during full telemetry. Local MAVROS data
 and inbound FC commands remain immediate. Learned UDP peers expire after 30 s
 without traffic; configured targets and LAN broadcast remain available.
+The router also announces the Pi in Mission Planner's Messages tab (29 Oct
+2026): `Pi booted N s ago` once the FC link first carries data, and `Pi Wi-Fi
+up: <network> <address>` each time a Wi-Fi interface gets an address, as
+MAVLink 2 STATUSTEXT (INFO) from the FC's system id as the onboard computer;
+Mission Planner shows them as `191 : ...`. Each goes to the FC, which forwards
+it to a Mission Planner on USB, and to the Wi-Fi GCS endpoints; a GCS that
+connects over Wi-Fi later is sent the latest of each. Not through ExpressLRS:
+`MAV2_OPTIONS 2` stops forwarding to that port. Serial FC only; `--no-announce`
+turns it off.
 An explicit Disconnect pauses automatic runtime connection until the next
 Pi/web-host restart or an explicit Connect. A profile can opt out of automatic
 connection; simulation profiles opt out by default.

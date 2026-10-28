@@ -1,0 +1,13 @@
+{
+  "feature": "pi_announce_20261029",
+  "triage": "ready-for-human",
+  "problem": "Operator, 29 Oct 2026: 'can we have a very small addition to the code, where the pi sends a message to the fc which shows on the messages tab in the mission planner, the msg that pi will send is that it has booted and has connected to the wifi'.",
+  "change": [
+    "scripts/mav_router.py (the native UART owner, up before networking and Docker): PiAnnouncer sends MAVLink 2 STATUSTEXT, severity INFO, sysid 1 (--announce-sysid) compid 191: 'Pi booted N s ago' on the first data from the FC, 'Pi Wi-Fi up: <ssid> <ip>' for each new Wi-Fi (wl*) address (ssid from iwgetid or nmcli, else omitted); written to the FC serial and sent to the Wi-Fi GCS destinations; a GCS that first appears on UDP 14550 gets the latest of each. Serial FC only; --no-announce",
+    "frames built in the router (no pymavlink on the Pi): x25_crc, statustext_frame, ASCII, 50 characters"
+  ],
+  "mission_planner": "MissionPlanner MAVLinkInterface.cs: STATUSTEXT from another component of the current sysid is also added to the vehicle's messages as 'compid : text'. ArduPilot forwards a broadcast from TELEM3 to ports with learned routes (Mission Planner on USB); MAV2_OPTIONS 2 keeps it off the ExpressLRS port",
+  "tests": "sim/test_mav_router_broadcast.py: frame decodes in pymavlink as (1, 191, 6, text), 50-character limit and ASCII; Wi-Fi interfaces only; boot once after FC data, Wi-Fi per new address, latest of each for a new GCS; end to end on a pty: 'Pi booted ... s ago' reaches the FC side and the GCS. The UART batching test runs with --no-announce. Router and boot tests 15 passed",
+  "status": "implemented; not deployed (the Pi is off the hotspot)",
+  "blockers": ["the running router keeps the old code until it restarts: a Pi reboot, or the router process restarted by its supervisor"]
+}

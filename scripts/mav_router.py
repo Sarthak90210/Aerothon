@@ -17,6 +17,7 @@ import select
 import socket
 import subprocess
 import time
+from pathlib import Path
 
 import serial
 
@@ -69,13 +70,124 @@ def lan_interfaces(ip_output):
     return found
 
 
-def read_lan_interfaces():
+def read_ip_addr():
     try:
-        out = subprocess.run(["ip", "-o", "-4", "addr", "show"], capture_output=True,
-                             text=True, timeout=2).stdout
+        return subprocess.run(["ip", "-o", "-4", "addr", "show"], capture_output=True,
+                              text=True, timeout=2).stdout
     except (OSError, subprocess.SubprocessError):
-        return []
-    return lan_interfaces(out)
+        return ""
+
+
+def read_lan_interfaces():
+    return lan_interfaces(read_ip_addr())
+
+
+# ---------------------------------------------------------------------------
+# The Pi tells the operator it is up (operator, 29 Oct 2026). One MAVLink 2
+# STATUSTEXT from the FC's system as its onboard computer: Mission Planner
+# copies another component's text into the vehicle's Messages tab as
+# "191 : ...". Sent to the FC, which forwards a broadcast to its other ports
+# (USB), and to the Wi-Fi GCS endpoints, which the FC does not echo back to.
+# ---------------------------------------------------------------------------
+STATUSTEXT_ID, STATUSTEXT_CRC_EXTRA = 253, 83
+MAV_COMP_ID_ONBOARD_COMPUTER, MAV_SEVERITY_INFO = 191, 6
+
+
+def x25_crc(data, crc=0xFFFF):
+    """MAVLink's CRC-16/MCRF4XX."""
+    for b in data:
+        tmp = (b ^ crc) & 0xFF
+        tmp = (tmp ^ (tmp << 4)) & 0xFF
+        crc = ((crc >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4)) & 0xFFFF
+    return crc
+
+
+def statustext_frame(text, seq, sysid=1, compid=MAV_COMP_ID_ONBOARD_COMPUTER,
+                     severity=MAV_SEVERITY_INFO):
+    """A MAVLink 2 STATUSTEXT: ASCII, at most 50 characters."""
+    body = text.encode("ascii", "replace")[:50]
+    payload = (bytes([severity]) + body).rstrip(b"\0") or b"\0"   # v2 trims trailing zeros
+    header = bytes([0xFD, len(payload), 0, 0, seq & 0xFF, sysid, compid,
+                    STATUSTEXT_ID & 0xFF, 0, 0])
+    crc = x25_crc(header[1:] + payload)
+    crc = x25_crc(bytes([STATUSTEXT_CRC_EXTRA]), crc)
+    return header + payload + crc.to_bytes(2, "little")
+
+
+def wifi_interfaces(ip_output):
+    """[(interface, ip)] for the Wi-Fi interfaces in `ip -o -4 addr show` text."""
+    found = []
+    for line in ip_output.splitlines():
+        parts = line.split()
+        if len(parts) >= 4 and parts[2] == "inet" and parts[1].startswith("wl"):
+            found.append((parts[1], parts[3].split("/")[0]))
+    return found
+
+
+def read_ssid(interface):
+    """The network a Wi-Fi interface joined, or "" when no tool says."""
+    for cmd in (["iwgetid", "-r", interface],
+                ["nmcli", "-t", "-g", "GENERAL.CONNECTION", "device", "show", interface]):
+        try:
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=2).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if out:
+            return out.splitlines()[0]
+    return ""
+
+
+def read_uptime():
+    try:
+        return float(Path("/proc/uptime").read_text().split()[0])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+class PiAnnouncer:
+    """'Pi booted' once the FC link carries data, then 'Pi Wi-Fi up' for each
+    Wi-Fi address that appears. A GCS that connects over Wi-Fi later is sent
+    the latest of each, so it does not miss them."""
+
+    def __init__(self, sysid=1, uptime=read_uptime, ssid=read_ssid):
+        self.sysid, self.uptime, self.ssid = sysid, uptime, ssid
+        self.seq = 0
+        self.fcu_seen = False
+        self.wifi = set()
+        self.latest = {}             # kind -> text, resent to a new GCS
+
+    def _frame(self, text):
+        self.seq += 1
+        return statustext_frame(text, self.seq, sysid=self.sysid)
+
+    def _say(self, kind, text):
+        self.latest[kind] = text
+        logger.info(f"Announced to the FC: {text}")
+        return [self._frame(text)]
+
+    def on_fcu_data(self, wifi):
+        """Frames to send on the first data from the FC (else none)."""
+        if self.fcu_seen:
+            return []
+        self.fcu_seen = True
+        up = self.uptime()
+        frames = self._say("boot", "Pi booted" + (f" {up:.0f} s ago" if up is not None else ""))
+        return frames + self.on_wifi(wifi)
+
+    def on_wifi(self, wifi):
+        """Frames for Wi-Fi addresses new since the last call (once the FC is seen)."""
+        if not self.fcu_seen:
+            return []
+        frames = []
+        for interface, ip in wifi:
+            if (interface, ip) not in self.wifi:
+                ssid = self.ssid(interface)
+                frames += self._say("wifi", f"Pi Wi-Fi up: {ssid + ' ' if ssid else ''}{ip}")
+        self.wifi = set(wifi)
+        return frames
+
+    def for_new_gcs(self):
+        return [self._frame(t) for t in self.latest.values()]
 
 
 def gcs_destinations(learned, configured, lans, out_port, broadcast):
@@ -105,9 +217,14 @@ def own_echo(addr, lans, out_port):
 
 def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                gcs_host=None, gcs_out_port=None, extra_ports=None,
-               fcu_serial=None, fcu_baud=921600, gcs_broadcast=False):
+               fcu_serial=None, fcu_baud=921600, gcs_broadcast=False,
+               announce=None, announce_sysid=1):
     if extra_ports is None:
         extra_ports = [14551, 14552]
+    # The aircraft (a serial FC) announces the Pi; the simulator does not.
+    announcer = PiAnnouncer(sysid=announce_sysid) if (fcu_serial if announce is None else announce) else None
+    wifi = wifi_interfaces(read_ip_addr()) if announcer else []
+    t_last_wifi = time.time()
 
     # Use UDP for SITL, or open the Pixhawk telemetry device directly on the Pi.
     if fcu_serial:
@@ -180,6 +297,18 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
         except serial.SerialTimeoutException:
             dropped[0] += 1
 
+    def announce_frames(frames, gcs=None):
+        """To the FC (forwarded to USB) and to the Wi-Fi GCS, or to one GCS."""
+        for frame in frames:
+            if gcs is None and fcu_serial:
+                write_fcu(frame)
+            for g_addr in ([gcs] if gcs else gcs_destinations(
+                    active_gcs_senders, configured_gcs, lans, out_port, gcs_broadcast)):
+                try:
+                    gcs_sock.sendto(frame, g_addr)
+                except OSError:
+                    pass
+
     sockets = [fcu_link, gcs_sock, mavros_sock]
     packet_count = 0
     gcs_packet_count = 0
@@ -214,6 +343,8 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                     except Exception:
                         pass
                     gcs_batch.append(data, time.monotonic())
+                    if announcer:
+                        announce_frames(announcer.on_fcu_data(wifi))
 
                 # 2. Packet from GCS (Mission Planner / QGC commands) -> Route to FCU
                 elif s is gcs_sock:
@@ -221,6 +352,8 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                     # FCU it would echo the FC's telemetry back into its UART.
                     if own_echo(addr, lans, out_port):
                         continue
+                    if announcer and addr not in active_gcs_senders:
+                        announce_frames(announcer.for_new_gcs(), gcs=addr)
                     active_gcs_senders[addr] = time.monotonic()
                     try:
                         if fcu_serial:
@@ -264,6 +397,11 @@ def run_router(fcu_port=14560, mavros_port=14555, gcs_port=14550,
                     lans = fresh
                 t_last_lan = time.time()
 
+            if announcer and time.time() - t_last_wifi > 2.0:
+                wifi = wifi_interfaces(read_ip_addr())
+                announce_frames(announcer.on_wifi(wifi))
+                t_last_wifi = time.time()
+
             if time.time() - t_last_stat > 10.0:
                 logger.info(f"Router status: {packet_count} pkts routed | "
                             f"{gcs_packet_count} GCS datagrams | "
@@ -293,9 +431,16 @@ if __name__ == "__main__":
     parser.add_argument("--gcs-broadcast", action="store_true",
                         help="Also broadcast FCU MAVLink to every LAN on --gcs-out-port, "
                              "so any Mission Planner in UDP mode receives it")
+    parser.add_argument("--no-announce", action="store_true",
+                        help="Do not send 'Pi booted' / 'Pi Wi-Fi up' STATUSTEXT (on by default "
+                             "with --fcu-serial)")
+    parser.add_argument("--announce-sysid", type=int, default=1,
+                        help="The FC's system id, sent as the onboard computer of it")
     args = parser.parse_args()
 
     run_router(fcu_port=args.fcu_in, mavros_port=args.mavros_port,
                gcs_port=args.gcs_port, gcs_host=args.gcs_host,
                gcs_out_port=args.gcs_out_port, fcu_serial=args.fcu_serial,
-               fcu_baud=args.fcu_baud, gcs_broadcast=args.gcs_broadcast)
+               fcu_baud=args.fcu_baud, gcs_broadcast=args.gcs_broadcast,
+               announce=False if args.no_announce else None,
+               announce_sysid=args.announce_sysid)
