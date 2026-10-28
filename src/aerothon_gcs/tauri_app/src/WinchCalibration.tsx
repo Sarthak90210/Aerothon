@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Telemetry } from './types';
 
-type Props = {S:Telemetry|null;connected:boolean;send:(cmd:string,args?:any,danger?:boolean)=>void;onClose:()=>void};
+type Props = {S:Telemetry|null;connected:boolean;send:(cmd:string,args?:any,danger?:boolean,label?:string)=>void;onClose:()=>void};
 
 export default function WinchCalibration({S,connected,send,onClose}:Props) {
   const w=S?.winch, cal=w?.calibration, limits=w?.limits;
@@ -34,7 +34,7 @@ export default function WinchCalibration({S,connected,send,onClose}:Props) {
         <div className="calibration-target">
           <strong>Run time {cal?.run_s?.toFixed(1)??'0.0'} s</strong>
           <label>Line out (m)<input type="number" min="1.5" max="20" step="0.01" value={length} onChange={e=>setLength(e.target.value)}/></label>
-          <button disabled={!length} onClick={()=>send('winch_cal',{action:'set_max',length_m:Number(length)},true)}>Set paid-out limit here</button>
+          <button disabled={!length} onClick={()=>send('winch_cal',{action:'set_max',length_m:Number(length)},true,`Set the winch paid-out limit at ${Number(length)} m`)}>Set paid-out limit here</button>
         </div>
       </fieldset>
       <div className="calibration-stage"><h3>In force</h3>

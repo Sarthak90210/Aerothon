@@ -1484,7 +1484,12 @@ records the real pulse widths, disarmed:
    it is exactly at one of the three poses.
 3. Press "This is ..." for the pose it is really at; the pulse width sent is
    recorded for that pose. Repeat until all three are recorded.
-4. Apply. `camera_ctrl` (`tilt_calibration.py`) saves the three points, in
+4. Apply, then Confirm in the dialog that opens over the window, which names
+   the three outputs. (Until 29 October the confirmation opened in the
+   Mission panel with the window closed; the operator never saw it and the
+   recorded calibration never left the GCS, 28 October. Every calibration
+   window's reviewed command now confirms over it, and command results show
+   over it.) `camera_ctrl` (`tilt_calibration.py`) saves the three points, in
    us, to `camera_tilt.json` in the measured-state directory and sends every
    angle through them: each pose gets its recorded output, the others
    (banner -20, ground -35) the straight line through the neighbouring

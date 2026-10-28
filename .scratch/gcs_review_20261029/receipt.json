@@ -1,0 +1,19 @@
+{
+  "feature": "gcs_review_20261029",
+  "triage": "ready-for-human",
+  "problem": "Aircraft, 28 Oct 2026: 'it does record the correct pwm values when i click what is what, then i apply the calibration and it just again moves very little'. The Pi's command log (commands.sqlite, 609 commands) holds every Camera cal pose, nudge and mark but no apply: the recorded draft (FORWARD 2060, ALIGN 1650, NADIR 1070 us) never reached camera_ctrl, no camera_tilt.json was written, and the poses kept the uncalibrated 1500/1250/1000 us.",
+  "diagnosis": "Reproduced in the GCS served by the Pi: Apply calibration (a reviewed command) closed the calibration window and put a small 'camera cal' Confirm/Cancel box in the Mission panel, below Stop and return. Nothing is sent until Confirm. No reviewed command from any calibration window (winch_cal set_max, lidar_cal_apply, delete_dimension_preset) appears in the Pi's command log either. Command results were shown over Arena and Lidar cal only, so Camera cal's refused marks ('the last nudge has not reached the camera yet') were not visible over it.",
+  "change": [
+    "App.tsx: a reviewed command from a calibration window keeps the window open; the confirmation opens in a dialog over it (the same Confirm/Cancel and reviewAllowed checks); closing a window drops a pending confirmation; command results show over all four windows",
+    "Callers label the confirmation: 'Apply camera calibration: forward 2060 us, 45 down 1650 us, straight down 1070 us', 'Clear the saved camera calibration', 'Apply lidar calibration', 'Set the winch paid-out limit at N m', 'Delete preset NAME'",
+    "package_pi_runtime.py: manifest camera_servo_output 5 (was 9)",
+    "MASTER_DOCUMENTATION.md Camera cal step 4"
+  ],
+  "tests": "sim/test_gcs_calibrations.py test_a_calibration_window_confirms_its_reviewed_commands_over_itself (source-level: there is no React component harness, so the live check is the browser on the Pi); GCS node tests 45 passed, tsc, vite build; calibration/contract/field-PDF tests 77 passed",
+  "reduced_suite": "logs/gcs_review_20261029/reduced_suite.log (29 Oct, started after the last source edit): Python 2307 passed, 8 skipped, 4 failed; native ROS 9 passed/3 skipped; syntax, XML/YAML, frontend build ok. The four failures are load-bound and outside the change: banner detector camera-rate timing (293 ms vs 100 ms per frame), BannerEnvelope every-corruption (no detail published), and two test_qualification_offline_scope collections that hit their 30 s subprocess timeout. Rerun alone on an idle WSL: 4 passed (rerun_four_failures.log).",
+  "flight_source": "unchanged",
+  "status": "implemented; reduced suite recorded; committed; not yet deployed",
+  "blockers": [
+    "a redeploy restarts the runtime and drops an unapplied Camera cal draft held in the aggregator"
+  ]
+}

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { Telemetry } from './types';
 
-type Props = {S:Telemetry|null;connected:boolean;send:(cmd:string,args?:any,danger?:boolean)=>void;onClose:()=>void};
+type Props = {S:Telemetry|null;connected:boolean;send:(cmd:string,args?:any,danger?:boolean,label?:string)=>void;onClose:()=>void};
 // camera_ctrl/tilt_calibration.py POSES: what the operator can judge by eye.
 const poses = [['FORWARD','Forward (level)'],['ALIGN','45° down'],['NADIR','Straight down']] as const;
 
@@ -52,8 +52,8 @@ export default function CameraCalibration({S,connected,send,onClose}:Props) {
       </div>
       <div className="dims-actions"><span>{disabled?'Connect telemetry and disarm to calibrate.':''}</span>
         <button disabled={disabled} onClick={()=>send('camera_cal',{action:'reset'})}>Reset</button>
-        <button disabled={disabled||!applied?.points} onClick={()=>send('camera_cal',{action:'clear'},true)}>Clear saved</button>
-        <button className="primary" disabled={disabled||!complete} onClick={()=>send('camera_cal',{action:'apply'},true)}>Apply calibration</button></div>
+        <button disabled={disabled||!applied?.points} onClick={()=>send('camera_cal',{action:'clear'},true,'Clear the saved camera calibration')}>Clear saved</button>
+        <button className="primary" disabled={disabled||!complete} onClick={()=>send('camera_cal',{action:'apply'},true,`Apply camera calibration: forward ${show(draft.FORWARD)}, 45° down ${show(draft.ALIGN)}, straight down ${show(draft.NADIR)}`)}>Apply calibration</button></div>
     </div>
   </div>;
 }

@@ -22,5 +22,7 @@
     "FC reads the airframe 31 deg nose-up on the bench: level calibration or mounting to check before flight",
     "webcam absent from the Pi's USB; Pi undervoltage (throttled 0x50000)"
   ],
-  "status": "implemented, offline suite passed; committed; deploying"
+  "status": "deployed; output 5 driven by the Pi verified on the aircraft; Camera cal to be recorded by the operator",
+  "deployed": "27 Oct: bundle pi-runtime-20261027.zip (sha256 9760de82...391046, source 0c241e1) installed on the Pi (deploy_20261027b: backups before_20261027T064217.tar.gz sha256 3a57ca2f..., 268 files verified, 13 changed, 4 stale GCS assets removed, 14 packages rebuilt). SERVO5_FUNCTION 7 -> 0 set through the router (pymavlink, FC disarmed, read back 0); the runtime could not start for it: the Pi rebooted at its start",
+  "verified_on_aircraft": "DO_SET_SERVO 5 through the router: ack 0, SERVO_OUTPUT_RAW servo5 1500/1250/1000/1500 us as sent; through camera_ctrl (runtime connected, /camera/set_pose): 'camera pose -> FORWARD (output 1500 us)', ALIGN 1250, NADIR 1000; output 5 read 1500 after the last FORWARD (rc/out lags a step; the operator was also pressing Camera cal). Camera cal itself (calibration) not yet recorded"
 }

@@ -437,6 +437,14 @@ summary {
 .review button {
   margin-right: 0.5rem;
 }
+/* A reviewed command from a calibration window, confirmed over it. */
+.review-dialog {
+  width: min(100%, 520px);
+}
+.review-dialog .review {
+  margin: 0;
+  border: 0;
+}
 .error {
   color: var(--danger);
   padding: 1rem 1.5rem;

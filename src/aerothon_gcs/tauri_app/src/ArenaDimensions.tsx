@@ -25,7 +25,7 @@ const GROUP_TITLES: Record<string, string> = {
 type Props = {
   S: Telemetry | null;
   connected: boolean;
-  send: (cmd: string, args?: any, danger?: boolean) => void;
+  send: (cmd: string, args?: any, danger?: boolean, label?: string) => void;
   onClose: () => void;
 };
 
@@ -190,7 +190,7 @@ export default function ArenaDimensions({
           <button
             disabled={!canApply || !presets.saved[chosen]}
             onClick={() =>
-              send("delete_dimension_preset", { name: chosen }, true)
+              send("delete_dimension_preset", { name: chosen }, true, `Delete preset ${chosen}`)
             }
           >
             Delete

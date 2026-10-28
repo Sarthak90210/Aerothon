@@ -541,3 +541,24 @@ def test_the_web_host_and_launch_carry_both_calibrations():
                   encoding="utf-8").read()
     assert "'calibration_file': os.path.join(measured_state, 'camera_tilt.json')" in launch
     assert "'limits_file': os.path.join(measured_state, 'winch_limits.json')" in launch
+
+
+def test_a_calibration_window_confirms_its_reviewed_commands_over_itself():
+    """Aircraft, 28 Oct 2026: Apply closed Camera cal and waited for Confirm in
+    the Mission panel; the operator never saw it, so no calibration left the
+    GCS and the poses kept their uncalibrated outputs. The window now stays
+    open and the confirmation, labelled with what it applies, opens over it."""
+    src = os.path.join(ROOT, "src/aerothon_gcs/tauri_app/src")
+    app = open(os.path.join(src, "App.tsx"), encoding="utf-8").read()
+    review = app[app.index("const reviewedSend"):app.index("const closeOverlay")]
+    assert "Open(false)" not in review, "a reviewed command must not close its window"
+    assert "{overlayOpen && review && (" in app and "{reviewBox}" in app
+    assert "{!overlayOpen && reviewBox}" in app
+    assert "{overlayOpen && outcome &&" in app, "command results show over every window"
+    for name in ("CameraCalibration.tsx", "LidarCalibration.tsx",
+                 "WinchCalibration.tsx", "ArenaDimensions.tsx"):
+        text = open(os.path.join(src, name), encoding="utf-8").read()
+        reviewed = [line for line in text.splitlines() if "true)" in line and "send(" in line]
+        assert not reviewed, f"{name}: a reviewed command without a label: {reviewed}"
+    camera = open(os.path.join(src, "CameraCalibration.tsx"), encoding="utf-8").read()
+    assert "Apply camera calibration: forward ${show(draft.FORWARD)}" in camera

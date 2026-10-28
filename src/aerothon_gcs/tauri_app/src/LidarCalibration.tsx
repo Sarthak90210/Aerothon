@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Telemetry } from './types';
 import { MetricPlot } from './LidarView';
 
-type Props = {S:Telemetry|null;connected:boolean;send:(cmd:string,args?:any,danger?:boolean)=>void;onClose:()=>void};
+type Props = {S:Telemetry|null;connected:boolean;send:(cmd:string,args?:any,danger?:boolean,label?:string)=>void;onClose:()=>void};
 const fields = [['x_m','Forward X (m)'],['y_m','Left Y (m)'],['z_m','Up Z (m)'],['roll_deg','Roll (°)'],['pitch_deg','Pitch (°)']];
 const targets = [['ahead','Ahead, 0°'],['far','Far ahead, 0°'],['port','Left, +90°'],['starboard','Right, −90° (check)']];
 
@@ -51,7 +51,7 @@ export default function LidarCalibration({S,connected,send,onClose}:Props) {
       </div>
       <div className="dims-actions"><span>{disabled?'Connect telemetry and disarm to calibrate.':''}</span>
         <button disabled={disabled} onClick={()=>send('lidar_cal_reset')}>Reset</button>
-        <button className="primary" disabled={disabled||!result?.ok} onClick={()=>send('lidar_cal_apply',{},true)}>Apply calibration</button></div>
+        <button className="primary" disabled={disabled||!result?.ok} onClick={()=>send('lidar_cal_apply',{},true,'Apply lidar calibration')}>Apply calibration</button></div>
     </div>
   </div>;
 }

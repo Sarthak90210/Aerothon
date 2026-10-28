@@ -79,7 +79,7 @@ def build(root, out):
                     local_ros_packages=[Path(p).name for p in PACKAGES],
                     includes_simulation=False, includes_historical_evidence=False,
                     hardware_qualified=False, encoder_backend_implemented=False,
-                    camera_servo_output=9,
+                    camera_servo_output=5,
                     configuration='Ship defaults; measure and configure on the aircraft.')
     out.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(out, 'x', compression=zipfile.ZIP_DEFLATED) as z:

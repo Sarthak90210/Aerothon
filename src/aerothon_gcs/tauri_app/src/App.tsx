@@ -373,18 +373,24 @@ export default function App() {
       setBusy(false);
     }
   }
+  // A window's reviewed command is confirmed in that window. It used to close
+  // the window and wait for Confirm in the Mission panel, where operators
+  // missed it: Camera cal "applied" and the calibration never left the GCS
+  // (aircraft, 28 Oct 2026).
+  const overlayOpen = arenaOpen || lidarOpen || cameraCalOpen || winchCalOpen;
   const reviewedSend = (
     cmd: string,
     args: Record<string, unknown> = {},
     danger = false,
+    label?: string,
   ) => {
-    if (danger) {
-      setArenaOpen(false);
-      setLidarOpen(false);
-      setCameraCalOpen(false);
-      setWinchCalOpen(false);
-      setReview({ cmd, args, label: `${cmd.replace(/_/g, " ")}${args.mode ? ` ${args.mode}` : ""}` });
-    } else void perform(cmd, args);
+    if (danger)
+      setReview({ cmd, args, label: label ?? `${cmd.replace(/_/g, " ")}${args.mode ? ` ${args.mode}` : ""}` });
+    else void perform(cmd, args);
+  };
+  const closeOverlay = (close: (open: boolean) => void) => () => {
+    setReview(null);
+    close(false);
   };
   useEffect(() => {
     if (view !== "map" || !mapHost.current) return;
@@ -505,6 +511,38 @@ export default function App() {
       centered.current = true;
     }
   }, [t, view]);
+  const reviewBox = review && (
+    <section className="review">
+      <h3>{review.label}</h3>
+      <p>
+        {hostState?.profile_id ?? "No vehicle"} · {fcu ? t?.mission.mode : NA} ·{" "}
+        {fcu ? (t?.mission.armed ? "Armed" : "Disarmed") : NA}
+      </p>
+      {["stop", "abort"].includes(review.cmd) && !executionActive(t) && (
+        // Stop and Abort act on a production execution. After a manual
+        // takeoff from Aircraft controls they were accepted and the
+        // aircraft kept hovering.
+        <p className="review-warning" role="alert">
+          No task running: this will not move the aircraft.
+          {t?.mission.armed ? " Armed: use Land or RTL." : ""}
+        </p>
+      )}
+      {review.cmd === "stop" && <p className="task-note">Stage-aware LAND/RTL.</p>}
+      <button
+        disabled={
+          busy || !reviewAllowed(t, linked, review.cmd, review.args)
+        }
+        onClick={() => {
+          const request = review;
+          setReview(null);
+          void perform(request.cmd, request.args);
+        }}
+      >
+        Confirm
+      </button>
+      <button onClick={() => setReview(null)}>Cancel</button>
+    </section>
+  );
   return (
     <div className="app">
       <header>
@@ -612,7 +650,7 @@ export default function App() {
             <button aria-label="Dismiss" onClick={() => setError("")}>×</button>
           </div>
         )}
-        {(arenaOpen || lidarOpen) && outcome && clock - outcomeAt < 8000 && (
+        {overlayOpen && outcome && clock - outcomeAt < 8000 && (
           <div className={`toast ${outcome.state === "Failed" ? "" : "info"}`} role="status">
             <p>{outcome.cmd.replace(/_/g, " ")}: {outcome.state}. {outcome.reason}</p>
           </div>
@@ -933,38 +971,7 @@ export default function App() {
           >
             Stop and return
           </button>
-          {review && (
-            <section className="review">
-              <h3>{review.label}</h3>
-              <p>
-                {hostState?.profile_id ?? "No vehicle"} · {fcu ? t?.mission.mode : NA} ·{" "}
-                {fcu ? (t?.mission.armed ? "Armed" : "Disarmed") : NA}
-              </p>
-              {["stop", "abort"].includes(review.cmd) && !executionActive(t) && (
-                // Stop and Abort act on a production execution. After a manual
-                // takeoff from Aircraft controls they were accepted and the
-                // aircraft kept hovering.
-                <p className="review-warning" role="alert">
-                  No task running: this will not move the aircraft.
-                  {t?.mission.armed ? " Armed: use Land or RTL." : ""}
-                </p>
-              )}
-              {review.cmd === "stop" && <p className="task-note">Stage-aware LAND/RTL.</p>}
-              <button
-                disabled={
-                  busy || !reviewAllowed(t, linked, review.cmd, review.args)
-                }
-                onClick={() => {
-                  const request = review;
-                  setReview(null);
-                  void perform(request.cmd, request.args);
-                }}
-              >
-                Confirm
-              </button>
-              <button onClick={() => setReview(null)}>Cancel</button>
-            </section>
-          )}
+          {!overlayOpen && reviewBox}
           {outcome && (
             <p role="status">
               {outcome.cmd}: {outcome.state}. {outcome.reason}
@@ -1169,7 +1176,7 @@ export default function App() {
           S={t}
           connected={fcu}
           send={reviewedSend}
-          onClose={() => setArenaOpen(false)}
+          onClose={closeOverlay(setArenaOpen)}
         />
       )}
       {lidarOpen && (
@@ -1177,7 +1184,7 @@ export default function App() {
           S={t}
           connected={fcu}
           send={reviewedSend}
-          onClose={() => setLidarOpen(false)}
+          onClose={closeOverlay(setLidarOpen)}
         />
       )}
       {cameraCalOpen && (
@@ -1185,7 +1192,7 @@ export default function App() {
           S={t}
           connected={fcu}
           send={reviewedSend}
-          onClose={() => setCameraCalOpen(false)}
+          onClose={closeOverlay(setCameraCalOpen)}
         />
       )}
       {winchCalOpen && (
@@ -1193,8 +1200,13 @@ export default function App() {
           S={t}
           connected={fcu}
           send={reviewedSend}
-          onClose={() => setWinchCalOpen(false)}
+          onClose={closeOverlay(setWinchCalOpen)}
         />
+      )}
+      {overlayOpen && review && (
+        <div className="dims-overlay" role="dialog" aria-label={review.label}>
+          <div className="card dims review-dialog">{reviewBox}</div>
+        </div>
       )}
     </div>
   );
