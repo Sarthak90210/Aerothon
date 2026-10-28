@@ -8,6 +8,10 @@
   ],
   "mission_planner": "MissionPlanner MAVLinkInterface.cs: STATUSTEXT from another component of the current sysid is also added to the vehicle's messages as 'compid : text'. ArduPilot forwards a broadcast from TELEM3 to ports with learned routes (Mission Planner on USB); MAV2_OPTIONS 2 keeps it off the ExpressLRS port",
   "tests": "sim/test_mav_router_broadcast.py: frame decodes in pymavlink as (1, 191, 6, text), 50-character limit and ASCII; Wi-Fi interfaces only; boot once after FC data, Wi-Fi per new address, latest of each for a new GCS; end to end on a pty: 'Pi booted ... s ago' reaches the FC side and the GCS. The UART batching test runs with --no-announce. Router and boot tests 15 passed",
-  "status": "implemented; not deployed (the Pi is off the hotspot)",
-  "blockers": ["the running router keeps the old code until it restarts: a Pi reboot, or the router process restarted by its supervisor"]
+  "status": "deployed and verified at the router; to be seen in Mission Planner by the operator",
+  "blockers": [
+    "the boot-time message appears on the next Pi boot; Mission Planner must be connected over USB or the Pi Wi-Fi, not ExpressLRS"
+  ],
+  "deployed": "29 Oct 04:00:19 IST: pi-runtime-20261029e.zip (sha256 7146a03b...a526f, source 4ee62a8) by deploy_pi_h.sh, router only (scripts/mav_router.py, MASTER_DOCUMENTATION.md), SOURCE VERIFIED 268 files, 2 changed; runtime not restarted; old router (pid 679) signalled, profile_router relaunched it (pid 10038)",
+  "verified": "router journal 04:00:19: \"Announced to the FC: Pi booted 616 s ago\", \"Announced to the FC: Pi Wi-Fi up: piwifi 192.168.137.193\" (piwifi is the Pi's Wi-Fi connection name from nmcli); announce_check.py joining the router as a new UDP GCS received both as STATUSTEXT 1/191 severity 6. Mission Planner on USB (FC forwarding) not yet seen by the operator"
 }
