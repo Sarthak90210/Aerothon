@@ -19,13 +19,13 @@
   "tests": "affected (test_l298n_winch, test_gcs_calibrations, test_world_sim_venue, test_stream_rate_coverage, test_rc_in_bridge, test_launch_defaults): 73 passed, 2 skipped. Reduced suite: logs/rc6_winch_20261029/reduced_suite.log (running)",
   "deploy_route": "deploy_pi_e.sh: the Pi's workspace is --symlink-install (build/winch_ctrl/winch_ctrl, build/mission_bringup/{mission_bringup,config/*}, build/camera_ctrl/camera_ctrl link into /workspace/src), and the change edits existing files only, so files are replaced and the runtime restarted, no colcon build. Tested on an extraction of pi-runtime-20261029.zip with a stubbed web API: 7 to change, backup, SOURCE VERIFIED 268, links reach src/, disconnect then connect vehicle; second dry run 0 to change; active task refused; a file added outside gcs/ refused",
   "flight_source": "mission decisions unchanged; winch hand drive (no mission), camera receiver passthrough (off) and one stream rate changed",
-  "status": "deployed 9fe0860 and checked on the aircraft; FC output 5 freed for the Pi and verified; records committed",
+  "status": "deployed 65fe5da; channel 8 tilts through the Pi and channel 6 drives only the winch, verified on the aircraft",
   "blockers": [
     "no winch limits on the Pi: hand drive pays out without end; Winch cal paid-out limit needed short of the line end (mission needs >= 1.5 m of line: min_calibrated_payout_m)",
     "MAV3_RC_CHAN 2 on the FC lets RC_CHANNELS fall to 2 Hz when the interval is reset; proposed MAV3_RC_CHAN 10 awaits the operator",
     "Pi power resets (operator deferred)",
-    "RC_CHANNELS bursts at 2 Hz for ~6 s every 30-40 s at the Pi (not the keeper); cause unknown; the winch pauses during them",
-    "operator reports the payload rose after ~2 s with RC6 held down while the recording shows RC6 988 then 2011: check the radio channel monitor while holding the switch"
+    "operator reports the payload rose after ~2 s with RC6 held down while the recording shows RC6 988 then 2011: check the radio channel monitor while holding the switch",
+    "RC_CHANNELS fell to 2 Hz in bursts before 03:23 and to ~3.6 Hz during runtime start-up; none since at 10 Hz"
   ],
   "commit": "9fe0860",
   "deployed": "29 Oct 03:09 IST: pi-runtime-20261029b.zip (sha256 707d7747...7822a6, source 9fe0860) by deploy_pi_e.sh on the Pi: backup before_20261029T030904.tar.gz sha256 70337522...4519d2, SOURCE VERIFIED 268 files, 7 changed, links reach src/, runtime disconnected and reconnected to vehicle, no rebuild",
@@ -48,5 +48,8 @@
   "servo5_verified": "servo5_hold_check.py inside the runtime (logs/rc6_winch_20261029/servo5_hold_check.log): before, output 5 held RC8's last 2011 us; poses through camera_ctrl /camera/set_pose: ALIGN 1590, NADIR 1000, FORWARD 2050 us, each read on /mavros/rc/out channel 5 unchanged for 3 s (60 samples at 20 Hz). The first FORWARD was not resent (camera_ctrl already at FORWARD). Left at FORWARD",
   "records": "aerothon_hardware.parm and hardware_wiring.yaml back to SERVO5_FUNCTION 0 (58 recorded earlier on 29 Oct); venue.yaml comment (values unchanged); guide and AGENTS; test_gcs_calibrations checks SERVO5_FUNCTION 0 in both records",
   "deployed_records": "29 Oct 03:23:48 IST: pi-runtime-20261029c.zip (sha256 5c466f65...cd041a, source d478094) by deploy_pi_f.sh, records only: AGENTS.md, MASTER_DOCUMENTATION.md, aerothon_hardware.parm, hardware_wiring.yaml, venue.yaml (comments); SOURCE VERIFIED 268 files, 5 changed; runtime not restarted (Running, fresh)",
-  "rc8_through_pi": "venue.yaml camera_ctrl rc_tilt_channel 8: the Pi passes channel 8's pulse to output 5 when no mission runs, once it has moved since the Pi last commanded; ignored in a mission. Channel 6 stays the winch's alone. Test: on the aircraft settings channel 6 at 988/2011/1500 sends nothing to the servo, channel 8 at 988/2011/1500 is sent as is"
+  "rc8_through_pi": "venue.yaml camera_ctrl rc_tilt_channel 8: the Pi passes channel 8's pulse to output 5 when no mission runs, once it has moved since the Pi last commanded; ignored in a mission. Channel 6 stays the winch's alone. Test: on the aircraft settings channel 6 at 988/2011/1500 sends nothing to the servo, channel 8 at 988/2011/1500 is sent as is",
+  "deployed_rc8": "29 Oct 03:29:08 IST: pi-runtime-20261029d.zip (sha256 a3cfca5b...2d1f64, source 65fe5da) by deploy_pi_g.sh: backup before_20261029T032908.tar.gz sha256 4d6f23e8...71bac0, SOURCE VERIFIED 268 files, 4 changed, runtime restarted (no rebuild); ros2 param camera_ctrl rc_tilt_channel 8; /aerothon/rc/in 10.0 Hz, worst gap 0.245 s after start-up",
+  "rc8_verified": "22:00:20-31 UTC (03:30 IST), operator moving switches, /aerothon/rc/in with /mavros/rc/out: RC6 2011 -> 1500 -> 988 -> 1500 with RC8 2011: output 5 stayed 2011; RC8 988 / 1500 / 2011 -> output 5 988 / 1500 / 2011 within one sample, every change",
+  "hand_drive_recording": "hand_drive_0311.log (03:11-03:26 IST): every RC6 988 period paid out without a change until RC6 changed (e.g. 03:24:25.8 988 -> 27.1 2011); no channel gaps after 03:23 at 10 Hz. The Pi never reverses the motor with the switch held: a reversal seen while holding is the line passing the end of the spool (unconfirmed: watch the spool)"
 }
