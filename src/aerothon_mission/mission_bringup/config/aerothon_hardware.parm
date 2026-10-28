@@ -20,9 +20,9 @@
 # No mount, and the output must be free: only the Pi drives it (operator,
 # 29 Oct 2026). A passthrough takes it back from the Pi whenever its channel
 # moves past RCn_DZ (56, RC6, the winch switch, did; 58, RC8, did until
-# 29 Oct). No receiver channel tilts the camera (camera_ctrl rc_tilt_channel
-# 0). GCS Camera cal records the pulse width for forward, 45 deg and
-# straight down.
+# 29 Oct). Receiver channel 8 tilts the camera through the Pi instead
+# (camera_ctrl rc_tilt_channel 8), so RC8 must do nothing here: RC8_OPTION 0.
+# GCS Camera cal records the pulse width for forward, 45 deg and straight down.
 MNT1_TYPE 0
 SERVO5_FUNCTION 0
 # The former camera output is released.

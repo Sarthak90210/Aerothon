@@ -194,7 +194,8 @@ SERVO_MEASURED = {"FORWARD": 1820.0, "ALIGN": 1490.0, "NADIR": 1120.0}
 
 def servo_camera(tmp_path, **params):
     from test_winch import FakeCommandClient
-    node = camera(tmp_path, backend="mavlink", fc_output="servo", rc_tilt_channel=6, **params)
+    params.setdefault("rc_tilt_channel", 6)
+    node = camera(tmp_path, backend="mavlink", fc_output="servo", **params)
     node.cli_cmd = FakeCommandClient()
     node.servo = lambda: [(int(r.param1), r.param2) for r, _ in node.cli_cmd.sent if r.command == 183]
     return node
@@ -256,6 +257,30 @@ def test_the_receiver_tilts_the_camera_when_no_mission_runs(tmp_path):
         node.destroy_node()
 
 
+def test_on_the_aircraft_channel_8_tilts_the_camera_and_channel_6_never_does(tmp_path):
+    # Operator, 29 Oct 2026: channel 6 (the winch switch) tilted the camera too.
+    class Channels:
+        def __init__(self, ch6, ch8):
+            self.channels = [1500, 1500, 1000, 1500, 1000, ch6, 1500, ch8]
+
+    node = servo_camera(tmp_path, rc_tilt_channel=8)
+    try:
+        node._on_rc(Channels(1500, 1500))
+        node._tick()
+        start = len(node.servo())
+        for ch6 in (988, 2011, 1500, 988):               # the winch switch, every position
+            node._on_rc(Channels(ch6, 1500))
+            node._tick()
+        assert len(node.servo()) == start and all(pwm != 988.0 and pwm != 2011.0
+                                                  for _, pwm in node.servo()), node.servo()
+        for ch8 in (988, 2011, 1500):
+            node._on_rc(Channels(1500, ch8))
+            node._tick()
+            assert node.servo()[-1] == (5, float(ch8)), ch8
+    finally:
+        node.destroy_node()
+
+
 def test_a_stale_or_absent_receiver_moves_nothing(tmp_path):
     node = servo_camera(tmp_path)
     try:
@@ -289,12 +314,13 @@ def test_the_aircraft_venue_drives_servo_5_from_the_pi():
     config = os.path.join(ROOT, "src", "aerothon_mission", "mission_bringup", "config")
     camera_params = yaml.safe_load(open(os.path.join(config, "venue.yaml")))["camera_ctrl"]["ros__parameters"]
     assert camera_params["fc_output"] == "servo" and camera_params["servo_channel"] == 5
-    # Operator, 29 Oct 2026: the Pi alone tilts the camera and channel 6 drives
-    # the winch alone. Passing channel 6 tilted the camera with the winch's
-    # switch; SERVO5_FUNCTION 58 (channel 8) took the servo back from the Pi.
-    assert camera_params["rc_tilt_channel"] == 0
+    # Operator, 29 Oct 2026: the Pi alone drives output 5, channel 8 tilts the
+    # camera through it, and channel 6 drives the winch alone. Passing channel 6
+    # tilted the camera with the winch's switch; SERVO5_FUNCTION 58 (channel 8
+    # on the FC) took the servo back from the Pi.
+    assert camera_params["rc_tilt_channel"] == 8
     winch = yaml.safe_load(open(os.path.join(config, "venue.yaml")))["winch_ctrl"]["ros__parameters"]
-    assert winch["rc_manual_channel"] == 6
+    assert winch["rc_manual_channel"] == 6 != camera_params["rc_tilt_channel"]
     parm = open(os.path.join(config, "aerothon_hardware.parm"), encoding="utf-8").read()
     assert "\nSERVO5_FUNCTION 0\n" in parm and "\nMNT1_TYPE 0\n" in parm
     wiring = yaml.safe_load(open(os.path.join(config, "hardware_wiring.yaml")))

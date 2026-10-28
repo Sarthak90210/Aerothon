@@ -55,11 +55,12 @@ camera_ctrl:
     servo_channel: 5
     servo_pwm_min: 800           # widen if Camera cal cannot reach a pose
     servo_pwm_max: 2200
-    # Only the Pi tilts the camera (operator, 29 Oct 2026). No receiver channel
-    # is passed through, here or on the FC (SERVO5_FUNCTION 0; 58, channel 8,
-    # took the servo back whenever channel 8 moved). Channel 6 is the winch's
-    # hand drive only: passing it here tilted the camera too.
-    rc_tilt_channel: 0
+    # Only the Pi drives output 5 (FC SERVO5_FUNCTION 0) and receiver channel
+    # 8 tilts the camera through it when no mission runs (operator, 29 Oct
+    # 2026). Channel 6 is the winch's hand drive only: passing it here tilted
+    # the camera too, and the FC's own channel 8 passthrough (58) took the
+    # servo back from the Pi whenever channel 8 moved.
+    rc_tilt_channel: 8
 
 perception_payload:
   ros__parameters:

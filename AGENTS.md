@@ -130,10 +130,10 @@ unreachable, so that bundle is not deployed.
 The user identified CUAV X7+. The camera tilt servo is on SERVO5 and, since
 27 October, the Pi sets its pulse width directly (`MAV_CMD_DO_SET_SERVO`,
 `camera_ctrl fc_output: servo`, FC `SERVO5_FUNCTION 0`, `MNT1_TYPE 0`).
-Since 29 Oct only the Pi tilts it: no receiver channel is passed through, on
-the Pi (`rc_tilt_channel 0`) or the FC (58, RC8, took the servo back).
-Channel 6 is the winch's hand drive only, which a brief gap in the 10 Hz
-channels pauses, not cancels. Camera cal records microseconds per
+Since 29 Oct only the Pi drives output 5, and receiver channel 8 tilts it
+through the Pi when no mission runs (`rc_tilt_channel 8`; the FC's own RC8
+passthrough, 58, took the servo back). Channel 6 is the winch's hand drive
+only, which a brief gap in the 10 Hz channels pauses, not cancels. Camera cal records microseconds per
 pose. Confirm direction, endpoints and measured travel on the aircraft.
 `readback=timed` assumes settlement; it does not prove motion or FC acceptance.
 
