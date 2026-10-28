@@ -12,7 +12,8 @@ BTS7960 directly and MEASURES travel from the N20 quadrature encoder
 With backend:=l298n the Pi drives an L298N (l298n.py) with no encoder; payout
 is the timed estimate. An RC switch (rc_manual_channel; 6, a three-position
 switch, on the aircraft) then also drives it by hand (high one way, low the
-other, middle stop) whenever no autonomous mission is running.
+other, middle stop) whenever no autonomous mission is running. A gap in the
+channels shorter than rc_loss_s pauses it; a longer one needs the middle.
 
 WINCH LIMITS (backend:=l298n). The GCS calibrates where the line stops: the
 operator opens a calibration (/winch/calibration {"action": "begin"}), which
@@ -135,10 +136,15 @@ class WinchNode(Node):
         # or stale radio stop it. Ignored completely during a mission. After
         # startup, a mission or a lost radio the switch must be seen in the
         # middle first (aircraft, 25 Oct: a switch left at LOW lowered at boot).
+        # Channels silent past rc_timeout_s pause the motor; only silence past
+        # rc_loss_s is a lost radio that needs the middle again (aircraft,
+        # 29 Oct: a gap in the 5 Hz channels stopped the motor with RC6
+        # held, and it stayed stopped until the switch went back to the middle).
         p("rc_manual_channel", 5)
         p("rc_high_us", 1800)
         p("rc_low_us", 1200)
         p("rc_timeout_s", 0.5)
+        p("rc_loss_s", 2.0)
         # Winch limits calibrated at the GCS (backend:=l298n); "" keeps none.
         p("limits_file", "")
         p("calibration_timeout_s", 600.0)    # an open calibration lifts the limits
@@ -196,6 +202,7 @@ class WinchNode(Node):
         self._mission_state = ""
         self.manual = 0              # RC hand drive in effect: 1, -1 or 0
         self.rc_ready = False        # hand switch seen in the middle since startup/mission/lost radio
+        self.rc_reason = ""          # what hand drive is doing and why, logged on change
         self.limit = None            # calibrated {max_payout_m, line_speed_mps, stroke_s, saved_at}
         self.limit_source = "max_payout_m parameter (not calibrated)"
         self.cal_until = None        # an open calibration's end, node time
@@ -265,14 +272,40 @@ class WinchNode(Node):
         """1 (IN1), -1 (IN2) or 0 from the RC hand switch. 0 during a mission, for
         a middle stick, for a missing or stale radio, and until the switch has
         been seen in the middle since startup, the last mission or the last
-        lost radio: a switch left at either end never starts the motor."""
+        lost radio: a switch left at either end never starts the motor. A
+        brief gap in the channels only pauses it: the switch still held when
+        they return drives on."""
         band = self._rc_band()
         if band is None:
-            self.rc_ready = False
+            if self._rc_brief_gap():
+                self._rc_note("paused: no channels for over rc_timeout_s")
+            else:
+                self.rc_ready = False
+                self._rc_note("off: mission, no radio or failsafe; middle first")
             return 0
         if band == 0:
             self.rc_ready = True
+            self._rc_note("stopped: switch in the middle")
+        elif not self.rc_ready:
+            self._rc_note("waiting: switch to the middle first")
         return band if self.rc_ready else 0
+
+    def _rc_brief_gap(self):
+        """True while the channels have been silent past rc_timeout_s but not
+        yet rc_loss_s, the last value valid and no mission running."""
+        if self.mission_active() or self._rc is None:
+            return False
+        channels, t = self._rc
+        i = int(self.get_parameter("rc_manual_channel").value) - 1
+        if not 0 <= i < len(channels) or int(channels[i]) < 900:
+            return False
+        return self._now() - t <= float(self.get_parameter("rc_loss_s").value)
+
+    def _rc_note(self, reason):
+        """Log what hand drive is doing, once per change."""
+        if reason != self.rc_reason:
+            self.rc_reason = reason
+            self.get_logger().info(f"hand drive {reason}")
 
     def _rc_band(self):
         """1 high, -1 low, 0 middle; None for a mission, a missing, stale or
@@ -317,15 +350,21 @@ class WinchNode(Node):
                     # Limits lifted: the operator is finding where they go.
                     self.cal_run_s += dt if self.manual == lower else -dt
                     self.payout += step if self.manual == lower else -step
+                    self._rc_note("paying out (calibration)" if self.manual == lower
+                                  else "winding in (calibration)")
                 elif self.manual == lower:
                     if self.limit and self.payout >= self.max_payout():
                         self.manual = 0          # at the calibrated paid-out limit
+                        self._rc_note("stopped: at the calibrated paid-out limit")
                     else:
                         self.payout = min(self.max_payout(), self.payout + step)
+                        self._rc_note("paying out")
                 elif self.limit and self.payout <= 0.0:
                     self.manual = 0              # at the calibrated wound-up limit
+                    self._rc_note("stopped: at the calibrated wound-up limit")
                 else:
                     self.payout = max(0.0, self.payout - step)
+                    self._rc_note("winding in")
             want = self.manual
         if want != self.motor.direction:
             self.motor.drive(want)
@@ -933,6 +972,7 @@ class WinchNode(Node):
             "measurement_age_s": None if self._measurement_t is None else max(0.0, self._now()-self._measurement_t),
             "rc_manual": getattr(self, "manual", 0),
             "rc_manual_ready": getattr(self, "rc_ready", False),
+            "rc_manual_reason": getattr(self, "rc_reason", ""),
             "mission_active": self.mission_active() if self.backend == "l298n" else None,
             "payout_basis": ("measured N20 encoder travel" if self.gpio is not None
                              else "measured winch joint" if self._measured() is not None

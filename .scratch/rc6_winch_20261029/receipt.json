@@ -1,0 +1,27 @@
+{
+  "feature": "rc6_winch_20261029",
+  "triage": "ready-for-human",
+  "problem": "Operator, 29 Oct 2026: 'mission planner is configures t[o] have se[r]vo til[t] on channel 8, the pi is making it tilt on channel 6 as well fix that and fix the issue where the dc motor stops spinning even though the channel 6 is up or down'.",
+  "found": {
+    "camera": "venue.yaml camera_ctrl rc_tilt_channel 6 (0c241e1): with no mission running the Pi sent channel 6's pulse to SERVO5 with DO_SET_SERVO, so the winch switch tilted the camera. The FC (live read, 29 Oct 02:48): SERVO5_FUNCTION 58 (RC8 passthrough, set by the operator in Mission Planner), SERVO5_MIN/MAX 1100/1900, RC8_DZ 0, RC8_OPTION 0, RC6_OPTION 0.",
+    "ardupilot_passthrough": "ArduPilot master AP_ServoRelayEvents::do_set_servo accepts k_rcin1..16 outputs, sets the pulse and calls ignore_small_rcin_changes(); SRV_Channel::output_ch then keeps it until the RC input differs by more than the channel's dead zone. So with SERVO5_FUNCTION 58 a Pi pose holds only while channel 8 stays still; RC8_DZ 0 hands the servo back on any change.",
+    "winch": "winch_ctrl dropped RC6 hand drive when /aerothon/rc/in was older than rc_timeout_s (0.5 s) and reset rc_ready, so it stayed stopped with the switch held until the switch was seen in the middle. The channels come from the FC's RC_CHANNELS, requested at 5 Hz by stream_rate_keeper, over the 115200 TELEM link, then rc_in_bridge: two late messages were enough. Until ~01:00 29 Oct the FC also forwarded the ELRS port's ~100/s RC overrides onto that link (osd_elrs_20261029 set MAV2_OPTIONS 2). Measured 29 Oct with the transmitter off: router 76 RC_CHANNELS in 15 s, worst gap 0.251 s; /aerothon/rc/in 97 in 20 s, worst gap 0.385 s. The L298N driver has no run-time limit; no winch limits are saved on the Pi. The winch did not log hand drive stops, so the observed stop is not attributed from logs.",
+    "fc_params_dump": "/home/pi5/.local/state/aerothon/deploy_20261027b/fc_params_20261029.json (00:51) and live read via deploy_20261029/fc_rc_read.py"
+  },
+  "change": [
+    "venue.yaml camera_ctrl rc_tilt_channel 0: the Pi passes no receiver channel; channel 8 tilts the camera on the FC. Channel 6 is the winch's hand drive only",
+    "aerothon_hardware.parm SERVO5_FUNCTION 58 and hardware_wiring.yaml servo_function 58, recording the operator's FC set-up and the RC8_DZ hold rule",
+    "winch_node: rc_loss_s 2.0. Channels silent past rc_timeout_s (0.5 s) pause hand drive; the switch still held when they return drives on. Silence past rc_loss_s or a failsafe value (<900 us) is a lost radio and still needs the middle; missions unchanged. Each hand drive change logged ('hand drive paying out', 'paused: ...', 'off: ...', limits) and reported as rc_manual_reason in /winch/status",
+    "stream_rate_keeper and scripts/set_stream_rates.py: RC_CHANNELS 5 -> 10 Hz (~0.27 kB/s more; table ~4.5 kB/s of ~11.5 kB/s)",
+    "MASTER_DOCUMENTATION.md camera tilt and RC6 hand drive sections; AGENTS.md hardware context",
+    "tests: test_l298n_winch brief gap pauses and drives on (fails on the old winch_node: rc_ready reset), failsafe then gap still needs the middle, hand drive reasons; test_gcs_calibrations venue rc_tilt_channel 0 / winch channel 6 / SERVO5_FUNCTION 58; test_world_sim_venue no longer replaces rc_tilt_channel"
+  ],
+  "tests": "affected (test_l298n_winch, test_gcs_calibrations, test_world_sim_venue, test_stream_rate_coverage, test_rc_in_bridge, test_launch_defaults): 73 passed, 2 skipped. Reduced suite: logs/rc6_winch_20261029/reduced_suite.log (running)",
+  "deploy_route": "deploy_pi_e.sh: the Pi's workspace is --symlink-install (build/winch_ctrl/winch_ctrl, build/mission_bringup/{mission_bringup,config/*}, build/camera_ctrl/camera_ctrl link into /workspace/src), and the change edits existing files only, so files are replaced and the runtime restarted, no colcon build. Tested on an extraction of pi-runtime-20261029.zip with a stubbed web API: 7 to change, backup, SOURCE VERIFIED 268, links reach src/, disconnect then connect vehicle; second dry run 0 to change; active task refused; a file added outside gcs/ refused",
+  "flight_source": "mission decisions unchanged; winch hand drive (no mission), camera receiver passthrough (off) and one stream rate changed",
+  "status": "implemented; affected tests passed; reduced suite running; not committed or deployed",
+  "blockers": [
+    "a Pi camera pose (mission, Camera cal) holds only while channel 8 is still: RC8_DZ 0 on the FC; RC8 jitter on this transmitter unmeasured",
+    "the hand drive fix and 10 Hz channels are to be confirmed on the aircraft with the transmitter on: hold RC6 and watch rc_manual_reason / the runtime log"
+  ]
+}

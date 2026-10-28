@@ -23,8 +23,8 @@ SIM_ONLY = {("mission_bt", "search_brake_mps2"), ("mission_bt", "crossing_strip_
             ("velocity_controller", "clearance_floor_m")}
 # Aircraft values the simulation must replace: its SITL flight controller has a
 # camera mount on the Gazebo joint (the aircraft's Pi drives SERVO5 itself,
-# 27 Oct 2026), and it has no receiver to pass through.
-SIM_REPLACES = {("camera_ctrl", "fc_output"): "mount", ("camera_ctrl", "rc_tilt_channel"): 0}
+# 27 Oct 2026). Neither passes a receiver channel to the camera (29 Oct).
+SIM_REPLACES = {("camera_ctrl", "fc_output"): "mount"}
 
 
 def params(path):

@@ -1457,22 +1457,27 @@ acceptance. Observe each pose and measure worst-move settlement.
 
 The tilt servo is on SERVO5 (MAIN OUT 5) and **the Pi sets its pulse width
 itself** with `MAV_CMD_DO_SET_SERVO` (27 Oct 2026; `camera_ctrl`
-`fc_output: servo` in `venue.yaml`). The FC must leave the output free:
-`SERVO5_FUNCTION 0`, no mount (`aerothon_hardware.parm`). Two FC set-ups
-failed on the aircraft first: `SERVO5_FUNCTION 56` (RC6 passthrough) rewrote
-the output from the receiver every loop and `MNT1_TYPE 0` refused every
-mount command (result 4); then a servo mount (`MNT1_TYPE 1`) compensated an
-attitude the FC read as 31 deg nose-up on the bench and squeezed forward /
-45 / down into 1529 / 1202 / 1100 us. Driving the pulse directly keeps the
-FC's lean compensation and level calibration out of the camera.
+`fc_output: servo` in `venue.yaml`), with no mount (`aerothon_hardware.parm`).
+Two FC set-ups failed on the aircraft first: `SERVO5_FUNCTION 56` (RC6
+passthrough) took the output back from the Pi whenever RC6, the winch switch,
+moved, and `MNT1_TYPE 0` refused every mount command (result 4); then a servo
+mount (`MNT1_TYPE 1`) compensated an attitude the FC read as 31 deg nose-up
+on the bench and squeezed forward / 45 / down into 1529 / 1202 / 1100 us.
+Driving the pulse directly keeps the FC's lean compensation and level
+calibration out of the camera.
 
-The receiver still tilts the camera: `camera_ctrl` passes `rc_tilt_channel`
-(channel 6, the operator's) through to the servo whenever no mission runs,
-once the stick or switch has moved since the Pi last commanded the camera
-(a Camera cal pose or the end of a mission is not undone by a stick left
-where it was). During a mission the receiver is ignored. **Channel 6 is also
-the winch's hand drive** (`winch_ctrl rc_manual_channel`): moving it tilts the
-camera and runs the winch together.
+**The receiver tilts the camera on the FC, on channel 8** (operator, 29 Oct
+2026: Mission Planner `SERVO5_FUNCTION 58`, RC8 passthrough). The Pi passes
+no receiver channel (`camera_ctrl rc_tilt_channel 0`); until 29 Oct it passed
+channel 6, so the winch switch tilted the camera as well. ArduPilot keeps a
+`DO_SET_SERVO` pulse on a passthrough output until that channel moves by more
+than its dead zone (`SRV_Channel::output_ch`, `ignore_small_rcin_changes`):
+a Pi pose, Camera cal included, holds only while channel 8 stays still, and
+with `RC8_DZ 0` any change in channel 8 hands the servo back to the stick.
+Leave channel 8 alone during a mission, or give it a dead zone (`RC8_DZ`)
+wider than its jitter; that is unmeasured on this transmitter.
+`camera_ctrl` can still pass a channel through the Pi (`rc_tilt_channel` N)
+for an FC with `SERVO5_FUNCTION 0`.
 
 Uncalibrated, forward is 1500 us and each degree down 5.56 us less (straight
 down 1000 us), within `servo_pwm_min..max` (800..2200 us). **GCS Camera cal**
@@ -1588,7 +1593,14 @@ RC channel 6, a three-position switch, drives the motor by hand (high one
 way, low the other, middle stop) only while no mission runs; channel 5 on
 this transmitter has two positions and no stop. After startup, a mission or
 a lost radio the switch must be seen in the middle before it drives at all
-(25 Oct: a switch left at an end lowered the line at boot). **During an
+(25 Oct: a switch left at an end lowered the line at boot). The channels
+reach the Pi from the FC (`RC_CHANNELS`, requested at 10 Hz; 5 Hz until
+29 Oct). Silent past `rc_timeout_s` (0.5 s), hand drive pauses; it drives on
+when they return with the switch still held. Only silence past `rc_loss_s`
+(2 s) or a failsafe value counts as a lost radio (29 Oct: one gap stopped
+the motor with RC6 held until the switch went back to the middle). Each
+change is logged as `hand drive ...` and reported as `rc_manual_reason` in
+`/winch/status`. **During an
 autonomous mission the switch is ignored completely; fly with it in the
 middle**, so it neither drives the motor before Start nor waits for the
 middle again afterwards. On the FC channel 6 must do nothing: `RC6_OPTION 0`,

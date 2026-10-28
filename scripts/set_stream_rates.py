@@ -40,7 +40,7 @@ MAV_CMD_SET_MESSAGE_INTERVAL = 511
 # get the highest rate; the rest are sized to goal.md's stated needs.
 # Budget: the measured link is TELEM3 at 115200 baud, about 11.5 kB/s. The
 # previous table asked for ~7.2 kB/s (62%) before Mission Planner's own
-# streams, and gaps in velocity aborted gate braking. This one is ~4.2 kB/s;
+# streams, and gaps in velocity aborted gate braking. This one is ~4.5 kB/s;
 # 25 Hz pose still leaves every freshness window (0.2-0.7 s) many samples.
 DESIRED = {
     30:  25.0,   # ATTITUDE            - attitude rail + control loop
@@ -52,7 +52,7 @@ DESIRED = {
     2:    2.0,   # SYSTEM_TIME
     27:   2.0,   # RAW_IMU: magnetometer diagnostics only
     241:  2.0,   # VIBRATION: operator diagnostics only
-    65:   5.0,   # RC_CHANNELS         - RC / failsafe state
+    65:  10.0,   # RC_CHANNELS         - RC / failsafe state, RC6 hand drive
     36: 20.0,    # SERVO_OUTPUT_RAW for delivery load assessment (calibrated at 20)
     193:  2.0,   # EKF_STATUS_REPORT   - EKF health (Q27 interlock)
     242:  1.0,   # HOME_POSITION       - organiser fence and zone are resolved about home

@@ -5,7 +5,7 @@ flight_controller: CUAV X7+
 camera_tilt:
   control_owner: camera_ctrl_via_mavros
   ardupilot_output: 5  # Operator, 24 Oct 2026: SERVO5 / MAIN OUT 5 (was SERVO9).
-  servo_function: 7  # Mount pitch; actual angle/PWM calibration is pending.
+  servo_function: 58  # Operator, 29 Oct 2026: RC8 passthrough; the Pi's DO_SET_SERVO holds until RC8 moves.
   connection_confirmed_by_user: true
   hardware_measured: false
 winch:

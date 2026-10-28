@@ -289,9 +289,13 @@ def test_the_aircraft_venue_drives_servo_5_from_the_pi():
     config = os.path.join(ROOT, "src", "aerothon_mission", "mission_bringup", "config")
     camera_params = yaml.safe_load(open(os.path.join(config, "venue.yaml")))["camera_ctrl"]["ros__parameters"]
     assert camera_params["fc_output"] == "servo" and camera_params["servo_channel"] == 5
-    assert camera_params["rc_tilt_channel"] == 6
+    # Operator, 29 Oct 2026: channel 8 tilts the camera on the FC (SERVO5_FUNCTION
+    # 58); the Pi passing channel 6 as well tilted it with the winch's switch.
+    assert camera_params["rc_tilt_channel"] == 0
+    winch = yaml.safe_load(open(os.path.join(config, "venue.yaml")))["winch_ctrl"]["ros__parameters"]
+    assert winch["rc_manual_channel"] == 6
     parm = open(os.path.join(config, "aerothon_hardware.parm"), encoding="utf-8").read()
-    assert "\nSERVO5_FUNCTION 0\n" in parm and "\nMNT1_TYPE 0\n" in parm
+    assert "\nSERVO5_FUNCTION 58\n" in parm and "\nMNT1_TYPE 0\n" in parm
     sim_venue = yaml.safe_load(open(os.path.join(ROOT, "src", "aerothon_sim", "sim_gazebo", "config",
                                                  "world_sim_venue.yaml")))
     assert sim_venue["camera_ctrl"]["ros__parameters"]["fc_output"] == "mount", \

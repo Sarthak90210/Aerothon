@@ -17,12 +17,15 @@
 
 # Camera tilt: a hobby servo on SERVO5 whose pulse width the Pi sets with
 # MAV_CMD_DO_SET_SERVO (operator, 27 Oct 2026; camera_ctrl fc_output servo).
-# No mount: the output must be free, or the FC overwrites the Pi's pulse
-# every loop (56, RC6 passthrough, did). The receiver still tilts the camera
-# through the Pi (camera_ctrl rc_tilt_channel). GCS Camera cal records the
-# pulse width for forward, 45 deg and straight down.
+# No mount. The receiver's channel 8 tilts it on the FC (operator, 29 Oct
+# 2026: SERVO5_FUNCTION 58, RC8 passthrough); the Pi passes no channel
+# (camera_ctrl rc_tilt_channel 0). ArduPilot keeps a DO_SET_SERVO pulse on a
+# passthrough output until that channel moves by more than its RCn_DZ, so a
+# Pi pose holds only while channel 8 stays still: RC8_DZ 0 hands the servo
+# back on any change. GCS Camera cal records the pulse width for forward,
+# 45 deg and straight down.
 MNT1_TYPE 0
-SERVO5_FUNCTION 0
+SERVO5_FUNCTION 58
 # The former camera output is released.
 SERVO9_FUNCTION 0
 

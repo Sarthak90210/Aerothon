@@ -12,6 +12,7 @@ selects RC6, its three-position switch (channel 5 there has two positions).
     python3 -m pytest sim/test_l298n_winch.py -v
 """
 
+import json
 import os
 import sys
 import unittest
@@ -220,6 +221,55 @@ class NodeTests(unittest.TestCase):
         self.rc(1000)
         self.tick()
         self.assertEqual(self.node.motor.direction, STOP, 'a failsafe value needs the middle again')
+
+    def test_a_brief_gap_in_the_channels_pauses_and_the_held_switch_drives_on(self):
+        # Aircraft, 29 Oct 2026: the motor stopped with RC6 held and stayed
+        # stopped. The channels arrive at 5-10 Hz over the FC link; a gap past
+        # rc_timeout_s (0.5 s) dropped the hand drive and demanded the middle.
+        for us, way in ((2000, FORWARD), (1000, REVERSE)):
+            self.centre()
+            self.rc(us)
+            self.tick()
+            self.assertEqual(self.node.motor.direction, way)
+            self.node._rc = (self.node._rc[0], self.node._now() - 0.8)   # silent 0.8 s
+            self.tick()
+            self.assertEqual(self.node.motor.direction, STOP, "a stale radio still pauses it")
+            self.assertTrue(self.node.rc_ready, "a brief gap is not a lost radio")
+            self.assertIn("paused", self.node.rc_reason)
+            self.rc(us)                                    # the channels return, switch held
+            self.tick()
+            self.assertEqual(self.node.motor.direction, way, us)
+        self.node._rc = (self.node._rc[0], self.node._now() - 2.5)       # past rc_loss_s: lost
+        self.tick()
+        self.rc(1000)
+        self.tick()
+        self.assertEqual(self.node.motor.direction, STOP, "a lost radio still needs the middle")
+
+    def test_a_brief_gap_after_a_failsafe_value_still_needs_the_middle(self):
+        self.centre()
+        self.rc(2000)
+        self.tick()
+        self.rc(0)                                         # failsafe / no signal
+        self.tick()
+        self.node._rc = (self.node._rc[0], self.node._now() - 0.8)
+        self.tick()
+        self.rc(2000)
+        self.tick()
+        self.assertEqual(self.node.motor.direction, STOP)
+
+    def test_hand_drive_logs_what_it_is_doing(self):
+        self.centre()
+        self.assertEqual(self.node.rc_reason, "stopped: switch in the middle")
+        self.rc(2000)
+        self.tick()
+        self.assertEqual(self.node.rc_reason, "paying out")
+        self.rc(1000)
+        self.tick()
+        self.assertEqual(self.node.rc_reason, "winding in")
+        sent = []
+        self.node.pub_status.publish = sent.append
+        self.node.publish_status()
+        self.assertEqual(json.loads(sent[-1].data)["rc_manual_reason"], "winding in")
 
     def test_a_switch_left_at_either_end_never_starts_the_motor(self):
         # Aircraft, 25 Oct 2026: channel 5 at LOW when the runtime connected
