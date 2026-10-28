@@ -1,0 +1,27 @@
+{
+  "feature": "pi_deploy_20261029",
+  "triage": "ready-for-human",
+  "problem": "Operator, 29 Oct 2026: 'Deploy to Pi' -- the GCS calibration-confirm fix (ff927f5, receipt .scratch/gcs_review_20261029) onto the Pi running 0c241e1 (pi-runtime-20261027.zip).",
+  "bundle": "logs/pi-runtime-20261029.zip, built from the working tree at 37df059 (src, scripts and both guides equal to HEAD; GCS dist built 29 Oct 00:59 from this source): 268 files, 2250701 bytes, sha256 69f05acde731e69ccf58d3bf5528df02d3bd8f8674049e133ae8f08ef2e7dba4; exactly AGENTS.md and MASTER_DOCUMENTATION.md; manifest camera_servo_output 5; served gcs/index.html -> assets/index-noRR-Y6Q.js, which carries 'Apply camera calibration: forward'; 54 satellite and 54 tile files",
+  "against_installed": "vs pi-runtime-20261027.zip (0c241e1, on the Pi): changed MASTER_DOCUMENTATION.md, gcs/index.html and six hashed GCS assets; six old GCS assets not carried; no ROS package file differs",
+  "route": "deploy_pi_d.sh, GCS and guides only: web_host serves /workspace/gcs directly (scripts/pi_runtime/run_container.sh), so the runtime is not stopped and nothing is rebuilt -- the unapplied Camera cal draft and the FC link stay, and the full-load colcon build that resets this Pi on its supply is avoided. Refuses an active task, a running runtime without can_disconnect, and any changed file outside gcs/ and the guides. Backs up gcs/, runtime_manifest.json and both guides first; index.html is written last; every manifest digest is verified after.",
+  "script_test": "29 Oct, WSL, on an extraction of pi-runtime-20261027.zip with the state check stubbed: dry run 8 to change, 6 stale; apply: backup written, SOURCE VERIFIED 268 files, changed 8, removed 6 stale GCS; second dry run 0 to change; a modified src/aerothon_runtime/.../web.py REFUSED; an execution in state Running refused",
+  "status": "deployed (GCS and guides only; runtime not restarted, nothing rebuilt); served GCS verified from the laptop",
+  "blockers": [
+    "Pi undervoltage persists (throttled 0x50000 within a minute of boot)",
+    "Camera cal pose accuracy on the aircraft (2050/1590/1000 us) is the operator's judgement; not independently measured"
+  ],
+  "destination": "pi5@192.168.137.193 on the laptop Windows hotspot (operator turned it on, 29 Oct); booted 02:41:56 IST, throttled=0x50000 from boot; runtime Running on profile vehicle, fresh, can_disconnect true, no execution; installed bundle was 0c241e1 (served index-C1822yjO.js)",
+  "steps": [
+    "bundle and deploy_pi_d.sh (sha256 481431ef...0f6087) copied to /home/pi5/.local/state/aerothon/deploy_20261029; bundle sha256 verified on the Pi",
+    "dry run on the Pi: 8 to change, 6 stale GCS, identical to the local test",
+    "install 02:43:01 IST, runtime left running: backup before_20261029T024301.tar.gz sha256 6852fffe41ee2f1d0842dfa422ab24b05fbc393167026031e361f93bc81e046d; SOURCE VERIFIED 268 files, changed 8, removed 6 stale GCS; install.log on the Pi"
+  ],
+  "verified": [
+    "from the laptop, http://192.168.137.193:8899/ serves index-noRR-Y6Q.js and index-CzwtM7HN.css; the served script is byte-identical to the bundle (sha256 36caf07a...e1d5ad) and carries the labelled Camera cal confirmation; the old index-C1822yjO.js URL returns the 397-byte index.html fallback, and gcs/assets holds only the six new files",
+    "the browser pane on the Pi GCS loads the new script: Drone (Pi UART0), Live, STABILIZE, disarmed, battery 98%, sats 0, task idle",
+    "Camera cal window (opened and closed, nothing sent): servo output in us, 800-2200; in force forward 2050, 45 down 1590, straight down 1000 us, saved calibration camera_tilt.json",
+    "runtime still Running, fresh, no execution after the install; throttled 0x50000 unchanged"
+  ],
+  "camera_cal_found": "camera_tilt.json on the Pi saved 2026-10-28T19:16:48Z (00:46:48 IST 29 Oct): FORWARD 2050, ALIGN 1590, NADIR 1000 us. One camera_cal apply in commands.sqlite (a8d6b106..., confirm true), result Outcome unknown because the web service restarted afterwards; the file and the GCS show it in force. Applied before this deploy, through the earlier GCS; the dialog fix makes the next apply visible."
+}
