@@ -1,0 +1,11 @@
+{
+  "feature": "sim_rerun_20261029",
+  "triage": "ready-for-human",
+  "problem": "Operator, 29 Oct 2026: 'on the current code base run a simulation directly on my machine on the last run that passed and see if everything still works fine'.",
+  "reference": "r19_follow (26 Oct 2026, aerothon26_field_red_near_c, target pad c, source ac75470, world_sim_venue search_speed_override_mps 0.0 for the run): PASS 14 FAIL 0; flight 347.9 s, closest red 2.11 m, drop error 0.21 m, landed 0.41 m from home",
+  "run": "r20_current: same world, target and driver (regressions.sh -> field_run.sh -> sim/check_track.py, copied to driver/ from the 26 Oct session), source 72c00c8 with only the run's override in the tree; override set CRLF-safe and checked (the venue file now has CRLF line ends; the 26 Oct sed would not have matched), restored to 5.56 afterwards. World maker laptop simulation with the Gazebo window, 04:17-05:05 IST",
+  "result": "PASS 14 FAIL 0 (logs/sim_rerun_20261029/aerothon26_field_red_near_c_r20_current/grade.txt): COMPLETED, landed and disarmed; delivery 0.20 m from the pad centre (check_track drop error 0.19 m at 4.93 m); no red-zone entry, closest red 2.37 m; inside the geofence; both corridor lanes flown through; flight 536.9 s (limit 900); landed 0.15 m from home; chase.mp4",
+  "difference": "Stages matched r19 in order and timing (about 10 s later) up to SEARCH_QR. The search lasted 206 s (183 -> 389 s) against r19's 31 s: red-zone fragments of the one square were confirmed mid-sweep six times (r19 once), each re-planning the sweep, and twice the segment was invalidated (brake, re-plan). Flight-decision code (mission_bt, avoidance, perception) is unchanged since ac75470; the simulation ran at ~0.13x real time against r19's ~0.33x, which moves where detections land. Not separately proven",
+  "status": "rerun passed on the current source; simulator stopped through the world maker",
+  "blockers": ["search duration depends on when red fragments are confirmed; a faster or slower host changes it (r19 31 s, r20 206 s)"]
+}
