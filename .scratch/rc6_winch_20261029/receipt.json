@@ -19,9 +19,32 @@
   "tests": "affected (test_l298n_winch, test_gcs_calibrations, test_world_sim_venue, test_stream_rate_coverage, test_rc_in_bridge, test_launch_defaults): 73 passed, 2 skipped. Reduced suite: logs/rc6_winch_20261029/reduced_suite.log (running)",
   "deploy_route": "deploy_pi_e.sh: the Pi's workspace is --symlink-install (build/winch_ctrl/winch_ctrl, build/mission_bringup/{mission_bringup,config/*}, build/camera_ctrl/camera_ctrl link into /workspace/src), and the change edits existing files only, so files are replaced and the runtime restarted, no colcon build. Tested on an extraction of pi-runtime-20261029.zip with a stubbed web API: 7 to change, backup, SOURCE VERIFIED 268, links reach src/, disconnect then connect vehicle; second dry run 0 to change; active task refused; a file added outside gcs/ refused",
   "flight_source": "mission decisions unchanged; winch hand drive (no mission), camera receiver passthrough (off) and one stream rate changed",
-  "status": "implemented; affected tests passed; reduced suite running; not committed or deployed",
+  "status": "deployed 9fe0860 and checked on the aircraft; FC output 5 freed for the Pi and verified; records committed",
   "blockers": [
-    "a Pi camera pose (mission, Camera cal) holds only while channel 8 is still: RC8_DZ 0 on the FC; RC8 jitter on this transmitter unmeasured",
-    "the hand drive fix and 10 Hz channels are to be confirmed on the aircraft with the transmitter on: hold RC6 and watch rc_manual_reason / the runtime log"
-  ]
+    "no winch limits on the Pi: hand drive pays out without end; Winch cal paid-out limit needed short of the line end (mission needs >= 1.5 m of line: min_calibrated_payout_m)",
+    "MAV3_RC_CHAN 2 on the FC lets RC_CHANNELS fall to 2 Hz when the interval is reset; proposed MAV3_RC_CHAN 10 awaits the operator",
+    "Pi power resets (operator deferred)",
+    "RC_CHANNELS bursts at 2 Hz for ~6 s every 30-40 s at the Pi (not the keeper); cause unknown; the winch pauses during them",
+    "operator reports the payload rose after ~2 s with RC6 held down while the recording shows RC6 988 then 2011: check the radio channel monitor while holding the switch"
+  ],
+  "commit": "9fe0860",
+  "deployed": "29 Oct 03:09 IST: pi-runtime-20261029b.zip (sha256 707d7747...7822a6, source 9fe0860) by deploy_pi_e.sh on the Pi: backup before_20261029T030904.tar.gz sha256 70337522...4519d2, SOURCE VERIFIED 268 files, 7 changed, links reach src/, runtime disconnected and reconnected to vehicle, no rebuild",
+  "verified_on_aircraft": [
+    "ros2 param get /camera_ctrl rc_tilt_channel: 0; /winch/status carries rc_manual_reason (new winch_node running)",
+    "router (traffic.py, 15 s, 03:11): RC_CHANNELS 9.1 Hz, SERVO_OUTPUT_RAW 18 Hz, ATTITUDE 9.8 Hz, FC 3.25 kB/s; GET_MESSAGE_INTERVAL RC_CHANNELS 100000 us. Within ~1 min of the runtime start (MAVROS start-up traffic) RC_CHANNELS fell to 2.3 Hz",
+    "hand_drive_probe.py record (deploy_20261029b/hand_drive_0311.log): operator moved RC8 (988/1500/2011) with RC6 at 1500, winch idle: camera and winch channels separate",
+    "same log: the winch followed RC6 exactly: 988 -> rc_manual -1 paying out, 2011 -> +1 winding in, 1500 -> stopped; every down period (1.9-2.5 s) stayed paying out until RC6 changed. Operator: the payload rose after ~2 s with the switch held down. The Pi never reversed with RC6 at 988: consistent with the line running off the spool and winding back on (uncalibrated estimate ~0.3 m/s, ~0.6 m in 2 s); spool direction to be watched to confirm",
+    "periods of RC_CHANNELS at exactly 2 Hz (0.50 s gaps) at the Pi, matching FC MAV3_RC_CHAN 2: the per-message interval appears to be reset to the port stream rate at times; with rc_loss_s the winch paused (logged twice) instead of latching"
+  ],
+  "power": "Pi cold power-ons (power_reset 0) at ~02:17:46 (volt log ends at 4.94 V) and 03:03:37 (kernel Undervoltage detected 03:03:39); throttled 0x50000 each boot. A reset stops the motor and hand drive waits for the middle after it",
+  "operator_requirement": "Operator, 29 Oct 2026: 'i want the servo to be tilted by the pi, by sending pwm signals to the servo output 5 and i just want the pi to read the pwm signal from rc channel 6 and then just rotate the motor i dont want both of these to collide with each other'; then 'Yes, set it' (SERVO5_FUNCTION 0, MNT1_TYPE 0)",
+  "scout": {
+    "servo_output_5": "only camera_ctrl sends to it (MAV_CMD_DO_SET_SERVO, servo_channel 5); DO_WINCH only in winch_ctrl's unused mavlink backend; nothing sends RC_CHANNELS_OVERRIDE; MAVROS rc_io and gimbal_control plugins loaded, nothing publishes to them",
+    "rc_channels": "/aerothon/rc/in (rc_in_bridge) read by winch_ctrl (rc_manual_channel 6, acts), camera_ctrl (rc_tilt_channel 0, no subscription), execution_node (profile rc_config {} on the drone: no takeover or stick channel), readiness_node (failsafe only)",
+    "motor_pins": "only winch_ctrl (one process, backend l298n, BCM 18/23/24) uses lgpio",
+    "fc": "outputs 1-4 motors (33-36); SERVO5_FUNCTION 58 (RC8 passthrough) took output 5 back from the Pi; MNT1_TYPE 7 with no mount output; RC6_OPTION 0, no RCIN6 output, FLTMODE_CH 7, TUNE 0"
+  },
+  "fc_changes": "29 Oct ~03:24 IST, FC disarmed, through the router (deploy_20261027b/fc_set_params.py): SERVO5_FUNCTION 58 -> 0, MNT1_TYPE 7 -> 0, both read back (logs/rc6_winch_20261029/fc_set_servo5_0.log). MNT1_TYPE takes effect at the next FC boot",
+  "servo5_verified": "servo5_hold_check.py inside the runtime (logs/rc6_winch_20261029/servo5_hold_check.log): before, output 5 held RC8's last 2011 us; poses through camera_ctrl /camera/set_pose: ALIGN 1590, NADIR 1000, FORWARD 2050 us, each read on /mavros/rc/out channel 5 unchanged for 3 s (60 samples at 20 Hz). The first FORWARD was not resent (camera_ctrl already at FORWARD). Left at FORWARD",
+  "records": "aerothon_hardware.parm and hardware_wiring.yaml back to SERVO5_FUNCTION 0 (58 recorded earlier on 29 Oct); venue.yaml comment (values unchanged); guide and AGENTS; test_gcs_calibrations checks SERVO5_FUNCTION 0 in both records"
 }

@@ -19,7 +19,7 @@ set -euo pipefail
 ws=/home/pi5/aerothon_ws
 task=/home/pi5/.local/state/aerothon/deploy_20261029b
 archive=$task/pi-runtime-20261029b.zip
-want=WANT_SHA256
+want=707d7747a3f735a587e4ef14a47e43a5c0b0764bac13937176687ffc877822a6
 api=http://127.0.0.1:8899
 echo "$want  $archive" | sha256sum -c -
 

@@ -1466,18 +1466,18 @@ on the bench and squeezed forward / 45 / down into 1529 / 1202 / 1100 us.
 Driving the pulse directly keeps the FC's lean compensation and level
 calibration out of the camera.
 
-**The receiver tilts the camera on the FC, on channel 8** (operator, 29 Oct
-2026: Mission Planner `SERVO5_FUNCTION 58`, RC8 passthrough). The Pi passes
-no receiver channel (`camera_ctrl rc_tilt_channel 0`); until 29 Oct it passed
-channel 6, so the winch switch tilted the camera as well. ArduPilot keeps a
-`DO_SET_SERVO` pulse on a passthrough output until that channel moves by more
-than its dead zone (`SRV_Channel::output_ch`, `ignore_small_rcin_changes`):
-a Pi pose, Camera cal included, holds only while channel 8 stays still, and
-with `RC8_DZ 0` any change in channel 8 hands the servo back to the stick.
-Leave channel 8 alone during a mission, or give it a dead zone (`RC8_DZ`)
-wider than its jitter; that is unmeasured on this transmitter.
-`camera_ctrl` can still pass a channel through the Pi (`rc_tilt_channel` N)
-for an FC with `SERVO5_FUNCTION 0`.
+**Only the Pi tilts the camera; channel 6 only drives the winch** (operator,
+29 Oct 2026). The FC leaves output 5 free (`SERVO5_FUNCTION 0`, `MNT1_TYPE
+0`) and the Pi passes no receiver channel (`camera_ctrl rc_tilt_channel 0`).
+Two set-ups collided on 29 Oct: the Pi passed channel 6 to the servo, so the
+winch switch tilted the camera, and `SERVO5_FUNCTION 58` (RC8 passthrough)
+took the servo back from the Pi whenever channel 8 moved. ArduPilot keeps a
+`DO_SET_SERVO` pulse on a passthrough output only until that channel moves
+past its dead zone (`SRV_Channel::output_ch`, `ignore_small_rcin_changes`).
+Checked on the aircraft after the change: poses through `camera_ctrl` held
+on output 5 for 3 s each at 1590, 1000 and 2050 us. `camera_ctrl` can still
+pass a channel through the Pi (`rc_tilt_channel` N) if hand tilt is wanted
+again.
 
 Uncalibrated, forward is 1500 us and each degree down 5.56 us less (straight
 down 1000 us), within `servo_pwm_min..max` (800..2200 us). **GCS Camera cal**
