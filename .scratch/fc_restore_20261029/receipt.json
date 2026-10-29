@@ -1,0 +1,26 @@
+{
+  "feature": "fc_restore_20261029",
+  "triage": "ready-for-human",
+  "problem": "Operator, 29 Oct 2026 evening: 'configure the params again on the fc i reset them configure them so that the servo again works'; then 'your only job is to configure the params in fc so thaat all the i functions work'; 'the servo is conencted on servo output 5 b but it still does not work'.",
+  "found": {
+    "pi": "192.168.137.193 (laptop hotspot); reset by itself on power at ~21:07, ~21:09:50, ~21:15:30 and ~21:40 (throttled 0x50000); router sole owner of /dev/ttyAMA0 at 115200, GPIO14 TXD0 / GPIO15 RXD0",
+    "link_fault": "21:17-21:28 the FC's heartbeats reached the Pi as MAVLink 1 (0xFE) and nothing the Pi sent was answered (no PARAM_VALUE, COMMAND_ACK or AUTOPILOT_VERSION, MAVLink 1 or 2): the FC received nothing from the Pi, so the Pi's DO_SET_SERVO tilt commands could not reach it. By 21:45 (after the Pi's ~21:40 boot; the FC itself up since ~21:07, not rebooted) the FC answered in MAVLink 2 with full streams. Cause not identified: Pi side on those boots or the Pi TX -> FC TELEM3 RX wire (header pin 8)",
+    "servo_params": "SERVO5_FUNCTION 0 and MNT1_TYPE 0 were already in place after the reset (their defaults); the servo failed for the link, not a parameter",
+    "one_heartbeat": "one heartbeat at 21:17 read ARMED; every later one disarmed"
+  },
+  "restore_file": "fc_restore_20261029.param, 1270 parameters, sha256 a0b80f27...734c1c: the 00:51 full read (1298) with the later read-back changes (osd_elrs ~01:00: SERIAL1_PROTOCOL 2, MAV2_RAW_SENS/EXT_STAT/RC_CHAN/POSITION/EXTRA1/EXTRA2/EXTRA3 1, MAV2_OPTIONS 2, BRD_SER2_RTSCTS 0; rc6_winch 03:20: SERVO5_FUNCTION 0, MNT1_TYPE 0). Left out: STAT_*, FORMAT_VERSION, device IDs, baro ground values (build_restore.py)",
+  "written": [
+    "pass 1, USB COM25 from the laptop (Mission Planner disconnected by the operator), 21:52 IST: FC had 1052 parameters; 119 written and read back (accelerometer, gyro, compass, level calibrations; RC1-14 ranges; FLTMODE3/4/6, FLTMODE_CH 7; FS_THR_ENABLE 1; MOT_THST_HOVER; RTL_ALT_M 15; SERIAL1 2/460 ELRS, SERIAL2 42/115 DJI OSD, SERIAL7_BAUD 57, BRD_SER2_RTSCTS 0; MAV1 rates 0; MAV2 ELRS rates and options; OSD_TYPE 5, MSP_OPTIONS 4, RSSI_TYPE 5); MIS_TOTAL refused (mission count, not configuration) (pass1_usb.log)",
+    "through the Pi router, 21:46-21:48 Pi clock (restore_seq.sh, runtime disconnected meanwhile): pass A 0 to write; MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN ack 0, heartbeat back in 7 s; pass B 16 written (gyro offsets the boot recalibration had replaced, which it will replace again; MAV3 stream rates back to the reference 0, the runtime requests its own); 19 MNT1_* absent by design (MNT1_TYPE 0); runtime reconnected"
+  ],
+  "read_back": "SERVO5_FUNCTION 0, MNT1_TYPE 0, SERIAL1 2/460, SERIAL2 42/115, SERIAL5 2/115 options 0, MAV2_OPTIONS 2, OSD_TYPE 5, FLTMODE_CH 7, FS_THR_ENABLE 1, FRAME_CLASS 1, GPS1_TYPE 9",
+  "verified": [
+    "servo5_hold_check.py in the runtime (servo5_hold_check_after_restore.log): camera_ctrl poses ALIGN 1590, NADIR 1000, FORWARD 2050 us each held by FC output 5 for 3 s (60 samples at 20 Hz, no spread); the first sample 2011 us was channel 8 passed through. Left at FORWARD",
+    "fc_rc_check.py at the router: RC_CHANNELS 10.1 Hz, chancount 0 (ELRS MAVLink mode), rssi 254, ch1-9 1500 1500 988 1500 988 988 2011 2011 988; output 5 2050"
+  ],
+  "status": "FC configuration restored and read back; servo output 5 follows the Pi. Operator, 29 Oct ~22:00 IST, flipping channel 8: 'Yes, it tilts'",
+  "blockers": [
+    "the Pi-to-FC uplink fault was not explained; if the FC stops answering again, check the Pi header pin 8 -> TELEM3 RX wire",
+    "Pi power resets (throttled 0x50000)"
+  ]
+}
