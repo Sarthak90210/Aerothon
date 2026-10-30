@@ -35,11 +35,13 @@ from gcs_aggregator.readiness_node import RateMeter, Readiness
 
 
 class DeliveryBoundaryReadinessTests(unittest.TestCase):
-    def test_irregular_boundary_does_not_pass_readiness(self):
+    def test_irregular_boundary_passes_only_when_convex(self):
+        # A zone pegged out on the ground is not square to north (30 Oct
+        # 2026): a convex quadrilateral is searched as its polygon; a dart,
+        # one corner pushed into the field, is still refused.
         node = Readiness.__new__(Readiness)
         node.obs = {}
         node.home = SimpleNamespace(geo=SimpleNamespace(latitude=0.0, longitude=0.0))
-        # Four distinct WGS84 coordinates, but one corner cuts into the field.
         payload = {"vertices": [
             {"lat": 0.0, "lon": 0.0},
             {"lat": 0.0, "lon": 0.0003},
@@ -47,8 +49,12 @@ class DeliveryBoundaryReadinessTests(unittest.TestCase):
             {"lat": 0.0003, "lon": 0.0},
         ]}
         node._on_delivery_zone(SimpleNamespace(data=json.dumps(payload)))
+        self.assertTrue(node.obs["delivery_zone_valid"])
+        self.assertIn("turned polygon", node.obs["delivery_zone_value"])
+        payload["vertices"][2] = {"lat": 0.0001, "lon": 0.0001}
+        node._on_delivery_zone(SimpleNamespace(data=json.dumps(payload)))
         self.assertFalse(node.obs["delivery_zone_valid"])
-        self.assertIn("rectangle", node.obs["delivery_zone_reason"])
+        self.assertIn("convex", node.obs["delivery_zone_reason"])
 
     def test_boundary_waits_for_home_and_invalid_replacement_revokes_readiness(self):
         node = Readiness.__new__(Readiness)

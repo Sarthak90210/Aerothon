@@ -404,6 +404,19 @@ def return_entrance(spec):
     return (float(r["x"]), float(r["y"]))
 
 
+def course_points(spec):
+    """The operator's optional course points for a world: home (the spawn),
+    the entry lane's home-side and zone-side mouths, the exit lane's
+    zone-side and home-side mouths, each on its centreline."""
+    r = spec["return_corridor"]
+    exit_home = _place((float(r["length"]), 0.0), r["x"], r["y"],
+                       math.radians(r["yaw_deg"]))
+    c = spec["corridor"]
+    return {"home": spawn_point(spec),
+            "entry": [(float(c["x"]), float(c["y"])), corridor_exit(spec)],
+            "exit": [return_entrance(spec), exit_home]}
+
+
 def obstacle_polygons(spec):
     """Every return-lane obstacle as a world polygon."""
     r = spec["return_corridor"]

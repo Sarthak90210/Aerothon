@@ -63,7 +63,7 @@ def node_cmd(module, params):
 
 def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigation_only=False,
         injected_command_delay_s=.4, gcs_preset=None, gcs_create_from=None,
-        gcs_create_from_file=None, fence_only=None):
+        gcs_create_from_file=None, fence_only=None, course_points=False):
     if not math.isfinite(injected_command_delay_s) or injected_command_delay_s<0:
         raise ValueError('Injected command delay must be finite and nonnegative')
     spec = W.load(spec_path)
@@ -81,12 +81,21 @@ def fly(spec_path, conditions, seed, out_root, rtf, max_sim_s, domain, navigatio
         arena_dimensions=('GCS preset ' + repr(gcs_preset)) if gcs_preset
             else 'launch parameters from the world spec',
         camera_capture_hz=CAMERA_CAPTURE_HZ,lidar_scan_hz=LIDAR_SCAN_HZ,
-        fence_only=fence_only),indent=2))
+        fence_only=fence_only,course_points=course_points),indent=2))
     (out/'source_manifest.json').write_text(json.dumps(source_manifest(ROOT),indent=2))
     zone, fence = organiser_inputs(spec)
     # The judges' polygon alone, local ENU "x,y;x,y;...": no delivery-zone
     # corners reach the aircraft, as at the competition.
     fence_env = {"AEROTHON_FENCE_ONLY": "1"} if fence_only else {}
+    if course_points:
+        # The operator's optional course points (home, corridor ends), as the
+        # GCS applies them; home-local metres.
+        hx, hy = W.spawn_point(spec)
+        c = W.course_points(spec)
+        loc = lambda p: [round(p[0] - hx, 3), round(p[1] - hy, 3)]   # noqa: E731
+        fence_env["AEROTHON_COURSE_POINTS"] = json.dumps(
+            {"home": loc(c["home"]), "entry": [loc(p) for p in c["entry"]],
+             "exit": [loc(p) for p in c["exit"]]})
     fence = fence_only or fence
     env = dict(os.environ, ROS_DOMAIN_ID=str(domain), ROS_LOCALHOST_ONLY="1",
                AEROTHON_DELIVERY_ZONE=zone, AEROTHON_GEOFENCE=fence, **fence_env,
@@ -210,6 +219,9 @@ def main():
                     help="built-in preset to save --gcs-preset from if missing")
     ap.add_argument("--gcs-create-from-file", type=Path, default=None,
                     help="dimensions JSON to save --gcs-preset from if missing")
+    ap.add_argument("--course-points", action="store_true",
+                    help="also give the aircraft the world's course points "
+                         "(home, corridor ends), as the GCS applies them")
     ap.add_argument("--fence-only", default=None, metavar="X,Y;X,Y;...",
                     help="give the aircraft only this local geofence polygon "
                          "(the judges' points), no delivery-zone corners")
@@ -232,7 +244,8 @@ def main():
                            args.max_sim_s, args.domain_base + iv[0] % 100,args.navigation_only,
                            gcs_preset=args.gcs_preset, gcs_create_from=args.gcs_create_from,
                            gcs_create_from_file=args.gcs_create_from_file,
-                           fence_only=args.fence_only),
+                           fence_only=args.fence_only,
+                           course_points=args.course_points),
             enumerate(runs)))
     ok = 0
     print(f"\n{'run':44s} {'result':10s} {'grade':5s} {'hits':>4s} {'fence':>5s} "

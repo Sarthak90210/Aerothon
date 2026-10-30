@@ -32,6 +32,7 @@ import { decodeGrid } from "./lidarGeometry";
 import coverage from "./satelliteCoverage.json";
 import { satelliteStyle } from "./mapSources";
 import { organiserFence } from "./organiser";
+import OrganiserPoints from "./OrganiserPoints";
 import "./gcs.css";
 const Graphs = lazy(() => import("./Graphs"));
 
@@ -138,8 +139,6 @@ export default function App() {
     setOutcomeAt(Date.now());
   };
   const [target, setTarget] = useState(""),
-    [fenceText, setFenceText] = useState(""),
-    [zoneText, setZoneText] = useState(""),
     [mapReady, setMapReady] = useState(false);
   const [colours, setColours] = useState({
     green: "",
@@ -462,28 +461,15 @@ export default function App() {
       map.current = null;
     };
   }, [view, onlineMap, theme]);
-  // Draw the fence: the applied polygon and whatever is typed in the boxes
-  // (with zone corners, the outline of the fence points and the corners).
-  let draftFence: [number, number][] = [];
-  let draftZone: { lat: number; lon: number }[] = [];
-  let draftError = "";
-  let zoneError = "";
-  try {
-    draftZone = zoneText.trim() ? boundary(zoneText) : [];
-    if (draftZone.length && draftZone.length !== 4)
-      zoneError = `${draftZone.length} corners (expected 4)`;
-  } catch (reason) {
-    zoneError = String(reason).replace(/^Error: /, "");
-  }
-  const zoneReady = draftZone.length === 4 && !zoneError;
-  try {
-    draftFence = fenceText.trim()
-      ? organiserFence(boundary(fenceText), zoneReady ? draftZone : [])
-          .map((p) => [p.lat, p.lon] as [number, number])
-      : [];
-  } catch (reason) {
-    draftError = String(reason).replace(/^Error: /, "");
-  }
+  // Draw the fence: the applied polygon and the outline of the organiser
+  // points stored so far (dashed), as Apply will send it.
+  const stored = t?.organiser_points?.points ?? {};
+  const pick = (keys: string[]) => keys.filter((k) => stored[k]).map((k) => stored[k]);
+  const zonePts = pick(["zone_1", "zone_2", "zone_3", "zone_4"]);
+  const outline = organiserFence(pick(["fence_back_left", "fence_back_right"]),
+                                 zonePts.length === 4 ? zonePts : []);
+  const draftFence: [number, number][] = outline.length >= 3
+    ? outline.map((p) => [p.lat, p.lon] as [number, number]) : [];
   const draftKey = JSON.stringify(draftFence);
   const appliedFence = t?.geofence_vertices ?? [];
   const appliedKey = JSON.stringify(appliedFence);
@@ -1007,7 +993,7 @@ export default function App() {
             {t?.safety.ready_items?.map((item) => (
               <div className="readiness-row" key={item.key}>
                 <span>
-                  {item.label}: {item.ok ? "Ready" : "Blocked"}
+                  {item.label}: {item.ok ? "Ready" : item.advisory ? "Check" : "Blocked"}
                 </span>
                 <span>
                   {readinessValue(item.value)}{item.reason ? ` · ${item.reason}` : ""}
@@ -1045,60 +1031,11 @@ export default function App() {
               Apply colours
             </button>
             <p className="view-note">Colours applied: {t?.banner_colours ? Object.entries(t.banner_colours).map(([name,hex]) => `${name} ${hex}`).join(' · ') : 'none'}</p>
-            <label>
-              Geofence points behind take-off, or the whole fence (lat, lon per line)
-              <textarea
-                rows={4}
-                value={fenceText}
-                placeholder={["lat, lon  (behind take-off, left)", "lat, lon  (behind take-off, right)"].join("\n")}
-                onChange={(e) => setFenceText(e.target.value)}
-              />
-            </label>
-            <label>
-              Delivery-zone corners, 4 (lat, lon per line; blank if not given)
-              <textarea
-                rows={4}
-                value={zoneText}
-                placeholder={["lat, lon  (corner 1)", "lat, lon  (corner 2)", "... any order"].join("\n")}
-                onChange={(e) => setZoneText(e.target.value)}
-              />
-            </label>
+            <OrganiserPoints t={t} busy={busy} fcu={fcu}
+              perform={(cmd, args) => void perform(cmd, args)} review={reviewedSend} />
             <p className="view-note">
-              {draftError || zoneError
-                ? draftError || zoneError
-                : draftFence.length
-                  ? zoneReady
-                    ? `Fence: outline of the ${boundary(fenceText).length} points and the 4 corners, ${draftFence.length} vertices · dashed on Map`
-                    : `${draftFence.length} points · dashed on Map`
-                  : "Drawn on the Map tab."}
-            </p>
-            <button
-              disabled={!fcu || busy || t?.mission.armed !== false || draftFence.length < 3 || Boolean(draftError || zoneError)}
-              onClick={() => {
-                try {
-                  reviewedSend(
-                    "set_geofence",
-                    { vertices: organiserFence(boundary(fenceText), zoneReady ? draftZone : []) },
-                    true,
-                  );
-                } catch (reason) {
-                  setError(String(reason));
-                }
-              }}
-            >
-              Apply geofence
-            </button>
-            <button
-              disabled={!fcu || busy || t?.mission.armed !== false || !zoneReady}
-              onClick={() => reviewedSend("set_delivery_zone", { vertices: draftZone }, true)}
-            >
-              Apply delivery zone
-            </button>
-            <p className="view-note">
-              Fence applied: {appliedFence.length ? `${appliedFence.length} points (filled on Map)` : "none"}.
-              With zone corners the aircraft searches only inside them; apply
-              both. Without them: around take-off = arena fence, away from it =
-              delivery zone (+10 m fence). Readiness shows which.
+              Fence applied: {appliedFence.length ? `${appliedFence.length} points (filled on Map)` : "none"};
+              the stored points' outline is dashed on the Map.
             </p>
           </details>
           <details>

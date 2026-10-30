@@ -78,6 +78,42 @@ def parse_polygon(payload, what="geofence", min_vertices=3, max_vertices=64):
     return vertices, ""
 
 
+def parse_course_points(payload):
+    """The operator's optional course points, ``(dict, '')`` or ``(None, reason)``.
+
+    ``{"home": {lat, lon} | null, "entry": [home-side, zone-side] | null,
+    "exit": [zone-side, home-side] | null}``, each point ``{"lat", "lon"}``,
+    as (lat, lon) tuples. A corridor needs both its ends; a malformed part is
+    refused whole, since guidance read wrong is worse than none.
+    """
+    try:
+        value = json.loads(payload) if isinstance(payload, str) else payload
+    except (TypeError, ValueError):
+        return None, "course points are not valid JSON"
+    if not isinstance(value, dict):
+        return None, "course points must be an object"
+
+    def point(p):
+        lat, lon = float(p["lat"]), float(p["lon"])
+        if not (math.isfinite(lat) and math.isfinite(lon)
+                and -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+            raise ValueError
+        return lat, lon
+    out = {"home": None, "entry": None, "exit": None}
+    try:
+        if value.get("home"):
+            out["home"] = point(value["home"])
+        for key in ("entry", "exit"):
+            ends = value.get(key)
+            if ends:
+                if len(ends) != 2:
+                    return None, f"the {key} corridor needs both its ends"
+                out[key] = tuple(point(p) for p in ends)
+    except (KeyError, TypeError, ValueError):
+        return None, "a course point needs a numeric WGS84 lat and lon"
+    return out, ""
+
+
 def polygon_area(points):
     """Signed shoelace area of a local XY polygon (positive = CCW)."""
     area = 0.0

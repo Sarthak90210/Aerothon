@@ -8,11 +8,13 @@ export interface ReadinessItem {
   ok: boolean;
   value: unknown;
   reason: string;
+  advisory?: boolean;   // warns, does not hold the interlock
 }
 
 export interface Telemetry {
   banner_colours?: Record<string,string>;
   geofence_vertices?: [number, number][];
+  organiser_points?: OrganiserPoints;
   execution?: {task:string; state:string; stage?:string; control_owner?:string; command_id?:string; reason?:string};
   runtime_health?: {fresh:boolean};
   runtime_mode?: 'mission' | 'manual';
@@ -215,3 +217,16 @@ export interface DimensionField {
   used_by: string | null;
 }
 
+// The organisers' six fence points and the optional course points
+// (gcs_aggregator/organiser_points.py), typed or recorded with the GPS.
+export type OrganiserPoint = {
+  lat: number; lon: number; source: "typed" | "recorded";
+  samples?: number; spread_m?: number;
+};
+export type OrganiserPoints = {
+  slots: { key: string; label: string; required: boolean }[];
+  points: Record<string, OrganiserPoint>;
+  recording: { slot: string; elapsed_s: number; samples: number } | null;
+  last: { slot: string; ok: boolean; reason: string } | null;
+  applied: { t: number; fence: number; home: boolean; entry: boolean; exit: boolean } | null;
+};

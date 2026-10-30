@@ -200,3 +200,22 @@ test("the organisers' six points: fence is their outline, zone corners kept apar
   assert.deepEqual(organiserFence(zone, []), zone);
   assert.equal(convexHull([behind[0], behind[0]]).length, 1);
 });
+
+test("organiser points: lat, lon parsing and which commands need a disarmed aircraft", async () => {
+  const { parseLatLon } = await import("../src/organiser.ts");
+  assert.deepEqual(parseLatLon("13.1705900, 77.5331760"), { lat: 13.17059, lon: 77.533176 });
+  assert.equal(parseLatLon("13.17"), null);
+  assert.equal(parseLatLon("91, 10"), null);
+  assert.equal(parseLatLon("a, b"), null);
+  const t = ready();
+  t.gps = { lat: 13.17, lon: 77.53, sats: 14, fix: "3D" };
+  assert.equal(reviewAllowed(t, true, "set_point", {}), true);
+  assert.equal(reviewAllowed(t, true, "apply_organiser_points", {}), true);
+  assert.equal(reviewAllowed(t, true, "record_point", {}), true);
+  t.mission.armed = true;
+  assert.equal(reviewAllowed(t, true, "set_point", {}), false);
+  assert.equal(reviewAllowed(t, true, "apply_organiser_points", {}), false);
+  assert.equal(reviewAllowed(t, true, "record_point", {}), true);   // moves nothing
+  t.gps.fix = "NO";
+  assert.equal(reviewAllowed(t, true, "record_point", {}), false);
+});

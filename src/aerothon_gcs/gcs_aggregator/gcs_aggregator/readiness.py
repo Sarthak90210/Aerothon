@@ -246,14 +246,28 @@ def evaluate(obs, limits=None):
              "" if ok else (obs.get("arena_dimensions_reason") or
                             "arena dimensions not applied"))
 
+    # ---- the recorded home point (GCS course points, optional) ---- #
+    # ADVISORY: a warning on the list, not a hold, and not in ITEMS: present
+    # only once a home point is recorded (the aircraft should stand on it).
+    if obs.get("home_point_m") is not None:
+        d = float(obs["home_point_m"])
+        ok = d <= float(lim.get("max_home_point_m", 2.0))
+        out.append({"key": "home_point", "label": "Home point", "ok": ok,
+                    "value": f"{d:.1f} m", "advisory": True,
+                    "reason": "" if ok else (
+                        f"the aircraft is {d:.1f} m from the recorded home "
+                        f"(advisory)")})
+
     return out
 
 
 def is_ready(items):
-    """The interlock: every item must pass. Empty is NOT ready."""
-    return bool(items) and all(i["ok"] for i in items)
+    """The interlock: every item must pass. Empty is NOT ready. Advisory
+    items warn on the list but do not hold it."""
+    return bool(items) and all(i["ok"] or i.get("advisory") for i in items)
 
 
 def blocking_reasons(items):
     """Human-readable reasons the interlock is holding, in display order."""
-    return [f"{i['label']}: {i['reason']}" for i in items if not i["ok"]]
+    return [f"{i['label']}: {i['reason']}" for i in items
+            if not i["ok"] and not i.get("advisory")]

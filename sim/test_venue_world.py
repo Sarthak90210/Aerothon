@@ -112,6 +112,25 @@ class OrganiserInputTests(unittest.TestCase):
         self.assertEqual(why, "")
         self.assertAlmostEqual(abs(W.polygon_area(local)), 17.8 * 23.9, delta=0.5)
 
+    def test_every_gcs_slot_is_given_in_priority_order(self):
+        import organiser_inputs as O
+        from gcs_aggregator.organiser_points import KEYS
+        spec = V.build("venue_test")
+        pts = O.organiser_inputs(spec, *HOME)["points"]
+        self.assertEqual(list(pts), list(KEYS))
+        loc = {k: global_to_local(*map(float, v.split(",")), *HOME) for k, v in pts.items()}
+        back = global_to_local(*SURVEY_BACK_RIGHT, *HOME)
+        self.assertLess(math.dist(loc["fence_back_right"], back), 0.1)
+        self.assertLess(math.dist(loc["home"], (0.0, 0.0)), 0.01)
+        h = math.radians(spec["takeoff"]["yaw_deg"])
+
+        def fwd(p):
+            return p[0] * math.cos(h) + p[1] * math.sin(h)
+        self.assertAlmostEqual(fwd(loc["entry_home"]), 5.5, places=1)
+        self.assertAlmostEqual(fwd(loc["entry_zone"]), 11.5, places=1)
+        self.assertAlmostEqual(fwd(loc["exit_zone"]), 11.5, places=1)
+        self.assertAlmostEqual(fwd(loc["exit_home"]), 5.5, places=1)
+
     def test_the_turned_zone_is_published_as_its_corners(self):
         import publish_delivery_zone as P
         corners = P.zone_from_env({"AEROTHON_DELIVERY_ZONE": "1,2;3,4;5,6;7,8"})

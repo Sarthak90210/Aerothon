@@ -5,6 +5,15 @@
 // box is the judges' polygon as before.
 export type LatLon = { lat: number; lon: number };
 
+// One "lat, lon" typed into an organiser slot, or null.
+export const parseLatLon = (text: string): LatLon | null => {
+  const parts = text.split(",").map((v) => Number(v.trim()));
+  if (parts.length !== 2 || !parts.every(Number.isFinite)) return null;
+  const [lat, lon] = parts;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  return { lat, lon };
+};
+
 // Andrew's monotone chain, counter-clockwise in (lon, lat). Convexity
 // survives the lat/lon scaling (an affine map), so no projection is needed.
 export function convexHull(points: LatLon[]): LatLon[] {

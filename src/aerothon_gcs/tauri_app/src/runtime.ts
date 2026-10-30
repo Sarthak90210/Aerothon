@@ -206,9 +206,13 @@ export function reviewAllowed(
       "set_banner_colours",
       "set_geofence",
       "set_delivery_zone",
+      "set_point",
+      "apply_organiser_points",
     ].includes(cmd)
   )
     return t?.mission.armed === false && !missionActive(t);
+  // Recording reads the aircraft's own GPS where it stands; it moves nothing.
+  if (cmd === "record_point") return t?.gps?.fix === "3D";
   if (cmd === "winch") return startAllowed(t, connected, "mechanism");
   return !missionActive(t);
 }

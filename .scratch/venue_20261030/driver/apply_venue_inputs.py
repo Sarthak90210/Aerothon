@@ -92,13 +92,55 @@ else:
 org = get(f"{WM}/api/organiser/{world}", timeout=90)
 print("banner colours", org["banner_colours"], flush=True)
 command("set_banner_colours", {"colours": org["banner_colours"]})
-def points(text):
-    return [dict(zip(("lat", "lon"), map(float, line.split(",")))) for line in text.splitlines()]
+# The organisers' points through the GCS's organiser slots, as the operator
+# enters them: the six fence points typed (required), then the optional course
+# points (VENUE_COURSE=0 leaves them out): home RECORDED with the aircraft's
+# own GPS where it stands on the pad (VENUE_RECORD_HOME=0 types it), the
+# corridors' ends typed. Then Apply organiser points.
+pts = org["points"]
+fence_keys = ["fence_back_left", "fence_back_right", "zone_1", "zone_2", "zone_3", "zone_4"]
+course_keys = ["entry_home", "entry_zone", "exit_zone", "exit_home"]
+with_course = os.environ.get("VENUE_COURSE", "1") == "1"
+record_home = os.environ.get("VENUE_RECORD_HOME", "1") == "1"
 
 
-print("typed behind take-off:", org["geofence"].replace("\n", " | "), flush=True)
-print("typed zone corners:", org["delivery_zone"].replace("\n", " | "), flush=True)
-fence = points(org["geofence_outline"])
-command("set_geofence", {"vertices": fence})
-command("set_delivery_zone", {"vertices": points(org["delivery_zone"])})
-print("home", org["home"], "fence points", len(fence), flush=True)
+def typed(slot):
+    lat, lon = map(float, pts[slot].split(","))
+    command("set_point", {"slot": slot, "lat": lat, "lon": lon})
+
+
+for slot in fence_keys:
+    typed(slot)
+if with_course:
+    for slot in course_keys:
+        typed(slot)
+    if record_home:
+        # The aggregator keeps its points in this file (organiser_points_file).
+        saved = os.path.expanduser("~/.aerothon/organiser_points.json")
+        command("set_point", {"slot": "home", "clear": True})
+        recorded = None
+        for attempt in range(3):
+            r = command("record_point", {"slot": "home"})
+            if r["state"] not in ("Completed", "Accepted"):
+                time.sleep(10)
+                continue
+            time.sleep(9)                      # 5 s of fixes, then the poll
+            try:
+                recorded = (json.load(open(saved)) or {}).get("home")
+            except (OSError, ValueError):
+                recorded = None
+            if recorded and recorded.get("source") == "recorded":
+                break
+            recorded = None
+        print("record home:", recorded, flush=True)
+        if recorded is None:
+            print("home not recorded; typing it", flush=True)
+            typed("home")
+    else:
+        typed("home")
+else:
+    # The aggregator keeps points across runs: clear the optional ones.
+    for slot in ["home"] + course_keys:
+        command("set_point", {"slot": slot, "clear": True})
+command("apply_organiser_points", {})
+print("home", org["home"], "points applied:", "six fence" + (" + course" if with_course else ""), flush=True)
