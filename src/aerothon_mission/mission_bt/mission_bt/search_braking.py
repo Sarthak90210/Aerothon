@@ -1,6 +1,6 @@
 """Stop an invalidated search segment, then replan from fresh measured pose."""
 import math
-from .search_planner import point_in_exclusion, routing_obstacles
+from .search_planner import nearest_exit, point_in_exclusion, routing_obstacles
 
 
 class SearchBrakingGate:
@@ -36,9 +36,8 @@ class SearchBrakingGate:
                     if r[0]<=x<=r[1] and r[2]<=y<=r[3]]
         target=(x,y)
         if containing:
-            x0,x1,y0,y1=containing[0]
-            target=min(((x0-.25,y),(x1+.25,y),(x,y0-.25),(x,y1+.25)),
-                       key=lambda p:math.dist((x,y),p))
+            # Not back over the corridors (Mav.escape_avoid, as route_leg).
+            target=nearest_exit(containing[0],x,y,.25,getattr(mav,'escape_avoid',None))
         if not stage.router._segment_safe(mav,target,exclusions=current):
             if not self.escape_blocked:
                 # New paint can obstruct the escape itself. Cancel that

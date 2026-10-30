@@ -403,6 +403,16 @@ class EscapeTests(unittest.TestCase):
         b = route_leg((12.6, 2.9), (0.0, 0.0), 1.5, red)
         self.assertEqual(a["waypoints"], b["waypoints"])
 
+    def test_the_search_brakes_escape_the_same_way(self):
+        # search_braking's own nearest-edge escape (the path the venue run
+        # took) shares nearest_exit.
+        from mission_bt.search_planner import nearest_exit
+        box = (12.7, 20.7, -1.1, 6.9)
+        behind = lambda x, y: x < 12.7                          # noqa: E731
+        self.assertEqual(nearest_exit(box, 13.7, 2.9), (12.45, 2.9))
+        self.assertEqual(nearest_exit(box, 13.7, 2.9, avoid=behind), (13.7, -1.35))
+        self.assertEqual(nearest_exit(box, 13.7, 2.9, avoid=lambda x, y: True), (12.45, 2.9))
+
     def test_the_line_is_the_latched_outbound_exit(self):
         mav = commander()
         mav.corridor_exit_pose = None
