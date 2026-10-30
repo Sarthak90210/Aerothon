@@ -171,6 +171,20 @@ class CommanderTests(unittest.TestCase):
         self.assertEqual(margin, 3.0)
         self.assertEqual(len(fence), 4)
 
+    def test_the_fence_upload_checks_the_zone_not_its_bounding_box(self):
+        # First headless venue run (30 Oct): refused with "delivery-zone
+        # corner (-33.0, -8.7) lies outside the geofence", a box corner.
+        from mission_bt.mission_tree import UploadArenaFence
+        fence = self.mav.geofence_local
+        ok, why = UploadArenaFence(self.mav)._geometry_ok(fence)
+        self.assertTrue(ok, why)
+        cx = sum(p[0] for p in fence) / len(fence)
+        cy = sum(p[1] for p in fence) / len(fence)
+        shrunk = [(cx + 0.9 * (x - cx), cy + 0.9 * (y - cy)) for x, y in fence]
+        ok, why = UploadArenaFence(self.mav)._geometry_ok(shrunk)
+        self.assertFalse(ok)
+        self.assertIn("outside the geofence", why)
+
     def test_the_mission_may_arm(self):
         from mission_bt.mission_tree import RequireDeliveryZone
         leaf = RequireDeliveryZone(self.mav, 1.0)

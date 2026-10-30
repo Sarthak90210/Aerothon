@@ -34,8 +34,9 @@ from mission_bt.banner_orbit import (_now as _ros_now,
                                      outbound_structure)
 from mission_bt.decode_hover import APPEARANCE_ONLY, DecodeHover
 from mission_bt.delivery_observer import DeliveryObserver
-from mission_bt.delivery_zone import (chord_inside, nearest_point_in_zone,
-                                      point_in_polygon, point_inside_with_margin)
+from mission_bt.delivery_zone import (chord_inside, distance_to_polygon_edge,
+                                      nearest_point_in_zone, point_in_polygon,
+                                      point_inside_with_margin)
 from mission_bt.geofence import build_fence, compare_fences, rect_vertices
 from mission_bt.leg_router import ARRIVED, BLOCKED, LegRouter
 from mission_bt.detector_timing import search_speed as qualified_search_speed
@@ -4059,12 +4060,18 @@ class UploadArenaFence(py_trees.behaviour.Behaviour):
         if not point_inside_with_margin(hx, hy, poly, self.home_margin_m):
             return False, (f"home ({hx:.1f}, {hy:.1f}) is not at least "
                            f"{self.home_margin_m:.1f} m inside the geofence")
-        zone = self.mav.delivery_search_zone(self.zone_clearance_m)
-        if zone is not None:
-            for cx, cy in rect_vertices(zone):
-                if not point_in_polygon(cx, cy, poly):
-                    return False, (f"delivery-zone corner ({cx:.1f}, {cy:.1f}) "
-                                   "lies outside the geofence")
+        # A turned zone is checked by its own corners, not its bounding box
+        # (30 Oct 2026: the box's corners lie outside the venue's fence). Its
+        # far corners ARE fence vertices, so on the edge counts as inside.
+        corners = getattr(self.mav, "zone_corners_local", None)
+        if corners is None:
+            zone = self.mav.delivery_search_zone(self.zone_clearance_m)
+            corners = rect_vertices(zone) if zone is not None else []
+        for cx, cy in corners:
+            if not (point_in_polygon(cx, cy, poly)
+                    or distance_to_polygon_edge(cx, cy, poly) < 0.05):
+                return False, (f"delivery-zone corner ({cx:.1f}, {cy:.1f}) "
+                               "lies outside the geofence")
         return True, ""
 
     def update(self):
