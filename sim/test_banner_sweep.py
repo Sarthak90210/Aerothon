@@ -254,6 +254,50 @@ class DwellTests(unittest.TestCase):
         self.assertEqual(stage.step_index, 1,
                          "stared at a heading that could no longer pass")
 
+    def _starved(self, frames_from_s):
+        clock = self.clock
+
+        class Starved(SweepMav):
+            """Frames dropped while the camera turns to its pose."""
+            def __init__(s):
+                super().__init__(banner_at=0.0)
+                s.seq = 0
+
+            def banner_observation(s):
+                if clock() < frames_from_s:
+                    return None
+                s.seq += 1
+                return {"capture_stamp": clock(), "sequence": s.seq}
+
+            def banner_identified(s):
+                return clock() >= frames_from_s and super().banner_identified()
+        return Starved()
+
+    def test_a_heading_seen_without_frames_waits_for_them(self):
+        """Venue GUI run (31 Oct 2026): the sweep's first heading closed at
+        0/0 frames while the camera turned to its pose -- the one heading that
+        faced the entry banner. It now waits for frames to judge."""
+        mav = self._starved(9.0)
+        stage = self._stage(mav, dwell_s=5.0)
+        for _ in range(85):                      # 8.5 s, no frames yet
+            stage.update()
+            self.clock.advance(0.1)
+        self.assertEqual(stage.step_index, 0, "left a heading it never saw")
+        self.assertEqual(stage.phase, stage.DWELL)
+        for _ in range(20):                      # frames arrive at 9 s
+            stage.update()
+            self.clock.advance(0.1)
+        self.assertEqual(stage.step_index, 0)
+        self.assertNotEqual(stage.phase, stage.DWELL, "the banner was in frame")
+
+    def test_a_heading_that_never_gets_frames_still_moves_on(self):
+        mav = self._starved(1e9)
+        stage = self._stage(mav, dwell_s=5.0)
+        for _ in range(160):                     # 16 s: past 3 dwells
+            stage.update()
+            self.clock.advance(0.1)
+        self.assertGreaterEqual(stage.step_index, 1)
+
     def test_the_next_step_is_one_step_further_round(self):
         mav = SweepMav(banner_at=None)
         stage = self._stage(mav, step_rad=math.radians(30.0))

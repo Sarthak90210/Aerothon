@@ -464,6 +464,9 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
     SEARCH, SETTLE, DWELL, CENTRE, SQUARE, RELOCATE = \
         "SEARCH", "SETTLE", "DWELL", "CENTRE", "SQUARE", "RELOCATE"
     MEASURE, TURNING, MOVING = "MEASURE", "TURNING", "MOVING"
+    # A heading's dwell runs on, up to this many dwells, until it has
+    # min_samples frames to judge (see _dwell).
+    STARVED_DWELL_FACTOR = 3.0
     # How far the mouth's lidar face may sit from a laid sheet's ground range:
     # the sheet is 1.15 m deep about the mouth line, plus ranging error.
     LAID_FACE_TOL_M = 1.5
@@ -1751,6 +1754,20 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 f"staring at step {self.step_index + 1}/{len(self._offsets)}, "
                 f"{self._elapsed():.1f}/{self.dwell_s:.0f} s, "
                 f"{self._hits}/{self._samples} frames identified")
+            return py_trees.common.Status.RUNNING
+        # A HEADING WITHOUT FRAMES WAS NOT LOOKED AT. The detector drops every
+        # frame while the camera is still turning to its pose ("camera not
+        # pointed ahead"); a sweep's first heading, just after a pose change,
+        # closed at 0/0 and then 0/5 frames. In the venue world (31 Oct 2026)
+        # that heading faced the entry banner, no other one did, the search
+        # never read the board, and its recovery flew into the exit lane.
+        # Wait for the frames, up to STARVED_DWELL_FACTOR dwells.
+        if (self._samples < self.min_samples
+                and self._elapsed() < self.STARVED_DWELL_FACTOR * self.dwell_s):
+            self.feedback_message = (
+                f"waiting for camera frames at step {self.step_index + 1}/"
+                f"{len(self._offsets)}: {self._samples} after "
+                f"{self._elapsed():.1f} s")
             return py_trees.common.Status.RUNNING
 
         ratio = self._close_dwell()
