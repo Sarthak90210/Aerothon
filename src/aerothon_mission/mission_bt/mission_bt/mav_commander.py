@@ -1404,22 +1404,6 @@ class Mav:
             self.corridor_exit_pose = (x, y, z, self.yaw())
         return self.corridor_exit_pose
 
-    # How far behind the outbound exit an escape from red ground's margin is
-    # "back over the corridors" (route_leg's avoid). The exit is latched about
-    # 2 m past the walls' end, so a metre behind it is still clear of them.
-    ESCAPE_BEHIND_EXIT_M = 1.0
-
-    def escape_avoid(self, x, y):
-        """True for ground more than ESCAPE_BEHIND_EXIT_M behind the outbound
-        corridor's exit, across the squared gate heading; False before it."""
-        pose = getattr(self, "corridor_exit_pose", None)
-        if pose is None:
-            return False
-        ex, ey, _z, yaw = pose
-        h = self.gate_heading if getattr(self, "gate_heading", None) is not None else yaw
-        return ((x - ex) * math.cos(h) + (y - ey) * math.sin(h)
-                < -self.ESCAPE_BEHIND_EXIT_M)
-
     def record_gate_heading(self, yaw):
         """Latch the heading squared on the outbound gate: the corridor axis.
 

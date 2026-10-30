@@ -377,54 +377,6 @@ class ReturnAndHomeTests(unittest.TestCase):
         self.assertEqual(len(mav.logs), 1)
 
 
-class EscapeTests(unittest.TestCase):
-    """Leaving red ground's margin, not back over the corridors (31 Oct 2026)."""
-
-    def test_the_escape_skips_the_edge_behind_the_corridor_exit(self):
-        from mission_bt.search_planner import route_leg
-        # Corridor exit at x = 13.7 heading +x; red square x 15.2..18.2,
-        # y 1.4..4.4, as the detector reports it (1 m inflated). Climbed out
-        # at (13.7, 2.9): inside its clearance margin, whose nearest edge is
-        # behind, over the corridors' ends.
-        red = [[14.2, 19.2, 0.4, 5.4]]
-        behind = lambda x, y: x < 13.7 - 1.0                    # noqa: E731
-        plain = route_leg((13.7, 2.9), (14.0, -9.0), 1.5, red)
-        self.assertLess(plain["waypoints"][0][0], 12.7)          # backed out
-        r = route_leg((13.7, 2.9), (14.0, -9.0), 1.5, red, avoid=behind)
-        self.assertTrue(r["ok"])
-        self.assertTrue(all(not behind(*p) for p in r["waypoints"]))
-        self.assertAlmostEqual(r["waypoints"][0][0], 13.7)       # sideways
-
-    def test_starting_behind_the_line_keeps_the_nearest_edge(self):
-        from mission_bt.search_planner import route_leg
-        red = [[14.2, 19.2, 0.4, 5.4]]
-        behind = lambda x, y: x < 13.7 - 1.0                    # noqa: E731
-        a = route_leg((12.6, 2.9), (0.0, 0.0), 1.5, red, avoid=behind)
-        b = route_leg((12.6, 2.9), (0.0, 0.0), 1.5, red)
-        self.assertEqual(a["waypoints"], b["waypoints"])
-
-    def test_the_search_brakes_escape_the_same_way(self):
-        # search_braking's own nearest-edge escape (the path the venue run
-        # took) shares nearest_exit.
-        from mission_bt.search_planner import nearest_exit
-        box = (12.7, 20.7, -1.1, 6.9)
-        behind = lambda x, y: x < 12.7                          # noqa: E731
-        self.assertEqual(nearest_exit(box, 13.7, 2.9), (12.45, 2.9))
-        self.assertEqual(nearest_exit(box, 13.7, 2.9, avoid=behind), (13.7, -1.35))
-        self.assertEqual(nearest_exit(box, 13.7, 2.9, avoid=lambda x, y: True), (12.45, 2.9))
-
-    def test_the_line_is_the_latched_outbound_exit(self):
-        mav = commander()
-        mav.corridor_exit_pose = None
-        mav.gate_heading = None
-        self.assertFalse(mav.escape_avoid(-100.0, 0.0))
-        mav.corridor_exit_pose = (13.7, 2.9, 1.2, 0.3)
-        mav.gate_heading = 0.0
-        self.assertFalse(mav.escape_avoid(13.0, 2.9))
-        self.assertTrue(mav.escape_avoid(12.5, 2.9))
-        self.assertFalse(mav.escape_avoid(13.7, -1.4))
-
-
 class CorridorExitTests(unittest.TestCase):
 
     def test_the_aircraft_is_told_to_hold_where_the_walls_end(self):

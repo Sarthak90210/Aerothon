@@ -698,23 +698,9 @@ def _dijkstra(nodes, edges, src, dst):
     return [nodes[i] for i in path], dist[dst]
 
 
-def nearest_exit(box, x, y, margin_m=0.25, avoid=None):
-    """Where to leave box (x0, x1, y0, y1) from (x, y) inside it: the nearest
-    of its four edges, straight across. With `avoid(x, y)` (ground an escape
-    should not take, Mav.escape_avoid) the nearest edge it does not mark,
-    unless the escape starts on such ground; the nearest if all are marked."""
-    x0, x1, y0, y1 = box
-    exits = sorted(((x0 - margin_m, y), (x1 + margin_m, y),
-                    (x, y0 - margin_m), (x, y1 + margin_m)),
-                   key=lambda p: math.hypot(p[0] - x, p[1] - y))
-    if avoid is not None and not avoid(x, y):
-        return next((p for p in exits if not avoid(*p)), exits[0])
-    return exits[0]
-
-
 def route_leg(start, end, clearance_m, exclusions, max_detour_ratio=4.0,
               min_detour_allowance_m=25.0, corner_margin_m=0.25,
-              max_obstacles=16, avoid=None, _depth=0):
+              max_obstacles=16, _depth=0):
     """Waypoints from `start` to `end` that keep the airframe off red ground.
 
     Returns a dict, in the style of plan_search():
@@ -752,22 +738,17 @@ def route_leg(start, end, clearance_m, exclusions, max_detour_ratio=4.0,
     # inflated margin of a strip confirmed mid-leg, the box was ignored, and
     # the leg ran on diagonally through the paint. Step out the shortest way,
     # then route from there with every box in play.
-    #
-    # NOT BACK OVER THE CORRIDORS. `avoid(x, y)` marks ground an escape should
-    # not take when it starts outside it: behind the outbound corridor's exit
-    # (Mav.escape_avoid). The venue worlds (31 Oct 2026) climbed out of the
-    # entry lane 1.3 m short of a red square's margin; the nearest edge was
-    # behind, and the search's first leg backed over both corridors' ends at
-    # 10 m. The nearest edge that is not behind is taken, else the nearest.
     containing = [b for b in blocks if _contains(b, sx, sy)]
     if containing and _depth < 3:
-        exit_pt = nearest_exit(containing[0], sx, sy, corner_margin_m, avoid)
+        x0, x1, y0, y1 = containing[0]
+        m = corner_margin_m
+        exit_pt = min(((x0 - m, sy), (x1 + m, sy), (sx, y0 - m), (sx, y1 + m)),
+                      key=lambda p: math.hypot(p[0] - sx, p[1] - sy))
         rest = route_leg(exit_pt, end, clearance_m, exclusions,
                          max_detour_ratio=max_detour_ratio,
                          min_detour_allowance_m=min_detour_allowance_m,
                          corner_margin_m=corner_margin_m,
-                         max_obstacles=max_obstacles, avoid=avoid,
-                         _depth=_depth + 1)
+                         max_obstacles=max_obstacles, _depth=_depth + 1)
         if not rest["ok"]:
             return rest
         step = math.hypot(exit_pt[0] - sx, exit_pt[1] - sy)

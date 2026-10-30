@@ -103,8 +103,7 @@ class LegRouter:
             return True
 
         result = route_leg(mav.pos()[:2], (float(x), float(y)),
-                           self.clearance_m, ex,
-                           avoid=getattr(mav, "escape_avoid", None))
+                           self.clearance_m, ex)
         if not result["ok"]:
             self._wps = []
             self._i = 0
