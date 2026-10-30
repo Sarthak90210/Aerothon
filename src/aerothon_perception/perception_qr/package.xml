@@ -3,8 +3,9 @@
 <package format="3">
   <name>perception_qr</name>
   <version>0.1.0</version>
-  <description>QR detection/decoding (OpenCV QRCodeDetector) — scans the start QR and
-               matches the target QR in the delivery zone. Publishes decode + match
+  <description>Marker detection: the field's AprilTag 36h11 boards (OpenCV aruco,
+               default) or QR codes (zbar + OpenCV) — scans the start marker and
+               matches the target marker in the delivery zone. Publishes decode + match
                + an annotated image stream for the GCS.</description>
   <maintainer email="sarthakkhubchandanik@gmail.com">Team Rotor FPV</maintainer>
   <license>MIT</license>

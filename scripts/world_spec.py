@@ -114,6 +114,13 @@ BANNER_COLOUR_NAMES = ("green", "orange", "exit", "red")
 # where the aircraft must go, orange where it must not (`orange: true`).
 BOARD_SIZE_M = (3.7, 1.15)
 BANNER_MOUNTS = ("posts", "rod")
+# The markers. The venue's boards are AprilTag 36h11 tags (photographed 29 Oct
+# 2026, IDs 100-500) on white boards, not QR codes; "qr" still prints the QR
+# codes of materials/qr_matrices.json. A tag pad's ID is its pattern: the
+# start marker carries the target pad's ID.
+MARKER_KINDS = ("apriltag_36h11", "qr")
+TAG36H11_IDS = 587
+DEFAULT_TAG_IDS = {"a": 100, "b": 200, "c": 300, "d": 400, "e": 500}
 
 HOME_FENCE_CLEARANCE_M = 2.0           # readiness: home >= 2 m inside the fence
 BANNER_NEAR_RANGE_M = 9.6              # AlignToBanner: 0.8 x the 12 m lidar range
@@ -149,7 +156,8 @@ def default_spec():
         # to prove the detector rejects an unframed panel.
         "decoys": [],
         "start_target": "random",
-        "qr": {"start_m": 2.2, "target_m": 3.0},
+        "qr": {"start_m": 2.2, "target_m": 3.0, "kind": MARKER_KINDS[0],
+               "ids": dict(DEFAULT_TAG_IDS)},
         "banner": {"board_bottom_m": BOARD_BOTTOM_M,
                    "placement": "suspended", "lettered": False,
                    "colours": {}, "width_m": BOARD_SIZE_M[0],
@@ -788,8 +796,9 @@ def apply_dimensions(spec, dims):
         "mount": "rod", "orange": not (out["banner"].get("colours") or {}).get("exit"),
         # The organisers' banners carry no wording.
         "lettered": False})
-    out["qr"] = {"start_m": q["start_m"], "target_m": q["target_m"],
-                 "border_m": q["border_m"]}
+    # Sizes from the GCS; which markers they are (kind, tag IDs) is the world's.
+    out["qr"].update({"start_m": q["start_m"], "target_m": q["target_m"],
+                      "border_m": q["border_m"]})
     for zone in out["red_zones"]:
         zone["w"] = zone["h"] = rz["side_m"]
     out["dimensions"] = d
@@ -907,6 +916,20 @@ def validate(spec):
         v = float(spec["qr"][key])
         if not 0.2 <= v <= 5.0:
             errs.append(f"QR size {key} = {v} m is outside 0.2-5 m")
+    kind = spec["qr"].get("kind", MARKER_KINDS[0])
+    if kind not in MARKER_KINDS:
+        errs.append(f"marker kind {kind!r} is not one of {', '.join(MARKER_KINDS)}")
+    elif kind != "qr":
+        ids = spec["qr"].get("ids") or {}
+        try:
+            got = {k: int(ids[k]) for k in PAD_LETTERS}
+        except (KeyError, TypeError, ValueError):
+            errs.append(f"tag IDs must give an integer for each of pads {', '.join(PAD_LETTERS)}")
+        else:
+            if any(not 0 <= v < TAG36H11_IDS for v in got.values()):
+                errs.append(f"tag IDs must be 0-{TAG36H11_IDS - 1} (AprilTag 36h11)")
+            if len(set(got.values())) != len(got):
+                errs.append("each pad needs its own tag ID")
 
     fence = fence_polygon(spec)
     if len(fence) < 3:

@@ -85,10 +85,14 @@ THE SERVO ITSELF (backend:=mavlink, fc_output:=servo; the aircraft, 27 Oct)
     the bench and squeezed the three poses into the bottom of the travel).
 
     The receiver keeps its say: `rc_tilt_channel` (read from /aerothon/rc/in)
-    is passed through to the servo whenever no mission runs -- once the stick
-    or switch has moved since the Pi last commanded the camera, so a Camera
-    cal pose or the end of a mission is not undone by a stick left where it
-    was. During a mission the receiver is ignored.
+    tilts the camera whenever no mission runs -- once the stick or switch has
+    moved since the Pi last commanded the camera, so a Camera cal pose or the
+    end of a mission is not undone by a stick left where it was. During a
+    mission the receiver is ignored. The channel is an ANGLE, not a pulse
+    width: rc_tilt_low_us is straight down, rc_tilt_high_us forward, the
+    middle 45 deg down, and that angle goes through the Camera cal like a GCS
+    pose, so a three-position switch lands on the three recorded poses (30 Oct
+    2026: passed through as a pulse width it missed every calibrated pose).
 """
 
 import json
@@ -190,6 +194,9 @@ class CameraCtrl(Node):
         p("rc_tilt_channel", 0)             # receiver channel for the tilt; 0 = none
         p("rc_takeover_us", 30)             # stick movement that takes the camera back
         p("rc_timeout_s", 0.5)
+        p("rc_tilt_low_us", 1000)           # receiver pulse for straight down (-90 deg)
+        p("rc_tilt_high_us", 2000)          # receiver pulse for forward (0 deg)
+        p("rc_tilt_reversed", False)        # low pulse forward, high straight down
 
         self.backend = self.get_parameter("backend").value
         self.joint_name = self.get_parameter("joint_name").value
@@ -376,8 +383,19 @@ class CameraCtrl(Node):
             return None
         return int(channels[ch - 1])
 
+    def _rc_angle(self, rc):
+        """The receiver pulse as a tilt angle: low straight down, high forward
+        (or the reverse), clamped to the three poses' span."""
+        low = float(self.get_parameter("rc_tilt_low_us").value)
+        high = float(self.get_parameter("rc_tilt_high_us").value)
+        share = min(1.0, max(0.0, (rc - low) / (high - low))) if high != low else 0.5
+        if self.get_parameter("rc_tilt_reversed").value is True:
+            share = 1.0 - share
+        down, forward = tilt_calibration.POSES["NADIR"], tilt_calibration.POSES["FORWARD"]
+        return down + (forward - down) * share
+
     def _rc_passthrough(self):
-        """The receiver's tilt channel onto the servo while no mission runs,
+        """The receiver's tilt channel onto the camera while no mission runs,
         once it has moved since the Pi last commanded the camera."""
         if not self.servo_output() or self.mission_active():
             return
@@ -390,12 +408,13 @@ class CameraCtrl(Node):
             self._rc_hold = None
             self.get_logger().info(f"camera tilt from the receiver (channel "
                                    f"{self.get_parameter('rc_tilt_channel').value})")
-        output = tilt_calibration.clamp_output(rc, *self.output_limits())
-        if self._raw_output is not None and self.requested_name == "RC" and \
-                abs(output - self._raw_output) < 5:
+        angle = self._rc_angle(rc)
+        if self.requested_name == "RC" and self._raw_output is None and \
+                self.requested_rad is not None and \
+                abs(math.degrees(self.requested_rad) - angle) < 0.5:
             return
-        self._raw_output = output
-        self._target("RC", math.radians(tilt_calibration.angle_for(output, self._points())))
+        self._raw_output = None                     # through the calibration
+        self._target("RC", math.radians(angle))
         self._send()
 
     def _send_set_servo(self):

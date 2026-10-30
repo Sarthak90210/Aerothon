@@ -1,0 +1,45 @@
+{
+  "feature": "manual_mode_20261030",
+  "triage": "ready-for-human",
+  "problem": "Operator, 30 Oct 2026: 'add a mode in the gcs for manual mission where the pi will not be running any algos or detections or anything, and will only do the servo and the dc motor rotation and the usual custom gcs and mavrouter mission planner, nothing else no lidar mapping or the lidar working'",
+  "scope": "Connection profile mode mission|manual (contracts.py), launch manual:=true (mission2.launch.py), web host passes manual:= and slam off, refuses task Starts, reports mode (web.py), aggregator reports runtime_mode (aggregator.py), GCS Connections Mode selector and manual Start reason (Connections.tsx, runtime.ts, types.ts). New-profile drone device default /dev/ttyAMA0 -> /dev/ttyAMA2 (header 8 dead, fc_uplink_20261030). Flight decision modules unchanged; mission-mode node set unchanged",
+  "manual_nodes": [
+    "mavros_node",
+    "stream_rate_keeper",
+    "rc_in_bridge",
+    "camera_ctrl_node",
+    "winch_node",
+    "aggregator",
+    "(+ remote_devices with a simulator gateway)"
+  ],
+  "tests": [
+    "sim/test_manual_mode.py 8 passed (profile mode, launch node sets manual/mission/simulated, web host launch args, Start refusal) with sim/test_launch_defaults.py: 11 passed, no skips (WSL, ROS 2 Jazzy, built workspace)",
+    "sim/test_gcs_calibrations.py, test_l298n_winch.py, test_gcs_merge_contract.py, test_real_path_wiring.py, test_rc_in_bridge.py, test_remote_device_link.py, test_world_sim_venue.py: 103 passed",
+    "GCS npm run test:gcs 46 passed (new: manual mode names its Start reason); npm run build (tsc + vite) ok"
+  ],
+  "deployed": {
+    "route": "deploy_manual.sh as pi5: exactly four sources (HEAD 82ab2b8 + manual mode, LF; the operator's uncommitted AprilTag/arena edits NOT included) and the GCS built from a HEAD worktree + the frontend patch (index-B0FLMBaf.js, 115 files); runtime stopped first, backup before_20261030T012048.tar.gz sha256 cd581099...4212, runtime_manifest.json 268 files all verified; web host restarted only",
+    "note": "the first run stopped at its own link check (a two-level container-path symlink the host cannot follow) after install and manifest; web host restarted by hand; the check now runs inside the container and passes",
+    "profile": "vehicle_manual 'Drone manual (servo + winch)': copy of vehicle with mode manual, slam false, /dev/ttyAMA2, autoconnect; connected and selected for boot"
+  },
+  "verified_on_aircraft": [
+    "launch args manual:=true slam:=false; container processes exactly aggregator, camera_ctrl_node, mavros_node, rc_in_bridge, stream_rate_keeper, winch_node",
+    "servo5_hold_check.py: ALIGN 1890, NADIR 1140, FORWARD 2200 us held by FC output 5 for 3 s each = camera_tilt.json saved 01:06 Pi clock (a GCS Camera cal after the UART2 switch, not by this change)",
+    "/winch/status state IDLE",
+    "POST /api/commands start mechanism -> 400 'manual mode runs no missions or tests; Connect a mission-mode profile'"
+  ],
+  "open": [
+    "channel 8 tilt and RC6 winch in manual mode not yet watched by the operator with the transmitter on",
+    "nothing committed"
+  ],
+  "camera_feed_update": {
+    "request": "Operator: 'the custom gcs should still include the webcam feed but without any algos running'",
+    "change": "manual mode keeps usb_cam, camera_exposure and web_video_server (launch camera_feed condition); the GCS Feed selector shows and selects only 'Raw camera' (/image_raw) in manual mode (App.tsx); wording updated",
+    "tests": "sim/test_manual_mode.py + test_launch_defaults + test_real_path_wiring + test_remote_device_link: 30 passed; GCS test:gcs 46 passed, build ok (main and HEAD worktree)",
+    "deployed": "deploy_20261030_manual_b: launch file and contracts.py changed, GCS index-xSlnqXFj.js; backup before_20261030T013334.tar.gz sha256 5b540f8b...9646; manifest 268 files verified; links reach src/",
+    "verified_on_aircraft": "vehicle_manual reconnected by autoconnect, manual, fresh; processes aggregator, camera_ctrl_node, camera_exposure, mavros_node, rc_in_bridge, stream_rate_keeper, web_video_server, winch_node; usb_cam respawning because no camera: no /dev/video0, lsusb root hubs only (no webcam, no lidar adapter), undervoltage at boot",
+    "open": "camera feed not observed until the webcam is attached",
+    "verified_webcam": "operator attached the webcam: lsusb 046d:094c Logitech Brio 100, /dev/video0; usb_cam picked it up by respawn (no reconnect); GET /video/stream?topic=/image_raw via the web host: 18.2 MB, 179 JPEG frames in 6 s (~30 fps, 1280x720); frame manual_mode_raw_frame.jpg (camera pointing down at the ground)"
+  },
+  "reduced_scope_suite": "scripts/run_tests.sh --reduced-scope on the final source (WSL, ledger logs/offline_reduced_scope_manual_mode_20261030b.json): Python unit tests 2344 passed, 8 skipped (the deferred strong-gust cases); native ROS interfaces 9 passed, 3 skipped; Python/shell syntax and XML/YAML ok; GCS frontend build FAILED only because WSL has no node (scripts/run_tests.sh line 95); the same build (tsc + vite) and npm run test:gcs 46 passed on Windows"
+}

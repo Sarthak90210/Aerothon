@@ -240,7 +240,9 @@ def test_the_receiver_tilts_the_camera_when_no_mission_runs(tmp_path):
     try:
         node._on_rc(FakeRC(1500, 1700))
         node._tick()
-        assert node.servo()[-1] == (5, 1700.0), "the receiver's channel 6 passed through"
+        # 1700 us is 70% of the way from straight down to forward: -27 deg,
+        # through the uncalibrated line (1500 us forward, 5.56 us a degree).
+        assert node.servo()[-1] == (5, 1350.0), "the receiver's channel is an angle"
         node.request("NADIR")                        # Camera cal or the mission
         assert node.servo()[-1] == (5, 1000.0)
         node._on_rc(FakeRC(1500, 1710))
@@ -248,11 +250,11 @@ def test_the_receiver_tilts_the_camera_when_no_mission_runs(tmp_path):
         assert node.servo()[-1] == (5, 1000.0), "a stick left where it was does not undo it"
         node._on_rc(FakeRC(1500, 1300))
         node._tick()
-        assert node.servo()[-1] == (5, 1300.0), "moving the stick takes the camera back"
+        assert node.servo()[-1] == (5, 1150.0), "moving the stick takes the camera back (-63 deg)"
         node._on_mission_state(String(data="SEARCH_QR"))
         node._on_rc(FakeRC(1500, 1900))
         node._tick()
-        assert node.servo()[-1] == (5, 1300.0), "the receiver is ignored during a mission"
+        assert node.servo()[-1] == (5, 1150.0), "the receiver is ignored during a mission"
     finally:
         node.destroy_node()
 
@@ -273,10 +275,39 @@ def test_on_the_aircraft_channel_8_tilts_the_camera_and_channel_6_never_does(tmp
             node._tick()
         assert len(node.servo()) == start and all(pwm != 988.0 and pwm != 2011.0
                                                   for _, pwm in node.servo()), node.servo()
-        for ch8 in (988, 2011, 1500):
+        # Low straight down, high forward, middle 45 deg: the uncalibrated line.
+        for ch8, pwm in ((988, 1000.0), (2011, 1500.0), (1500, 1250.0)):
             node._on_rc(Channels(1500, ch8))
             node._tick()
-            assert node.servo()[-1] == (5, float(ch8)), ch8
+            assert node.servo()[-1] == (5, pwm), ch8
+    finally:
+        node.destroy_node()
+
+
+def test_channel_8_lands_on_the_camera_cal_poses(tmp_path):
+    # Operator, 30 Oct 2026: the GCS poses were right, the transmitter's were
+    # not -- channel 8 went to the servo as a raw pulse width.
+    class Channels:
+        def __init__(self, ch8):
+            self.channels = [1500, 1500, 1000, 1500, 1000, 1500, 1500, ch8]
+
+    node = servo_camera(tmp_path, rc_tilt_channel=8)
+    try:
+        node._on_calibration(String(data=json.dumps({"points": SERVO_MEASURED})))
+        for ch8, pose in ((988, "NADIR"), (1500, "ALIGN"), (2011, "FORWARD")):
+            node._on_rc(Channels(ch8))
+            node._tick()
+            assert node.servo()[-1] == (5, SERVO_MEASURED[pose]), (ch8, pose)
+        node._on_calibration(String(data=json.dumps({"points": {
+            "FORWARD": 2200.0, "ALIGN": 1890.0, "NADIR": 1140.0}})))
+        assert node.servo()[-1] == (5, 2200.0), "a new Camera cal re-applies to the switch"
+        node.set_parameters([Parameter("rc_tilt_reversed", value=True)])
+        node._on_rc(Channels(988))
+        node._tick()
+        assert node.servo()[-1] == (5, 2200.0), "reversed: low is forward (already there)"
+        node._on_rc(Channels(2011))
+        node._tick()
+        assert node.servo()[-1] == (5, 1140.0), "reversed: high is straight down"
     finally:
         node.destroy_node()
 

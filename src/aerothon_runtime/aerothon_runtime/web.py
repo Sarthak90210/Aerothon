@@ -268,6 +268,7 @@ class Host:
     def state(self):
         return {'profiles': list(self.profiles.values()), 'profile_id': self.profile_id,
                 'runtime': 'Stopped' if self.stopped() else 'Running',
+                'mode': self.profiles.get(self.profile_id, {}).get('mode', 'mission'),
                 'fresh': self.fresh(), 'can_disconnect': self.disarmed() or not self.controlled,
                 'can_edit_profiles': self.editable(), 'execution': self.execution,
                 'autoconnect_suspended': self.auto_suspended,
@@ -288,8 +289,10 @@ class Host:
         temporary.write_text(json.dumps(p, indent=2))
         temporary.replace(current)
         link = 'udp://127.0.0.1:14555@127.0.0.1:14556' if p['transport']=='serial' else fcu_url(p)
+        manual = p.get('mode') == 'manual'
         args = ['ros2', 'launch', 'mission_bringup', 'mission2.launch.py',
-                'managed:=true', 'rviz:=false', f"slam:={str(p.get('slam',False)).lower()}",
+                'managed:=true', f"manual:={str(manual).lower()}", 'rviz:=false',
+                f"slam:={str(p.get('slam',False) and not manual).lower()}",
                 f"slam_odometry:={p.get('slam_odometry', 'lidar' if vehicle == 'drone' else 'fcu')}",
                 f"use_sim:={'true' if p['gateway'] else 'false'}",
                 'camera_backend:=mavlink', f"winch_backend:={p.get('winch_backend', 'mavlink')}",
@@ -521,6 +524,8 @@ class Host:
             if cmd == 'disarm' and (self.telemetry.get('safety',{}).get('on_ground') is not True or self.telemetry.get('sample_age_s',{}).get('extended_state',999) >= 3):
                 raise ValueError('fresh FCU on-ground evidence is required for manual disarm')
             if cmd == 'start':
+                if self.profiles.get(self.profile_id, {}).get('mode') == 'manual':
+                    raise ValueError('manual mode runs no missions or tests; Connect a mission-mode profile')
                 if self.telemetry.get('runtime_health',{}).get('fresh') is not True:
                     raise ValueError('production execution service is unavailable')
                 if self.start_reserved:

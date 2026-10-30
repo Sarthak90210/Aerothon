@@ -175,6 +175,9 @@ export default function App() {
     t = fresh ? telemetry : null,
     fcu = freshFcu(t),
     running = missionActive(t) || starting;
+  // Manual flight mode: no detectors run, so the raw camera is the only feed.
+  const manualMode = telemetry?.runtime_mode === "manual" || hostState?.mode === "manual",
+    feed = manualMode ? "/image_raw" : topic;
   const selectedTask = mode === "flight" ? "mission" : task,
     taskInfo = tasks.find((item) => item.id === selectedTask)!;
   const canStart = !busy && !starting && startAllowed(t, fresh, selectedTask);
@@ -713,23 +716,27 @@ export default function App() {
                 <div className="camera-tools">
                   <label>
                     Feed
+                    {/* Manual mode runs no detectors: only the raw camera exists. */}
                     <select
-                      value={topic}
+                      value={feed}
+                      disabled={manualMode}
                       onChange={(e) => setTopic(e.target.value)}
                     >
-                      <option value="/percep/overlay">Composite</option>
+                      {!manualMode && <option value="/percep/overlay">Composite</option>}
                       <option value="/image_raw">Raw camera</option>
-                      <option value="/percep/qr/annotated">QR</option>
-                      <option value="/percep/banner/annotated">Banner</option>
-                      <option value="/percep/redzone/annotated">
-                        Red zone
-                      </option>
+                      {!manualMode && <>
+                        <option value="/percep/qr/annotated">QR</option>
+                        <option value="/percep/banner/annotated">Banner</option>
+                        <option value="/percep/redzone/annotated">
+                          Red zone
+                        </option>
+                      </>}
                     </select>
                   </label>
                 </div>
                 <CameraFeed
-                  url={videoUrl(activeEndpoint, topic)}
-                  topic={topic}
+                  url={videoUrl(activeEndpoint, feed)}
+                  topic={feed}
                   live={fresh}
                   device={t?.devices?.camera}
                 />

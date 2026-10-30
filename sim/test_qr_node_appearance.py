@@ -62,6 +62,8 @@ class QrNodeAppearanceTests(unittest.TestCase):
     def setUp(self):
         self.bridge = CvBridge()
         self.node = QrNode()
+        # QR codes: the appearance matching these pin is the QR path's.
+        self.node.set_parameters([Parameter("marker_kind", value="qr")])
         self.detail = []
         self.node.pub_detail.publish = lambda m: self.detail.append(json.loads(m.data))
         for pub in (self.node.pub_matched, self.node.pub_offset,

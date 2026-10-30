@@ -50,6 +50,13 @@ alignment skipped and logged (r12 13/14: the remaining fault is the
 simulator-only 20 km/h search override crossing the square before it was
 confirmed).
 
+On 29 October the venue's boards turned out to be AprilTag 36h11 tags
+(IDs 100-500 photographed), not QR codes (master guide section 1, "29
+October 2026"). `qr_node` reads them by default (`marker_kind` aruco,
+`perception_qr/tag_decode.py`), the ID being both payload and pattern; QR
+stays selectable (`AEROTHON_MARKER_KIND=qr`). Simulator worlds print tags
+unless their spec says `qr`. The sweep is still sized for a 33-module QR.
+
 On 15 October the organiser clarifications were applied (master guide
 section 1, "15 October 2026"). Final source `188aacd0...` passed the full
 reduced offline suite and two calm rendered acceptances 22/22: pattern-only

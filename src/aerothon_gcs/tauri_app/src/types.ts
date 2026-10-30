@@ -15,6 +15,7 @@ export interface Telemetry {
   geofence_vertices?: [number, number][];
   execution?: {task:string; state:string; stage?:string; control_owner?:string; command_id?:string; reason?:string};
   runtime_health?: {fresh:boolean};
+  runtime_mode?: 'mission' | 'manual';
   sensor_diagnostics?: {
     vibration_mps2: (number | null)[] | null;
     clipping: (number | null)[] | null;

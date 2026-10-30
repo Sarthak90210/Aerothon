@@ -132,6 +132,9 @@ class Aggregator(Node):
         self._command_receipts = {}
         self._sensor_metrics = {key: SensorMetric() for key in ("camera", "lidar")}
         self.managed = self.declare_parameter('managed', False).value is True
+        # manual: the launch started no perception, lidar or execution service.
+        self.state["runtime_mode"] = (
+            "manual" if self.declare_parameter('manual', False).value is True else "mission")
         self.ws_host = self.declare_parameter('ws_host', WS_HOST).value
         self._device_status = None
         self._runtime_seen = None

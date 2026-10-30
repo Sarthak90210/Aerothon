@@ -10,6 +10,11 @@ Examples:
   ros2 launch mission_bringup mission2.launch.py use_sim:=false \
        fcu_url:=/dev/ttyAMA0:921600 \
        lidar_yaw_deg:=<measured> lidar_mirrored:=<measured>
+
+  # Manual flight (GCS profile mode "manual"): the transmitter flies; only
+  # MAVROS, the camera servo, the winch, the GCS aggregator and the raw
+  # webcam feed run.
+  ros2 launch mission_bringup mission2.launch.py use_sim:=false manual:=true
 """
 import os
 import atexit
@@ -18,7 +23,7 @@ import tempfile
 from ament_index_python.packages import get_package_share_directory, get_package_prefix
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 from launch.substitutions import (Command, EnvironmentVariable,
                                   LaunchConfiguration, PythonExpression)
 from launch_ros.actions import Node
@@ -61,6 +66,17 @@ def generate_launch_description():
     sim_or = lambda sim, real: PythonExpression(
         [f"'{sim}' if "] + in_sim + [f" else '{real}'"])
 
+    # manual:=true is the GCS's manual-flight mode: the transmitter flies and
+    # the Pi runs only MAVROS, the stream rates (RC channels for the servo and
+    # winch), rc_in_bridge, camera_ctrl, winch_ctrl, the GCS aggregator and the
+    # raw webcam feed (driver, exposure, video server). No perception, lidar,
+    # mapping, avoidance or mission executive.
+    manual = LaunchConfiguration('manual')
+    not_manual = ["not ('", manual, "'.lower() in ('true', '1'))"]
+    full = IfCondition(PythonExpression(not_manual))
+    full_and = lambda *expr: IfCondition(PythonExpression(
+        ['('] + list(expr) + [') and '] + not_manual))
+
     pkg_bringup = get_package_share_directory('mission_bringup')
     rviz_config_file = os.path.join(pkg_bringup, 'config', 'aerothon_slam.rviz')
     params_file = LaunchConfiguration('params_file')
@@ -73,6 +89,8 @@ def generate_launch_description():
 
     args = [
         DeclareLaunchArgument('managed', default_value='false'),
+        DeclareLaunchArgument('manual', default_value='false',
+                              description='Manual flight: servo, winch, camera feed and GCS only'),
         DeclareLaunchArgument('remote_gateway', default_value=''),
         DeclareLaunchArgument('target_system_id', default_value='1'),
         DeclareLaunchArgument('target_component_id', default_value='1'),
@@ -156,6 +174,7 @@ def generate_launch_description():
         package='robot_state_publisher', executable='robot_state_publisher',
         output='screen',
         parameters=[{'robot_description': robot_description, 'use_sim_time': use_sim}],
+        condition=full,
     )
 
     # 2. MAVROS Core Node
@@ -192,16 +211,23 @@ def generate_launch_description():
                          "'/camera_info' if not ('", use_sim,
                          "'.lower() in ('true', '1')) and not bool('",
                          remote_gateway, "') else '/camera/camera_info'"]),
-                     # Test switch: fly as if the codes encoded nothing, so
-                     # the pattern alone must identify the pad.
+                     # The field's markers: AprilTag 36h11 boards (29 Oct
+                     # 2026). AEROTHON_MARKER_KIND=qr reads QR codes instead.
+                     'marker_kind': os.environ.get('AEROTHON_MARKER_KIND', 'aruco'),
+                     'marker_dictionary': os.environ.get(
+                         'AEROTHON_MARKER_DICT', 'DICT_APRILTAG_36h11'),
+                     # Test switch (QR only): fly as if the codes encoded
+                     # nothing, so the pattern alone must identify the pad.
                      'use_payloads': os.environ.get(
                          'AEROTHON_QR_IGNORE_PAYLOADS', '0') != '1'}],
+        condition=full,
     )
 
     banner = Node(
         package='perception_banner', executable='banner_node', output='screen',
         parameters=[{'image_topic': image_topic, 'use_sim_time': use_sim,
                      'camera_hfov': camera_hfov}],
+        condition=full,
     )
 
     # One camera feed with every detector's findings drawn on it. The GCS
@@ -210,12 +236,14 @@ def generate_launch_description():
     overlay = Node(
         package='perception_overlay', executable='overlay_node', output='screen',
         parameters=[{'image_topic': image_topic, 'use_sim_time': use_sim}],
+        condition=full,
     )
 
     redzone = Node(
         package='perception_redzone', executable='redzone_node', output='screen',
         parameters=[{'image_topic': image_topic, 'use_sim_time': use_sim,
                      'camera_hfov': camera_hfov}],
+        condition=full,
     )
 
     # Is the delivered payload on the ground? WinchDrop confirms every drop
@@ -224,6 +252,7 @@ def generate_launch_description():
         package='perception_redzone', executable='payload_node', output='screen',
         parameters=[params_file,
                     {'image_topic': image_topic, 'use_sim_time': use_sim}],
+        condition=full,
     )
 
     # 3a. Hold MAVLink stream rates where the guidance loop needs them.
@@ -291,12 +320,14 @@ def generate_launch_description():
     )
 
     # 3d. Flight sensors. In the sim Gazebo publishes both.
-    real = IfCondition(PythonExpression(["not ('", use_sim, "'.lower() in ('true', '1')) and not bool('", remote_gateway, "')"]))
+    on_aircraft = ["not ('", use_sim, "'.lower() in ('true', '1')) and not bool('", remote_gateway, "')"]
+    real = full_and(*on_aircraft)
+    camera_feed = IfCondition(PythonExpression(on_aircraft))   # manual mode too
     def real_lidar(model):
-        return IfCondition(PythonExpression([
+        return full_and(
             "not ('", use_sim, "'.lower() in ('true', '1')) and not bool('",
             remote_gateway, "') and '", LaunchConfiguration('lidar_model'),
-            "'.lower() == '", model, "'"]))
+            "'.lower() == '", model, "'")
     lidar_ld06 = Node(
         package='ldlidar_stl_ros2', executable='ldlidar_stl_ros2_node',
         name='ld06', output='screen', condition=real_lidar('ld06'),
@@ -335,7 +366,7 @@ def generate_launch_description():
     )
     webcam = Node(
         package='usb_cam', executable='usb_cam_node_exe', name='c270',
-        output='screen', condition=real, respawn=True, respawn_delay=2.0,
+        output='screen', condition=camera_feed, respawn=True, respawn_delay=2.0,
         parameters=[{'video_device': LaunchConfiguration('camera_device'),
                      'image_width': 1280, 'image_height': 720,
                      'framerate': 30.0, 'pixel_format': 'mjpeg2rgb',
@@ -349,7 +380,7 @@ def generate_launch_description():
     # camera stayed on auto exposure; this holds the configured value.
     camera_exposure = Node(
         package='mission_bringup', executable='camera_exposure', output='screen',
-        condition=real, respawn=True, respawn_delay=2.0,
+        condition=camera_feed, respawn=True, respawn_delay=2.0,
         parameters=[{'device': LaunchConfiguration('camera_device'),
                      'exposure': ParameterValue(
                         LaunchConfiguration('camera_exposure'), value_type=int)}],
@@ -360,12 +391,13 @@ def generate_launch_description():
         package='avoidance', executable='velocity_controller', output='screen',
         # The venue file may set cruise_speed (velocity_controller section).
         parameters=[params_file, {'scan_topic': scan_topic, 'use_sim_time': use_sim}],
+        condition=full,
     )
 
     # 5. Autonomous Behavior Tree Mission Executive
     mission = Node(
         package='mission_bt', executable='mission_tree', output='screen',
-        condition=UnlessCondition(managed),
+        condition=full_and("not ('", managed, "'.lower() in ('true', '1'))"),
         parameters=[params_file,
                     {'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
                      'target_marker_m': target_marker_m,
@@ -373,7 +405,7 @@ def generate_launch_description():
     )
 
     execution = Node(package='aerothon_runtime', executable='execution_node',
-        output='screen', condition=IfCondition(managed),
+        output='screen', condition=full_and("'", managed, "'.lower() in ('true', '1')"),
         parameters=[params_file, {'use_sim_time': use_sim, 'camera_hfov': camera_hfov,
             'target_marker_m': target_marker_m,
             'remote_gateway': ParameterValue(remote_gateway, value_type=str),
@@ -399,12 +431,14 @@ def generate_launch_description():
                      # as launch values instead of through the GCS.
                      'require_arena_dimensions': os.environ.get(
                          'AEROTHON_REQUIRE_ARENA_DIMENSIONS', '1') != '0'}],
+        condition=full,
     )
 
     aggregator = Node(
         package='gcs_aggregator', executable='aggregator', output='screen',
         parameters=[{'use_sim_time': use_sim, 'image_topic': image_topic,
                      'managed': ParameterValue(managed, value_type=bool),
+                     'manual': ParameterValue(manual, value_type=bool),
                      'ws_host': PythonExpression(["'127.0.0.1' if '", managed, "'.lower() == 'true' else '0.0.0.0'"])}],
     )
 
@@ -418,7 +452,7 @@ def generate_launch_description():
     mapping_odometry = Node(
         package='mission_bringup', executable='scan_odometry', output='screen',
         parameters=[{'use_sim_time': use_sim}],
-        condition=IfCondition(PythonExpression(["'", launch_slam,
+        condition=full_and(*(["'", launch_slam,
             "'.lower() in ('true', '1') and "] + lidar_slam)),
     )
 
@@ -454,7 +488,7 @@ def generate_launch_description():
             'min_pass_through': 1,
             'occupancy_threshold': 0.1,
         }],
-        condition=IfCondition(launch_slam),
+        condition=full_and("'", launch_slam, "'.lower() in ('true', '1')"),
     )
 
     # slam_toolbox is a lifecycle node. Without this manager it remains
@@ -470,7 +504,7 @@ def generate_launch_description():
             'node_names': ['slam_toolbox'],
             'bond_timeout': 0.0,
         }],
-        condition=IfCondition(launch_slam),
+        condition=full_and("'", launch_slam, "'.lower() in ('true', '1')"),
     )
 
     # 9. RViz 2 Visualizer with SLAM, costmap, point cloud, camera view
@@ -488,7 +522,7 @@ def generate_launch_description():
             'QT_OPENGL': 'software',
         },
         output='screen',
-        condition=IfCondition(launch_rviz),
+        condition=full_and("'", launch_rviz, "'.lower() in ('true', '1')"),
     )
 
     return LaunchDescription(args + [

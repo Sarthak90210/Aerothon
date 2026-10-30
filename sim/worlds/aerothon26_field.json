@@ -97,7 +97,15 @@
   "qr": {
     "start_m": 1.0,
     "target_m": 1.0,
-    "border_m": 0.0
+    "border_m": 0.1,
+    "kind": "apriltag_36h11",
+    "ids": {
+      "a": 100,
+      "b": 200,
+      "c": 300,
+      "d": 400,
+      "e": 500
+    }
   },
   "banner": {
     "board_bottom_m": 2.4384,
@@ -143,7 +151,7 @@
     "qr": {
       "target_m": 1.0,
       "start_m": 1.0,
-      "border_m": 0.0
+      "border_m": 0.1
     },
     "red_zone": {
       "side_m": 3.048,

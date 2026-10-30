@@ -8,12 +8,16 @@ export interface ConnectionProfile {
   hardware_reviewed:boolean; delivery_calibration:string;
   vehicle?:'simulation'|'drone'; winch_backend?:'mavlink'|'gpio'|'l298n'; gcs_host?:string;
   autoconnect?:boolean; slam_odometry?:'lidar'|'fcu';
+  // mission: the full stack. manual: transmitter flight; the Pi runs only the
+  // camera servo, the winch, the raw camera feed and this GCS (no detection,
+  // lidar or missions).
+  mode?:'mission'|'manual';
 }
 export const vehicleLabel = (p?: ConnectionProfile | null) =>
   !p ? 'No vehicle selected'
     : (p.vehicle ?? (p.transport === 'serial' ? 'drone' : 'simulation')) === 'drone'
       ? 'Real drone' : 'Laptop simulation';
-export interface HostState {profiles:ConnectionProfile[]; profile_id:string|null; runtime:'Stopped'|'Running'; can_disconnect:boolean; can_edit_profiles:boolean;connection_error?:string;autoconnect_suspended?:boolean;}
+export interface HostState {profiles:ConnectionProfile[]; profile_id:string|null; runtime:'Stopped'|'Running'; can_disconnect:boolean; can_edit_profiles:boolean;connection_error?:string;autoconnect_suspended?:boolean;mode?:'mission'|'manual';}
 export class ApiError extends Error { status:number; constructor(status:number, message:string) { super(message); this.status=status; } }
 export async function api(path:string, data?:unknown, timeoutMs=10000):Promise<any> {
   // A request that never answers (lost Wi-Fi, a saturated browser connection
@@ -88,8 +92,8 @@ export function endpoint(value: string): string {
 }
 export function defaultProfile(host = ''): ConnectionProfile {
   return {id:'vehicle',name:'Vehicle',transport:'tcp',host,port:5762,bind_port:14555,system_id:1,component_id:1,
-    gateway:host ? `http://${host}:8090` : '',device:'/dev/ttyAMA0',baud:115200,camera_device:'/dev/video0',lidar_port:'/dev/ttyUSB0',
-    lidar_yaw_deg:0,lidar_mirrored:false,camera_hfov:.851919,marker_m:1.0,rc_config:{},slam:false,hardware_reviewed:false,delivery_calibration:'',vehicle:'simulation'};
+    gateway:host ? `http://${host}:8090` : '',device:'/dev/ttyAMA2',baud:115200,camera_device:'/dev/video0',lidar_port:'/dev/ttyUSB0',
+    lidar_yaw_deg:0,lidar_mirrored:false,camera_hfov:.851919,marker_m:1.0,rc_config:{},slam:false,hardware_reviewed:false,delivery_calibration:'',vehicle:'simulation',mode:'mission'};
 }
 export function videoUrl(_value:string, topic:string):string {
   return `/video/stream?topic=${encodeURIComponent(topic)}&type=mjpeg`;
@@ -134,6 +138,7 @@ export function deviceIssue(key: string, d?: DeviceMetric): string {
 /** Why Start is unavailable for a task, or '' when it may be reviewed. */
 export function startBlockReason(t:Telemetry|null, connected:boolean, task:string):string {
   if(!connected || !t) return 'No live telemetry.';
+  if(t.runtime_mode === 'manual') return 'Manual mode: the Pi runs only the camera servo, the winch, the camera feed and the GCS. Connect a mission-mode profile to run tasks.';
   if(t.runtime_health?.fresh !== true) return 'The production execution service is not reporting.';
   if(t.execution && ['Submitted','Accepted','Running'].includes(t.execution.state))
     return `${tasks.find(x=>x.id===t.execution?.task)?.label ?? 'A task'} is ${t.execution.state.toLowerCase()}. Stop it first.`;

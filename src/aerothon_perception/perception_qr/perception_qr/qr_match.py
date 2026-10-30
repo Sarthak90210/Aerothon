@@ -49,3 +49,16 @@ def matches(target, payload):
         return True
     want, got = identifiers(target), identifiers(payload)
     return bool(got) and got <= want
+
+
+def same_tag(target, payload):
+    """True if a pad's tag ID is the start tag's (tag_decode.py).
+
+    A tag's ID is its pattern, so the pad must carry exactly the start's ID:
+    "300" and an operator's "ID 300" are the same tag, "30" and "3000" are
+    not. No containment as in matches(): a tag names nothing else."""
+    target, payload = str(target or "").strip(), str(payload or "").strip()
+    if not target or not payload or target == APPEARANCE_ONLY:
+        return False
+    got = identifiers(payload)
+    return bool(got) and got == identifiers(target)

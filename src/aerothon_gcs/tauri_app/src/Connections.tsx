@@ -5,7 +5,7 @@ import { defaultProfile, api } from './runtime';
 // Choosing the vehicle fills the link it uses; every field stays editable.
 function asVehicle(p: ConnectionProfile, vehicle: 'simulation' | 'drone'): ConnectionProfile {
   return vehicle === 'drone'
-    ? { ...p, vehicle, transport: 'serial', device: '/dev/ttyAMA0', baud: p.baud || 115200, gateway: '', winch_backend: p.winch_backend ?? 'l298n', autoconnect:true, slam:true, slam_odometry:'lidar' }
+    ? { ...p, vehicle, transport: 'serial', device: '/dev/ttyAMA2', baud: p.baud || 115200, gateway: '', winch_backend: p.winch_backend ?? 'l298n', autoconnect:true, slam:true, slam_odometry:'lidar' }
     : { ...p, vehicle, transport: 'tcp', port: 5762, hardware_reviewed: false, winch_backend: 'mavlink', autoconnect:false, slam_odometry:'fcu',
         gateway: p.gateway || (p.host ? `http://${p.host}:8090` : '') };
 }
@@ -43,7 +43,8 @@ export default function Connections({ state, refresh }: { state: HostState | nul
   }
   return <section className="connections">
     <h2>Connections</h2>
-    <p>Runtime: {state?.runtime ?? '—'} · Profile: {state?.profile_id ?? 'none'}</p>
+    <p>Runtime: {state?.runtime ?? '—'} · Profile: {state?.profile_id ?? 'none'}{state?.mode === 'manual' ? ' · Manual mode' : ''}</p>
+    {p.mode === 'manual' && <p>Manual mode: no detection, lidar, mapping or missions run. The raw camera feed stays on, channel 8 tilts the camera, channel 6 drives the winch, and Mission Planner works through the Pi router as usual. Save the profile, then Disconnect and Connect.</p>}
     {state?.connection_error&&<p role="alert">Auto-connect: {state.connection_error}</p>}
     {/* A launch that fails at once used to leave only "Runtime: Stopped". */}
     {state?.runtime === 'Stopped' && state.profile_id && !state.autoconnect_suspended &&
@@ -56,6 +57,10 @@ export default function Connections({ state, refresh }: { state: HostState | nul
         {field('id', 'Profile ID')}{field('name', 'Name')}
         <label>Vehicle<select value={vehicle} onChange={e => setP(old => asVehicle(old, e.target.value as 'simulation' | 'drone'))}>
           <option value="simulation">Laptop simulation</option><option value="drone">Real drone</option>
+        </select></label>
+        <label>Mode<select value={p.mode ?? 'mission'} onChange={e => change('mode', e.target.value)}>
+          <option value="mission">Mission (full stack)</option>
+          <option value="manual">Manual flight (servo, winch, camera feed and GCS only)</option>
         </select></label>
         <label>FCU link<select value={p.transport} onChange={e => change('transport', e.target.value)}>
           <option value="tcp">TCP</option><option value="udp">UDP</option><option value="serial">UART</option>

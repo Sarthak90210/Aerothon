@@ -222,7 +222,8 @@ BUILTIN_PRESETS = {
     # 2026), Mission 2, with the operator's 25 Oct reading: corridor 10 ft
     # high, banner hung down to 8 ft. Walls 22 ft long and 11.5 ft apart;
     # arch boards 11.5 x 1.5 ft, ground boards 11.5 x 1 ft, 1 in white
-    # border; QR 1 m with no white border; red zone 10 x 10 ft, 1 in border;
+    # border; QR 1 m with no white border (the venue's boards are tags on a
+    # white margin, below); red zone 10 x 10 ft, 1 in border;
     # three 3.5 x 6 ft boards on legs in the exit corridor; payload
     # 100 x 50 x 50 mm, 100 g. NOT GIVEN, entered here as working values to
     # measure on the day: lane spacing (5 m centre to centre), the hall
@@ -237,7 +238,10 @@ BUILTIN_PRESETS = {
         "banner": {"width_m": 11.5 * FT, "height_m": 1.5 * FT, "border_m": 1 * INCH,
                    "ground_height_m": 1 * FT, "suspended_bottom_m": 8 * FT,
                    "placement": "both"},
-        "qr": {"target_m": 1.0, "start_m": 1.0, "border_m": 0.0},
+        # The boards at the venue (29 Oct 2026) are AprilTag 36h11 tags on a
+        # white margin about one tag cell wide, a tenth of the board, not the
+        # PDF's borderless QR: 1 m taken as the board, 0.1 m its margin.
+        "qr": {"target_m": 1.0, "start_m": 1.0, "border_m": 0.1},
         "red_zone": {"side_m": 10 * FT, "border_m": 1 * INCH},
         "payload": {"length_m": 0.10, "width_m": 0.05, "mass_kg": 0.10},
         "obstacle": {"reach_frac": round(3.5 / 11.5, 4), "height_m": 6 * FT},

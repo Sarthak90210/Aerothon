@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""QR detection, target matching and plausibility gating (zbar + OpenCV, qr_decode.py).
+"""Marker detection, target matching and plausibility gating.
+
+The field's markers are AprilTag 36h11 tags (photographed at the venue, 29 Oct
+2026), not QR codes: `marker_kind` 'aruco' (the default) reads them through
+OpenCV's aruco module (tag_decode.py, `marker_dictionary`) and the payload is
+the tag ID. 'qr' keeps the QR path (zbar + OpenCV, qr_decode.py) with its
+appearance matching. Topic names keep "qr"; they carry whichever marker.
 
 Two jobs in Mission 2:
   1. START QR  — decode the delivery target string during the start scan.
@@ -56,8 +62,8 @@ from std_msgs.msg import String, Bool
 
 from camera_ctrl.gate import CameraGate
 from perception_qr.qr_decode import QrDecoder, zbar_available
-from perception_qr import qr_appearance
-from perception_qr.qr_match import APPEARANCE_ONLY, matches
+from perception_qr import qr_appearance, tag_decode
+from perception_qr.qr_match import APPEARANCE_ONLY, matches, same_tag
 
 UNREAD = 0.25      # mission_bt.decode_hover.UNREAD
 
@@ -69,7 +75,12 @@ class QrNode(Node):
         p('image_topic', '/image_raw')
         p('camera_info_topic', '/camera/camera_info')
         p('target', '')
-        # ---- appearance matching, the PRIMARY evidence ---- #
+        # 'aruco': the field's AprilTag 36h11 boards, the ID read as the
+        # payload (tag_decode.py). 'qr': QR codes, everything below.
+        p('marker_kind', 'aruco')
+        p('marker_dictionary', tag_decode.DEFAULT_DICTIONARY)
+        # ---- appearance matching (QR), the PRIMARY evidence ---- #
+        # A tag's ID is already its pattern; this is for QR codes only.
         # The organisers have not settled whether the codes encode anything,
         # and the requirement is to match the marker by how it looks. The
         # start marker's own pattern becomes the reference; a pad whose
@@ -78,8 +89,9 @@ class QrNode(Node):
         p('appearance_threshold', qr_appearance.DEFAULT_THRESHOLD)
         p('appearance_coarse_threshold', qr_appearance.COARSE_THRESHOLD)
         p('match_mode', 'identifiers')   # or 'exact'; see qr_match.py
-        # False discards every decoded payload: the organisers' codes may
-        # carry nothing, and this flies that case on codes that do.
+        # False discards every decoded QR payload: the organisers' codes may
+        # carry nothing, and this flies that case on codes that do. Tag IDs
+        # are kept: they are the pattern, not data printed in it.
         p('use_payloads', True)
         p('process_every', 1)
         # Plausibility bounds on the PHYSICAL marker. Wide on purpose: the
@@ -95,7 +107,9 @@ class QrNode(Node):
         self.process_every = max(1, int(self.get_parameter('process_every').value))
 
         self.bridge = CvBridge()
-        self.decoder = QrDecoder()
+        # Built on first use and kept, so a set_parameters switch of kind or
+        # dictionary takes effect on the next frame.
+        self._decoders = {}
         # The start marker, as a pattern. Captured during the start scan --
         # the only time a marker is in frame before any target exists -- and
         # cleared when a new run starts so one flight's reference cannot
@@ -124,13 +138,35 @@ class QrNode(Node):
         self.pub_detail = self.create_publisher(String, '/percep/qr/detail', 10)
         self.pub_annot = self.create_publisher(Image, '/percep/qr/annotated', 5)
 
+        kind = self._kind()
         self.get_logger().info(
-            f"perception_qr up; image_topic={image_topic} target='{self.target}'")
-        if not zbar_available():
+            f"perception_qr up; image_topic={image_topic} target='{self.target}' "
+            f"markers={kind}"
+            + (f" ({self.get_parameter('marker_dictionary').value})"
+               if kind == 'aruco' else ''))
+        if kind == 'aruco':
+            # Fail at start-up, not on the first frame of the start scan.
+            self._decoder()
+        elif not zbar_available():
             self.get_logger().warn(
                 "zbar not found (apt install libzbar0; pip install pyzbar): "
                 "decoding with OpenCV alone, which loses markers to motion "
                 "blur and vibration that zbar reads")
+
+    def _kind(self):
+        kind = str(self.get_parameter('marker_kind').value).strip().lower()
+        if kind not in ('aruco', 'qr'):
+            raise ValueError(f"marker_kind must be 'aruco' or 'qr', not {kind!r}")
+        return kind
+
+    def _decoder(self):
+        kind = self._kind()
+        key = (kind, str(self.get_parameter('marker_dictionary').value)
+               if kind == 'aruco' else '')
+        if key not in self._decoders:
+            self._decoders[key] = (tag_decode.TagDecoder(key[1]) if kind == 'aruco'
+                                   else QrDecoder())
+        return self._decoders[key]
 
     def _on_info(self, m: CameraInfo):
         # CameraInfo.k is a numpy array, so `if m.k` raises
@@ -158,7 +194,8 @@ class QrNode(Node):
         Capturing it there -- rather than being handed a reference -- keeps
         this to what the aircraft actually saw.
         """
-        if not bool(self.get_parameter('appearance_matching').value):
+        if (not bool(self.get_parameter('appearance_matching').value)
+                or self._kind() != 'qr'):
             return None
         seen = qr_appearance.signature(frame, quad)
         if seen is None:
@@ -203,6 +240,8 @@ class QrNode(Node):
     def _matches(self, payload: str) -> bool:
         if self.target == APPEARANCE_ONLY:
             return False
+        if self._kind() == 'aruco':
+            return same_tag(self.target, payload)
         if self.match_mode == 'exact':
             return bool(self.target) and payload == self.target
         return matches(self.target, payload)
@@ -281,8 +320,9 @@ class QrNode(Node):
         rejected = []
         best = None            # (is_match, payload, cx, cy, px)
 
-        decoded, located = self.decoder.read(frame)
-        if not bool(self.get_parameter('use_payloads').value):
+        kind = self._kind()
+        decoded, located = self._decoder().read(frame)
+        if kind == 'qr' and not bool(self.get_parameter('use_payloads').value):
             decoded = [("", quad) for _, quad in decoded]
 
         require = bool(self.get_parameter('require_plausible').value)
@@ -399,6 +439,9 @@ class QrNode(Node):
             "accepted": accepted,
             "matched": matched,
             "target": self.target,
+            "marker_kind": kind,
+            "marker_dictionary": (str(self.get_parameter('marker_dictionary').value)
+                                  if kind == 'aruco' else None),
             "marker_px": round(best[4], 1) if best else 0.0,
             "offset": [round(offset.x, 3), round(offset.y, 3), offset.z],
             "alt": None if self._alt is None else round(self._alt, 2),

@@ -1,0 +1,13 @@
+{
+  "feature": "aruco_markers_20261029",
+  "triage": "ready-for-human",
+  "problem": "Operator, 29 Oct 2026, with nine venue photographs: 'these are not qrs that they specified before, these are aruco markers. change the code immediately for that, and run all the simulations locally'.",
+  "finding": "Every OpenCV aruco dictionary tried on the photographs: each board reads as AprilTag 36h11 (DICT_APRILTAG_36h11), IDs 100, 200, 300, 400, 500 (300 in two photographs at different places). 4x4/6x6/original-ArUco hits were 16-42 px background specks. Tag 8x8 cells with border, white margin about one cell (a tenth of the board). Fixture: tests/perception/field_tags_20261029 (marker-only crops, expected.json).",
+  "scope": "Perception (perception_qr tag_decode.py, qr_node marker_kind/marker_dictionary, qr_match.same_tag), launch env AEROTHON_MARKER_KIND/AEROTHON_MARKER_DICT, check_pi_runtime aruco check, field GCS preset QR border 0.1 m, simulator tag printing (world_spec qr.kind/qr.ids, materialize_world, materials/tag36h11_matrices.json, the four field worlds), tests. Mission tree, planner and search geometry unchanged (sweep still sized for a 33-module QR).",
+  "status": "runs in progress",
+  "evidence": [],
+  "blockers": [
+    "board size and margin, and how the start marker relates to the pads (same ID assumed), to be confirmed at the venue",
+    "not deployed to the Pi; no real-camera flight on the new detector"
+  ]
+}

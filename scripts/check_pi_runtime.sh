@@ -18,6 +18,7 @@ done
 for module in cv_bridge cv2 numpy scipy py_trees websockets aiohttp pyzbar.pyzbar serial; do
     check "Python import: $module" python3 -c "import $module"
 done
+check 'Field markers: OpenCV aruco AprilTag 36h11' python3 -c "import cv2; cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)"
 check 'OCR confirming path: tesseract' command -v tesseract
 check 'MAVROS geoid data' test -d /usr/share/GeographicLib/geoids
 web_root="$root/gcs"

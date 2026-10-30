@@ -1,0 +1,58 @@
+{
+  "feature": "fc_uplink_20261030",
+  "triage": "ready-for-human",
+  "problem": "Operator, 30 Oct 2026 ~04:30 IST: everything powered, Pi on Wi-Fi, GCS loads, but Mission Planner keeps loading parameters and the camera servo does not move.",
+  "found": {
+    "mission_planner_tlog": "Documents/Mission Planner/logs/QUADROTOR/1/2026-10-30 04-04-20.tlog, 28.9 s: FC (1,1) sent only HEARTBEAT 26, TIMESYNC 3 (its own requests, tc1 0), STATUSTEXT 2; Mission Planner sent PARAM_REQUEST_LIST 5, REQUEST_DATA_STREAM 28, AUTOPILOT_VERSION_REQUEST 4, COMMAND_LONG 10; 0 PARAM_VALUE. Same Pi boot setup at 01:56 the same night (2026-10-30 01-56-23.tlog, 1013 s): 1279 parameters and full streams",
+    "pi": "192.168.137.66 on the laptop hotspot (SSID piwifi), host key ED25519 SHA256:jz8v4aicVfo4ysmWWKhrCBuTO7kf2tCDCAEyljeOEFk (matches the 25 Oct flash); found up 1 min with throttled 0x50000 (another power reset); config.txt dtparam=uart0=on, no uart2-pi5 overlay any more; runtime.env /dev/ttyAMA0 115200",
+    "router": "aerothon-router owns /dev/ttyAMA0 at 115200; ~6 packets/s routed (heartbeat level), 0 FC writes timed out: bytes enter the Pi UART",
+    "uplink_check": "fc_uplink_check.py on the Pi through the router: MAVLink 2 and MAVLink 1 requests both got only HEARTBEAT 7, TIMESYNC 1 back; no PARAM_VALUE, COMMAND_ACK or AUTOPILOT_VERSION",
+    "pin_test": "pinctrl, router running: GPIO14 driven low read 0, driven high read 1; control GPIO4 the same; restored GPIO14 a4 (TXD0) pn, GPIO4 no pu. Unlike 16 Oct, the Pi TX pin drives",
+    "signing": "FC frames unsigned (incompat 0x0): MAVLink signing is not the cause",
+    "conclusion": "The Pi sends to header pin 8 and the FC receives none of it: the pin 8 -> TELEM3 RX wire/connector or the FC's TELEM3 RX input. Intermittent: worked 01:56, failed 04:04 and after the ~04:40 Pi boot; also failed 29 Oct 21:17-21:28 and 16-17 Oct"
+  },
+  "changed": "Nothing on the Pi or FC (GPIO14/GPIO4 modes restored after the 0.6 s drive test). Laptop known_hosts gained the matching key for 192.168.137.66",
+  "next": [
+    "Reseat or replace the jumper from Pi header pin 8 to TELEM3 RX (and check the common ground); watch Mission Planner load parameters over Wi-Fi",
+    "Mission Planner on the FC's USB: parameters loading there clears the FC itself",
+    "If the FC side is suspect: Pi loopback (pin 8 to pin 10 with the FC wire off) proves the Pi UART end to end"
+  ],
+  "blockers": [
+    "physical wiring check by the operator",
+    "Pi power resets (throttled 0x50000)"
+  ],
+  "rewiring_session": {
+    "pi_address": "piwifi: wlan0 192.168.0.103 (joined by the operator with nmcli --ask, profile saved), eth0 192.168.0.100; same host key",
+    "uart": "dtparam=uart0=on, GPIO14 a4 TXD0, GPIO15 a4 RXD0, /dev/ttyAMA0 115200 held by the router only",
+    "steps": [
+      "jumper loopback: pin 10 followed only its own pull, no connection to pin 8",
+      "FC TX on pin 10 but no ground: 15285 bad / 494 good bytes in 15 s at 115200, no other baud decoded",
+      "ground fixed, TX wire off: pins 8 and 10 floating, clean",
+      "reseated: FC -> Pi clean, 194 good / 0 bad bytes in 10 s, heartbeats at 1 Hz; FC still answered no request"
+    ],
+    "fc_usb_uarts_txt": "MAVFTP @SYS/uarts.txt over USB COM25, three reads: SERIAL5 UART2 (TELEM3) TX 68-388 B/s, RX 0, FE=5 NE=1 static; SERIAL5_BAUD 115",
+    "pin8_short": "GPIO14 in TXD0 mode read lo idle and while sending (150/150 samples); as input it read 0 with pull-up and pull-down: header pin 8 tied to ground. GPIO14 left as input (ip pn) to protect it; a reboot or 'pinctrl set 14 a4 pn' restores TXD0",
+    "conclusion": "After the reseat the wire on Pi pin 8 is on ground (likely TELEM3 GND/RX swapped, or the pin 8 connector touching pin 6); the FC's TELEM3 RX receives nothing"
+  },
+  "status": "FC link on UART2 (GPIO4/5) both ways; parameters answer, servo output 5 follows the Pi (30 Oct)",
+  "uart2_switch": {
+    "why": "GPIO14 (header 8) read 0 with its pull-up even with the operator's wire moved off it: the Pi's UART0 TX is unusable (also suspect 16-17 Oct)",
+    "changed_on_pi": [
+      "/boot/firmware/config.txt (operator's sudo, enable_uart2_20261030.sh): '#dtparam=uart0=on', 'dtoverlay=uart2-pi5' under [all]; backup config.txt.bak-uart0-20261030",
+      "/home/pi5/aerothon-deploy/runtime.env: AEROTHON_FCU_DEVICE=/dev/ttyAMA2 and comments; backup runtime.env.bak-ttyAMA0-20261030",
+      "GCS profile 'vehicle' saved through /api/profiles as 'Drone (Pi UART2)', /dev/ttyAMA2 115200, autoconnect; vehicle_connection.json rewritten by Connect at boot"
+    ],
+    "wiring": "TELEM3 pin 2 TX -> Pi header 29 (GPIO5 RXD2), TELEM3 pin 3 RX -> header 7 (GPIO4 TXD2), TELEM3 pin 6 GND -> Pi ground; TELEM3 pin 1 5 V unconnected. The first attempt had TX/RX swapped (pin 7 driven high, pin 29 floating)",
+    "verified": [
+      "after reboot: /dev/ttyAMA2, GPIO4 a2 TXD2 idle hi, GPIO5 a2 RXD2; router 'UART owner started: /dev/ttyAMA2 at 115200'",
+      "FC -> Pi: 34938 bytes in 8 s, 0 bad, 29 message types, 400 PARAM_VALUE (a parameter download running)",
+      "Pi -> FC: fc_uplink_check.py got PARAM_VALUE (param_count 1279), AUTOPILOT_VERSION and COMMAND_ACK 512 result 0",
+      "runtime Running on /dev/ttyAMA2, fresh",
+      "servo5_hold_check.py in the runtime: FORWARD 2050, ALIGN 1590, NADIR 1000, FORWARD 2050 us held by FC output 5 for 3 s each; output 5 was 2011 us (channel 8 passthrough) before"
+    ],
+    "open": [
+      "RC_CHANNELS read ch6/ch8 0 in one 6 s sample (transmitter off or not yet linked); channel 8 tilt not re-observed by the operator",
+      "Pi power: throttled 0x50000 on several boots, resets during the session"
+    ]
+  }
+}

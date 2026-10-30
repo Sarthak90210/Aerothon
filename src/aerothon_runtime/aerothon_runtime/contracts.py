@@ -87,6 +87,13 @@ def profile(value, *, require_gateway=True):
     if winch in ('gpio', 'l298n') and vehicle != 'drone':
         raise ValueError('the Pi GPIO winch is on the real drone only')
     p['winch_backend'] = winch
+    # mission: the full stack. manual: the transmitter flies; the Pi runs only
+    # MAVROS, the camera servo, the winch, the raw camera feed and the GCS (no
+    # perception, lidar, mapping or mission executive). The router runs in both.
+    mode = p.get('mode') or 'mission'
+    if mode not in {'mission', 'manual'}:
+        raise ValueError('mode must be mission or manual')
+    p['mode'] = mode
     if require_gateway and vehicle == 'simulation' and not gateway:
         raise ValueError('a simulated vehicle requires the laptop sensor gateway')
     # These are deployment files/devices, never arbitrary shell fragments.

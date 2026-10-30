@@ -730,6 +730,75 @@ the final source: search round the square, return lane entered from its face
 the source before the winch change, which only the unanswered-command path
 uses.
 
+### 29 October 2026: the field's markers are AprilTag 36h11, not QR
+
+The operator photographed the venue's boards on 29 Oct: square black-bordered
+fiducials on white boards, not the PDF's borderless QR codes. Every OpenCV
+aruco dictionary was tried on the photographs: each board reads as
+**AprilTag 36h11** (`DICT_APRILTAG_36h11`) with **IDs 100, 200, 300, 400 and
+500**; the 4x4, 6x6 and original-ArUco hits were 16-42 px specks in the
+background. ID 300 appears in two photographs at different places, possibly
+the take-off copy of a pad (not confirmed). The tag is 8 x 8 cells, black
+border included, on a white margin about one cell wide (a tenth of the board).
+Crops of the six boards, marker only, are the fixture
+`tests/perception/field_tags_20261029/` (`expected.json` gives the IDs).
+
+What changed (perception and simulator; mission tree, planner and search
+geometry unchanged):
+
+- `perception_qr/tag_decode.py`: `TagDecoder` reads tags with OpenCV's aruco
+  module (4.6's `detectMarkers` on the Pi's Ubuntu 24.04, `ArucoDetector` on
+  4.7+) and keeps `QrDecoder`'s contract: the payload is the ID in decimal
+  ("300"), quads are the tag's own corners. `minMarkerDistanceRate` is 0.02,
+  not OpenCV's 0.05: a white board on darker ground thresholds to a dark band
+  round the board, a candidate a margin larger than the tag, and the default
+  kept the band and dropped the tag (48 of 224 flat-shaded synthetic boards
+  from 24 to 360 px unread, as Gazebo renders them; 0 at 0.02; all six
+  photographs read at either). Motion blur reads up to about a fifth of the
+  tag's width. Ground textures (noise, paving) read as nothing. A tag seen
+  but not identified is reported unread only when it shows a dark border
+  ring; blurred past reading, a tag is not even a candidate, so the unread
+  hold rarely applies to tags.
+- `qr_node`: `marker_kind` 'aruco' (default) or 'qr'; `marker_dictionary`
+  (default `DICT_APRILTAG_36h11`). With tags a pad matches when its ID equals
+  the start marker's (`qr_match.same_tag`: "300" and an operator's "ID 300"
+  are one tag, "30" and "3000" are not). QR appearance matching is off for
+  tags (the ID is the pattern), so the mission's `APPEARANCE_ONLY` fallback,
+  which needs a QR module grid, never stands in for an ID; `use_payloads`
+  false no longer discards anything for tags. `/percep/qr/detail` carries
+  `marker_kind` and `marker_dictionary`. Topic names keep "qr".
+- Launch: `AEROTHON_MARKER_KIND` (default `aruco`; `qr` for QR codes) and
+  `AEROTHON_MARKER_DICT` (default `DICT_APRILTAG_36h11`), read by
+  `mission2.launch.py` like `AEROTHON_QR_IGNORE_PAYLOADS`. On the Pi they go
+  in the launcher environment. `scripts/check_pi_runtime.sh` now checks that
+  the aruco module has the 36h11 dictionary.
+- GCS preset "AeroTHON 2026 Track 1 field (organiser PDF)": QR white border
+  0.1 m (was 0), the photographed margin, with 1 m taken as the board. The
+  board's real size and margin are still to be measured on the day; the
+  plausibility gate (0.15-3.5 m) does not depend on them.
+- Simulator: world specs carry `qr.kind` (`apriltag_36h11` by default, or
+  `qr`) and `qr.ids` (pads a-e, default 100-500, distinct, 0-586); the start
+  marker prints the target pad's ID. `scripts/materialize_world.py` prints
+  the tag's cells (`materials/tag36h11_matrices.json`, from OpenCV's own
+  dictionary by `scripts/generate_tag_matrices.py`) on a white plate, with
+  the GCS QR border as the margin, or a tenth of the board when a world gives
+  none. The four field worlds carry the tags and the 0.1 m border. Every
+  world now prints tags unless it says `qr`, matching the aircraft default.
+- Not changed: the sweep is still sized for a 33-module QR at 5.3 px per
+  module (8 m for a 1 m marker on the 0.85 rad camera). A tag's 8 cells need
+  far fewer pixels, so this is conservative; raising the sweep is a separate,
+  flight-facing change. The headless world (`sim/headless_world.py`) still
+  models QR reading at the object level.
+
+Tests: `sim/test_tag_decode.py` (field photographs, rendered boards at every
+size/turn/ground, blur, textures, node matching, world printing, a printed
+board read from above, so not mirrored); QR-path tests now set
+`marker_kind` qr.
+
+Runs (laptop simulation through the world maker and the GCS, calm, graded by
+`sim/check_track.py`, `logs/aruco_markers_20261029/`, receipt
+`.scratch/aruco_markers_20261029/receipt.json`): in progress.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch
@@ -820,6 +889,11 @@ physical gate/height holds and tight-origin/stub-waypoint rules are qualified
 functional changes and must be preserved during cleanup.
 
 ### QR identification
+
+The venue's markers are AprilTag 36h11 tags (section 1, "29 October 2026"),
+read by default (`marker_kind` aruco): the tag ID is the payload and the
+pattern, and a pad matches when its ID is the start marker's. The rest of
+this section is the QR path (`AEROTHON_MARKER_KIND=qr`).
 
 The organisers have not confirmed that the codes encode anything and require
 matching by visual appearance. `qr_appearance.py` rectifies each located
@@ -1429,14 +1503,27 @@ that tunnel. Deployment receipts belong under `.scratch/pi_deploy_20261014/`.
 
 The hardware file proposes TELEM2, MAVLink 2 and 921600 baud. Confirm connector
 pinout, electrical levels, ground, permissions and the actual device first.
-The inspected Pi's prior measured setup used TELEM3, `/dev/ttyAMA0`, GPIO14 TX
-and GPIO15 RX at 115200 baud. That destination setting takes precedence over
+**Measured link since 30 Oct 2026: TELEM3 on the Pi's UART2, `/dev/ttyAMA2`
+at 115200**: TELEM3 pin 2 (TX) to header 29 (GPIO5, RXD2), pin 3 (RX) to
+header 7 (GPIO4, TXD2), pin 6 (GND) to a Pi ground, pin 1 (5 V) unconnected;
+`dtoverlay=uart2-pi5` with `dtparam=uart0=on` commented out, `runtime.env`
+and the drone profile on `/dev/ttyAMA2`. That night Mission Planner stuck at
+"Getting params" and the camera servo did not move: the FC's own
+`@SYS/uarts.txt` showed TELEM3 (SERIAL5) RX at 0 bytes while it transmitted,
+and GPIO14 (header 8) read 0 with its pull-up even with its wire removed, so
+the UART0 TX pin is unusable (it failed a drive test on 16 Oct too). On UART2
+the FC answered parameters and commands at once, and output 5 held the Pi's
+poses (receipt `.scratch/fc_uplink_20261030/`). Two wiring faults on the way
+look alike from Mission Planner: no common ground garbles FC -> Pi (97% bad
+bytes at the right baud), and TX/RX swapped leaves the Pi's RX floating. From
+23 to 30 Oct the link used UART0, `/dev/ttyAMA0`, GPIO14 TX and GPIO15 RX.
+That destination setting takes precedence over
 the proposal until a deliberate FC link change is measured. `/dev/serial0`
 currently names the Pi debug UART `/dev/ttyAMA10` and its login console.
 In the documented topology the router owns the serial device:
 
 ```bash
-python3 scripts/mav_router.py --fcu-serial /dev/ttyAMA0 --fcu-baud 115200 \
+python3 scripts/mav_router.py --fcu-serial /dev/ttyAMA2 --fcu-baud 115200 \
   --mavros-port 14555 --gcs-port 14550 --gcs-broadcast \
   [--gcs-host <extra-laptop-ip> --gcs-out-port 14550]
 ```
@@ -1721,6 +1808,26 @@ and inclusion-fence polygons and wait for readiness. Readiness is not physical
 qualification. START M2 is explicit and guarded. Record operator, FC, ROS and
 camera logs. A command acknowledgement does not prove actuator movement.
 
+**Manual flight mode** (30 Oct 2026). A connection profile's Mode is
+"Mission (full stack)" or "Manual flight (servo, winch, camera feed and GCS
+only)" (profile `mode` `mission` / `manual`, launch `manual:=true`). In manual
+mode the transmitter flies and the Pi runs only MAVROS, `stream_rate_keeper`
+(RC channels at 10 Hz), `rc_in_bridge`, `camera_ctrl` (channel 8 tilt, Camera
+cal), `winch_ctrl` (RC6 hand drive, Winch cal), the aggregator (GCS telemetry
+and commands) and the raw webcam feed (`usb_cam`, `camera_exposure`,
+`web_video_server`; the GCS shows "Raw camera" only). No perception, lidar,
+SLAM, avoidance, readiness, mission executive or execution service starts,
+and the host refuses every task Start ("manual mode runs no missions or
+tests"). The
+router is a host service and serves Mission Planner in both modes. Switch by
+selecting the profile in Connections, Disconnect (disarmed), Connect; the last
+connected auto-connect profile is the one the Pi starts at boot. On the
+aircraft profile `vehicle_manual` ("Drone manual (servo + winch)") is the
+manual copy of `vehicle`. Checked on the aircraft: exactly those nodes,
+output 5 holding the saved Camera cal points, the winch IDLE on RC6, Start
+refused, and the raw feed at about 30 fps through the GCS video proxy once
+the webcam was attached (receipt `.scratch/manual_mode_20261030/`; `sim/test_manual_mode.py`).
+
 Abort is latched and checked each tree tick. The guard includes persistent FCU
 loss, requested abort, critical battery, floor violation and excessive attitude.
 Stage-aware abort disables avoidance and selects LAND below 1.5 m or RTL higher
@@ -1820,7 +1927,9 @@ exit corridor's hung and laid boards print in it and there are no orange
 boards; without one, orange marks the far opening of both corridors. With
 GCS dimensions the banner border, the laid board's own height (Ground banner
 height), the obstacle height and the QR white border follow the fields (QR
-border 0: the code printed without its quiet zone). A laid sheet over the
+border 0: the code printed without its quiet zone). Markers are AprilTag
+36h11 boards by default (`qr.kind`, `qr.ids`; the start marker carries the
+target pad's ID), the border their white margin. A laid sheet over the
 delivery zone is drawn on the zone's slab. **6 organiser points** turns the fence into six draggable points
 P1-P6, listed with latitude/longitude once the simulator is connected. Saving writes the same values as
 GCS preset `World NAME` to `~/.aerothon/dimension_presets.json`.

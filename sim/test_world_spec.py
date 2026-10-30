@@ -520,7 +520,9 @@ class ArenaDimensionTests(unittest.TestCase):
         self.assertEqual((out["corridor"]["x"], out["corridor"]["y"], out["corridor"]["yaw_deg"]),
                          (12.0, -14.0, 25.0))
         self.assertEqual(out["qr"], {"start_m": 0.9, "target_m": 1.2,
-                                     "border_m": d["qr"]["border_m"]})
+                                     "border_m": d["qr"]["border_m"],
+                                     "kind": W.normalise(s)["qr"]["kind"],
+                                     "ids": W.normalise(s)["qr"]["ids"]})
         self.assertTrue(all(z["w"] == z["h"] == 2.0 for z in out["red_zones"]))
         self.assertEqual(out["banner"]["board_bottom_m"], d["banner"]["suspended_bottom_m"])
         for o in out["return_corridor"]["obstacles"]:

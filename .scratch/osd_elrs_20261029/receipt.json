@@ -1,0 +1,28 @@
+{
+  "feature": "osd_elrs_20261029",
+  "triage": "ready-for-human",
+  "problem": "Operator, 29 Oct 2026: 'setup the params for osd on dji its connected to telem 2 and set mavlink over elrs'.",
+  "found": {
+    "firmware": "ArduPilot 4.7.1 (stream rates are MAVn_*: MAV1 = SERIAL0 USB, MAV2 = SERIAL1, MAV3 = SERIAL5 the Pi)",
+    "dji_osd_telem2": "already the documented MSP DisplayPort setup: SERIAL2_PROTOCOL 42, SERIAL2_BAUD 115, SERIAL2_OPTIONS 0, OSD_TYPE 5, MSP_OPTIONS 4 (Betaflight fonts), OSD1_ENABLE 1; BRD_SER2_RTSCTS 2 (auto)",
+    "elrs": "already running in MAVLink mode on SERIAL1 (TELEM1) at 460800: RC_CHANNELS_OVERRIDE from system 255 component 68 at ~100/s, RC_CHANNELS chancount 0; but SERIAL1_PROTOCOL 1 (MAVLink1), MAV2 stream rates 0, and the FC forwarded every override out of TELEM3 to the Pi (seen at the router: 1197 in 12 s, roughly 4-5 kB/s of the 115200 link)",
+    "gps": "GPS1_TYPE 9 (DroneCAN, node 125); SERIAL3/4 disabled is expected"
+  },
+  "sources": [
+    "https://www.expresslrs.org/software/mavlink/",
+    "https://ardupilot.org/copter/docs/common-displayport.html",
+    "https://ardupilot.org/copter/docs/common-param-name-changes.html",
+    "https://discuss.ardupilot.org/t/dji-air-unit-o3-and-msp-displayport-osd/93549"
+  ],
+  "set_and_read_back": {
+    "SERIAL1_PROTOCOL": "1 -> 2 (MAVLink2, ExpressLRS guide)",
+    "MAV2_RAW_SENS/EXT_STAT/RC_CHAN/POSITION/EXTRA1/EXTRA2/EXTRA3": "0 -> 1 (ExpressLRS guide)",
+    "MAV2_ADSB/PARAMS/RAW_CTRL": "0 (kept, ExpressLRS guide)",
+    "MAV2_OPTIONS": "0 -> 2 (bit 1, don't forward MAVLink to/from the ELRS port: the 100/s RC overrides stop crossing to the Pi's TELEM3; the FC still uses them)",
+    "BRD_SER2_RTSCTS": "2 -> 0 (the DJI air unit has TX/RX only)"
+  },
+  "unchanged": "SERIAL1_BAUD 460, RSSI_TYPE 5, SERIAL2 42/115, OSD_TYPE 5, MSP_OPTIONS 4, RC_OVERRIDE_TIME 3, FS_THR_ENABLE 1, RC_FS_TIMEOUT 1",
+  "status": "written, FC rebooted on the operator's yes, verified; OSD on the goggles to be checked by the operator",
+  "operator_side": "ELRS: TX Link Mode MAVLink (receiver off while changing it); on ELRS v3 the receiver's serial protocol MAVLink under Other Devices. DJI goggles: Custom OSD on; air unit TX/RX crossed to TELEM2 RX/TX",
+  "verified_after_reboot": "29 Oct: MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN ack 0, heartbeat back in 7 s, GPS DroneCAN1-125 detected, EKF3 aligned. Read back SERIAL1_PROTOCOL 2, SERIAL1_BAUD 460, MAV2_OPTIONS 2, MAV2_RC_CHAN 1, BRD_SER2_RTSCTS 0, SERIAL2 42/115, OSD_TYPE 5, MSP_OPTIONS 4, RSSI_TYPE 5. 12 s at the router: no messages from any system but the FC (the ELRS overrides no longer cross to TELEM3); RC_CHANNELS chancount 0, rssi 254, ch1-9 1500 1500 988 1500 988 988 988 1500 988; SYS_STATUS RC receiver present, enabled, healthy; runtime Running, fresh"
+}

@@ -55,7 +55,8 @@ def test_the_preset_carries_the_pdf_dimensions():
         (11.5 * FT, 1.5 * FT, 1 * FT))
     assert b["suspended_bottom_m"] == pytest.approx(8 * FT)        # hung down to 8 ft
     assert b["border_m"] == pytest.approx(INCH) and b["placement"] == "both"
-    assert (d["qr"]["target_m"], d["qr"]["start_m"], d["qr"]["border_m"]) == (1.0, 1.0, 0.0)
+    # The venue's tag boards (29 Oct) have a white margin; the PDF said none.
+    assert (d["qr"]["target_m"], d["qr"]["start_m"], d["qr"]["border_m"]) == (1.0, 1.0, 0.1)
     assert (d["red_zone"]["side_m"], d["red_zone"]["border_m"]) == pytest.approx((10 * FT, INCH))
     assert d["obstacle"]["height_m"] == pytest.approx(6 * FT)
     assert d["obstacle"]["reach_frac"] * c["width_m"] == pytest.approx(3.5 * FT, abs=1e-3)
@@ -350,7 +351,9 @@ def test_a_start_marker_running_off_the_frame_is_never_the_reference():
     owns = not rclpy.ok()
     if owns:
         rclpy.init()
+    from rclpy.parameter import Parameter
     node = QrNode()
+    node.set_parameters([Parameter("marker_kind", value="qr")])
     try:
         node.target = ""
         img = _fixture("start_qr_borderless_clipped.jpg")
@@ -430,11 +433,11 @@ def test_the_field_world_prints_the_pdf_boards(tmp_path, field):
     assert re.search(r'name="ground_banner_panel"><pose>[-0-9.]+ 0 0\.102 0 0 0</pose>', model("corridor_return"))
     assert re.search(r'name="ground_banner_panel"><pose>[-0-9.]+ 0 0\.012 0 0 0</pose>', laid)
     qr = model("delivery_qr_target_c")
-    # No white border: the plate is the 1 m code, its 25 modules 4 cm each,
-    # the 7-module finder pattern starting at the edge.
+    # The venue's board (29 Oct): a 1 m white plate, a 0.1 m margin, the
+    # AprilTag's 8 cells 0.1 m each, its black top row the full 0.8 m.
     assert "<size>1.0 1.0 0.04</size>" in qr
-    assert "<size>0.280000 0.040000 0.012</size>" in qr
-    assert re.search(r'<pose>-0\.360000 0\.480000 0\.026', qr), "finder pattern not at the edge"
+    assert "<size>0.800000 0.100000 0.012</size>" in qr
+    assert re.search(r'<pose>0\.000000 0\.350000 0\.026', qr), "tag border not inside the margin"
     assert not re.findall(r"@[A-Z_]+@", world)
 
 

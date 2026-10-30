@@ -357,7 +357,7 @@
       "qr": {
         "target_m": 1.0,
         "start_m": 1.0,
-        "border_m": 0.0
+        "border_m": 0.1
       },
       "red_zone": {
         "side_m": 3.048,

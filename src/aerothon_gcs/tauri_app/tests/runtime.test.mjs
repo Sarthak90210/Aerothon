@@ -155,6 +155,17 @@ test("a blocked start names its reason, and the reason agrees with startAllowed"
   assert.match(startBlockReason(t, true, "banner"), /readiness interlock is blocked/);
   assert.match(startBlockReason(t, true, "mechanism"), /Winch feedback is unavailable/);
 });
+test("manual mode runs no tasks and says so instead of a missing service", () => {
+  const t = ready();
+  t.runtime_mode = "manual";
+  delete t.runtime_health;
+  for (const task of tasks) {
+    assert.match(startBlockReason(t, true, task.id), /^Manual mode:/);
+    assert.equal(startAllowed(t, true, task.id), false);
+  }
+  t.runtime_mode = "mission";
+  assert.match(startBlockReason(t, true, "mission"), /execution service is not reporting/);
+});
 test("a flight start waiting on a device says what the device measured", () => {
   const t = ready();
   t.devices = {identity:{ok:true}, lidar:{ok:true}, clock:{ok:true}, camera_actuator:{ok:true},

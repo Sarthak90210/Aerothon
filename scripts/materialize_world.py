@@ -97,6 +97,20 @@ def strip_quiet_zone(matrix: list[list[bool]]) -> list[list[bool]]:
     return [r[cols[0]:cols[-1] + 1] for r in matrix[rows[0]:rows[-1] + 1]]
 
 
+def tag_cells(assets: Path, tag_id: int) -> list[list[bool]]:
+    """An AprilTag 36h11 tag's cells (True black, border included): the
+    stored grids of scripts/generate_tag_matrices.py, else OpenCV's."""
+    stored = assets / "tag36h11_matrices.json"
+    if stored.exists():
+        cells = json.loads(stored.read_text(encoding="utf-8")).get(str(tag_id))
+        if cells:
+            return cells
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]
+                           / "src/aerothon_perception/perception_qr"))
+    from perception_qr import tag_decode
+    return tag_decode.marker_cells(tag_decode.DEFAULT_DICTIONARY, tag_id)
+
+
 def qr_visuals(matrix: list[list[bool]], size: float, prefix: str,
                wear: int = 0, border_m: float = None) -> str:
     """White plate plus horizontally merged black QR module runs.
@@ -544,24 +558,31 @@ def main() -> None:
         # not the arena was randomised, so the two cases cannot diverge.
         args.layout_out.write_text(json.dumps(layout, sort_keys=True),
                                    encoding="utf-8")
-    matrices_path = args.assets / "qr_matrices.json"
-    if not matrices_path.exists():
-        raise SystemExit(f"Missing {matrices_path}; run generate_competition_assets.py")
-    matrices = json.loads(matrices_path.read_text(encoding="utf-8"))
-
     choices = ["a", "b", "c", "d", "e"]
     if args.start_target.lower() in choices:
         start_letter = args.start_target.lower()
     else:
         rng = random.Random(args.seed or None)
         start_letter = rng.choice(choices)
-    start_matrix = matrices[f"qr_target_{start_letter}.png"]
-    payloads = (args.assets / "qr_payloads.txt").read_text(encoding="utf-8")
-    start_payload = next(
-        (line.split(":", 1)[1].strip() for line in payloads.splitlines()
-         if line.startswith(f"qr_target_{start_letter}.png")), "?")
-    print(f"start pad names delivery target {start_letter.upper()} "
-          f"({start_payload})")
+    marker_spec = spec["qr"] if spec else world_spec.default_spec()["qr"]
+    marker_kind = marker_spec.get("kind", world_spec.MARKER_KINDS[0])
+    if marker_kind == "qr":
+        matrices_path = args.assets / "qr_matrices.json"
+        if not matrices_path.exists():
+            raise SystemExit(f"Missing {matrices_path}; run generate_competition_assets.py")
+        qr_matrices = json.loads(matrices_path.read_text(encoding="utf-8"))
+        matrices = {l: qr_matrices[f"qr_target_{l}.png"] for l in choices}
+        payloads = (args.assets / "qr_payloads.txt").read_text(encoding="utf-8")
+        start_payload = next(
+            (line.split(":", 1)[1].strip() for line in payloads.splitlines()
+             if line.startswith(f"qr_target_{start_letter}.png")), "?")
+    else:
+        ids = {l: int(marker_spec["ids"][l]) for l in choices}
+        matrices = {l: tag_cells(args.assets, ids[l]) for l in choices}
+        start_payload = f"AprilTag 36h11 ID {ids[start_letter]}"
+    start_matrix = matrices[start_letter]
+    print(f"MARKERS: {marker_kind}; start pad names delivery target "
+          f"{start_letter.upper()} ({start_payload})")
     bottom = (float(spec["banner"]["board_bottom_m"]) if spec
               else world_spec.BOARD_BOTTOM_M)
     bw = float(spec["banner"].get("width_m", 3.7)) if spec else 3.7
@@ -589,6 +610,14 @@ def main() -> None:
     qr_border = (float(spec["qr"]["border_m"])
                  if dimensioned and "border_m" in spec["qr"] else None)
 
+    def marker(matrix, size, prefix):
+        # A tag with no border given is printed as the venue's boards are,
+        # on a white margin a tenth of the board (one cell of ten).
+        border = qr_border
+        if border is None and marker_kind != "qr":
+            border = size / 10.0
+        return qr_visuals(matrix, size, prefix, cond["wear"]["qr"], border)
+
     def hung_board(colour):
         return (banner_geometry(cond["wear"]["banner"], bottom, lettered, colour,
                                 width=bw, height=bh, rod=rod, border=border)
@@ -604,11 +633,9 @@ def main() -> None:
     print(f"BANNER PLACEMENT: {placement}"
           + ("" if lettered else "; no lettering (organiser clarification)"))
     replacements = {
-        "@QR_START_VISUALS@": qr_visuals(start_matrix, args.start_qr_size,
-                                        "start_qr", cond["wear"]["qr"], qr_border),
-        **{f"@QR_TARGET_{l.upper()}_VISUALS@": qr_visuals(
-            matrices[f"qr_target_{l}.png"], args.target_qr_size, f"target_{l}",
-            cond["wear"]["qr"], qr_border) for l in "abcde"},
+        "@QR_START_VISUALS@": marker(start_matrix, args.start_qr_size, "start_qr"),
+        **{f"@QR_TARGET_{l.upper()}_VISUALS@": marker(matrices[l], args.target_qr_size,
+                                                      f"target_{l}") for l in "abcde"},
         "@AEROTHON_BANNER_GEOMETRY@": "\n        ".join(
             x for x in (hung,) if x),
         RETURN_BANNER_TOKEN: hung_board(exit_print),

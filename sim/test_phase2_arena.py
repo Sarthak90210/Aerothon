@@ -137,7 +137,8 @@ def test_the_world_matches_the_dimensions_entered(height_m):
     assert b["mount"] == "rod" and b["orange"] is True
     assert b["board_bottom_m"] + b["height_m"] == pytest.approx(c["wall_height"])
     assert b["width_m"] == c["width"]
-    assert spec["qr"] == {"start_m": 1.0, "target_m": 1.0}
+    assert spec["qr"] == {"start_m": 1.0, "target_m": 1.0, "kind": "apriltag_36h11",
+                          "ids": W.DEFAULT_TAG_IDS}
     assert len(spec["red_zones"]) == 1
     assert spec["red_zones"][0]["w"] == pytest.approx(1.524)
     # Obstacles in the exit corridor reach half its width from a wall.

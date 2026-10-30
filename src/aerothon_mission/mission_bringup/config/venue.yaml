@@ -61,6 +61,12 @@ camera_ctrl:
     # the camera too, and the FC's own channel 8 passthrough (58) took the
     # servo back from the Pi whenever channel 8 moved.
     rc_tilt_channel: 8
+    # Channel 8 is an angle through the Camera cal (30 Oct 2026): this pulse
+    # is straight down, rc_tilt_high_us forward, the middle 45 deg down.
+    # rc_tilt_reversed: true if the switch tilts the wrong way.
+    rc_tilt_low_us: 1000
+    rc_tilt_high_us: 2000
+    rc_tilt_reversed: false
 
 perception_payload:
   ros__parameters:
