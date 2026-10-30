@@ -10,11 +10,23 @@
     "The zone's far corners are fence vertices; FC FENCE_MARGIN 2 m would brake a lane 1 m inside the zone."
   ],
   "scope": "Mission (decision code, authorised by the operator 30 Oct): delivery_zone.boundary_to_local_polygon/rectangle_touches_polygon; mav_commander turned corners searched as their polygon, lanes also 3 m inside an arena fence (search_fence), red rectangles kept only where they touch the zone polygon; mission_tree lane trim; readiness accepts turned corners. GCS: second box for the four zone corners, Apply geofence sends the outline of the fence points and the corners (organiser.ts), Apply delivery zone; built-in preset 'AeroTHON 2026 venue (30 Oct survey)'. Simulator: world_spec turned zone (yaw_deg), venue take-off pad (pad_m, pad_colour, start_marker_ahead_m), fence mode 'behind'; materialize_world, organiser_inputs, publish_delivery_zone (corner form), headless red pad, check_track zone polygon; scripts/venue_world.py and sim/worlds/aerothon26_venue*.json.",
-  "status": "implemented; offline checks and runs in progress",
-  "evidence": [],
+  "status": "paused by the operator 30 Oct: headless grid partly flown, rendered GUI runs and the reduced suite not yet run",
+  "evidence": [
+    "commits ca302ca (pending 29-30 Oct work), 6a65671 (venue), 3553711 (UploadArenaFence checks a turned zone's own corners; found by the first headless run)",
+    "unit: sim/test_turned_zone.py, sim/test_venue_world.py, GCS organiser test; with the zone/fence/geofence suites 76 passed; GCS node tests 47 passed; tsc clean",
+    "headless batch b (logs/venue_20261030/headless_b, INTERRUPTED): 3 parallel at RTF 2 plus stale processes starved the corridor controller (setpoint gaps>0.3 s: 129-248 in the failed runs); not valid corridor evidence",
+    "headless solo c06 (boards 1.5 m, first right, RTF 1): navigation PASS, corridor 0.81 m, red 2.81 m, landed 0.6 m, no setpoint gaps",
+    "headless batch d (RTF 1, 2 parallel, paused after two): c01 PASS corridor 0.96 m red 2.67 m; c02 PASS corridor 0.96 m red 2.76 m; c03/c04 killed mid-run"
+  ],
   "blockers": [
     "back-left fence point: the typed value is 122 m off; the world mirrors the back-right point. Enter the organisers' own six points on the day.",
     "board size, start-marker distance and obstacle places along the lane are working values (1 m boards, marker 1.5 m ahead of the pad centre, boards at 2 m and 4 m)",
     "not deployed to the Pi; no aircraft flight on this source"
+  ],
+  "next": [
+    "finish headless batch d (c03-c11, RTF 1, PAR 2)",
+    "rendered GUI runs: run_venue.sh aerothon26_venue / _far / _r10",
+    "reduced suite on the final source (AEROTHON_OFFLINE_SCOPE_EVIDENCE=logs/offline_reduced_scope_venue_20261030.json, nvm node)",
+    "check c04's near-red after the entry-lane exit on a clean run"
   ]
 }

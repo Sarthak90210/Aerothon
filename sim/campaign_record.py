@@ -3,11 +3,25 @@ import hashlib
 import json
 import math
 import os
+import time
 from functools import lru_cache
 from pathlib import Path
 
 
 @lru_cache(maxsize=1)
+def _read(p, tries=10):
+    # Windows briefly holds files under /mnt/d (Explorer/indexing after a WSL
+    # restart): EACCES on an ordinary read killed whole headless runs at start-up
+    # (31 Oct 2026). Retry before giving up.
+    for i in range(tries):
+        try:
+            return p.read_bytes()
+        except PermissionError:
+            if i == tries - 1:
+                raise
+            time.sleep(0.5)
+
+
 def source_manifest(root):
     result={}
     for directory in ('src','scripts','sim'):
@@ -16,7 +30,7 @@ def source_manifest(root):
             for name in files:
                 p=Path(path)/name
                 if p.suffix in ('.py','.sh','.cpp','.hpp','.h','.xml','.yaml','.yml','.json','.sdf','.xacro','.toml','.ts','.tsx','.rs','.parm','.cfg','.ini','.txt','.urdf','.glb','.dae','.stl','.ply','.obj','.mtl','.png','.jpg','.jpeg','.webp','.svg'):
-                    result[str(p.relative_to(root))]=hashlib.sha256(p.read_bytes()).hexdigest()
+                    result[str(p.relative_to(root))]=hashlib.sha256(_read(p)).hexdigest()
     return result
 
 

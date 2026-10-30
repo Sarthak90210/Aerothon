@@ -799,6 +799,64 @@ Runs (laptop simulation through the world maker and the GCS, calm, graded by
 `sim/check_track.py`, `logs/aruco_markers_20261029/`, receipt
 `.scratch/aruco_markers_20261029/receipt.json`): in progress.
 
+### 30 October 2026: the surveyed venue
+
+The operator measured the venue and surveyed it with GPS about the take-off
+pad (home 13.1705900, 77.5331760). Their figures override the field PDF
+(whose SHA-256 is unchanged) where they differ:
+
+- Markers: AprilTag 36h11 only. The ten photographs in `actual markers/`
+  read as IDs 100, 200, 300 (two boards), 400 and 500. The first marker can be
+  any of them; the aircraft finds its match in the delivery zone as before.
+- Corridors: 6 m long, 3.5 m (11.5 ft, the banners' width) wide, walls 3 m;
+  a 1.5-2 m gap between them; banners as the PDF. The exit lane holds two
+  boards, 2 m tall, at most 1.5 m from the wall, 4-5 cm thick; the entry lane
+  none.
+- Take-off: a red pad of about 0.5 m, the aircraft on it at take-off and
+  landing, the first marker about 1 m in front. One red zone, 3 x 3 m.
+- Organiser points: two fence points behind take-off (left and right) and the
+  delivery zone's four corners. Search only inside the corners; the fence is
+  all six.
+
+Survey, in the corridor frame (the lanes run 286.5 deg true): lanes 6.1 and
+6.3 m long, 2.25 m apart, mouths 5.2-5.7 m in front of home; the zone 17.8 x
+23.9 m from 12.2-13.4 m in front, square to the lanes within 3 deg, its
+corners up to 1.2 m off a rectangle. The back-right point is 5.4 m behind and
+23.4 m right of home ("really wide on the back side"); the back-left point as
+typed lay 122 m ahead, so the worlds mirror the back-right one. Another team's
+points put the zone about 3 m left and their entry lane 2.8 m long; they are
+not used.
+
+What changed (decision code, authorised by the operator; section 4 "The
+venue's six points"): a turned four-corner zone, refused before as "not an
+axis-aligned ENU rectangle", is searched as its polygon, lanes trimmed 1 m
+inside it and 3 m inside the arena fence; red ground counts only where it
+touches the zone, so the red take-off pad is not a keep-out; readiness accepts
+turned corners. GCS: a delivery-zone corners box, Apply geofence sends the
+outline of all six points, Apply delivery zone the corners; built-in preset
+**AeroTHON 2026 venue (30 Oct survey)** (lanes 6 x 11.5 ft x 3 m, spacing
+11.5 ft + 2 m, navigation 1.5 m, red zone 3 m, boards 2 m reaching 1.5 m,
+1 m markers with 0.1 m margin).
+
+Simulator: world specs take a turned zone (`delivery_zone.yaw_deg`), a venue
+take-off pad (`takeoff.pad_m`, `pad_colour`, aircraft on its centre) with the
+start marker `start_marker_ahead_m` in front, and a fence of points behind
+take-off plus the zone corners (`geofence.mode` "behind"). `scripts/venue_world.py`
+builds the surveyed venue in the corridor frame and turns it to 163.48 deg
+ENU about home, so the GCS receives corners turned as the organisers' will be:
+`sim/worlds/aerothon26_venue.json` (boards 1.5 m, first on the left flying
+home, 2 m gap, red zone mid-left, target C), `aerothon26_venue_far.json`
+(boards 1.5 m, first right, 1.5 m gap, red zone before the exit, target B in
+the far corner) and `aerothon26_venue_r10.json` (boards 1.0 m, target D).
+Working values to confirm on the day: boards at 2 m and 4 m along the lane,
+start marker centre 1.5 m in front of the pad centre, pads and red zone placed
+by the world, not known. The organiser inputs endpoint gives the two back
+points, the four corners and their outline; the headless world sees the red
+pad as red ground.
+
+Evidence (`logs/venue_20261030/`, receipt `.scratch/venue_20261030/receipt.json`):
+in progress.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch
@@ -1159,14 +1217,32 @@ starts cannot replace active executions. Hardware camera/winch motion and
 physical delivery remain unqualified; the GPIO/encoder winch backend exists in
 software but is unmeasured and bench-unverified.
 
-**The judges' geofence is the one organiser polygon.** They give six
-coordinates. Paste them into Organiser inputs, one `latitude, longitude` per
+**The venue's six points: two behind take-off, four zone corners (30 Oct
+2026).** The organisers give two fence points behind the take-off pad and the
+delivery zone's four corners; the aircraft searches only inside the corners,
+and the fence is all six. In Organiser inputs paste the two points behind
+take-off into the geofence box and the four corners, in any order, into
+"Delivery-zone corners". Apply geofence sends the outline (convex hull) of
+all six (`organiser.ts`, `organiserFence`; the near corners fall inside it);
+Apply delivery zone sends the corners. Apply both. A zone square to north is
+searched as its rectangle as before; one turned to the ground (the venue's
+runs 16.5 deg off east-west) is accepted as a convex quadrilateral
+(`boundary_to_local_polygon`) and searched like the judges' polygon: lanes
+over its bounding box trimmed 1 m inside it, and also 3 m inside the arena
+fence (`Mav.search_fence`), because its far corners are fence vertices and
+the FC's 2 m FENCE_MARGIN would brake a lane 1 m inside the zone. Red ground
+is kept only where it touches the zone (`inside_delivery_zone`): the red
+take-off pad is not a restricted zone. Readiness "Search area" reads
+"supplied corners (turned polygon)". Built-in preset: **AeroTHON 2026 venue
+(30 Oct survey)** (section 1, "30 October 2026").
+
+**Without zone corners the judges' geofence is the one organiser polygon.**
+Paste the points into the geofence box alone, one `latitude, longitude` per
 line: the GCS counts them, draws the draft dashed on the Map tab, and after
-Apply geofence draws the applied polygon filled. No delivery-zone corners are
-entered. The rulebook says "Delivery zone geo-fence coordinates will be
-provided"; the team expected a fence round the whole flying area. Take-off
-decides which (`delivery_zone.judges_polygon_role`), on the aircraft and in
-readiness alike:
+Apply geofence draws the applied polygon filled. The rulebook says "Delivery
+zone geo-fence coordinates will be provided"; the team expected a fence round
+the whole flying area. Take-off decides which
+(`delivery_zone.judges_polygon_role`), on the aircraft and in readiness alike:
 
 - **Take-off inside the points: arena fence.** The polygon is the FC inclusion
   fence (take-off at least 2 m inside). Once the outbound corridor's exit is

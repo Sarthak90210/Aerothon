@@ -57,6 +57,18 @@ October 2026"). `qr_node` reads them by default (`marker_kind` aruco,
 stays selectable (`AEROTHON_MARKER_KIND=qr`). Simulator worlds print tags
 unless their spec says `qr`. The sweep is still sized for a 33-module QR.
 
+On 30 October the operator surveyed the venue (master guide section 1, "30
+October 2026"): lanes 6 x 3.5 m, walls 3 m, a 1.5-2 m gap; two 2 m boards in
+the exit lane, at most 1.5 m from the wall; a 0.5 m red take-off pad with the
+first marker about 1 m in front; one 3 x 3 m red zone; six organiser points,
+two behind take-off and the zone's four corners. The GCS takes the corners in
+their own box (fence = outline of all six, search only inside the corners),
+and a zone turned off north is searched as its polygon, lanes also 3 m
+inside the fence, red kept only inside the zone (a decision-code change).
+Worlds `sim/worlds/aerothon26_venue*.json` (`scripts/venue_world.py`), GCS
+preset "AeroTHON 2026 venue (30 Oct survey)". The typed back-left point was
+122 m off and is mirrored in the worlds; enter the organisers' points on the day.
+
 On 15 October the organiser clarifications were applied (master guide
 section 1, "15 October 2026"). Final source `188aacd0...` passed the full
 reduced offline suite and two calm rendered acceptances 22/22: pattern-only
