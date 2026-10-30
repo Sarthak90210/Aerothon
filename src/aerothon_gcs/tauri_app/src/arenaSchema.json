@@ -372,6 +372,47 @@
         "reach_frac": 0.3043,
         "height_m": 1.8288000000000002
       }
+    },
+    "AeroTHON 2026 venue (30 Oct survey)": {
+      "corridor": {
+        "length_m": 6.0,
+        "width_m": 3.5052000000000003,
+        "wall_height_m": 3.0,
+        "nav_height_m": 1.5,
+        "spacing_m": 5.5052,
+        "return_side": "right"
+      },
+      "hall": {
+        "length_m": 50.0,
+        "width_m": 50.0,
+        "ceiling_m": 30.0
+      },
+      "banner": {
+        "width_m": 3.5052000000000003,
+        "height_m": 0.45720000000000005,
+        "border_m": 0.0254,
+        "ground_height_m": 0.3048,
+        "suspended_bottom_m": 2.4384,
+        "placement": "both"
+      },
+      "qr": {
+        "target_m": 1.0,
+        "start_m": 1.0,
+        "border_m": 0.1
+      },
+      "red_zone": {
+        "side_m": 3.0,
+        "border_m": 0.0254
+      },
+      "payload": {
+        "length_m": 0.1,
+        "width_m": 0.05,
+        "mass_kg": 0.1
+      },
+      "obstacle": {
+        "reach_frac": 0.4286,
+        "height_m": 2.0
+      }
     }
   },
   "placements": [

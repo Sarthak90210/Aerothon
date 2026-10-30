@@ -41,7 +41,8 @@ from gcs_aggregator.readiness import blocking_reasons, evaluate, is_ready
 from perception_banner.colours import validate as validate_colours
 from perception_banner.colours import missing as missing_colours
 from mission_bt.delivery_zone import (ROLE_DELIVERY_ZONE, judges_polygon_role,
-                                      parse_boundary, boundary_to_local_zone,
+                                      parse_boundary, boundary_to_local_polygon,
+                                      boundary_to_local_zone,
                                       parse_polygon, point_inside_with_margin,
                                       polygon_to_local)
 
@@ -372,14 +373,19 @@ class Readiness(Node):
 
     def _resolve_delivery_zone(self):
         zone = None
+        turned = False
         reason = self.delivery_parse_reason
         if self.delivery_vertices is not None:
             if self.home is None:
                 reason = "delivery-zone boundary awaits FCU home position"
             else:
-                zone, reason = boundary_to_local_zone(
-                    self.delivery_vertices, float(self.home.geo.latitude),
-                    float(self.home.geo.longitude))
+                home = (float(self.home.geo.latitude), float(self.home.geo.longitude))
+                zone, reason = boundary_to_local_zone(self.delivery_vertices, *home)
+                if zone is None:
+                    # Turned corners: the mission searches their polygon.
+                    corners, reason = boundary_to_local_polygon(self.delivery_vertices, *home)
+                    if corners is not None:
+                        zone, turned = corners, True
         if self.delivery_vertices is None and self.obs.get("geofence_valid"):
             # Fence-only arena: the judges give one polygon and no delivery
             # corners. Round take-off it is the whole flying area and the
@@ -394,7 +400,9 @@ class Readiness(Node):
             return
         self.obs["delivery_zone_valid"] = zone is not None
         self.obs["delivery_zone_reason"] = reason or "four-corner boundary resolved in local ENU"
-        self.obs["delivery_zone_value"] = "supplied corners" if zone is not None else "invalid"
+        self.obs["delivery_zone_value"] = (
+            "invalid" if zone is None
+            else "supplied corners (turned polygon)" if turned else "supplied corners")
 
     # ---- interlock ---- #
     def _on_lidar(self, message):

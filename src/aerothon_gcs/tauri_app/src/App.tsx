@@ -31,6 +31,7 @@ import Slam, { type Grid, type MapPose } from "./LidarView";
 import { decodeGrid } from "./lidarGeometry";
 import coverage from "./satelliteCoverage.json";
 import { satelliteStyle } from "./mapSources";
+import { organiserFence } from "./organiser";
 import "./gcs.css";
 const Graphs = lazy(() => import("./Graphs"));
 
@@ -138,6 +139,7 @@ export default function App() {
   };
   const [target, setTarget] = useState(""),
     [fenceText, setFenceText] = useState(""),
+    [zoneText, setZoneText] = useState(""),
     [mapReady, setMapReady] = useState(false);
   const [colours, setColours] = useState({
     green: "",
@@ -460,12 +462,24 @@ export default function App() {
       map.current = null;
     };
   }, [view, onlineMap, theme]);
-  // Draw the fence: the applied polygon and whatever is typed in the box.
+  // Draw the fence: the applied polygon and whatever is typed in the boxes
+  // (with zone corners, the outline of the fence points and the corners).
   let draftFence: [number, number][] = [];
+  let draftZone: { lat: number; lon: number }[] = [];
   let draftError = "";
+  let zoneError = "";
+  try {
+    draftZone = zoneText.trim() ? boundary(zoneText) : [];
+    if (draftZone.length && draftZone.length !== 4)
+      zoneError = `${draftZone.length} corners (expected 4)`;
+  } catch (reason) {
+    zoneError = String(reason).replace(/^Error: /, "");
+  }
+  const zoneReady = draftZone.length === 4 && !zoneError;
   try {
     draftFence = fenceText.trim()
-      ? boundary(fenceText).map((p) => [p.lat, p.lon] as [number, number])
+      ? organiserFence(boundary(fenceText), zoneReady ? draftZone : [])
+          .map((p) => [p.lat, p.lon] as [number, number])
       : [];
   } catch (reason) {
     draftError = String(reason).replace(/^Error: /, "");
@@ -1032,28 +1046,39 @@ export default function App() {
             </button>
             <p className="view-note">Colours applied: {t?.banner_colours ? Object.entries(t.banner_colours).map(([name,hex]) => `${name} ${hex}`).join(' · ') : 'none'}</p>
             <label>
-              Geofence (lat, lon per line)
+              Geofence points behind take-off, or the whole fence (lat, lon per line)
               <textarea
-                rows={7}
+                rows={4}
                 value={fenceText}
-                placeholder={["-35.3634507, 149.1650815", "-35.3634507, 149.1659792", "..."].join("\n")}
+                placeholder={["lat, lon  (behind take-off, left)", "lat, lon  (behind take-off, right)"].join("\n")}
                 onChange={(e) => setFenceText(e.target.value)}
               />
             </label>
+            <label>
+              Delivery-zone corners, 4 (lat, lon per line; blank if not given)
+              <textarea
+                rows={4}
+                value={zoneText}
+                placeholder={["lat, lon  (corner 1)", "lat, lon  (corner 2)", "... any order"].join("\n")}
+                onChange={(e) => setZoneText(e.target.value)}
+              />
+            </label>
             <p className="view-note">
-              {draftError
-                ? draftError
+              {draftError || zoneError
+                ? draftError || zoneError
                 : draftFence.length
-                  ? `${draftFence.length} points${draftFence.length === 6 ? "" : " (expected 6)"} · dashed on Map`
+                  ? zoneReady
+                    ? `Fence: outline of the ${boundary(fenceText).length} points and the 4 corners, ${draftFence.length} vertices · dashed on Map`
+                    : `${draftFence.length} points · dashed on Map`
                   : "Drawn on the Map tab."}
             </p>
             <button
-              disabled={!fcu || busy || t?.mission.armed !== false || draftFence.length < 3 || Boolean(draftError)}
+              disabled={!fcu || busy || t?.mission.armed !== false || draftFence.length < 3 || Boolean(draftError || zoneError)}
               onClick={() => {
                 try {
                   reviewedSend(
                     "set_geofence",
-                    { vertices: boundary(fenceText) },
+                    { vertices: organiserFence(boundary(fenceText), zoneReady ? draftZone : []) },
                     true,
                   );
                 } catch (reason) {
@@ -1063,10 +1088,17 @@ export default function App() {
             >
               Apply geofence
             </button>
+            <button
+              disabled={!fcu || busy || t?.mission.armed !== false || !zoneReady}
+              onClick={() => reviewedSend("set_delivery_zone", { vertices: draftZone }, true)}
+            >
+              Apply delivery zone
+            </button>
             <p className="view-note">
               Fence applied: {appliedFence.length ? `${appliedFence.length} points (filled on Map)` : "none"}.
-              Around take-off = arena fence; away from it = delivery zone
-              (+10 m fence). Readiness shows which.
+              With zone corners the aircraft searches only inside them; apply
+              both. Without them: around take-off = arena fence, away from it =
+              delivery zone (+10 m fence). Readiness shows which.
             </p>
           </details>
           <details>

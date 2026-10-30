@@ -96,11 +96,25 @@ def geofence_payload(fence, home_lat, home_lon):
 
 
 def zone_from_env(environ=None):
-    """Read ``AEROTHON_DELIVERY_ZONE`` as ``(cx, cy, width, height)``."""
+    """Read ``AEROTHON_DELIVERY_ZONE`` as ``(cx, cy, width, height)``, or as
+    four corners ``x,y;x,y;x,y;x,y`` for a zone turned off north (the venue's,
+    30 Oct 2026), which come back as a list of (x, y)."""
     environ = os.environ if environ is None else environ
     raw = (environ.get("AEROTHON_DELIVERY_ZONE") or "").strip()
     if not raw:
         return DEFAULT_ZONE
+    if ";" in raw:
+        corners = []
+        for pair in raw.split(";"):
+            if not pair.strip():
+                continue
+            xy = [float(v) for v in pair.split(",")]
+            if len(xy) != 2 or not all(math.isfinite(v) for v in xy):
+                raise ValueError("AEROTHON_DELIVERY_ZONE corners must be 'x,y;x,y;x,y;x,y'")
+            corners.append((xy[0], xy[1]))
+        if len(corners) != 4:
+            raise ValueError("AEROTHON_DELIVERY_ZONE needs four corners")
+        return corners
     parts = raw.split(",")
     if len(parts) != 4:
         raise ValueError("AEROTHON_DELIVERY_ZONE must be 'cx,cy,width,height'")
@@ -115,15 +129,25 @@ def zone_from_env(environ=None):
     return cx, cy, width, height
 
 
-def boundary_payload(cx, cy, width, height, home_lat, home_lon):
+def zone_corners(zone):
+    """``(cx, cy, w, h)`` or four corners, as the four corners in ring order
+    (SW, SE, NE, NW for a rectangle)."""
+    if len(zone) == 4 and isinstance(zone[0], (tuple, list)):
+        return [tuple(c) for c in zone]
+    cx, cy, width, height = zone
+    half_w, half_h = width / 2.0, height / 2.0
+    return [(cx - half_w, cy - half_h), (cx + half_w, cy - half_h),
+            (cx + half_w, cy + half_h), (cx - half_w, cy + half_h)]
+
+
+def boundary_payload(cx, cy, width, height, home_lat, home_lon, corners=None):
     """Four corners of the local ENU rectangle as the mission's boundary JSON.
 
     Corners are emitted in ring order (SW, SE, NE, NW) so the payload reads as
-    a polygon rather than an unordered set.
+    a polygon rather than an unordered set. ``corners`` (a turned zone) are
+    published as given.
     """
-    half_w, half_h = width / 2.0, height / 2.0
-    corners = ((cx - half_w, cy - half_h), (cx + half_w, cy - half_h),
-               (cx + half_w, cy + half_h), (cx - half_w, cy + half_h))
+    corners = corners or zone_corners((cx, cy, width, height))
     vertices = []
     for x, y in corners:
         lat, lon = local_to_global(x, y, home_lat, home_lon)
@@ -155,7 +179,11 @@ def main():
     class DeliveryZoneSource(Node):
         def __init__(self):
             super().__init__("aerothon_delivery_zone_source")
-            self.cx, self.cy, self.width, self.height = zone_from_env()
+            self.corners = zone_corners(zone_from_env())
+            xs = [c[0] for c in self.corners]
+            ys = [c[1] for c in self.corners]
+            self.cx, self.cy = (min(xs) + max(xs)) / 2.0, (min(ys) + max(ys)) / 2.0
+            self.width, self.height = max(xs) - min(xs), max(ys) - min(ys)
             self.pub = self.create_publisher(String, TOPIC, latched)
             self.fence = geofence_from_env()
             self.pub_fence = self.create_publisher(String, GEOFENCE_TOPIC,
@@ -183,7 +211,8 @@ def main():
             fence_only = os.environ.get("AEROTHON_FENCE_ONLY", "0") == "1"
             if not fence_only:
                 self.pub.publish(String(data=boundary_payload(
-                    self.cx, self.cy, self.width, self.height, home_lat, home_lon)))
+                    self.cx, self.cy, self.width, self.height, home_lat, home_lon,
+                    corners=self.corners)))
             self.pub_fence.publish(String(data=geofence_payload(
                 self.fence, home_lat, home_lon)))
             verts = fence_vertices(self.fence)

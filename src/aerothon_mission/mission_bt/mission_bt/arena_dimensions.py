@@ -246,4 +246,25 @@ BUILTIN_PRESETS = {
         "payload": {"length_m": 0.10, "width_m": 0.05, "mass_kg": 0.10},
         "obstacle": {"reach_frac": round(3.5 / 11.5, 4), "height_m": 6 * FT},
     },
+    # The venue as the operator surveyed and measured it (30 Oct 2026), over
+    # the PDF where they differ: lanes 6 m long, walls 3 m, the same 3.5 m
+    # (11.5 ft, the banners' width) wide; a 1.5-2 m gap between them (2 m);
+    # two obstacles in the exit lane, 2 m tall, at most 1.5 m from the wall
+    # and 4-5 cm thick; one red zone 3 x 3 m. Hall: round the surveyed
+    # fence, 36 m from the back points to the zone's far edge and 47 m
+    # across at the back. Boards and banners as the PDF.
+    "AeroTHON 2026 venue (30 Oct survey)": {
+        **defaults(),
+        "corridor": {"length_m": 6.0, "width_m": 11.5 * FT, "wall_height_m": 3.0,
+                     "nav_height_m": 1.5, "spacing_m": 11.5 * FT + 2.0,
+                     "return_side": "right"},
+        "hall": {"length_m": 50.0, "width_m": 50.0, "ceiling_m": 30.0},
+        "banner": {"width_m": 11.5 * FT, "height_m": 1.5 * FT, "border_m": 1 * INCH,
+                   "ground_height_m": 1 * FT, "suspended_bottom_m": 8 * FT,
+                   "placement": "both"},
+        "qr": {"target_m": 1.0, "start_m": 1.0, "border_m": 0.1},
+        "red_zone": {"side_m": 3.0, "border_m": 1 * INCH},
+        "payload": {"length_m": 0.10, "width_m": 0.05, "mass_kg": 0.10},
+        "obstacle": {"reach_frac": round(1.5 / 3.5, 4), "height_m": 2.0},
+    },
 }

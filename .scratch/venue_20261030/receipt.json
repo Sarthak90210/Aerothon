@@ -1,0 +1,20 @@
+{
+  "feature": "venue_20261030",
+  "triage": "ready-for-human",
+  "problem": "Operator, 30 Oct 2026: the venue has AprilTag markers only (no QR), lanes 3 m high, 3.5 m wide, 6 m long with a 1.5-2 m gap, two 2 m obstacles in the exit lane (at most 1.5 m from the wall, 4-5 cm thick), a red 0.5 m take-off pad with the first marker about 1 m in front, one 3 x 3 m red zone, and six organiser coordinates: two fence points behind take-off and the delivery zone's four corners. Search only inside the corners; the fence is all six. GPS survey supplied (back-left point typed 122 m off: filled by mirroring the back-right one); another team's points supplied as a cross-check.",
+  "findings": [
+    "All ten photographs in 'actual markers/' read as AprilTag 36h11, IDs 100, 200, 300 (two boards), 400, 500: what perception reads by default since 29 Oct.",
+    "Survey in the corridor frame (286.5 deg true): lanes 6.1/6.3 m, 2.25 m gap, mouths 5.2-5.7 m in front of home; zone 17.8 x 23.9 m from 12.2-13.4 m in front, square to the lanes within 3 deg, corners off a rectangle by up to 1.2 m. The other team's points put their zone about 3 m left and their entry lane 2.8 m long; the operator's survey is used.",
+    "The four-corner path refused any zone not square to north ('not an axis-aligned ENU rectangle'), so the venue's corners could not be used; the judges' single polygon would have swept the wide strip out to the back-right fence point.",
+    "Every red patch was kept when no rectangular zone was supplied: the red take-off pad under the aircraft at take-off and landing could have become a keep-out.",
+    "The zone's far corners are fence vertices; FC FENCE_MARGIN 2 m would brake a lane 1 m inside the zone."
+  ],
+  "scope": "Mission (decision code, authorised by the operator 30 Oct): delivery_zone.boundary_to_local_polygon/rectangle_touches_polygon; mav_commander turned corners searched as their polygon, lanes also 3 m inside an arena fence (search_fence), red rectangles kept only where they touch the zone polygon; mission_tree lane trim; readiness accepts turned corners. GCS: second box for the four zone corners, Apply geofence sends the outline of the fence points and the corners (organiser.ts), Apply delivery zone; built-in preset 'AeroTHON 2026 venue (30 Oct survey)'. Simulator: world_spec turned zone (yaw_deg), venue take-off pad (pad_m, pad_colour, start_marker_ahead_m), fence mode 'behind'; materialize_world, organiser_inputs, publish_delivery_zone (corner form), headless red pad, check_track zone polygon; scripts/venue_world.py and sim/worlds/aerothon26_venue*.json.",
+  "status": "implemented; offline checks and runs in progress",
+  "evidence": [],
+  "blockers": [
+    "back-left fence point: the typed value is 122 m off; the world mirrors the back-right point. Enter the organisers' own six points on the day.",
+    "board size, start-marker distance and obstacle places along the lane are working values (1 m boards, marker 1.5 m ahead of the pad centre, boards at 2 m and 4 m)",
+    "not deployed to the Pi; no aircraft flight on this source"
+  ]
+}

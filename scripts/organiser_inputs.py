@@ -46,7 +46,6 @@ def organiser_inputs(spec, home_lat, home_lon):
     def geo(points):
         return [local_to_global(x - hx, y - hy, home_lat, home_lon) for x, y in points]
 
-    x0, x1, y0, y1 = W.zone_rect(spec)
     supplied = {k: v.upper() for k, v in (spec["banner"].get("colours") or {}).items() if v}
     colours = dict(SIM_COLOURS)
     if "exit" in supplied:
@@ -54,10 +53,16 @@ def organiser_inputs(spec, home_lat, home_lon):
         # boards, so the simulator's printed orange is not on the field.
         colours.pop("orange", None)
     colours.update(supplied)
+    g = spec["geofence"]
+    behind = [tuple(map(float, p)) for p in g.get("behind") or []] if g.get("mode") == "behind" else []
     return {
         "home": [home_lat, home_lon],
-        "geofence": lines(geo(W.fence_polygon(spec))),
-        "delivery_zone": lines(geo([(x0, y0), (x1, y0), (x1, y1), (x0, y1)])),
+        # The fence box: the points behind take-off when the organisers give
+        # those and the zone's corners (30 Oct 2026), else the whole fence.
+        "geofence": lines(geo(behind or W.fence_polygon(spec))),
+        # What Apply geofence sends: their outline with the corners.
+        "geofence_outline": lines(geo(W.fence_polygon(spec))),
+        "delivery_zone": lines(geo(W.zone_polygon(spec))),
         "banner_colours": colours,
     }
 

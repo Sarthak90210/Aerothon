@@ -416,20 +416,38 @@ def obstacle_polygons(spec):
     return out
 
 
+def takeoff_pad_size(spec):
+    """(w, h) of the take-off pad: the template's 5 x 8 m, or ``pad_m``."""
+    pad = spec["takeoff"].get("pad_m")
+    if pad is None:
+        return TAKEOFF_PAD_SIZE
+    return (float(pad), float(pad)) if not isinstance(pad, (list, tuple)) else (
+        float(pad[0]), float(pad[1]))
+
+
 def takeoff_polygon(spec):
     t = spec["takeoff"]
-    return rect_corners(t["x"], t["y"], *TAKEOFF_PAD_SIZE,
+    return rect_corners(t["x"], t["y"], *takeoff_pad_size(spec),
                         math.radians(t["yaw_deg"]))
 
 
 def spawn_point(spec):
+    """Where the aircraft stands. On a venue-sized pad (``pad_m``, 30 Oct
+    2026: a 0.5 m red pad) it stands on the pad's centre."""
     t = spec["takeoff"]
+    if t.get("pad_m") is not None:
+        return float(t["x"]), float(t["y"])
     return _place(SPAWN_OFFSET, t["x"], t["y"], math.radians(t["yaw_deg"]))
 
 
 def start_qr_point(spec):
+    """The start marker's centre: the template's, or ``start_marker_ahead_m``
+    in front of the pad centre along the take-off heading (the venue's is
+    about 1 m in front of the pad)."""
     t = spec["takeoff"]
-    return _place(START_QR_OFFSET, t["x"], t["y"], math.radians(t["yaw_deg"]))
+    ahead = t.get("start_marker_ahead_m")
+    offset = START_QR_OFFSET if ahead is None else (float(ahead), 0.0)
+    return _place(offset, t["x"], t["y"], math.radians(t["yaw_deg"]))
 
 
 def parked_payload_point(spec=None):
@@ -439,10 +457,20 @@ def parked_payload_point(spec=None):
     return _place(PARKED_PAYLOAD_OFFSET, t["x"], t["y"], math.radians(t["yaw_deg"]))
 
 
-def zone_rect(spec):
+def zone_polygon(spec):
+    """The delivery zone's corners; ``yaw_deg`` turns it (the venue's zone
+    lies square to its corridors, 16.5 deg off east-west)."""
     z = spec["delivery_zone"]
-    return (z["x"] - z["w"] / 2, z["x"] + z["w"] / 2,
-            z["y"] - z["h"] / 2, z["y"] + z["h"] / 2)
+    return rect_corners(z["x"], z["y"], z["w"], z["h"],
+                        math.radians(float(z.get("yaw_deg", 0.0))))
+
+
+def zone_rect(spec):
+    """The delivery zone's bounding box (the zone itself when not turned)."""
+    pts = zone_polygon(spec)
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    return (min(xs), max(xs), min(ys), max(ys))
 
 
 def red_polygon(r):
@@ -461,14 +489,37 @@ def fence_polygon(spec):
     if g.get("mode") == "polygon" and len(g.get("vertices") or []) >= 3:
         pts = [(float(x), float(y)) for x, y in g["vertices"]]
         return pts if polygon_area(pts) > 0 else pts[::-1]
+    if g.get("mode") == "behind":
+        # The organisers' points (30 Oct 2026): two behind take-off and the
+        # zone's corners; the fence is their outline.
+        return convex_hull([tuple(map(float, p)) for p in g.get("behind") or []]
+                           + zone_polygon(spec))
     m = float(g.get("margin", AUTO_FENCE_MARGIN_M))
-    x0, x1, y0, y1 = zone_rect(spec)
     pts = (takeoff_polygon(spec) + corridor_polygon(spec) + return_polygon(spec)
-           + [(x0, y0), (x1, y1)])
+           + zone_polygon(spec))
     xs = [p[0] for p in pts]
     ys = [p[1] for p in pts]
     return [(min(xs) - m, min(ys) - m), (max(xs) + m, min(ys) - m),
             (max(xs) + m, max(ys) + m), (min(xs) - m, max(ys) + m)]
+
+
+def convex_hull(points):
+    """Counter-clockwise hull, Andrew's monotone chain."""
+    pts = sorted(set(points))
+    if len(pts) <= 2:
+        return pts
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    def half(seq):
+        out = []
+        for p in seq:
+            while len(out) >= 2 and cross(out[-2], out[-1], p) <= 0:
+                out.pop()
+            out.append(p)
+        return out[:-1]
+    return half(pts) + half(pts[::-1])
 
 
 def polygon_area(pts):
@@ -866,8 +917,7 @@ def validate(spec):
     if not (z["w"] > 0 and z["h"] > 0):
         errs.append("delivery zone needs a positive width and height")
         return errs, warns
-    zx0, zx1, zy0, zy1 = zone_rect(spec)
-    zone_poly = [(zx0, zy0), (zx1, zy0), (zx1, zy1), (zx0, zy1)]
+    zone_poly = zone_polygon(spec)
 
     missing = [l for l in PAD_LETTERS if l not in spec["pads"]]
     if missing:

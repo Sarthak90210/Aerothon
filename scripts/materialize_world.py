@@ -831,11 +831,11 @@ def to_home_frame(layout, home):
     x0, x1, y0, y1 = layout["geofence_rect"]
     out["geofence_rect"] = [round(x0 - hx, 3), round(x1 - hx, 3),
                             round(y0 - hy, 3), round(y1 - hy, 3)]
-    if layout.get("geofence_poly"):
-        out["geofence_poly"] = [[round(x - hx, 3), round(y - hy, 3)]
-                                for x, y in layout["geofence_poly"]]
+    for key in ("geofence_poly", "delivery_zone_poly"):
+        if layout.get(key):
+            out[key] = [[round(x - hx, 3), round(y - hy, 3)] for x, y in layout[key]]
     out["home_world"] = [hx, hy]
-    out["frame"] = ("delivery_zone_rect/geofence_rect/geofence_poly are "
+    out["frame"] = ("delivery_zone_rect/delivery_zone_poly/geofence_rect/geofence_poly are "
                     "home-local ENU; gate, red_zones, pads, zone are world")
     return out
 
@@ -1204,6 +1204,19 @@ def apply_spec(world: str, spec: dict):
     for part in ("takeoff_landing_zone", "start_qr_target_a"):
         world, _ = _rigid_move(world, part, t["x"] - cx0, t["y"] - cy0, tyaw,
                                S.TAKEOFF_TEMPLATE_CENTRE)
+    if t.get("pad_m") is not None:
+        # The venue's pad (30 Oct 2026): about 0.5 m, red, the aircraft on it.
+        pw, ph = S.takeoff_pad_size(spec)
+        world = _replace_in_model(world, "takeoff_landing_zone", "<size>5 8 0.08</size>",
+                                  f"<size>{pw:.3f} {ph:.3f} 0.08</size>")
+        if t.get("pad_colour"):
+            world = _replace_in_model(
+                world, "takeoff_landing_zone",
+                "<material><ambient>0.10 0.42 0.72 1</ambient><diffuse>0.12 0.50 0.82 1</diffuse></material>",
+                material(*world_spec.print_colour(t["pad_colour"])))
+    if t.get("start_marker_ahead_m") is not None:
+        qx, qy = S.start_qr_point(spec)
+        world, _ = _set_pose(world, "start_qr_target_a", qx, qy, tyaw)
     sx, sy = S.spawn_point(spec)
     world = _set_include_pose(world, "aerothon_iris", sx, sy, tyaw)
     # The payload hangs under the airframe centre, so it goes where the spawn
@@ -1240,16 +1253,17 @@ def apply_spec(world: str, spec: dict):
     # ---- delivery zone and its painted boundary, any size ---- #
     z = spec["delivery_zone"]
     zw, zh = float(z["w"]), float(z["h"])
+    zyaw = math.radians(float(z.get("yaw_deg", 0.0)))
     world = _replace_in_model(world, "delivery_zone_40x30", "<size>40 30 0.08</size>",
                               f"<size>{zw:.3f} {zh:.3f} 0.08</size>")
-    world, _ = _set_pose(world, "delivery_zone_40x30", z["x"], z["y"])
+    world, _ = _set_pose(world, "delivery_zone_40x30", z["x"], z["y"], zyaw)
     i, j = _model_span(world, "delivery_geofence_boundary")
     block = world[i:j]
     a = block.index('<link name="lines">') + len('<link name="lines">')
     b = block.index("</link>")
     block = block[:a] + "\n        " + zone_boundary_visuals(zw, zh) + "\n      " + block[b:]
     world = world[:i] + block + world[j:]
-    world, _ = _set_pose(world, "delivery_geofence_boundary", z["x"], z["y"])
+    world, _ = _set_pose(world, "delivery_geofence_boundary", z["x"], z["y"], zyaw)
 
     # ---- red zones: any number, size and heading ---- #
     for name in ("restricted_red_zone_main", "restricted_red_zone_northwest",
@@ -1302,6 +1316,8 @@ def apply_spec(world: str, spec: dict):
 
     layout = {
         "delivery_zone_rect": [float(z["x"]), float(z["y"]), zw, zh],
+        # The zone's corners: turned when the spec gives it a heading.
+        "delivery_zone_poly": [[round(x, 3), round(y, 3)] for x, y in S.zone_polygon(spec)],
         "geofence_poly": [[round(x, 3), round(y, 3)] for x, y in fence],
         "geofence_rect": [round(min(fx), 3), round(max(fx), 3),
                           round(min(fy), 3), round(max(fy), 3)],

@@ -31,12 +31,15 @@ from mavros_msgs.srv import (CommandBool, CommandLong, ParamSetV2, SetMode,
 from rcl_interfaces.msg import ParameterType, ParameterValue
 
 from mission_bt.delivery_zone import (ARENA_FENCE_LANE_MARGIN_M,
-                                      ROLE_DELIVERY_ZONE, ZONE_LANE_MARGIN_M,
+                                      ROLE_ARENA, ROLE_DELIVERY_ZONE,
+                                      ZONE_LANE_MARGIN_M,
+                                      boundary_to_local_polygon,
                                       boundary_to_local_zone, bounding_zone,
                                       clip_beyond, inset_zone,
                                       judges_polygon_role, parse_boundary,
                                       parse_polygon, polygon_area,
-                                      polygon_to_local, safety_fence)
+                                      polygon_to_local,
+                                      rectangle_touches_polygon, safety_fence)
 from mission_bt.banner_orbit import SELF_M
 from mission_bt.banner_captures import BannerCaptures
 from mission_bt.detector_timing import DetectorTiming
@@ -62,14 +65,19 @@ def _latched_qos(depth: int = 1) -> QoSProfile:
     )
 
 
-def inside_delivery_zone(rectangles, zone):
+def inside_delivery_zone(rectangles, zone, polygon=None):
     """Red rectangles [x0, x1, y0, y1] that touch the supplied delivery zone.
 
     Restricted zones lie inside the delivery zone, so red seen outside it is
     not one: in r11 (24 Oct 2026) a tilted 20 km/h frame confirmed two boxes
-    short of the zone and the gate advance refused its destination. With no
-    supplied zone every rectangle is kept.
+    short of the zone and the gate advance refused its destination. The
+    venue's take-off pad is red too (30 Oct 2026), under the aircraft at
+    take-off and landing. A zone known only as a `polygon` (turned corners,
+    or the judges' points as the zone) filters the same way. With no supplied
+    zone every rectangle is kept.
     """
+    if zone is None and polygon is not None:
+        return [r for r in rectangles if rectangle_touches_polygon(r, polygon)]
     if zone is None:
         return list(rectangles)
     x0, x1, y0, y1 = (float(v) for v in zone[:4])
@@ -278,6 +286,9 @@ class Mav:
                                  self._on_home, qos)
         self.delivery_zone_global = None
         self.delivery_zone_local = None
+        # Corners not square to north: the zone as a polygon instead of
+        # delivery_zone_local's rectangle (boundary_to_local_polygon).
+        self.zone_corners_local = None
         self.delivery_zone_reason = "delivery-zone boundary is missing"
         node.create_subscription(String, '/mission/delivery_zone',
                                  self._on_delivery_zone, _latched_qos())
@@ -441,26 +452,40 @@ class Mav:
         vertices, why = parse_boundary(m.data)
         self.delivery_zone_global = vertices
         self.delivery_zone_local = None
+        self.zone_corners_local = None
         self.delivery_zone_reason = why
         self._resolve_delivery_zone()
 
     def _resolve_delivery_zone(self):
         if self.delivery_zone_global is None or self.home is None:
             return
-        zone, why = boundary_to_local_zone(
-            self.delivery_zone_global,
-            float(self.home.geo.latitude), float(self.home.geo.longitude))
+        home_lat = float(self.home.geo.latitude)
+        home_lon = float(self.home.geo.longitude)
+        zone, why = boundary_to_local_zone(self.delivery_zone_global, home_lat, home_lon)
+        corners = None
+        if zone is None:
+            # Turned or not quite square: searched as its polygon.
+            corners, turned_why = boundary_to_local_polygon(
+                self.delivery_zone_global, home_lat, home_lon)
+            why = "" if corners is not None else turned_why
+        # About home -> about the EKF origin (see _resolve_geofence).
+        hx, hy = self.home_local_xy()
         if zone is not None:
-            # About home -> about the EKF origin (see _resolve_geofence).
-            hx, hy = self.home_local_xy()
             zone = (zone[0] + hx, zone[1] + hx, zone[2] + hy, zone[3] + hy) + tuple(zone[4:])
+        if corners is not None:
+            corners = [(x + hx, y + hy) for x, y in corners]
         self.delivery_zone_local = zone
+        self.zone_corners_local = corners
         self.delivery_zone_reason = why or "four-corner boundary resolved in local ENU"
         if zone is not None:
             self._log_once(
                 "Delivery-zone boundary loaded: "
                 f"x {zone[0]:.1f}..{zone[1]:.1f}, "
                 f"y {zone[2]:.1f}..{zone[3]:.1f}")
+        if corners is not None:
+            self._log_once(
+                "Delivery-zone corners loaded as a polygon: " + ", ".join(
+                    f"({x:.1f}, {y:.1f})" for x, y in corners))
 
     def _log_once(self, text):
         """Log a line unless it repeats the last one: home arrives at 1 Hz
@@ -482,18 +507,38 @@ class Mav:
     @property
     def search_margin_m(self):
         """How far sweep lanes keep inside search_polygon()."""
-        if getattr(self, "judges_zone_local", None) is not None:
+        if (getattr(self, "judges_zone_local", None) is not None
+                or getattr(self, "zone_corners_local", None) is not None):
             return ZONE_LANE_MARGIN_M
         return ARENA_FENCE_LANE_MARGIN_M
 
-    def search_polygon(self):
-        """The fenced field beyond the outbound corridor, local XY, or None.
+    def search_fence(self):
+        """``(polygon, margin)`` sweep lanes must also keep inside, or None.
 
-        Only in a fence-only arena, and only once the corridor exit is known:
-        the polygon clipped to the side of the exit the corridor leads to,
-        one metre past it. With organiser corners the field is their
-        rectangle and this is None.
+        The venue's zone (30 Oct 2026) reaches the arena fence: its far
+        corners are fence vertices. The FC enforces that fence with its 2 m
+        FENCE_MARGIN, so a lane 1 m inside the zone would be braked short of
+        its end. Lanes keep ARENA_FENCE_LANE_MARGIN_M inside the fence too.
         """
+        if (getattr(self, "zone_corners_local", None) is not None
+                and self.geofence_local is not None
+                and getattr(self, "judges_role", None) == ROLE_ARENA):
+            return self.geofence_local, ARENA_FENCE_LANE_MARGIN_M
+        return None
+
+    def search_polygon(self):
+        """The field to sweep as a local XY polygon, or None.
+
+        Delivery-zone corners not square to north: their quadrilateral. A
+        fence-only arena, once the corridor exit is known: the polygon clipped
+        to the side of the exit the corridor leads to, one metre past it.
+        With square organiser corners the field is their rectangle and this
+        is None.
+        """
+        corners = getattr(self, "zone_corners_local", None)
+        if corners is not None:
+            self.delivery_zone_reason = "search area is the supplied delivery-zone corners"
+            return corners
         zone = getattr(self, "judges_zone_local", None)
         if self.fence_only and zone is not None:
             # The points ARE the delivery zone: known before take-off.
@@ -1474,8 +1519,10 @@ class Mav:
         except (KeyError, TypeError, ValueError):
             provisional = []
         zone = getattr(self, "delivery_zone_local", None)
-        confirmed = inside_delivery_zone(confirmed, zone)
-        provisional = inside_delivery_zone(provisional, zone)
+        polygon = (getattr(self, "zone_corners_local", None)
+                   or getattr(self, "judges_zone_local", None))
+        confirmed = inside_delivery_zone(confirmed, zone, polygon)
+        provisional = inside_delivery_zone(provisional, zone, polygon)
         self.provisional_exclusions = provisional
         self.confirmed_exclusions = confirmed
         self.exclusions = confirmed + provisional

@@ -454,7 +454,11 @@ if [[ -z "${AEROTHON_DELIVERY_ZONE:-}" || -z "${AEROTHON_GEOFENCE:-}" ]]; then
 import json
 d = json.load(open("/tmp/aerothon_arena_layout.json"))
 z = d["delivery_zone_rect"]; f = d["geofence_rect"]
-print("LAYOUT_ZONE=%s" % ",".join("%.3f" % v for v in z))
+zp = d.get("delivery_zone_poly")
+if zp and len({round(x, 2) for x, _ in zp}) > 2:   # turned: its four corners
+    print("LAYOUT_ZONE='%s'" % ";".join("%.3f,%.3f" % (x, y) for x, y in zp))
+else:
+    print("LAYOUT_ZONE=%s" % ",".join("%.3f" % v for v in z))
 if d.get("geofence_poly"):     # a user-built arena's polygon (x,y;x,y;...)
     print("LAYOUT_FENCE='%s'" % ";".join("%.3f,%.3f" % (x, y)
                                         for x, y in d["geofence_poly"]))

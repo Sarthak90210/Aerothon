@@ -4495,10 +4495,15 @@ class LawnmowerSearch(py_trees.behaviour.Behaviour):
         get = getattr(self.mav, "search_polygon", None)
         poly = get() if callable(get) else None
         if poly:
+            # A zone reaching the arena fence: lanes keep inside both.
+            get = getattr(self.mav, "search_fence", None)
+            fence = get() if callable(get) else None
             trimmed = []
             for a, b in zip(self.wps[0::2], self.wps[1::2]):
                 chord = chord_inside(poly, a, b, getattr(
                     self.mav, "search_margin_m", self.zone_margin_m))
+                if chord and fence:
+                    chord = chord_inside(fence[0], chord[0], chord[1], fence[1])
                 if chord:
                     trimmed.extend(chord)
             self.wps = trimmed

@@ -200,8 +200,12 @@ def grade(track, layout, target=None):
     out["geofence_exits"] = [
         {"t": p["t"], "at": (round(p["x"], 1), round(p["y"], 1))}
         for p in flying if not world_spec.point_in_polygon((p["x"], p["y"]), fence)]
-    in_zone = [p for p in flying
-               if zone[0] <= p["x"] <= zone[1] and zone[2] <= p["y"] <= zone[3]]
+    if layout.get("delivery_zone_poly"):
+        poly = [tuple(v) for v in layout["delivery_zone_poly"]]
+        in_zone = [p for p in flying if world_spec.point_in_polygon((p["x"], p["y"]), poly)]
+    else:
+        in_zone = [p for p in flying
+                   if zone[0] <= p["x"] <= zone[1] and zone[2] <= p["y"] <= zone[3]]
     out["max_alt_in_zone_m"] = (round(max(p["z"] for p in in_zone), 2)
                                 if in_zone else None)
     out["max_alt_m"] = round(max(p["z"] for p in flying), 2) if flying else None

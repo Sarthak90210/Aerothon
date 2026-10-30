@@ -168,6 +168,62 @@ def boundary_to_local_zone(vertices, home_lat, home_lon,
     return zone, ""
 
 
+def boundary_to_local_polygon(vertices, home_lat, home_lon,
+                              min_side_m=5.0, max_side_m=120.0,
+                              min_area_m2=25.0):
+    """Four WGS84 corners as a convex local XY quadrilateral, any heading.
+
+    ``([(x, y)] * 4 counter-clockwise, '')`` or ``(None, reason)``. A field
+    pegged out on the ground is turned to the ground, not to north: the venue's
+    zone (30 Oct 2026) runs 16.5 deg off east-west and its surveyed corners
+    miss a rectangle by up to 1.2 m, so boundary_to_local_zone refuses it.
+    The search keeps to this polygon itself (lanes trimmed inside it, as in a
+    fence-only arena), so any convex quadrilateral will do. The corners may
+    come in any order.
+    """
+    if vertices is None or len(vertices) != 4:
+        return None, "delivery-zone boundary must contain four vertices"
+    if not (math.isfinite(home_lat) and math.isfinite(home_lon)
+            and -90.0 <= home_lat <= 90.0 and -180.0 <= home_lon <= 180.0):
+        return None, "delivery-zone boundary needs a valid FCU home position"
+    local = [global_to_local(lat, lon, home_lat, home_lon)
+             for lat, lon in vertices]
+    cx = sum(p[0] for p in local) / 4.0
+    cy = sum(p[1] for p in local) / 4.0
+    pts = sorted(local, key=lambda p: math.atan2(p[1] - cy, p[0] - cx))
+    sides = [math.dist(a, b) for a, b in zip(pts, pts[1:] + pts[:1])]
+    if min(sides) < min_side_m:
+        return None, f"delivery-zone side is too short ({min(sides):.1f} m)"
+    if max(sides) > max_side_m:
+        return None, f"delivery-zone side is too long ({max(sides):.1f} m)"
+    if polygon_area(pts) < min_area_m2:
+        return None, "delivery-zone boundary encloses almost no area"
+    for a, b, c in zip(pts, pts[1:] + pts[:1], pts[2:] + pts[:2]):
+        if (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]) <= 0.0:
+            return None, "delivery-zone corners do not make a convex quadrilateral"
+    return pts, ""
+
+
+def rectangle_touches_polygon(rect, points):
+    """True when the box ``(x0, x1, y0, y1)`` and a convex polygon overlap."""
+    x0, x1, y0, y1 = (float(v) for v in rect)
+    box = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    if any(point_in_polygon(x, y, points) for x, y in box):
+        return True
+    if any(x0 <= x <= x1 and y0 <= y <= y1 for x, y in points):
+        return True
+
+    def crosses(p, q, r, s):
+        def side(a, b, c):
+            return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+        return (side(p, q, r) * side(p, q, s) < 0.0
+                and side(r, s, p) * side(r, s, q) < 0.0)
+
+    edges = list(zip(points, points[1:] + points[:1]))
+    return any(crosses(a, b, c, d) for a, b in zip(box, box[1:] + box[:1])
+               for c, d in edges)
+
+
 def inset_zone(zone, clearance_m):
     """Rectangle the aircraft centre may occupy inside the supplied boundary."""
     x0, x1, y0, y1 = (float(v) for v in zone)

@@ -177,3 +177,26 @@ test("a flight start waiting on a device says what the device measured", () => {
   assert.equal(startBlockReason(t, true, "banner"), "");
   assert.match(startBlockReason(t, true, "delivery_here"), /winch actuator is not reported/);
 });
+
+test("the organisers' six points: fence is their outline, zone corners kept apart", async () => {
+  const { convexHull, organiserFence } = await import("../src/organiser.ts");
+  // The venue survey, 30 Oct 2026: two points behind take-off, then the
+  // delivery zone's corners (any order).
+  const behind = [{ lat: 13.1703711, lon: 77.5331627 }, { lat: 13.1707773, lon: 77.5332852 }];
+  const zone = [
+    { lat: 13.1707636, lon: 77.5329365 }, { lat: 13.1705131, lon: 77.5330233 },
+    { lat: 13.1705581, lon: 77.5328695 }, { lat: 13.1707149, lon: 77.5330967 },
+  ];
+  const fence = organiserFence(behind, zone);
+  const key = (p) => `${p.lat},${p.lon}`;
+  // The near zone corners lie inside the outline: back points and far corners.
+  assert.deepEqual(new Set(fence.map(key)),
+    new Set([...behind, zone[0], zone[2]].map(key)));
+  // Counter-clockwise in (lon, lat).
+  let area = 0;
+  fence.forEach((p, i) => { const q = fence[(i + 1) % fence.length]; area += p.lon * q.lat - q.lon * p.lat; });
+  assert.ok(area > 0);
+  // No corners: the typed polygon goes as it is.
+  assert.deepEqual(organiserFence(zone, []), zone);
+  assert.equal(convexHull([behind[0], behind[0]]).length, 1);
+});

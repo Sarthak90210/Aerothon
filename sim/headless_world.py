@@ -299,9 +299,11 @@ class Arena:
         # is grassed (mission2.sdf, 0.50 0.76 0.38 -- inside the detector's
         # hue/saturation band). In Gazebo it was the largest green in view
         # from my_world's take-off pad, and the search orbited it.
-        zx0, zx1, zy0, zy1 = W.zone_rect(spec)
-        self.green_ground = [ccw([loc(p) for p in
-                                  ((zx0, zy0), (zx1, zy0), (zx1, zy1), (zx0, zy1))])]
+        self.green_ground = [ccw([loc(p) for p in W.zone_polygon(spec)])]
+        pad = spec["takeoff"]
+        if pad.get("pad_m") is not None and str(pad.get("pad_colour", "")).upper() == "#FF0000":
+            # The venue's red take-off pad: red ground to the red detector.
+            self.red.append(ccw([loc(p) for p in W.takeoff_polygon(spec)]))
         self.fence_local = [loc(p) for p in W.fence_polygon(spec)]
         self._edges()
 
@@ -1358,6 +1360,9 @@ def organiser_inputs(spec):
     _, layout = MW.apply_spec(template, spec)
     layout = MW.to_home_frame(layout, W.spawn_point(spec))
     zone = ",".join(f"{v:.3f}" for v in layout["delivery_zone_rect"])
+    if float(spec["delivery_zone"].get("yaw_deg", 0.0)) % 90.0:
+        # A turned zone goes as its four corners.
+        zone = ";".join(f"{x:.3f},{y:.3f}" for x, y in layout["delivery_zone_poly"])
     fence = ";".join(f"{x:.3f},{y:.3f}" for x, y in layout["geofence_poly"])
     return zone, fence
 
