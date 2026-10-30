@@ -2599,6 +2599,12 @@ class AlignToBanner(py_trees.behaviour.Behaviour):
                 f"square on: {math.degrees(alpha):+.1f} deg, "
                 f"{standoff:.1f} m")
             self.mav.board_face_t = self.clock()
+            # Where the squared-up banner is: straight ahead at the standoff.
+            # Read only by CheckGateAgainstCourse, against the recorded ends.
+            ax, ay = self.mav.pos()[:2]
+            ayaw = self.mav.yaw()
+            self.mav.banner_square_xy = (ax + standoff * math.cos(ayaw),
+                                         ay + standoff * math.sin(ayaw))
             # Where the hung banner was lined up: the return gate is searched
             # for at this height (the operator's order, 22 Oct), not at a
             # corridor altitude that sits under it.
@@ -3493,6 +3499,11 @@ class Corridor(py_trees.behaviour.Behaviour):
             # the delivery zone and the return leg without asserting arena
             # coordinates (audit A7, A9). Record it while we are standing in it.
             self.mav.record_corridor_exit()
+            # STOP HERE. Switching the navigator off sends nothing, and the FC
+            # flies its last velocity until its setpoint times out: the venue
+            # world (30 Oct 2026) coasted 1.6 m at 0.8 m/s through the camera
+            # change and climbed over a red square 3.7 m past the exit.
+            self.mav.goto(px, py, z, self.mav.yaw())
             self.feedback_message = f"corridor opened out at x={px:.2f}"
             return py_trees.common.Status.SUCCESS
 
@@ -5232,6 +5243,7 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
     ENTRY_BACKS_M = tuple(round(2.5 - 0.1 * k, 2) for k in range(14))   # 2.5 .. 1.2
     ENTRY_MARGIN_M = 0.25
     FACE_TOL_RAD = math.radians(5.0)
+    RECORDED_MOUTH_MAX_M = 6.0
 
     def __init__(self, mav, alt=3.0, tol=0.8, standoff_m=None,
                  camera_pitch_rad=math.radians(20.0), banner_centre_m=3.38,
@@ -5304,6 +5316,25 @@ class ReturnToCorridorMouth(py_trees.behaviour.Behaviour):
         rx = mx - off * math.sin(axis)
         ry = my + off * math.cos(axis)
         tyaw = math.atan2(math.sin(axis + math.pi), math.cos(axis + math.pi))
+        # The exit lane's zone-side mouth recorded at the GCS (optional): the
+        # aircraft flies back to it. Its heading stays the lidar-squared axis
+        # (GPS ends 6 m apart give it to ~10 deg only), and a recording more
+        # than RECORDED_MOUTH_MAX_M from the derived mouth is not believed.
+        rec = getattr(self.mav, "exit_corridor_local", None)
+        if rec:
+            gap = math.hypot(rec[0][0] - rx, rec[0][1] - ry)
+            if gap <= self.RECORDED_MOUTH_MAX_M:
+                if not getattr(self, "_rec_logged", False):
+                    self._rec_logged = True
+                    self.mav.log(f"ReturnToCorridorMouth: flying to the recorded "
+                                 f"exit mouth ({rec[0][0]:.1f}, {rec[0][1]:.1f}), "
+                                 f"{gap:.1f} m from the derived one")
+                return rec[0][0], rec[0][1], tyaw
+            if not getattr(self, "_rec_logged", False):
+                self._rec_logged = True
+                self.mav.log(f"ReturnToCorridorMouth: the recorded exit mouth is "
+                             f"{gap:.1f} m from the one derived from the outbound "
+                             f"gate; using the derived one", warn=True)
         return rx, ry, tyaw
 
     def standoff(self):
@@ -6733,6 +6764,114 @@ class WinchDrop(py_trees.behaviour.Behaviour):
             self.mav.log(f"delivery: {self.mav.delivery_note}", warn=True)
 
 
+class FaceEntryCorridor(py_trees.behaviour.Behaviour):
+    """Turn in place to the recorded entry corridor before the banner search.
+
+    The operator may record the corridors' ends at the GCS (30 Oct 2026,
+    optional). The search then starts facing the entry mouth, the heading
+    AlignToBanner treats as informed. With nothing recorded it passes at
+    once and the search starts on the heading the aircraft has, as before.
+    Guidance only: the camera finds the gate and the lidar squares up on it.
+    """
+
+    def __init__(self, name, mav, yaw_tol_rad=math.radians(8.0), timeout_ticks=150):
+        super().__init__(name)
+        self.mav = mav
+        self.yaw_tol = float(yaw_tol_rad)
+        self.timeout_ticks = int(timeout_ticks)
+
+    def initialise(self):
+        self._t = 0
+        self._yaw = None
+        self._hold = None
+
+    def update(self):
+        ends = getattr(self.mav, "entry_corridor_local", None)
+        if not ends:
+            self.feedback_message = "no entry corridor recorded"
+            return py_trees.common.Status.SUCCESS
+        if self._yaw is None:
+            x, y, z = self.mav.pos()[:3]
+            mx, my = ends[0]
+            self._yaw = math.atan2(my - y, mx - x)
+            self._hold = (x, y, z)
+            self.mav.log(f"FaceEntryCorridor: turning to the recorded entry mouth "
+                         f"({mx:.1f}, {my:.1f}), {math.hypot(mx - x, my - y):.1f} m "
+                         f"off, heading {math.degrees(self._yaw):+.0f} deg")
+        self._t += 1
+        self.mav.goto(*self._hold, self._yaw)
+        err = abs(math.atan2(math.sin(self.mav.yaw() - self._yaw),
+                             math.cos(self.mav.yaw() - self._yaw)))
+        if err <= self.yaw_tol or self._t >= self.timeout_ticks:
+            return py_trees.common.Status.SUCCESS
+        self.feedback_message = f"turning, {math.degrees(err):.0f} deg to go"
+        return py_trees.common.Status.RUNNING
+
+
+class CheckGateAgainstCourse(py_trees.behaviour.Behaviour):
+    """Refuse an outbound gate the recorded corridor ends put in the exit lane.
+
+    Passes when no entry corridor was recorded, or when the squared-up banner
+    is near the recorded entry mouth. Recorded points are GPS (1-3 m) and the
+    lanes 5.5 m apart, so only a gate clearly in the other lane is refused:
+    more than `far_m` from the entry mouth and `margin_m` nearer the exit
+    lane's home-side mouth, or, with no exit lane recorded, more than
+    `lone_far_m` from the entry mouth. A refusal sets `mav.gate_rejected`;
+    the tree then faces the entry mouth and aligns once more (`final` there,
+    where a second refusal fails the mission).
+    """
+
+    def __init__(self, name, mav, far_m=3.0, margin_m=2.0, lone_far_m=4.5,
+                 final=False):
+        super().__init__(name)
+        self.mav = mav
+        self.far_m = float(far_m)
+        self.margin_m = float(margin_m)
+        self.lone_far_m = float(lone_far_m)
+        self.final = bool(final)
+
+    def update(self):
+        entry = getattr(self.mav, "entry_corridor_local", None)
+        gate = getattr(self.mav, "banner_square_xy", None)
+        if not entry or gate is None:
+            return py_trees.common.Status.SUCCESS
+        d_entry = math.dist(gate, entry[0])
+        exit_ = getattr(self.mav, "exit_corridor_local", None)
+        d_exit = math.dist(gate, exit_[1]) if exit_ else None
+        if d_exit is None:
+            wrong = d_entry > self.lone_far_m
+        else:
+            wrong = d_entry > self.far_m and d_exit + self.margin_m < d_entry
+        where = (f"banner at ({gate[0]:.1f}, {gate[1]:.1f}): {d_entry:.1f} m from "
+                 f"the recorded entry mouth" + (
+                     f", {d_exit:.1f} m from the exit lane's" if d_exit is not None else ""))
+        if not wrong:
+            self.mav.log(f"CheckGateAgainstCourse: {where}; the entry gate")
+            return py_trees.common.Status.SUCCESS
+        self.mav.gate_rejected = True
+        reason = f"CheckGateAgainstCourse: {where}; not the entry gate"
+        self.mav.log(reason, warn=True)
+        if self.final:
+            self.mav.abort_reason = reason + " (second alignment)"
+        self.feedback_message = reason
+        return py_trees.common.Status.FAILURE
+
+
+class GateWasRejected(py_trees.behaviour.Behaviour):
+    """SUCCESS only after CheckGateAgainstCourse refused the gate: the outbound
+    alignment then runs once more. Any other failure stays a failure."""
+
+    def __init__(self, mav):
+        super().__init__("GateWasRejected")
+        self.mav = mav
+
+    def update(self):
+        if getattr(self.mav, "gate_rejected", False):
+            self.mav.gate_rejected = False
+            return py_trees.common.Status.SUCCESS
+        return py_trees.common.Status.FAILURE
+
+
 class GotoHome(py_trees.behaviour.Behaviour):
     """Return to the FC's home position, not to a hardcoded (0, 0).
 
@@ -6751,8 +6890,27 @@ class GotoHome(py_trees.behaviour.Behaviour):
     def initialise(self):
         self.router.reset()
 
-    def update(self):
+    # A recorded home this far from the FC's is not believed: the FC set its
+    # home where it armed, on the pad, with the same receiver.
+    RECORDED_HOME_MAX_M = 5.0
+
+    def _home(self):
+        """The recorded home point (GCS course points), else the FC's home."""
         hx, hy = self.mav.home_local_xy()
+        rec = getattr(self.mav, "course_home_local", None)
+        if rec is None:
+            return hx, hy
+        off = math.hypot(rec[0] - hx, rec[1] - hy)
+        if off > self.RECORDED_HOME_MAX_M:
+            if not getattr(self, "_warned", False):
+                self._warned = True
+                self.mav.log(f"GotoHome: the recorded home is {off:.1f} m from "
+                             f"the FC's home; flying to the FC's", warn=True)
+            return hx, hy
+        return rec
+
+    def update(self):
+        hx, hy = self._home()
         status = self.router.fly(self.mav, hx, hy, self.alt)
         if status is BLOCKED:
             return _blocked(self, self.router)
@@ -7454,6 +7612,19 @@ def build_root(mav, node, p):
         sequence.add_children(list(align))
         gate.add_children([ReturnGateBlocked(mav), sequence])
         return gate
+
+    def outbound_pass(label, final):
+        return [FaceEntryCorridor(f"{label}FaceEntryCorridor", mav),
+                *align_to_every_banner(mav, clock, p, label, alt_floor_m=gate_alt),
+                CheckGateAgainstCourse(f"{label}CheckGate", mav, final=final)]
+    # Only a gate refusal reaches the second pass: GateWasRejected fails
+    # otherwise, so an alignment that fails still fails the mission as before.
+    outbound_gate = py_trees.composites.Selector(name="OutboundGate", memory=True)
+    first = py_trees.composites.Sequence(name="OutboundGateFirst", memory=True)
+    first.add_children(outbound_pass("Outbound", final=False))
+    again = py_trees.composites.Sequence(name="OutboundGateAgain", memory=True)
+    again.add_children([GateWasRejected(mav), *outbound_pass("OutboundAgain", final=True)])
+    outbound_gate.add_children([first, again])
     landing = PrecisionDescent(
         mav, start_alt=p['takeoff_alt'],
         commit_alt=p.get('land_commit_alt', 1.5),
@@ -7546,9 +7717,11 @@ def build_root(mav, node, p):
         # (sim/fly_headless.py, shipped arena, calm).
         ClimbInPlace("BackToScanAlt", mav, p['takeoff_alt']),
         # One alignment pass per banner view: a hung board, then one
-        # lying on the ground. See align_to_every_banner.
-        *align_to_every_banner(mav, clock, p, "Outbound",
-                               alt_floor_m=gate_alt),
+        # lying on the ground. See align_to_every_banner. Recorded corridor
+        # ends (GCS, optional) point the search at the entry mouth first and
+        # refuse a gate they place in the exit lane, which is then searched
+        # for once more; without them both stages pass straight through.
+        outbound_gate,
         # LOWER ONLY ONCE SQUARED UP. Descending while still off to one side
         # of the gate put the aircraft low and pointed at the board, and it
         # drove into it. AlignToBanner now finishes with the aircraft in front
@@ -8073,6 +8246,17 @@ STATE_NAMES = {
     "ReturnCorridor": "RETURN_CORRIDOR",
     "GotoHome": "RETURN", "Land": "LAND", "StageAwareAbort": "ABORT",
 }
+# The outbound gate's wrapper and its second pass after a refused gate
+# (recorded corridor ends, build_root's OutboundGate): same states.
+STATE_NAMES.update({
+    "OutboundGate": "BANNER_ALIGN", "OutboundGateFirst": "BANNER_ALIGN",
+    "OutboundGateAgain": "BANNER_ALIGN", "GateWasRejected": "BANNER_ALIGN",
+    "OutboundFaceEntryCorridor": "BANNER_ALIGN", "OutboundCheckGate": "BANNER_ALIGN",
+    **{"OutboundAgain" + k[len("Outbound"):]: v for k, v in STATE_NAMES.items()
+       if k.startswith("Outbound")},
+})
+STATE_NAMES.update({"OutboundAgainFaceEntryCorridor": "BANNER_ALIGN",
+                    "OutboundAgainCheckGate": "BANNER_ALIGN"})
 
 
 # Mission states in which the tree may be rebuilt: nothing is flying it.

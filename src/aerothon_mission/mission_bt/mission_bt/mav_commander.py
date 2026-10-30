@@ -37,9 +37,11 @@ from mission_bt.delivery_zone import (ARENA_FENCE_LANE_MARGIN_M,
                                       boundary_to_local_zone, bounding_zone,
                                       clip_beyond, inset_zone,
                                       judges_polygon_role, parse_boundary,
+                                      parse_course_points,
                                       parse_polygon, polygon_area,
                                       polygon_to_local,
                                       rectangle_touches_polygon, safety_fence)
+from mission_bt.geofence import global_to_local
 from mission_bt.banner_orbit import SELF_M
 from mission_bt.banner_captures import BannerCaptures
 from mission_bt.detector_timing import DetectorTiming
@@ -292,6 +294,16 @@ class Mav:
         self.delivery_zone_reason = "delivery-zone boundary is missing"
         node.create_subscription(String, '/mission/delivery_zone',
                                  self._on_delivery_zone, _latched_qos())
+        # The operator's optional course points (30 Oct 2026): home and the
+        # two corridors' ends, typed or recorded with the aircraft's own GPS
+        # at the GCS. Guidance only: the camera and lidar still find, square
+        # up on and fly every gate. None of them is needed to fly.
+        self.course_global = None
+        self.course_home_local = None
+        self.entry_corridor_local = None    # (home-side mouth, zone-side mouth)
+        self.exit_corridor_local = None     # (zone-side mouth, home-side mouth)
+        node.create_subscription(String, '/mission/course_points',
+                                 self._on_course_points, _latched_qos())
         # RULEBOOK, Mission 2 Operation: "Coordinates for the geo-fence
         # boundary will be provided. Teams must program these into the ground
         # station software to ensure the UAS stays within the designated
@@ -403,6 +415,39 @@ class Mav:
         self.home = m
         self._resolve_delivery_zone()
         self._resolve_geofence()
+        self._resolve_course_points()
+
+    def _on_course_points(self, m):
+        self.course_global, why = parse_course_points(m.data)
+        if self.course_global is None:
+            self._log_once(f"Course points ignored: {why}")
+        self._resolve_course_points()
+
+    def _resolve_course_points(self):
+        """The course points in the EKF-origin frame, as the zone and fence."""
+        self.course_home_local = None
+        self.entry_corridor_local = None
+        self.exit_corridor_local = None
+        c = getattr(self, "course_global", None)
+        if c is None or self.home is None:
+            return
+        lat0 = float(self.home.geo.latitude)
+        lon0 = float(self.home.geo.longitude)
+        hx, hy = self.home_local_xy()
+
+        def local(p):
+            x, y = global_to_local(p[0], p[1], lat0, lon0)
+            return (x + hx, y + hy)
+        if c.get("home"):
+            self.course_home_local = local(c["home"])
+        if c.get("entry"):
+            self.entry_corridor_local = tuple(local(p) for p in c["entry"])
+        if c.get("exit"):
+            self.exit_corridor_local = tuple(local(p) for p in c["exit"])
+        parts = [name for name, v in (("home", self.course_home_local),
+                                      ("entry corridor", self.entry_corridor_local),
+                                      ("exit corridor", self.exit_corridor_local)) if v]
+        self._log_once("Course points loaded: " + (", ".join(parts) or "none"))
 
     def _on_geofence(self, m):
         vertices, why = parse_polygon(m.data, what="geofence")

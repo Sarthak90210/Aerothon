@@ -64,7 +64,26 @@ def organiser_inputs(spec, home_lat, home_lon):
         "geofence_outline": lines(geo(W.fence_polygon(spec))),
         "delivery_zone": lines(geo(W.zone_polygon(spec))),
         "banner_colours": colours,
+        # Every GCS organiser slot, "lat, lon": the six fence points (the two
+        # behind take-off with a "behind" fence) and the optional course points.
+        "points": points(spec, behind, geo),
     }
+
+
+def points(spec, behind, geo):
+    def one(p):
+        (lat, lon), = geo([p])
+        return f"{lat:.8f}, {lon:.8f}"
+    out = {}
+    if len(behind) == 2:
+        out["fence_back_left"], out["fence_back_right"] = (one(p) for p in behind)
+    for i, p in enumerate(W.zone_polygon(spec), 1):
+        out[f"zone_{i}"] = one(p)
+    c = W.course_points(spec)
+    out["home"] = one(c["home"])
+    out["entry_home"], out["entry_zone"] = (one(p) for p in c["entry"])
+    out["exit_zone"], out["exit_home"] = (one(p) for p in c["exit"])
+    return out
 
 
 def wait_for_home(timeout):

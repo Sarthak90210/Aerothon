@@ -513,7 +513,7 @@ class Host:
                     raise ValueError('command ID already used with different parameters')
                 return json.loads(row[1])
             cmd = data.get('cmd')
-            if cmd not in {'start', 'stop', 'land', 'abort', 'set_mode', 'set_delivery_zone', 'set_geofence', 'set_target', 'arm', 'disarm', 'takeoff', 'set_banner_colours', 'set_arena_dimensions', 'save_dimension_preset', 'delete_dimension_preset', 'lidar_cal_geometry', 'lidar_cal_background', 'lidar_cal_capture', 'lidar_cal_apply', 'lidar_cal_reset', 'gimbal_pitch', 'camera_cal', 'winch_cal'}:
+            if cmd not in {'start', 'stop', 'land', 'abort', 'set_mode', 'set_delivery_zone', 'set_geofence', 'record_point', 'set_point', 'apply_organiser_points', 'set_target', 'arm', 'disarm', 'takeoff', 'set_banner_colours', 'set_arena_dimensions', 'save_dimension_preset', 'delete_dimension_preset', 'lidar_cal_geometry', 'lidar_cal_background', 'lidar_cal_capture', 'lidar_cal_apply', 'lidar_cal_reset', 'gimbal_pitch', 'camera_cal', 'winch_cal'}:
                 raise ValueError('unknown command')
             recovery = cmd in {'stop','land','abort'} or (cmd=='set_mode' and data.get('args',{}).get('mode')=='RTL')
             if not self.internal_ws or (not self.fresh() and not recovery):

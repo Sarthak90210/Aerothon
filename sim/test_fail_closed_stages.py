@@ -1198,6 +1198,11 @@ def gate_stage_names(mission):
             names.extend(x.name for x in c.children[0].children)
         elif c.name == "DropUnlessSkipped":
             names.append(c.children[-1].name)
+        elif c.name == "OutboundGate":
+            # Faced to the recorded entry corridor, aligned, checked against
+            # it; the selector's second pass only follows a refused gate.
+            names.extend("AlignToBanner" if x.name.endswith("BannerAlignment") else x.name
+                         for x in c.children[0].children)
         elif c.name == "ReturnGate":
             # Searched and aligned unless red ground covers every point that
             # could be done from (ReturnGateBlocked, the selector's first).

@@ -24,6 +24,7 @@ Topics
 """
 
 import json
+import math
 import time
 
 import rclpy
@@ -40,8 +41,10 @@ from gcs_aggregator.readiness import blocking_reasons, evaluate, is_ready
 # no panel at all.
 from perception_banner.colours import validate as validate_colours
 from perception_banner.colours import missing as missing_colours
+from mission_bt.geofence import global_to_local
 from mission_bt.delivery_zone import (ROLE_DELIVERY_ZONE, judges_polygon_role,
-                                      parse_boundary, boundary_to_local_polygon,
+                                      parse_boundary, parse_course_points,
+                                      boundary_to_local_polygon,
                                       boundary_to_local_zone,
                                       parse_polygon, point_inside_with_margin,
                                       polygon_to_local)
@@ -159,6 +162,10 @@ class Readiness(Node):
         self.fence_parse_reason = "arena geofence boundary is missing"
         self.create_subscription(String, "/mission/geofence",
                                  self._on_geofence, boundary_qos)
+        self.course_home = None
+        self.fix = None
+        self.create_subscription(String, "/mission/course_points",
+                                 self._on_course_points, boundary_qos)
         self.create_subscription(String, "/mission/banner_colours",
                                  self._on_banner_colours, boundary_qos)
         self.create_subscription(String, "/mission/arena_dimensions/applied",
@@ -180,6 +187,23 @@ class Readiness(Node):
         # Kept only as a latency proxy; the FIX QUALITY comes from sats/HDOP,
         # because status >= 0 is true for a three-satellite fix.
         self.obs.setdefault("sats", 0)
+        self.fix = (float(m.latitude), float(m.longitude))
+        self._resolve_home_point()
+
+    def _on_course_points(self, m):
+        course, _why = parse_course_points(m.data)
+        self.course_home = (course or {}).get("home")
+        self._resolve_home_point()
+
+    def _resolve_home_point(self):
+        """How far the aircraft stands from the recorded home (advisory)."""
+        home = getattr(self, "course_home", None)
+        fix = getattr(self, "fix", None)
+        if home is None or fix is None:
+            self.obs.pop("home_point_m", None)
+            return
+        x, y = global_to_local(fix[0], fix[1], home[0], home[1])
+        self.obs["home_point_m"] = math.hypot(x, y)
 
     def _on_sats(self, m):
         self.obs["sats"] = int(m.data)

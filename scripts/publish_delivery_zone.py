@@ -43,6 +43,10 @@ TOPIC = "/mission/delivery_zone"
 # materialize_world.shipped_layout(); every launch passes the arena's own via
 # AEROTHON_GEOFENCE="x0,x1,y0,y1".
 GEOFENCE_TOPIC = "/mission/geofence"
+# The operator's optional course points (home, the corridors' ends), as the GCS
+# applies them. AEROTHON_COURSE_POINTS='{"home": [x, y], "entry": [[x, y],
+# [x, y]], "exit": [[x, y], [x, y]]}' in home-local metres; unset: none.
+COURSE_TOPIC = "/mission/course_points"
 DEFAULT_GEOFENCE = (-7.5, 60.0, -23.0, 19.0)
 
 
@@ -155,6 +159,17 @@ def boundary_payload(cx, cy, width, height, home_lat, home_lon, corners=None):
     return json.dumps({"vertices": vertices}, separators=(",", ":"))
 
 
+def course_payload(course, home_lat, home_lon):
+    """Home-local course points as the GCS publishes them, georeferenced."""
+    def geo(p):
+        lat, lon = local_to_global(float(p[0]), float(p[1]), home_lat, home_lon)
+        return {"lat": lat, "lon": lon}
+    out = {"home": geo(course["home"]) if course.get("home") else None}
+    for key in ("entry", "exit"):
+        out[key] = [geo(p) for p in course[key]] if course.get(key) else None
+    return json.dumps(out)
+
+
 def home_is_usable(home_lat, home_lon):
     """Reject the uninitialised MAVROS home instead of georeferencing about it.
 
@@ -186,6 +201,9 @@ def main():
             self.width, self.height = max(xs) - min(xs), max(ys) - min(ys)
             self.pub = self.create_publisher(String, TOPIC, latched)
             self.fence = geofence_from_env()
+            raw = (os.environ.get("AEROTHON_COURSE_POINTS") or "").strip()
+            self.course = json.loads(raw) if raw else None
+            self.pub_course = self.create_publisher(String, COURSE_TOPIC, latched)
             self.pub_fence = self.create_publisher(String, GEOFENCE_TOPIC,
                                                    latched)
             self.sent = False
@@ -213,6 +231,9 @@ def main():
                 self.pub.publish(String(data=boundary_payload(
                     self.cx, self.cy, self.width, self.height, home_lat, home_lon,
                     corners=self.corners)))
+            if self.course:
+                self.pub_course.publish(String(data=course_payload(
+                    self.course, home_lat, home_lon)))
             self.pub_fence.publish(String(data=geofence_payload(
                 self.fence, home_lat, home_lon)))
             verts = fence_vertices(self.fence)

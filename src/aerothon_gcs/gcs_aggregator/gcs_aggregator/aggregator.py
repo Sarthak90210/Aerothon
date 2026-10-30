@@ -40,6 +40,7 @@ import websockets
 
 from camera_ctrl import tilt_calibration
 from gcs_aggregator import lidar_calibration
+from gcs_aggregator import organiser_points
 from gcs_aggregator.sensor_metrics import SensorMetric
 
 
@@ -212,6 +213,9 @@ class Aggregator(Node):
         self.pub_geofence = self.create_publisher(String, "/mission/geofence", zone_qos)
         self.pub_delivery_zone = self.create_publisher(
             String, "/mission/delivery_zone", zone_qos)
+        # The operator's optional course points: home and the corridors' ends.
+        self.pub_course_points = self.create_publisher(
+            String, "/mission/course_points", zone_qos)
         # The fence in force, whoever supplied it, for the map's polygon.
         self.create_subscription(String, "/mission/geofence",
                                  self._on_geofence_supplied, zone_qos)
@@ -258,6 +262,19 @@ class Aggregator(Node):
             dict(group=g, key=k, label=label, default=default, min=lo, max=hi,
                  used_by=used) for g, k, label, default, lo, hi, used
             in arena_dimensions.FIELDS]
+        # The organisers' six fence points and the optional course points,
+        # typed or recorded with the aircraft's GPS; kept across restarts.
+        self.declare_parameter("organiser_points_file", os.path.expanduser(
+            "~/.aerothon/organiser_points.json"))
+        self._points_path = self.get_parameter("organiser_points_file").value
+        self._recorder = None
+        self.state["organiser_points"] = {
+            "slots": [dict(key=k, label=label, required=req)
+                      for k, label, req in organiser_points.SLOTS],
+            "points": organiser_points.load(self._points_path),
+            "recording": None, "last": None, "applied": None}
+        self.create_timer(0.2, self._poll_recorder,
+                          clock=Clock(clock_type=ClockType.STEADY_TIME))
 
         self.cli_arm = self.create_client(CommandBool, "/mavros/cmd/arming")
         self.cli_mode = self.create_client(SetMode, "/mavros/set_mode")
@@ -702,6 +719,83 @@ class Aggregator(Node):
         self.state["gps"]["lat"] = m.latitude
         self.state["gps"]["lon"] = m.longitude
         self.state["gps"]["fix"] = "3D" if m.status.status >= 0 else "NO"
+        if self._recorder is not None:
+            self._recorder.add(m.latitude, m.longitude, m.status.status >= 0,
+                               self.state["gps"].get("sats"))
+
+    # ---- organiser and course points ---------------------------------------
+    def _poll_recorder(self):
+        rec = self._recorder
+        op = self.state["organiser_points"]
+        if rec is None:
+            return
+        now = time.monotonic()
+        outcome = rec.poll(now)
+        if outcome is None:
+            op["recording"] = rec.status(now)
+            return
+        point, why = outcome
+        self._recorder = None
+        op["recording"] = None
+        if point is None:
+            op["last"] = {"slot": rec.slot, "ok": False, "reason": why}
+            return
+        op["points"][rec.slot] = point
+        organiser_points.save(self._points_path, op["points"])
+        op["last"] = {"slot": rec.slot, "ok": True,
+                      "reason": f"recorded from {point['samples']} fixes, "
+                                f"spread {point['spread_m']:.1f} m"}
+
+    def _points_command(self, cmd, args):
+        """record_point / set_point / apply_organiser_points."""
+        op = self.state["organiser_points"]
+        slot = args.get("slot")
+        if cmd in ("record_point", "set_point") and slot not in organiser_points.KEYS:
+            return "rejected", f"unknown point {slot!r}"
+        if cmd == "record_point":
+            if self._recorder is not None:
+                return "rejected", f"already recording {self._recorder.slot}"
+            gps = self.state["gps"]
+            seen = self._steady_seen.get("gps")
+            if gps.get("fix") != "3D" or seen is None or time.monotonic() - seen > 2.0:
+                return "rejected", "no fresh 3D GPS fix from the aircraft"
+            sats = gps.get("sats")
+            if sats is None or sats < organiser_points.MIN_SATS:
+                return "rejected", (f"{sats} satellites; "
+                                    f"{organiser_points.MIN_SATS} needed to record")
+            self._recorder = organiser_points.Recorder(slot, time.monotonic())
+            op["recording"] = self._recorder.status(time.monotonic())
+            return "accepted", (f"recording {slot}: hold the aircraft still for "
+                                f"{organiser_points.RECORD_S:.0f} s")
+        if self.state["mission"]["armed"]:
+            return "rejected", "organiser points can only change while disarmed"
+        if cmd == "set_point":
+            if args.get("clear"):
+                op["points"].pop(slot, None)
+            else:
+                point = organiser_points.typed(args.get("lat"), args.get("lon"))
+                if point is None:
+                    return "rejected", "the point needs a WGS84 lat and lon"
+                op["points"][slot] = point
+            organiser_points.save(self._points_path, op["points"])
+            return "accepted", ""
+        fence, zone, course, why = organiser_points.boundaries(op["points"])
+        if fence is None:
+            return "rejected", why
+        payload = json.dumps({"vertices": fence})
+        vertices, why = parse_polygon(payload, what="geofence")
+        if vertices is None:
+            return "rejected", why
+        self.pub_geofence.publish(String(data=payload))
+        self.state["geofence_vertices"] = [[lat, lon] for lat, lon in vertices]
+        self.pub_delivery_zone.publish(String(data=json.dumps(
+            {"vertices": zone}, separators=(",", ":"))))
+        self.pub_course_points.publish(String(data=json.dumps(course)))
+        op["applied"] = {"t": time.time(), "fence": len(fence),
+                         "home": course["home"] is not None,
+                         "entry": course["entry"] is not None,
+                         "exit": course["exit"] is not None}
+        return "accepted", ""
 
     def _on_qr(self, m):
         self.state["percep"]["start_qr"] = m.data
@@ -1114,6 +1208,8 @@ class Aggregator(Node):
                     return "rejected", why
                 self.pub_geofence.publish(String(data=payload))
                 self.state["geofence_vertices"] = [[lat, lon] for lat, lon in vertices]
+            elif cmd in ("record_point", "set_point", "apply_organiser_points"):
+                return self._points_command(cmd, args)
             elif cmd == "set_delivery_zone":
                 vertices = args.get("vertices")
                 if not isinstance(vertices, list) or len(vertices) != 4:
