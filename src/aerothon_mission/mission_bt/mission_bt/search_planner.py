@@ -700,7 +700,7 @@ def _dijkstra(nodes, edges, src, dst):
 
 def route_leg(start, end, clearance_m, exclusions, max_detour_ratio=4.0,
               min_detour_allowance_m=25.0, corner_margin_m=0.25,
-              max_obstacles=16, _depth=0):
+              max_obstacles=16, avoid=None, _depth=0):
     """Waypoints from `start` to `end` that keep the airframe off red ground.
 
     Returns a dict, in the style of plan_search():
@@ -738,17 +738,28 @@ def route_leg(start, end, clearance_m, exclusions, max_detour_ratio=4.0,
     # inflated margin of a strip confirmed mid-leg, the box was ignored, and
     # the leg ran on diagonally through the paint. Step out the shortest way,
     # then route from there with every box in play.
+    #
+    # NOT BACK OVER THE CORRIDORS. `avoid(x, y)` marks ground an escape should
+    # not take when it starts outside it: behind the outbound corridor's exit
+    # (Mav.escape_avoid). The venue worlds (31 Oct 2026) climbed out of the
+    # entry lane 1.3 m short of a red square's margin; the nearest edge was
+    # behind, and the search's first leg backed over both corridors' ends at
+    # 10 m. The nearest edge that is not behind is taken, else the nearest.
     containing = [b for b in blocks if _contains(b, sx, sy)]
     if containing and _depth < 3:
         x0, x1, y0, y1 = containing[0]
         m = corner_margin_m
-        exit_pt = min(((x0 - m, sy), (x1 + m, sy), (sx, y0 - m), (sx, y1 + m)),
-                      key=lambda p: math.hypot(p[0] - sx, p[1] - sy))
+        exits = sorted(((x0 - m, sy), (x1 + m, sy), (sx, y0 - m), (sx, y1 + m)),
+                       key=lambda p: math.hypot(p[0] - sx, p[1] - sy))
+        exit_pt = exits[0]
+        if avoid is not None and not avoid(sx, sy):
+            exit_pt = next((p for p in exits if not avoid(*p)), exits[0])
         rest = route_leg(exit_pt, end, clearance_m, exclusions,
                          max_detour_ratio=max_detour_ratio,
                          min_detour_allowance_m=min_detour_allowance_m,
                          corner_margin_m=corner_margin_m,
-                         max_obstacles=max_obstacles, _depth=_depth + 1)
+                         max_obstacles=max_obstacles, avoid=avoid,
+                         _depth=_depth + 1)
         if not rest["ok"]:
             return rest
         step = math.hypot(exit_pt[0] - sx, exit_pt[1] - sy)

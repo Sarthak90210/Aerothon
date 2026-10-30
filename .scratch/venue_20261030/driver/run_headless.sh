@@ -21,7 +21,7 @@ for w in "${WORLDS[@]}"; do
   dom=$((100 + 10 * i))
   python3 sim/fly_headless.py "$w" --conditions calm --seeds 1 --navigation-only \
     --gcs-preset "Venue headless: $name" --gcs-create-from-file "${w%.json}.dims.json" \
-    --rtf "${RTF:-1.0}" --out "$OUT" --domain-base $dom > "$OUT/$name.fly.log" 2>&1 &
+    --rtf "${RTF:-1.0}" --out "$OUT" --domain-base $dom ${FLY_EXTRA:-} > "$OUT/$name.fly.log" 2>&1 &
   i=$((i + 1))
   if (( i % ${PAR:-1} == 0 )); then wait; else sleep 20; fi
 done

@@ -1217,14 +1217,36 @@ starts cannot replace active executions. Hardware camera/winch motion and
 physical delivery remain unqualified; the GPIO/encoder winch backend exists in
 software but is unmeasured and bench-unverified.
 
-**The venue's six points: two behind take-off, four zone corners (30 Oct
-2026).** The organisers give two fence points behind the take-off pad and the
-delivery zone's four corners; the aircraft searches only inside the corners,
-and the fence is all six. In Organiser inputs paste the two points behind
-take-off into the geofence box and the four corners, in any order, into
-"Delivery-zone corners". Apply geofence sends the outline (convex hull) of
-all six (`organiser.ts`, `organiserFence`; the near corners fall inside it);
-Apply delivery zone sends the corners. Apply both. A zone square to north is
+**Organiser points: the six fence points first, then optional course points
+(30-31 Oct 2026).** The organisers give two fence points behind the take-off
+pad and the delivery zone's four corners; the aircraft searches only inside
+the corners, and the fence is all six. Organiser inputs lists one slot per
+point in priority order: the six fence points (required: behind take-off
+left and right, zone corners 1-4 in any order), then home and the corridors'
+ends (optional: entry corridor home-side and zone-side mouths, exit corridor
+zone-side and home-side mouths). Each slot takes a typed `lat, lon` (Set), or
+**Record here**: take the aircraft to the spot (carried or flown) and the
+aggregator averages its own GPS for 5 s, refusing without a 3D fix, with
+fewer than 8 satellites or with fixes spread over 2.5 m
+(`gcs_aggregator/organiser_points.py`). "Fill fence points" takes six pasted
+lines. Points persist in `~/.aerothon/organiser_points.json`. **Apply
+organiser points** (disarmed) sends the fence as the outline (convex hull)
+of the six, the zone as the four corners, and the course points on
+`/mission/course_points`; a corridor counts only with both its ends.
+
+The course points are guidance; the camera and lidar still find, square up
+on and fly every gate, and without them nothing changes. Recorded entry
+mouth: the aircraft turns to it before the outbound banner search
+(`FaceEntryCorridor`), and a gate the points place in the exit lane is
+refused and searched for once more, failing the mission on a second refusal
+(`CheckGateAgainstCourse`: over 3 m from the entry mouth and 2 m nearer the
+exit lane's, or over 4.5 m with no exit lane recorded). Recorded exit lane:
+the return flies to its zone-side mouth when that is within 6 m of the mouth
+derived from the outbound gate, keeping the lidar-squared axis. Recorded
+home: GotoHome flies there when it is within 5 m of the FC's home, and
+readiness shows an advisory "Home point" item (aircraft within 2 m of it;
+"Check", never a hold). Recording with the aircraft's own GPS keeps the
+points consistent with the FC's estimate. A zone square to north is
 searched as its rectangle as before; one turned to the ground (the venue's
 runs 16.5 deg off east-west) is accepted as a convex quadrilateral
 (`boundary_to_local_polygon`) and searched like the judges' polygon: lanes
