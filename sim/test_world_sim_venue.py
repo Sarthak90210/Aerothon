@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 VENUE = ROOT / "src/aerothon_mission/mission_bringup/config/venue.yaml"
 SIM_VENUE = ROOT / "src/aerothon_sim/sim_gazebo/config/world_sim_venue.yaml"
 LAUNCH = ROOT / "src/aerothon_mission/mission_bringup/launch/mission2.launch.py"
-SIM_ONLY = {("mission_bt", "search_brake_mps2"), ("mission_bt", "crossing_strip_m"),
+SIM_ONLY = {("mission_bt", "crossing_strip_m"),
             ("mission_bt", "search_speed_override_mps"),
             ("velocity_controller", "cruise_speed"),
             ("velocity_controller", "passage_half_width"),
@@ -24,8 +24,10 @@ SIM_ONLY = {("mission_bt", "search_brake_mps2"), ("mission_bt", "crossing_strip_
 # Aircraft values the simulation must replace: its SITL flight controller has a
 # camera mount on the Gazebo joint (the aircraft's Pi drives SERVO5 itself,
 # 27 Oct 2026), and it has no receiver to pass through (the aircraft's channel
-# 8 tilts the camera, 29 Oct).
-SIM_REPLACES = {("camera_ctrl", "fc_output"): "mount", ("camera_ctrl", "rc_tilt_channel"): 0}
+# 8 tilts the camera, 29 Oct). The search braking: the aircraft's 1.0 is an
+# unmeasured competition-day choice (31 Oct), the simulation's 0.8 measured.
+SIM_REPLACES = {("camera_ctrl", "fc_output"): "mount", ("camera_ctrl", "rc_tilt_channel"): 0,
+                ("mission_bt", "search_brake_mps2"): 0.8}
 
 
 def params(path):

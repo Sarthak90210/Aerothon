@@ -87,6 +87,9 @@ camera_ctrl:
     servo_pwm_min: 800
     servo_pwm_max: 2200
     rc_tilt_channel: 0            # no receiver in the simulator
+    rc_tilt_low_us: 1000          # the aircraft's, unused with channel 0
+    rc_tilt_high_us: 2000
+    rc_tilt_reversed: false
 
 perception_payload:
   ros__parameters:

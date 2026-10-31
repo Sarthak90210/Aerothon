@@ -22,6 +22,12 @@ mission_bt:
     payload_size_m: 0.10
     # The highest release the line can make with slack for the gravity hook.
     winch_reach_m: 5.5
+    # The braking the paced search counts on after red ground is confirmed,
+    # m/s^2 (mission default 0.5). Raised on competition day (31 Oct 2026)
+    # for a faster sweep, about 0.60 -> 0.70 m/s, the 1.5 m red clearance
+    # kept. A multirotor in GUIDED brakes harder than this, but it is not
+    # yet MEASURED on this airframe.
+    search_brake_mps2: 1.0
 
 winch_ctrl:
   ros__parameters:
