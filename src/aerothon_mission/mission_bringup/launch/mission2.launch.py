@@ -367,11 +367,13 @@ def generate_launch_description():
     webcam = Node(
         package='usb_cam', executable='usb_cam_node_exe', name='c270',
         output='screen', condition=camera_feed, respawn=True, respawn_delay=2.0,
-        # 15 Hz (31 Oct 2026): at 30 Hz the Pi's CPU was saturated (load ~20
-        # on 4 cores) and the detectors and runtime received ~0.4 frames/s.
+        # 10 Hz (31 Oct 2026): at 30 Hz the Pi's CPU was saturated (load ~20
+        # on 4 cores) and the detectors and runtime received ~0.4 frames/s;
+        # at 15 Hz, camera nadir over textured ground, frames still reached
+        # the runtime in bursts with 2-8 s gaps (load ~15).
         parameters=[{'video_device': LaunchConfiguration('camera_device'),
                      'image_width': 1280, 'image_height': 720,
-                     'framerate': 15.0, 'pixel_format': 'mjpeg2rgb',
+                     'framerate': 10.0, 'pixel_format': 'mjpeg2rgb',
                      'frame_id': 'camera_optical_frame', 'autoexposure': False,
                      'exposure': ParameterValue(
                         LaunchConfiguration('camera_exposure'), value_type=int),
