@@ -20,7 +20,7 @@ from mission_bt import mission_tree as production
 from mission_bt.leg_router import LegRouter
 from mission_bt.banner_orbit import fence_ok
 from mission_bt.search_planner import point_in_exclusion
-from .contracts import TASKS, TERMINAL, execution
+from .contracts import MISSION_TASKS, TASKS, TERMINAL, execution
 from .pilot import validate as validate_rc, intent
 
 S = py_trees.common.Status
@@ -210,16 +210,17 @@ class ExecutionNode(Node):
         self.create_timer(.2, self.tick)
         self.create_timer(.2, self.watchdog, clock=Clock(clock_type=ClockType.STEADY_TIME))
 
-    def build_normal(self, params):
+    def build_normal(self, params, skip_corridor=False):
         self.params = dict(params)
         self.holder['wall_top'] = params.get('corridor_wall_m')
         self.mav.banner_placement_learned = 'ground' if params.get('banner_placement') == 'ground' else None
-        tree = py_trees.trees.BehaviourTree(production.build_root(self.mav, self, params))
+        tree = py_trees.trees.BehaviourTree(production.build_root(
+            self.mav, self, params, skip_corridor=skip_corridor))
         tree.setup(timeout=15)
         return tree
 
     def normal_task(self):
-        return self.run and self.run['task'] == 'mission'
+        return self.run and self.run['task'] in MISSION_TASKS
 
     def pose_tf(self, m):
         t = TransformStamped()
@@ -334,14 +335,18 @@ class ExecutionNode(Node):
                 raise ValueError('mechanism bench execution requires disarm')
             # The avoidance tasks never move the camera, so they do not wait on
             # its (still unqualified) actuator feedback.
-            required = {'mission': ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
+            required = {**{t: ['identity','camera','lidar','clock','camera_actuator','winch_actuator']
+                           for t in MISSION_TASKS},
                         'mechanism': ['winch_actuator'], 'qr': ['camera','clock'], 'slam': ['lidar','clock'],
                         'avoidance_manual': ['identity','camera','lidar','clock'],
                         'avoidance_route': ['identity','camera','lidar','clock']}.get(task,
                         ['identity','camera','lidar','clock','camera_actuator'] + (['winch_actuator'] if task.startswith('delivery_') else []))
             if self.device_seen is None or now-self.device_seen > 1:
                 raise ValueError('required devices or measured actuator feedback are unavailable')
-            missing = [k for k in required if self.devices.get(k,{}).get('ok') is not True]
+            # A device the watchdog waives for this task (the aircraft's
+            # feedback-less actuators, 31 Oct) does not block it.
+            missing = [k for k in required if self.devices.get(k,{}).get('ok') is not True
+                       and task not in (self.devices.get(k,{}).get('waived_for') or ())]
             if missing:
                 raise ValueError('required devices or measured actuator feedback are unavailable: ' + ', '.join(
                     f"{k} ({self.devices.get(k,{}).get('reason') or 'not ok'})" for k in missing))
@@ -349,7 +354,7 @@ class ExecutionNode(Node):
                 validate_rc(self.rc_config)
                 if self.rc_seen is None or now-self.rc_seen > .5:
                     raise ValueError('live transmitter input is required')
-            if task == 'mission' and self.mav.state.armed:
+            if task in MISSION_TASKS and self.mav.state.armed:
                 raise ValueError('full mission starts from a disarmed aircraft')
             self.run = dict(command_id=cid, task=task, params=p, state='Accepted', reason='', control_owner='Runtime')
             self.recovery = None
@@ -359,7 +364,8 @@ class ExecutionNode(Node):
             if task in {'qr','slam'}:
                 self.tree = None
             elif self.normal_task():
-                self.holder['tree'] = self.build_normal(self.params)
+                self.holder['tree'] = self.build_normal(
+                    self.params, skip_corridor=task == 'mission_skip_corridor')
                 self.tree = self.holder['tree']
             else:
                 self.tree = py_trees.trees.BehaviourTree(self.component(task,p))
@@ -514,12 +520,19 @@ class ExecutionNode(Node):
                 devices[k] = {'ok':age<1,'receipt_age_s':age if k in self.sensor_seen else None}
             devices['identity'] = {'ok':self.mav.connected(),'value':self.system_id,'basis':'configured MAVROS target; live FCU link'}
             devices['clock'] = {'ok':True,'reason':'system ROS clock'}
-            devices['camera_actuator'] = {'ok':False,'reason':'hardware camera motion feedback has not been qualified'}
+            # The aircraft's tilt servo and L298N winch report no motion, so
+            # these stay not-ok -- but the operator waived them for mission
+            # starts on 31 Oct 2026 (checked by hand before Start). Other
+            # tasks still require them.
+            devices['camera_actuator'] = {'ok':False,'reason':'hardware camera motion feedback has not been qualified',
+                                          'waived_for':list(MISSION_TASKS)}
             winch = self.mav.winch_status if self.mav.winch_status_fresh() else {}
             measured = 'encoder' in str(winch.get('payout_basis', ''))
             devices['winch_actuator'] = {'ok': measured and not winch.get('fault'),
                 'reason': winch.get('fault') or ('' if measured else
                     'no measured winch feedback (select the Pi GPIO encoder winch and its measured values)')}
+            if not winch.get('fault'):
+                devices['winch_actuator']['waived_for'] = list(MISSION_TASKS)
             self.devices = devices
             self.device_seen = time.monotonic()
             self.create_local_status(devices)

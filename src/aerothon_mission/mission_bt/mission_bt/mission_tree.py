@@ -20,6 +20,7 @@ import time
 from mission_bt.search_braking import SearchBrakingGate
 import math
 import json
+import os
 import rclpy
 from rclpy.node import Node
 import py_trees
@@ -4250,6 +4251,55 @@ class EnterDeliveryZone(py_trees.behaviour.Behaviour):
                 else py_trees.common.Status.RUNNING)
 
 
+class HighTransit(py_trees.behaviour.Behaviour):
+    """Fly a list of points at one altitude, holding the current heading.
+
+    The skip-corridor mission (operator's order, 31 Oct 2026) crosses over
+    the corridors at 10 m instead of flying through them. The points are the
+    recorded corridor ends (GCS course points), read when the stage starts;
+    with none recorded there is nothing to follow and the stage passes, so
+    the next leg flies straight. Each leg is routed round red ground already
+    mapped, as every other transit is.
+    """
+
+    def __init__(self, name, mav, points, alt, clearance_m=DEFAULT_CLEARANCE_M,
+                 tol=0.8):
+        super().__init__(name)
+        self.mav = mav
+        self.points = points
+        self.alt = float(alt)
+        self.clearance_m = float(clearance_m)
+        self.tol = tol
+        self.router = LegRouter(clearance_m=clearance_m, tol=tol)
+        self._legs = []
+        self._yaw = 0.0
+
+    def initialise(self):
+        self.router.reset()
+        self._legs = [tuple(map(float, p[:2])) for p in (self.points() or ())]
+        self._yaw = self.mav.yaw()
+        self.mav.log(f"{self.name}: " + (
+            " -> ".join(f"({x:.1f}, {y:.1f})" for x, y in self._legs)
+            + f" at {self.alt:.1f} m" if self._legs
+            else "no recorded corridor points; flying straight on"))
+
+    def update(self):
+        if not self._legs:
+            return py_trees.common.Status.SUCCESS
+        x, y = self._legs[0]
+        status = self.router.fly(self.mav, x, y, self.alt, self._yaw)
+        if status is BLOCKED:
+            return _blocked(self, self.router)
+        self.feedback_message = (f"over the corridor to ({x:.1f}, {y:.1f}) "
+                                 f"at {self.alt:.1f} m, {len(self._legs)} left")
+        if status is ARRIVED:
+            self._legs.pop(0)
+            self.router.reset()
+            if not self._legs:
+                return py_trees.common.Status.SUCCESS
+        return py_trees.common.Status.RUNNING
+
+
 class RestoreNavigationSpeed(py_trees.behaviour.Behaviour):
     """Release the camera search cap only before the measured high return leg."""
 
@@ -7523,7 +7573,13 @@ class DeliverySkipped(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.FAILURE
 
 
-def build_root(mav, node, p):
+def build_root(mav, node, p, skip_corridor=False):
+    """The mission tree. `skip_corridor` (GCS task "Mission, skip corridor",
+    operator's order 31 Oct 2026): after the start QR climb to
+    `skip_corridor_alt` (10 m), cross over the entry corridor (its recorded
+    ends, when the GCS has them) into the delivery zone and search as usual;
+    after the drop climb again, cross over the exit corridor and land at home.
+    No banner alignment and no corridor flight either way."""
     # Import after the module's original GateAdvance class is defined.
     # Normal startup must use the measured, acknowledged gate handover too.
     from functools import partial
@@ -7687,7 +7743,7 @@ def build_root(mav, node, p):
                   payload_size_m=p.get('payload_size_m', 0.10)),
     ])
     mission = py_trees.composites.Sequence(name="Mission", memory=True)
-    mission.add_children([
+    children = [
         WaitForMissionStart(mav),
         SetBannerTarget("BannerTargetOutbound", mav, "green"),
         # Both organiser inputs are pre-flight requirements: no delivery-zone
@@ -7880,7 +7936,42 @@ def build_root(mav, node, p):
         # Phase 9: GPS gets us over home; the camera puts us on the pad.
         landing,
         Land(mav),
-    ])
+    ]
+    if skip_corridor:
+        # Everything from the start QR to the zone, and from the drop to the
+        # landing, is replaced; the take-off, start QR, search and drop are
+        # the full mission's own stages.
+        skip_alt = float(p.get('skip_corridor_alt', 10.0))
+        red_m = p.get('redzone_clearance', 1.5)
+        names = [child.name for child in children]
+        first = names.index("CameraForwardForCorridor")
+        entered = names.index("EnterDeliveryZone")
+        back = names.index("ClimbForReturn")
+        children = children[:first] + [
+            ClimbInPlace("ClimbToSkipAlt", mav, skip_alt, tol=0.3),
+            SetCameraPose("CameraNadirForSkip", mav, "NADIR"),
+            HighTransit("OverEntryCorridor", mav,
+                        lambda: mav.entry_corridor_local, skip_alt,
+                        clearance_m=red_m),
+            EnterDeliveryZone(mav, alt=skip_alt, clearance_m=zone_clearance),
+        ] + children[entered + 1:back] + [
+            ClimbInPlace("ClimbForReturn", mav, skip_alt, tol=0.2),
+            SetCameraPose("CameraNadirForReturnTransit", mav, "NADIR"),
+            RestoreNavigationSpeed(mav,
+                previous_speed=lambda: getattr(search, 'navigation_speed_before_search', None),
+                navigation_speed_mps=p.get('navigation_speed_mps', 5.),
+                transit_alt=skip_alt, clock=clock),
+            HighTransit("OverExitCorridor", mav,
+                        lambda: mav.exit_corridor_local, skip_alt,
+                        clearance_m=red_m),
+            SetBannerTarget("BannerTargetHome", mav, "green"),
+            GotoHome(mav, skip_alt, clearance_m=red_m),
+            ClimbInPlace("DescendForLanding", mav, landing.start_alt),
+            SetCameraPose("CameraNadirForLanding", mav, "NADIR"),
+            landing,
+            Land(mav),
+        ]
+    mission.add_children(children)
     root.add_children([abort_branch, mission])
     return root
 
@@ -8016,6 +8107,8 @@ def declare_mission_params(node):
     d('takeoff_alt', 5.0)
     d('search_alt_max', 10.0)      # CEILING for the derived sweep, not a target
     d('drop_alt', 5.0)
+    # The skip-corridor mission's crossing height over both corridors (31 Oct).
+    d('skip_corridor_alt', 10.0)
     # The highest release the winch's 6 m of line can make with the slack the
     # gravity hook needs to let go (WinchDrop).
     d('winch_reach_m', 5.5)
@@ -8136,6 +8229,7 @@ def declare_mission_params(node):
         'takeoff_alt': float(g('takeoff_alt')),
         'search_alt': float(g('search_alt_max')),
         'drop_alt': float(g('drop_alt')),
+        'skip_corridor_alt': float(g('skip_corridor_alt')),
         'winch_reach_m': float(g('winch_reach_m')),
         'image_width_px': int(g('image_width_px')),
         'image_height_px': int(g('image_height_px')),
@@ -8274,6 +8368,12 @@ STATE_NAMES.update({
 })
 STATE_NAMES.update({"OutboundAgainFaceEntryCorridor": "BANNER_ALIGN",
                     "OutboundAgainCheckGate": "BANNER_ALIGN"})
+# The skip-corridor mission's own legs (build_root(skip_corridor=True)).
+STATE_NAMES.update({"ClimbToSkipAlt": "SKIP_CORRIDOR",
+                    "CameraNadirForSkip": "CAMERA_NADIR",
+                    "OverEntryCorridor": "SKIP_CORRIDOR",
+                    "OverExitCorridor": "RETURN_TRANSIT",
+                    "DescendForLanding": "RETURN"})
 
 
 # Mission states in which the tree may be rebuilt: nothing is flying it.
@@ -8344,7 +8444,11 @@ def main():
         # straight to the ground view, as a learnt one does for the second.
         mav.banner_placement_learned = (
             "ground" if params.get("banner_placement") == "ground" else None)
-        tree = py_trees.trees.BehaviourTree(build_root(mav, node, params))
+        # The standalone node (simulation) flies the skip-corridor mission
+        # with AEROTHON_SKIP_CORRIDOR=1; the aircraft selects it at the GCS.
+        tree = py_trees.trees.BehaviourTree(build_root(
+            mav, node, params,
+            skip_corridor=os.environ.get("AEROTHON_SKIP_CORRIDOR") == "1"))
         tree.setup(timeout=15.0)
         return tree
 

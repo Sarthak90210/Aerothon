@@ -122,6 +122,8 @@ export default function App() {
     [lidarOpen, setLidarOpen] = useState(false),
     [cameraCalOpen, setCameraCalOpen] = useState(false),
     [winchCalOpen, setWinchCalOpen] = useState(false);
+  // The Mission tab flies the full mission or the skip-corridor one.
+  const [flightTask, setFlightTask] = useState<"mission" | "mission_skip_corridor">("mission");
   const [task, setTask] = useState("mission"),
     [action, setAction] = useState("stow"),
     [height, setHeight] = useState(5);
@@ -179,7 +181,7 @@ export default function App() {
   // Manual flight mode: no detectors run, so the raw camera is the only feed.
   const manualMode = telemetry?.runtime_mode === "manual" || hostState?.mode === "manual",
     feed = manualMode ? "/image_raw" : topic;
-  const selectedTask = mode === "flight" ? "mission" : task,
+  const selectedTask = mode === "flight" ? flightTask : task,
     taskInfo = tasks.find((item) => item.id === selectedTask)!;
   const canStart = !busy && !starting && startAllowed(t, fresh, selectedTask);
   const record = (text: string) =>
@@ -913,6 +915,22 @@ export default function App() {
         </section>
         <aside className="task-area">
           <h2>{mode === "flight" ? "Mission" : "Test task"}</h2>
+          {mode === "flight" && (
+            <label>
+              Mission
+              <select
+                value={flightTask}
+                disabled={running}
+                onChange={(e) => {
+                  setFlightTask(e.target.value as "mission" | "mission_skip_corridor");
+                  setReview(null);
+                }}
+              >
+                <option value="mission">Full mission</option>
+                <option value="mission_skip_corridor">Mission, skip corridor</option>
+              </select>
+            </label>
+          )}
           {mode === "testing" && (
             <label>
               Task
@@ -946,7 +964,7 @@ export default function App() {
               </select>
             </label>
           )}
-          {taskInfo.movement && selectedTask !== 'mission' && <label>Height above home (m)<input type="number" min={1} max={10} value={height} onChange={e => setHeight(Number(e.target.value))}/></label>}
+          {taskInfo.movement && !selectedTask.startsWith('mission') && <label>Height above home (m)<input type="number" min={1} max={10} value={height} onChange={e => setHeight(Number(e.target.value))}/></label>}
           {selectedTask.startsWith('delivery_') && <label>QR payload<input value={target} onChange={e => setTarget(e.target.value)} /></label>}
           {['delivery_gps','avoidance_route'].includes(selectedTask) && <label>Waypoints (lat, lon per line)<textarea value={waypoints} onChange={e => setWaypoints(e.target.value)} /></label>}
           <button

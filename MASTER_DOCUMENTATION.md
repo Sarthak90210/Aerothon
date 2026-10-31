@@ -901,6 +901,31 @@ runs at RTF 2 starved the corridor controller (setpoints at ~2 Hz); their
 results are not evidence (`headless_b/INTERRUPTED.txt`). The headless grid
 predates the dwell change, which only acts on frame-starved dwells.
 
+### 31 October 2026: skip-corridor mission, actuator start waiver
+
+The operator asked for a second mission beside the full one. GCS Mission
+panel: "Full mission" or "Mission, skip corridor" (runtime task
+`mission_skip_corridor`, `build_root(skip_corridor=True)`). The skip mission
+keeps take-off, the start QR, the search, the drop and the precision landing;
+it replaces both corridor legs. After the start QR it climbs to
+`skip_corridor_alt` (10 m), flies over the entry corridor's recorded ends
+(`HighTransit`, GCS course points; without them it goes straight on) and
+enters the delivery zone at 10 m (`EnterDeliveryZone`), then searches as
+usual. After the drop it climbs to 10 m, restores the navigation speed, flies
+over the exit corridor's recorded ends, goes home at 10 m, descends to the
+landing's start height and lands on the pad. No banner alignment and no
+corridor flight, so the rulebook's corridor and banner tasks are not flown.
+Legs are routed round red ground already mapped; the camera stays nadir.
+Standalone simulation selects it with `AEROTHON_SKIP_CORRIDOR=1`.
+
+Start waiver (operator, 31 Oct): on the aircraft the tilt servo reports no
+motion and the L298N winch has no encoder, so `camera_actuator` and
+`winch_actuator` are never ok and every mission Start was refused. The local
+execution watchdog now marks both `waived_for` the two mission tasks (the
+winch only while it reports no fault); they stay not-ok and still block the
+other flight tasks. Check the servo and winch by hand before Start. The
+simulator's gateway reports measured actuators and is unchanged.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch

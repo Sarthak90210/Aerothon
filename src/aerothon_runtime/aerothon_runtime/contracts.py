@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 
 TASKS = {
     'mission': ('Full mission', True),
+    # The full mission with both corridors crossed over at 10 m (31 Oct 2026).
+    'mission_skip_corridor': ('Mission, skip corridor', True),
     'slam': ('SLAM mapping', False),
     'qr': ('QR detection', False),
     'banner': ('Banner alignment', True),
@@ -15,6 +17,8 @@ TASKS = {
     'delivery_gps': ('Payload delivery at GPS location', True),
 }
 TERMINAL = {'Completed', 'Failed', 'Outcome unknown'}
+# The tasks that fly the mission tree (execution_node.build_normal).
+MISSION_TASKS = ('mission', 'mission_skip_corridor')
 
 def number(value, name, lo, hi):
     if isinstance(value, bool):

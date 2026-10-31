@@ -69,6 +69,12 @@ Worlds `sim/worlds/aerothon26_venue*.json` (`scripts/venue_world.py`), GCS
 preset "AeroTHON 2026 venue (30 Oct survey)". The typed back-left point was
 122 m off and is mirrored in the worlds; enter the organisers' points on the day.
 
+On 31 October the operator added "Mission, skip corridor" (task
+`mission_skip_corridor`, master guide section 1, "31 October 2026"): both
+corridors crossed over at 10 m, no banners. The same day they waived the
+camera/winch actuator feedback for mission starts on the aircraft
+(`waived_for`); it still blocks other flight tasks.
+
 On 15 October the organiser clarifications were applied (master guide
 section 1, "15 October 2026"). Final source `188aacd0...` passed the full
 reduced offline suite and two calm rendered acceptances 22/22: pattern-only

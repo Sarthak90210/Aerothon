@@ -66,6 +66,7 @@ export interface CommandOutcome {
 }
 export const tasks = [
   {id:'mission',label:'Full mission',movement:true,description:'Takeoff, detection, delivery, return and disarm.'},
+  {id:'mission_skip_corridor',label:'Mission, skip corridor',movement:true,description:'As the full mission, but after the start QR it climbs to 10 m and crosses over the entry corridor into the zone; after the drop it climbs to 10 m, crosses over the exit corridor and lands at home. No banners, no corridor flight.'},
   {id:'slam',label:'SLAM mapping',movement:false,description:'Map with lidar while the transmitter flies. Needs SLAM in the profile.'},
   {id:'qr',label:'QR detection',movement:false,description:'Detect QR from the current camera pose. No arming or camera movement.'},
   {id:'banner',label:'Banner alignment',movement:true,description:'Take off, align to the banner, return and land.'},
@@ -118,6 +119,7 @@ export const executionActive = (t: Telemetry | null) =>
 // The devices the execution service requires per task (execution_node.py).
 const REQUIRED: Record<string, string[]> = {
   mission: ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
+  mission_skip_corridor: ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
   avoidance_manual: ['identity','camera','lidar','clock'], avoidance_route: ['identity','camera','lidar','clock'],
   banner: ['identity','camera','lidar','clock','camera_actuator'],
   delivery_here: ['identity','camera','lidar','clock','camera_actuator','winch_actuator'],
@@ -155,7 +157,8 @@ export function startBlockReason(t:Telemetry|null, connected:boolean, task:strin
   if(age(t,'readiness') >= 3) return 'The readiness interlock is not reporting.';
   if(t.safety.ready !== true) return 'The flight readiness interlock is blocked. See Readiness.';
   // The runtime refuses these with only "camera (not ok)"; say what was measured.
-  const missing = t.devices ? (REQUIRED[task] ?? []).filter(k => t.devices?.[k]?.ok !== true) : [];
+  const missing = t.devices ? (REQUIRED[task] ?? []).filter(k => t.devices?.[k]?.ok !== true
+    && !(t.devices?.[k]?.waived_for ?? []).includes(task)) : [];
   return missing.length ? `Waiting for devices: ${missing.map(k => deviceIssue(k, t.devices?.[k])).join('; ')}.` : '';
 }
 export function startAllowed(t:Telemetry|null, connected:boolean, task:string):boolean {

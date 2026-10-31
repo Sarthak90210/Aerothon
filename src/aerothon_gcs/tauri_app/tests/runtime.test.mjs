@@ -178,6 +178,20 @@ test("a flight start waiting on a device says what the device measured", () => {
   assert.match(startBlockReason(t, true, "delivery_here"), /winch actuator is not reported/);
 });
 
+test("the aircraft's waived actuators block neither mission but still block other tasks", () => {
+  const t = ready();
+  const waived = ["mission", "mission_skip_corridor"];
+  t.devices = {identity:{ok:true}, camera:{ok:true}, lidar:{ok:true}, clock:{ok:true},
+    camera_actuator:{ok:false, reason:'no feedback', waived_for:waived},
+    winch_actuator:{ok:false, reason:'no encoder', waived_for:waived}};
+  assert.equal(startBlockReason(t, true, "mission"), "");
+  assert.equal(startBlockReason(t, true, "mission_skip_corridor"), "");
+  assert.match(startBlockReason(t, true, "delivery_here"), /Waiting for devices/);
+  t.devices.winch_actuator = {ok:false, reason:'winch fault: stalled'};
+  assert.match(startBlockReason(t, true, "mission_skip_corridor"), /stalled/);
+  assert.equal(taskCommand("mission_skip_corridor", "").args.task, "mission_skip_corridor");
+});
+
 test("the organisers' six points: fence is their outline, zone corners kept apart", async () => {
   const { convexHull, organiserFence } = await import("../src/organiser.ts");
   // The venue survey, 30 Oct 2026: two points behind take-off, then the

@@ -174,6 +174,7 @@ export interface DeviceMetric {
   hz?: number | null; // Gateway receipt rate, measured in steady time.
   receipt_age_s?: number | null;
   capture_age_s?: number | null; // Vehicle clock minus capture timestamp.
+  waived_for?: string[]; // Tasks this not-ok device does not block (operator waiver).
 }
 
 // One observation the aircraft made: a marker it decoded, a banner it read, or
