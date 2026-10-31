@@ -938,6 +938,24 @@ winch only while it reports no fault); they stay not-ok and still block the
 other flight tasks. Check the servo and winch by hand before Start. The
 simulator's gateway reports measured actuators and is unchanged.
 
+Timed drop (operator, 31 Oct). The aircraft has no loaded/unloaded hover
+calibration (profile `delivery_calibration` empty), and the delivery observer
+refuses at once ("load calibration missing or unqualified"): the mission
+failed into an FC recovery at the pad with the payload on the hook. Without a
+calibration `WinchDrop` now lowers to the release height plus 0.5 m of slack
+(or the line's limit, at most 40 s), holds 5 s stopped for the gravity hook,
+winds the line up (at most 45 s, else a failure) and records the delivery as
+unconfirmed; the mission then flies its return. A winch fault, or winch status
+stale for 3 s, fails the drop as before. A calibrated aircraft keeps the
+observer. Unit-tested (`sim/test_timed_drop.py`); the line lengths are the
+l298n estimate (0.30 m/s), not measured travel.
+
+The camera runs at 15 Hz (`mission2.launch.py`): at 30 Hz the Pi's CPU was
+saturated (load ~20) and the detectors and runtime received ~0.4 frames/s. The
+FC's TELEM3 port was MAVLink 1 (`SERIAL5_PROTOCOL 1`), which refuses fence
+uploads ("Need mavlink2 for item transfer") so every Start stopped in
+PREFLIGHT; it is now 2 (set through MAVROS, FC rebooted).
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch

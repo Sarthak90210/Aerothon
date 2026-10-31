@@ -217,6 +217,7 @@ class MotorConfirmationContinuationTests(unittest.TestCase):
             payload_seen=lambda:detection,qr_offset=SimpleNamespace(x=0.,y=0.,z=1.))
         leaf=WinchDrop(mav,5.,10.)
         leaf.initialise()
+        leaf.timed=False    # the calibrated observer's path, not the timed drop
         leaf.phase=1
         leaf.observer.state='DONE'
         leaf.observer.confirmed=True

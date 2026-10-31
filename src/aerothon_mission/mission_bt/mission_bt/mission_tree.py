@@ -6529,10 +6529,24 @@ class WinchDrop(py_trees.behaviour.Behaviour):
         self._phase_started = 0
         self._last_offset = None            # (ox, oy, alt, tick)
         self.observer = None
+        self.timed = False
 
     # The venue's 5.5 m reach on the 6 m spool: the line less this is the
     # highest release a calibrated line can make with slack for the hook.
     REACH_MARGIN_M = 0.5
+
+    # TIMED DROP (operator, 31 Oct 2026). Without a loaded/unloaded hover
+    # calibration the observer refuses the delivery at once ("load
+    # calibration missing or unqualified") and the mission fails into an FC
+    # recovery with the payload still on the hook. The aircraft has never
+    # been calibrated, so it lowers to the ground plus slack, holds for the
+    # gravity hook to let go, winds the line back up and records the
+    # delivery as unconfirmed. A calibrated aircraft keeps the observer.
+    TIMED_SLACK_M = 0.5
+    TIMED_HOLD_S = 5.0
+    TIMED_LOWER_MAX_S = 40.0
+    TIMED_STOW_MAX_S = 45.0
+    TIMED_STALE_S = 3.0
 
     def reach(self):
         """The highest release: winch_reach_m, or less when the line's
@@ -6585,6 +6599,15 @@ class WinchDrop(py_trees.behaviour.Behaviour):
         self.mav.delivery_confirmation_basis = None
         self.observer = DeliveryObserver(getattr(self.mav, 'delivery_load_profile', None),
                                          self.hfov, self.payload_size_m)
+        self.timed = not self.observer._profile_ok()
+        self._timed_step = 'lower'
+        self._timed_since = None
+        self._timed_stale_since = None
+        self._timed_payout = 0.0
+        if self.timed:
+            self.mav.log("drop: no load calibration; timed drop (lower to the "
+                         "ground plus slack, hold, wind up), delivery unconfirmed",
+                         warn=True)
         floor = self.tracking_floor()
         self.servo_alt = max(self.drop_alt, floor)
         self.release_alt = min(self.servo_alt, self.reach())
@@ -6753,6 +6776,8 @@ class WinchDrop(py_trees.behaviour.Behaviour):
                 self._settle_delivery(False, "winch fault: " + str(w["fault"]))
                 self.mav.abort_reason = self.mav.delivery_note
                 return py_trees.common.Status.FAILURE
+            if self.timed:
+                return self._timed_drop(now, w, payout, fresh_status)
             command = self.observer.update(now, seen() if callable(seen) else None,
                                            telemetry() if callable(telemetry) else None, payout)
             self.mav.winch(command)
@@ -6797,6 +6822,62 @@ class WinchDrop(py_trees.behaviour.Behaviour):
             if self.mav.reached(self.drop_x, self.drop_y, self.cruise_alt, 0.6):
                 return py_trees.common.Status.SUCCESS
 
+        return py_trees.common.Status.RUNNING
+
+    def _timed_drop(self, now, w, payout, fresh_status):
+        """One tick of the timed drop: lower, hold, wind up, then climb."""
+        if callable(fresh_status) and not fresh_status():
+            if self._timed_stale_since is None:
+                self._timed_stale_since = now
+            if now - self._timed_stale_since > self.TIMED_STALE_S:
+                self.mav.winch("stop")
+                self._settle_delivery(False, "winch status unavailable during the timed drop")
+                self.mav.abort_reason = self.mav.delivery_note
+                return py_trees.common.Status.FAILURE
+            return py_trees.common.Status.RUNNING
+        self._timed_stale_since = None
+        if self._timed_since is None:
+            self._timed_since = now
+        elapsed = now - self._timed_since
+        state = str(w.get("state", ""))
+        if self._timed_step == 'lower':
+            target = self.release_alt + self.TIMED_SLACK_M
+            self.feedback_message = (f"timed drop: lowering {payout:.2f} m of "
+                                     f"{target:.2f} m")
+            if state == "AT_LIMIT" or payout >= target - 0.05 \
+                    or elapsed > self.TIMED_LOWER_MAX_S:
+                self.mav.winch("stop")
+                self._timed_payout = payout
+                self._record_delivery_offset()
+                alt = self.mav.alt()
+                at = f"{alt:.2f} m" if isinstance(alt, (int, float)) else "unknown height"
+                self.mav.log(f"drop: line out {payout:.2f} m from {at} after "
+                             f"{elapsed:.0f} s; holding {self.TIMED_HOLD_S:.0f} s for the hook")
+                self._timed_step, self._timed_since = 'hold', now
+            else:
+                self.mav.winch("lower")
+        elif self._timed_step == 'hold':
+            self.mav.winch("stop")
+            self.feedback_message = f"timed drop: holding {elapsed:.0f} s"
+            if elapsed >= self.TIMED_HOLD_S:
+                self._timed_step, self._timed_since = 'stow', now
+                self.mav.winch("stow")
+        elif self._timed_step == 'stow':
+            self.feedback_message = f"timed drop: winding up, {payout:.2f} m out"
+            if payout <= 0.02 or state in ("IDLE", "RELEASED"):
+                self.mav.winch("stop")
+                self._settle_delivery(False, (
+                    f"timed drop without load calibration: line out "
+                    f"{self._timed_payout:.2f} m, held {self.TIMED_HOLD_S:.0f} s, "
+                    "wound up"))
+                self.phase = 5
+            elif elapsed > self.TIMED_STOW_MAX_S:
+                self.mav.winch("stop")
+                self._settle_delivery(False, "timed drop: winding up timed out")
+                self.mav.abort_reason = self.mav.delivery_note
+                return py_trees.common.Status.FAILURE
+            else:
+                self.mav.winch("stow")
         return py_trees.common.Status.RUNNING
 
     # ---- camera confirmation -------------------------------------------------

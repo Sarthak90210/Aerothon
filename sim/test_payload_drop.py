@@ -159,7 +159,9 @@ class CameraConfirmationTests(unittest.TestCase):
 
     def test_stale_winch_status_cannot_certify_recovery_completion(self):
         from mission_bt.mission_tree import WinchDrop
+        from mission_bt.delivery_observer import calibration
         mav = FakeMav()
+        mav.delivery_load_profile = calibration([.26]*40, [.24]*40)
         mav.winch_status = {'payout_estimate_m': 0, 'fault': ''}
         mav.winch_status_fresh = lambda: False
         mav.winch = lambda cmd: None
@@ -171,16 +173,20 @@ class CameraConfirmationTests(unittest.TestCase):
         self.assertFalse(mav.delivery_confirmed)
 
     def test_commanded_release_cannot_confirm_delivery(self):
+        # Uncalibrated: the timed drop (31 Oct 2026) lowers and never
+        # confirms, whatever the winch or the camera claim.
         from mission_bt.mission_tree import WinchDrop
         mav = FakeMav()
         mav.winch_status = {'released': True, 'ground': True, 'payout_m': 0}
-        mav.winch = lambda cmd: None
+        commands = []
+        mav.winch = commands.append
         mav.payload_seen = lambda: {'visible': True, 'stamp': 1, 'w_px': 22, 'h_px': 11}
         leaf = WinchDrop(mav)
         leaf.initialise(); leaf.phase = 1
-        self.assertEqual(leaf.update(), py_trees.common.Status.FAILURE)
-        self.assertFalse(mav.delivery_confirmed)
-        self.assertIn('calibration', mav.delivery_note)
+        self.assertTrue(leaf.timed)
+        self.assertEqual(leaf.update(), py_trees.common.Status.RUNNING)
+        self.assertEqual(commands, ['lower'])
+        self.assertIsNot(mav.delivery_confirmed, True)
 
 
 class LandOutcomeTests(unittest.TestCase):
