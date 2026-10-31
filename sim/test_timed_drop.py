@@ -130,6 +130,16 @@ class TimedDropTests(unittest.TestCase):
         self.assertTrue(all(c == "stop" for c in held))
         self.assertGreaterEqual(len(held) * 0.2, leaf.TIMED_HOLD_S - 0.2)
 
+    def test_the_slack_is_measured_from_the_height_actually_held(self):
+        # Rendered 31 Oct: hovering 0.5 m above the release height left the
+        # line 0.1 m short of the ground.
+        mav, winch, leaf = rig()
+        mav._alt = leaf.release_alt + 0.5
+        run(mav, winch, leaf, 120)
+        self.assertGreaterEqual(leaf._timed_payout,
+                                min(winch.line, mav._alt + leaf.TIMED_SLACK_M) - 0.1)
+        self.assertGreaterEqual(leaf._timed_payout, mav._alt)
+
     def test_a_short_line_stops_at_its_limit(self):
         mav, winch, leaf = rig()
         winch.line = 3.0                       # AT_LIMIT before release + slack

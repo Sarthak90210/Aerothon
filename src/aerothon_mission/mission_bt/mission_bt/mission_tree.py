@@ -6542,7 +6542,7 @@ class WinchDrop(py_trees.behaviour.Behaviour):
     # been calibrated, so it lowers to the ground plus slack, holds for the
     # gravity hook to let go, winds the line back up and records the
     # delivery as unconfirmed. A calibrated aircraft keeps the observer.
-    TIMED_SLACK_M = 0.5
+    TIMED_SLACK_M = 0.8
     TIMED_HOLD_S = 5.0
     TIMED_LOWER_MAX_S = 40.0
     TIMED_STOW_MAX_S = 45.0
@@ -6841,7 +6841,12 @@ class WinchDrop(py_trees.behaviour.Behaviour):
         elapsed = now - self._timed_since
         state = str(w.get("state", ""))
         if self._timed_step == 'lower':
-            target = self.release_alt + self.TIMED_SLACK_M
+            # From the height actually held, not the commanded one: rendered
+            # (31 Oct) the aircraft hovered at 5.58 m, inside the arrival
+            # tolerance of a 5.08 m release, and 5.49 m of line left no slack.
+            alt = self.mav.alt()
+            held = alt if isinstance(alt, (int, float)) and math.isfinite(alt) else 0.0
+            target = max(self.release_alt, held) + self.TIMED_SLACK_M
             self.feedback_message = (f"timed drop: lowering {payout:.2f} m of "
                                      f"{target:.2f} m")
             if state == "AT_LIMIT" or payout >= target - 0.05 \
