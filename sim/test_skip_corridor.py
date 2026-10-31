@@ -46,7 +46,7 @@ class TreeShapeTests(unittest.TestCase):
         names = [c.name for c in mission_names(skip=True)]
         self.assertFalse(CORRIDOR_STAGES & set(names), names)
         order = ["ScanStartQR", "ClimbToSkipAlt", "CameraNadirForSkip",
-                 "OverEntryCorridor", "EnterDeliveryZone", "DeliverySearch",
+                 "SkipTransitSpeed", "OverEntryCorridor", "EnterDeliveryZone", "DeliverySearch",
                  "DropUnlessSkipped", "ClimbForReturn",
                  "CameraNadirForReturnTransit", "RestoreNavigationSpeed",
                  "OverExitCorridor", "BannerTargetHome", "GotoHome",
@@ -77,6 +77,12 @@ class TreeShapeTests(unittest.TestCase):
         self.assertEqual(stages["EnterDeliveryZone"].alt, 10.0)
         self.assertEqual(stages["OverExitCorridor"].alt, 10.0)
         self.assertEqual(stages["GotoHome"].alt, 10.0)
+        # The crossing commands the navigation speed the return restores
+        # (headless, 31 Oct: none was ever set and the return failed).
+        self.assertEqual(stages["SkipTransitSpeed"].transit_alt, 10.0)
+        self.assertEqual(stages["SkipTransitSpeed"].previous_speed(),
+                         stages["SkipTransitSpeed"].ceiling)
+        self.assertLessEqual(stages["ClimbToSkipAlt"].tol, 0.2)
         # Down to the landing's own start height before the precision descent.
         self.assertEqual(stages["DescendForLanding"].target_alt(),
                          stages["PrecisionDescent"].start_alt)

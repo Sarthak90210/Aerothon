@@ -4304,8 +4304,9 @@ class RestoreNavigationSpeed(py_trees.behaviour.Behaviour):
     """Release the camera search cap only before the measured high return leg."""
 
     def __init__(self, mav, previous_speed, navigation_speed_mps=5.,
-                 transit_alt=10., clock=None, timeout_s=3.):
-        super().__init__('RestoreNavigationSpeed')
+                 transit_alt=10., clock=None, timeout_s=3.,
+                 name='RestoreNavigationSpeed'):
+        super().__init__(name)
         self.mav = mav
         self.previous_speed = previous_speed
         self.ceiling = float(navigation_speed_mps)
@@ -7947,9 +7948,19 @@ def build_root(mav, node, p, skip_corridor=False):
         first = names.index("CameraForwardForCorridor")
         entered = names.index("EnterDeliveryZone")
         back = names.index("ClimbForReturn")
+        nav_mps = p.get('navigation_speed_mps', 5.)
         children = children[:first] + [
-            ClimbInPlace("ClimbToSkipAlt", mav, skip_alt, tol=0.3),
+            # Inside the speed stage's .30 m altitude band, as ClimbForReturn.
+            ClimbInPlace("ClimbToSkipAlt", mav, skip_alt, tol=0.2),
             SetCameraPose("CameraNadirForSkip", mav, "NADIR"),
+            # The full mission's gate crossing commands the navigation speed
+            # the return restores after the search's cap. Nothing here did,
+            # and the return failed "pre-search navigation speed unavailable"
+            # (headless, 31 Oct). Command it before the crossing.
+            RestoreNavigationSpeed(mav, previous_speed=lambda: nav_mps,
+                                   navigation_speed_mps=nav_mps,
+                                   transit_alt=skip_alt, clock=clock,
+                                   name="SkipTransitSpeed"),
             HighTransit("OverEntryCorridor", mav,
                         lambda: mav.entry_corridor_local, skip_alt,
                         clearance_m=red_m),
@@ -7959,7 +7970,7 @@ def build_root(mav, node, p, skip_corridor=False):
             SetCameraPose("CameraNadirForReturnTransit", mav, "NADIR"),
             RestoreNavigationSpeed(mav,
                 previous_speed=lambda: getattr(search, 'navigation_speed_before_search', None),
-                navigation_speed_mps=p.get('navigation_speed_mps', 5.),
+                navigation_speed_mps=nav_mps,
                 transit_alt=skip_alt, clock=clock),
             HighTransit("OverExitCorridor", mav,
                         lambda: mav.exit_corridor_local, skip_alt,
@@ -8370,6 +8381,7 @@ STATE_NAMES.update({"OutboundAgainFaceEntryCorridor": "BANNER_ALIGN",
                     "OutboundAgainCheckGate": "BANNER_ALIGN"})
 # The skip-corridor mission's own legs (build_root(skip_corridor=True)).
 STATE_NAMES.update({"ClimbToSkipAlt": "SKIP_CORRIDOR",
+                    "SkipTransitSpeed": "SKIP_CORRIDOR",
                     "CameraNadirForSkip": "CAMERA_NADIR",
                     "OverEntryCorridor": "SKIP_CORRIDOR",
                     "OverExitCorridor": "RETURN_TRANSIT",

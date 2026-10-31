@@ -918,6 +918,18 @@ corridor flight, so the rulebook's corridor and banner tasks are not flown.
 Legs are routed round red ground already mapped; the camera stays nadir.
 Standalone simulation selects it with `AEROTHON_SKIP_CORRIDOR=1`.
 
+It first commands the navigation speed (`SkipTransitSpeed`): the full
+mission's gate crossing does that, the return restores it after the search's
+cap, and without it the first headless runs failed the return "pre-search
+navigation speed unavailable" (`logs/pi_deploy_20261031/skip_headless_run1_no_speed`).
+Headless after the fix (navigation only, calm, RTF 1,
+`skip_headless_run2/`): venue c01 with course points, 122 s, red clearance
+1.74 m; c06 with the fence only, 176 s, red clearance 2.99 m; both no red
+entry, no fence exit, no unexpected mode, landed 0.6 m from take-off, maximum
+10.06 m. Their failed checks are the three corridor checks (by design) and
+the two payload checks this harness does not exercise. Not flown rendered or
+on the aircraft.
+
 Start waiver (operator, 31 Oct): on the aircraft the tilt servo reports no
 motion and the L298N winch has no encoder, so `camera_actuator` and
 `winch_actuator` are never ok and every mission Start was refused. The local
