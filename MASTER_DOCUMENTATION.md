@@ -857,6 +857,50 @@ pad as red ground.
 Evidence (`logs/venue_20261030/`, receipt `.scratch/venue_20261030/receipt.json`):
 in progress.
 
+### 30-31 October 2026: organiser points at the GCS, venue runs
+
+The operator asked for the GCS to take the aircraft to each organiser point
+and record it: the six fence points first (required), then home and the two
+corridors' ends (optional, as before when absent). Section 4, "Organiser
+points", has the panel, recording and what the mission does with the course
+points (guidance only: face the entry corridor, refuse a gate in the exit
+lane, return to the recorded exit mouth, return home, advisory home check).
+
+Changes the runs drove (flight logic):
+
+- `Corridor`: hold position where the walls end. Switching the navigator off
+  sent nothing; the FC flew its last velocity until its setpoint timeout and
+  coasted 1.4 m after the exit (headless c04/c07/c09 climbed over a red
+  square 3.7 m past the entry lane's exit). Now it stops 0.2 m on.
+- `AlignToBanner`: a heading's dwell waits for frames (min_samples, up to 3
+  dwells). The detector drops frames while the camera turns to its pose; in
+  rendered runs the sweep's first heading, after a pose change, closed at
+  0/0 frames. With no course points that was the one heading facing the entry
+  banner (GUI run 2): the board was never read and the recovery flew along
+  the exit lane at gate height into its first board (FC crash disarm). Run 3,
+  aborted from the GCS at 1361 s, never read it either.
+- Tried and reverted (`7031bd7`): leaving red ground's margin sideways rather
+  than back over the corridors. The router's segment certificate allows only
+  the nearest-edge escape; the aircraft then held over the margin until the
+  search deadline and RTL.
+
+Headless grid (object-level, navigation only: delivery not exercised; RTF 1,
+two at a time, `logs/venue_20261030/headless_course/` with course points,
+`headless_g/` without, `headless_final_nocourse_pre_escape/` without, source
+identical to the merge): every board case flew both lanes -- reach 1.0, 1.25
+and 1.5 m, first board either side, 1.5 and 2 m gaps -- with corridor
+clearance 0.79-1.02 m and red clearance 2.4-4.8 m, landing 0.6-0.72 m from
+take-off. With course points: faced the entry mouth, accepted the gate (0.6-0.8
+m from the recorded mouth), returned to the recorded exit mouth (2.0-2.2 m from
+the derived one); one world's flight 230 s against 416 s without. The three
+worlds with a red square 3.7 m past the entry lane's exit fail two checks
+with or without course points: red clearance 1.06-1.25 m (no entry) and the
+search's escape from its margin crossing the corridors' ends at 10 m. A red
+zone that close to an exit is the open limitation. Earlier batches with three
+runs at RTF 2 starved the corridor controller (setpoints at ~2 Hz); their
+results are not evidence (`headless_b/INTERRUPTED.txt`). The headless grid
+predates the dwell change, which only acts on frame-starved dwells.
+
 ## 2. Architecture and source map
 
 Native deployment targets Ubuntu 24.04 arm64 and ROS 2 Jazzy. Current launch
