@@ -1,0 +1,230 @@
+{
+  "wall_time": 1792358244.6851873,
+  "confirmed_disarm_before_disconnect": {
+    "profiles": [
+      {
+        "id": "sitl",
+        "name": "Laptop SITL",
+        "transport": "tcp",
+        "host": "127.0.0.1",
+        "port": 5762,
+        "bind_port": 14555,
+        "system_id": 1,
+        "component_id": 1,
+        "gateway": "http://127.0.0.1:8090",
+        "device": "/dev/ttyAMA0",
+        "baud": 115200,
+        "camera_device": "/dev/video0",
+        "lidar_port": "/dev/ttyUSB0",
+        "lidar_yaw_deg": 0.0,
+        "lidar_mirrored": false,
+        "camera_hfov": 0.851919,
+        "marker_m": 3.0,
+        "rc_config": {},
+        "slam": true,
+        "hardware_reviewed": false,
+        "delivery_calibration": "",
+        "vehicle": "simulation",
+        "gcs_host": "",
+        "winch_backend": "mavlink",
+        "venue_file": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/slam_ui_20261018/local_sitl_venue.yaml",
+        "autoconnect": false,
+        "slam_odometry": "fcu"
+      }
+    ],
+    "profile_id": "sitl",
+    "runtime": "Running",
+    "fresh": true,
+    "can_disconnect": true,
+    "can_edit_profiles": false,
+    "execution": {
+      "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+      "task": "delivery_here",
+      "params": {
+        "height": 5.0,
+        "target": "AEROTHON2026:M2:TARGET_C"
+      },
+      "state": "Completed",
+      "reason": "operator stopped test",
+      "control_owner": "Flight controller",
+      "stage": "Return and land",
+      "disarmed": true
+    },
+    "autoconnect_suspended": false,
+    "connection_error": "",
+    "streams": [
+      {
+        "compressed": true,
+        "telemetry": 428,
+        "map": 44
+      }
+    ],
+    "tasks": [
+      {
+        "id": "mission",
+        "label": "Full mission",
+        "movement": true
+      },
+      {
+        "id": "slam",
+        "label": "SLAM mapping",
+        "movement": false
+      },
+      {
+        "id": "qr",
+        "label": "QR detection",
+        "movement": false
+      },
+      {
+        "id": "banner",
+        "label": "Banner alignment",
+        "movement": true
+      },
+      {
+        "id": "avoidance_manual",
+        "label": "Avoidance with transmitter",
+        "movement": true
+      },
+      {
+        "id": "avoidance_route",
+        "label": "Avoidance with waypoint route",
+        "movement": true
+      },
+      {
+        "id": "mechanism",
+        "label": "Mechanism only",
+        "movement": false
+      },
+      {
+        "id": "delivery_here",
+        "label": "Payload delivery here",
+        "movement": true
+      },
+      {
+        "id": "delivery_gps",
+        "label": "Payload delivery at GPS location",
+        "movement": true
+      }
+    ]
+  },
+  "disconnect_result": {
+    "profiles": [
+      {
+        "id": "sitl",
+        "name": "Laptop SITL",
+        "transport": "tcp",
+        "host": "127.0.0.1",
+        "port": 5762,
+        "bind_port": 14555,
+        "system_id": 1,
+        "component_id": 1,
+        "gateway": "http://127.0.0.1:8090",
+        "device": "/dev/ttyAMA0",
+        "baud": 115200,
+        "camera_device": "/dev/video0",
+        "lidar_port": "/dev/ttyUSB0",
+        "lidar_yaw_deg": 0.0,
+        "lidar_mirrored": false,
+        "camera_hfov": 0.851919,
+        "marker_m": 3.0,
+        "rc_config": {},
+        "slam": true,
+        "hardware_reviewed": false,
+        "delivery_calibration": "",
+        "vehicle": "simulation",
+        "gcs_host": "",
+        "winch_backend": "mavlink",
+        "venue_file": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/slam_ui_20261018/local_sitl_venue.yaml",
+        "autoconnect": false,
+        "slam_odometry": "fcu"
+      }
+    ],
+    "profile_id": null,
+    "runtime": "Stopped",
+    "fresh": false,
+    "can_disconnect": true,
+    "can_edit_profiles": true,
+    "execution": {
+      "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+      "task": "delivery_here",
+      "params": {
+        "height": 5.0,
+        "target": "AEROTHON2026:M2:TARGET_C"
+      },
+      "state": "Completed",
+      "reason": "operator stopped test",
+      "control_owner": "Flight controller",
+      "stage": "Return and land",
+      "disarmed": true
+    },
+    "autoconnect_suspended": true,
+    "connection_error": "",
+    "streams": [
+      {
+        "compressed": true,
+        "telemetry": 428,
+        "map": 44
+      }
+    ],
+    "tasks": [
+      {
+        "id": "mission",
+        "label": "Full mission",
+        "movement": true
+      },
+      {
+        "id": "slam",
+        "label": "SLAM mapping",
+        "movement": false
+      },
+      {
+        "id": "qr",
+        "label": "QR detection",
+        "movement": false
+      },
+      {
+        "id": "banner",
+        "label": "Banner alignment",
+        "movement": true
+      },
+      {
+        "id": "avoidance_manual",
+        "label": "Avoidance with transmitter",
+        "movement": true
+      },
+      {
+        "id": "avoidance_route",
+        "label": "Avoidance with waypoint route",
+        "movement": true
+      },
+      {
+        "id": "mechanism",
+        "label": "Mechanism only",
+        "movement": false
+      },
+      {
+        "id": "delivery_here",
+        "label": "Payload delivery here",
+        "movement": true
+      },
+      {
+        "id": "delivery_gps",
+        "label": "Payload delivery at GPS location",
+        "movement": true
+      }
+    ]
+  },
+  "owned_simulator_pgid": 13254,
+  "owned_web_pid": 13307,
+  "owned_runtime_pgid": 14937,
+  "process_shutdown_verification": {
+    "wall_time": 1792358464.1218972,
+    "owned_processes_remaining": [],
+    "verified_groups": [
+      13254,
+      14937
+    ],
+    "verified_web_pid": 13307,
+    "physical_hardware_accessed": false
+  }
+}

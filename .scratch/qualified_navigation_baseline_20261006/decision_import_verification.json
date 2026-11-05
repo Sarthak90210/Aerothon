@@ -1,0 +1,58 @@
+{
+  "mission_bt.mission_tree": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_mission/mission_bt/mission_bt/mission_tree.py",
+    "sha256": "e6eb77c904644d413ffcc1a612e4867d68cf27db29927e280b8b3c43ca1753c3"
+  },
+  "avoidance.velocity_controller": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py",
+    "sha256": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93"
+  },
+  "camera_ctrl.camera_ctrl_node": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/camera_ctrl/camera_ctrl/camera_ctrl_node.py",
+    "sha256": "2361a2e5047ec689196cf9eb31e6c3c2e8b7685a545aa481f8e24eafbcc81e4a"
+  },
+  "winch_ctrl.winch_node": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py",
+    "sha256": "733b40e790807f712a34096d2398669aeca4868473405f8dfa367a3cb99bc67b"
+  },
+  "sim.navigation_mission": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/navigation_mission.py",
+    "sha256": "30856c204bd282314067a2ffb0c408b41bdb99f1319067b8d0786279cb2abfa1"
+  },
+  "sim.headless_world": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/headless_world.py",
+    "sha256": "44f78a9b48f88bd79e6fee2107e58de3a9405267babc4cbc7d421fa6c3de1346"
+  },
+  "perception_qr.qr_node": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/perception_qr/perception_qr/qr_node.py",
+    "sha256": "4e7418b8f967d7722df86f595ce1aa49b7abf6d9ed08c4ff4199c2d1cbe317a6"
+  },
+  "perception_redzone.redzone_node": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/perception_redzone/perception_redzone/redzone_node.py",
+    "sha256": "1276b4722be4b10b56a4bef01a8725333ed40b843d51034f58ceb682d06024e6"
+  },
+  "perception_banner.banner_node": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/perception_banner/perception_banner/banner_node.py",
+    "sha256": "81b5cef79358b085e5fe6626b53a32b46d0b46a6c96b1a4bf27cb4fc70a88678"
+  },
+  "world_spec": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/scripts/world_spec.py",
+    "sha256": "fdbb3acc14ec3219c0da6b6a57278bd1b6a2c358a25784dd952096a75418d5f8"
+  },
+  "materialize_world": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/scripts/materialize_world.py",
+    "sha256": "60962484fc8f019d50d43e0b0740c419a05beb29d6fc4563ff971c1fc29cde85"
+  },
+  "test_corridor_stress": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/test_corridor_stress.py",
+    "sha256": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d"
+  },
+  "campaign_record": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/campaign_record.py",
+    "sha256": "a288fc19b8db13ad7d06f247bdc5e31462a7773db14a4b88c1d97c3cf2d318b3"
+  },
+  "check_corridor_clearance": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/scripts/check_corridor_clearance.py",
+    "sha256": "576b5b26e7cda04ac64bea17e9646739c50f3f78ec4770ae65e971285f26cfb0"
+  }
+}

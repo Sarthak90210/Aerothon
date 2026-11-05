@@ -1,0 +1,283 @@
+{
+  "source": "operator laptop UDP to Pi router, no GCS Connect",
+  "messages": {
+    "30": 627,
+    "253": 12,
+    "22": 1048,
+    "36": 503,
+    "33": 125,
+    "65": 124,
+    "178": 102,
+    "74": 102,
+    "1": 99,
+    "0": 40,
+    "163": 50,
+    "125": 50,
+    "152": 50,
+    "62": 50,
+    "42": 50,
+    "27": 50,
+    "116": 50,
+    "129": 50,
+    "29": 50,
+    "137": 50,
+    "24": 50,
+    "2": 50,
+    "136": 50,
+    "193": 50,
+    "241": 50,
+    "147": 50,
+    "11039": 50,
+    "77": 44,
+    "111": 4
+  },
+  "heartbeats": [
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 0.992
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 2.004
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 3.653
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 3.992
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 4.996
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 5.998
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 6.991
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 7.996
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 8.994
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 9.998
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 10.998
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 13.007
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 14.046
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 15.009
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 15.996
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 16.999
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 17.991
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 18.994
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 20.0
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 21.573
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 21.998
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 23.001
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 23.993
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 24.987
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 26.004
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 26.998
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 27.986
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 28.996
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 30.205
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 31.035
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 32.002
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 32.985
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 33.983
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 35.004
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 35.989
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 36.985
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 38.0
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 39.071
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 39.985
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 41.001
+    }
+  ],
+  "unique_parameters": 1048,
+  "expected_parameters": 1047,
+  "missing_parameter_indices": [],
+  "retry_read_requests": 97,
+  "invalid_known_crc": 4,
+  "heartbeat_received": true,
+  "disarmed": true
+}

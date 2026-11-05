@@ -1,0 +1,31 @@
+{
+  "profile": {
+    "id": "drone",
+    "name": "Drone (Pixhawk TELEM3)",
+    "transport": "serial",
+    "device": "/dev/ttyAMA0",
+    "baud": 115200,
+    "system_id": 1,
+    "component_id": 1,
+    "gateway": "",
+    "vehicle": "drone",
+    "camera_device": "/dev/video0",
+    "lidar_port": "/dev/ttyUSB0",
+    "lidar_yaw_deg": 0.0,
+    "lidar_mirrored": false,
+    "camera_hfov": 0.851919,
+    "marker_m": 1.0,
+    "rc_config": {},
+    "slam": false,
+    "hardware_reviewed": true,
+    "delivery_calibration": "",
+    "venue_file": "",
+    "winch_backend": "mavlink"
+  },
+  "state": {
+    "profile_id": "drone",
+    "runtime": "Stopped",
+    "fresh": false
+  },
+  "authorised_by": "user: props off, connect (propellers removed, airframe secured)"
+}

@@ -1,0 +1,5947 @@
+{
+  "latest": {
+    "mission": {
+      "selected": null,
+      "part": "mission",
+      "state": "FAILED",
+      "armed": false,
+      "mode": "STABILIZE",
+      "elapsed": 0.0,
+      "delivery_offset_m": null,
+      "landing_precision": null,
+      "result": null,
+      "result_reason": null
+    },
+    "flight": {
+      "x": 0.0,
+      "y": -0.07,
+      "alt": -0.03,
+      "gs": 0.17,
+      "roll_deg": 0.0,
+      "pitch_deg": -0.0,
+      "yaw_deg": 18.4
+    },
+    "gps": {
+      "lat": -35.3632449,
+      "lon": 149.1652154,
+      "sats": 18,
+      "fix": "3D"
+    },
+    "power": {
+      "volt": 16.8,
+      "pct": 100,
+      "current_a": -0.0
+    },
+    "sensor_diagnostics": {
+      "vibration_mps2": [
+        3.1511433124542236,
+        0.3337997496128082,
+        null
+      ],
+      "clipping": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "magnetic_ut": [
+        12.4,
+        20.300000000000008,
+        52.800000000000004
+      ],
+      "magnetic_strength_ut": 57.91105248568705,
+      "magnetic_units_basis": "mavros_milligauss_x1000",
+      "magnetic_frame": "base_link",
+      "magnetic_capture_stamp": 93.482
+    },
+    "nav": {
+      "front_m": 0,
+      "centering_err": 0,
+      "cmd_vx": 0
+    },
+    "percep": {
+      "start_qr": "",
+      "target_match": false,
+      "banner": false,
+      "mission_target": "",
+      "qr_reference": false,
+      "qr_match_basis": [],
+      "qr_appearance_score": null,
+      "redzone_visible": false,
+      "redzone_status": "NOT_VISIBLE",
+      "redzone_reason": "altitude -0.0 m too low to project",
+      "redzone_exclusions": [],
+      "redzone_area_m2": 0.0,
+      "square_angle_deg": null,
+      "square_standoff_m": null,
+      "square_ok": null,
+      "square_reason": ""
+    },
+    "safety": {
+      "ready": false,
+      "fcu_connected": true,
+      "ekf": "UNKNOWN",
+      "ekf_flags": {},
+      "geofence": "NONE",
+      "fence_count": 0,
+      "battery_ok": true,
+      "stale": [
+        "ekf:never",
+        "fence:135s"
+      ],
+      "ready_items": [
+        {
+          "key": "fcu_link",
+          "label": "FCU link",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "gps_sats",
+          "label": "GPS satellites",
+          "ok": true,
+          "value": 18,
+          "reason": ""
+        },
+        {
+          "key": "gps_hdop",
+          "label": "GPS HDOP",
+          "ok": true,
+          "value": 0.8,
+          "reason": ""
+        },
+        {
+          "key": "battery",
+          "label": "Battery voltage",
+          "ok": true,
+          "value": 16.8,
+          "reason": ""
+        },
+        {
+          "key": "ekf",
+          "label": "EKF health",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "lidar_rate",
+          "label": "Lidar rate",
+          "ok": true,
+          "value": 9.7,
+          "reason": ""
+        },
+        {
+          "key": "mavlink_latency",
+          "label": "MAVLink latency",
+          "ok": true,
+          "value": 0.0,
+          "reason": ""
+        },
+        {
+          "key": "camera_pose",
+          "label": "Camera pose",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "detectors",
+          "label": "Detector health",
+          "ok": true,
+          "value": {
+            "qr": 0.1,
+            "banner": 0.1,
+            "redzone": 0.1
+          },
+          "reason": ""
+        },
+        {
+          "key": "actuator",
+          "label": "Winch health",
+          "ok": false,
+          "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+          "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        },
+        {
+          "key": "rc_failsafe",
+          "label": "RC failsafe",
+          "ok": true,
+          "value": false,
+          "reason": ""
+        },
+        {
+          "key": "delivery_zone",
+          "label": "Search area",
+          "ok": true,
+          "value": "supplied corners",
+          "reason": ""
+        },
+        {
+          "key": "geofence",
+          "label": "Arena geofence",
+          "ok": true,
+          "value": "judges' points",
+          "reason": ""
+        },
+        {
+          "key": "banner_colours",
+          "label": "Banner colours",
+          "ok": true,
+          "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+          "reason": ""
+        },
+        {
+          "key": "arena_dimensions",
+          "label": "Arena dimensions",
+          "ok": true,
+          "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+          "reason": ""
+        }
+      ],
+      "ready_reasons": [
+        "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+      ],
+      "ready_waived": []
+    },
+    "checklist": {
+      "takeoff": false,
+      "start_qr": false,
+      "banner": false,
+      "corridor": false,
+      "target_id": false,
+      "drop": false,
+      "return": false,
+      "land": false
+    },
+    "scan": {
+      "yaw_deg": 18.4,
+      "ranges": [
+        0.24,
+        0.22,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.36,
+        0.35,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        6.93,
+        6.99,
+        7.08,
+        7.14,
+        7.21,
+        7.29,
+        7.38,
+        7.46,
+        7.55,
+        7.64,
+        7.72,
+        7.82,
+        7.92,
+        8.04,
+        8.14,
+        8.24,
+        8.33,
+        8.47,
+        8.56,
+        8.7,
+        8.81,
+        9.04,
+        9.19,
+        9.31,
+        9.46,
+        9.32,
+        6.29,
+        6.2,
+        6.18,
+        6.12,
+        6.08,
+        5.97,
+        4.39,
+        4.4,
+        4.46,
+        4.59,
+        4.29,
+        4.25,
+        4.22,
+        4.17,
+        4.31,
+        4.44,
+        4.54,
+        4.7,
+        4.92,
+        5.03,
+        5.27,
+        5.42,
+        5.7,
+        5.89,
+        6.27,
+        6.49,
+        6.99,
+        7.27,
+        7.6,
+        8.34,
+        8.76,
+        9.3,
+        9.88,
+        10.51,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        11.37,
+        10.35,
+        9.5,
+        8.76,
+        8.15,
+        7.59,
+        7.13,
+        6.69,
+        6.34,
+        6.0,
+        6.01,
+        5.71,
+        5.42,
+        5.2,
+        4.98,
+        4.77,
+        4.57,
+        4.41,
+        4.26,
+        4.15,
+        4.14,
+        4.18,
+        4.21,
+        4.27,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.33,
+        0.37,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.24,
+        0.23
+      ],
+      "angle_min": -3.1415927410125732,
+      "angle_step": 0.013993730768561363,
+      "range_min": 0.019999999552965164,
+      "range_max": 12.0,
+      "frame": "base_scan",
+      "stamp": 93.8
+    },
+    "lidar_cal": {
+      "raw_fresh": false,
+      "raw_nearest": null,
+      "body_nearest": [
+        151.1,
+        0.33
+      ],
+      "captures": {
+        "ahead": null,
+        "port": null
+      },
+      "result": null,
+      "applied": null,
+      "geometry": null,
+      "background_ready": false,
+      "samples": 0,
+      "capture_details": {}
+    },
+    "scans": [
+      {
+        "key": "banner||green region too small (2051 px, need 7348)",
+        "seq": 69,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2051 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2048 px, need 7348)",
+        "seq": 70,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2048 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 3
+      },
+      {
+        "key": "banner||green region too small (2014 px, need 7348)",
+        "seq": 71,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2014 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2044 px, need 7348)",
+        "seq": 72,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2044 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2010 px, need 7348)",
+        "seq": 73,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2010 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2001 px, need 7348)",
+        "seq": 74,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2001 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2008 px, need 7348)",
+        "seq": 75,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2008 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2006 px, need 7348)",
+        "seq": 76,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2006 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 3
+      },
+      {
+        "key": "banner||green region too small (2042 px, need 7348)",
+        "seq": 77,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2042 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (1970 px, need 7348)",
+        "seq": 78,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1970 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1997 px, need 7348)",
+        "seq": 79,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1997 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2004 px, need 7348)",
+        "seq": 80,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2004 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2002 px, need 7348)",
+        "seq": 81,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2002 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 3
+      },
+      {
+        "key": "banner||green region too small (1962 px, need 7348)",
+        "seq": 82,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1962 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 8
+      },
+      {
+        "key": "banner||green region too small (1960 px, need 7348)",
+        "seq": 83,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1960 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2003 px, need 7348)",
+        "seq": 84,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2003 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (1998 px, need 7348)",
+        "seq": 85,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1998 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1964 px, need 7348)",
+        "seq": 86,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1964 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 6
+      },
+      {
+        "key": "banner||green region too small (2000 px, need 7348)",
+        "seq": 87,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2000 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1965 px, need 7348)",
+        "seq": 88,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1965 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1966 px, need 7348)",
+        "seq": 89,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1966 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 3
+      },
+      {
+        "key": "banner||green region too small (1976 px, need 7348)",
+        "seq": 90,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1976 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1969 px, need 7348)",
+        "seq": 91,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1969 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 3
+      },
+      {
+        "key": "banner||green region too small (1934 px, need 7348)",
+        "seq": 92,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1934 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (1981 px, need 7348)",
+        "seq": 93,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1981 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1978 px, need 7348)",
+        "seq": 94,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1978 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1979 px, need 7348)",
+        "seq": 95,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1979 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1985 px, need 7348)",
+        "seq": 96,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1985 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1986 px, need 7348)",
+        "seq": 97,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1986 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (1984 px, need 7348)",
+        "seq": 98,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1984 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2028 px, need 7348)",
+        "seq": 99,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2028 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (1991 px, need 7348)",
+        "seq": 100,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1991 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (1999 px, need 7348)",
+        "seq": 101,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (1999 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2027 px, need 7348)",
+        "seq": 102,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2027 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2047 px, need 7348)",
+        "seq": 103,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2047 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2058 px, need 7348)",
+        "seq": 104,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2058 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2064 px, need 7348)",
+        "seq": 105,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2064 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2066 px, need 7348)",
+        "seq": 106,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2066 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2068 px, need 7348)",
+        "seq": 107,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2068 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2070 px, need 7348)",
+        "seq": 108,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2070 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2076 px, need 7348)",
+        "seq": 109,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2076 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2078 px, need 7348)",
+        "seq": 110,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2078 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2080 px, need 7348)",
+        "seq": 111,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2080 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2082 px, need 7348)",
+        "seq": 112,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2082 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2122 px, need 7348)",
+        "seq": 113,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2122 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2128 px, need 7348)",
+        "seq": 114,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2128 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2132 px, need 7348)",
+        "seq": 115,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2132 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2138 px, need 7348)",
+        "seq": 116,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2138 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2146 px, need 7348)",
+        "seq": 117,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2146 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2190 px, need 7348)",
+        "seq": 118,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2190 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2196 px, need 7348)",
+        "seq": 119,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2196 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2194 px, need 7348)",
+        "seq": 120,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2194 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2198 px, need 7348)",
+        "seq": 121,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2198 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2201 px, need 7348)",
+        "seq": 122,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2201 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2210 px, need 7348)",
+        "seq": 123,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2210 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2208 px, need 7348)",
+        "seq": 124,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2208 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2250 px, need 7348)",
+        "seq": 125,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2250 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2252 px, need 7348)",
+        "seq": 126,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2252 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2224 px, need 7348)",
+        "seq": 127,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2224 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2271 px, need 7348)",
+        "seq": 128,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2271 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2311 px, need 7348)",
+        "seq": 129,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2311 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2384 px, need 7348)",
+        "seq": 130,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2384 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2281 px, need 7348)",
+        "seq": 131,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2281 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2182 px, need 7348)",
+        "seq": 132,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2182 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2249 px, need 7348)",
+        "seq": 133,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2249 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2336 px, need 7348)",
+        "seq": 134,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2336 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2412 px, need 7348)",
+        "seq": 135,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2412 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2471 px, need 7348)",
+        "seq": 136,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2471 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2628 px, need 7348)",
+        "seq": 137,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2628 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2704 px, need 7348)",
+        "seq": 138,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2704 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2777 px, need 7348)",
+        "seq": 139,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2777 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2886 px, need 7348)",
+        "seq": 140,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2886 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2939 px, need 7348)",
+        "seq": 141,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2939 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3032 px, need 7348)",
+        "seq": 142,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3032 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3112 px, need 7348)",
+        "seq": 143,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3112 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3182 px, need 7348)",
+        "seq": 144,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3182 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3262 px, need 7348)",
+        "seq": 145,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3262 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3366 px, need 7348)",
+        "seq": 146,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3366 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3540 px, need 7348)",
+        "seq": 147,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3540 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3626 px, need 7348)",
+        "seq": 148,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3626 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3712 px, need 7348)",
+        "seq": 149,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3712 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3888 px, need 7348)",
+        "seq": 150,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3888 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (3996 px, need 7348)",
+        "seq": 151,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (3996 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4172 px, need 7348)",
+        "seq": 152,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4172 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4278 px, need 7348)",
+        "seq": 153,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4278 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4362 px, need 7348)",
+        "seq": 154,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4362 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4436 px, need 7348)",
+        "seq": 155,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4436 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4518 px, need 7348)",
+        "seq": 156,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4518 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4606 px, need 7348)",
+        "seq": 157,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4606 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4698 px, need 7348)",
+        "seq": 158,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4698 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4776 px, need 7348)",
+        "seq": 159,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4776 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4890 px, need 7348)",
+        "seq": 160,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4890 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (4972 px, need 7348)",
+        "seq": 161,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (4972 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5058 px, need 7348)",
+        "seq": 162,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5058 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5163 px, need 7348)",
+        "seq": 163,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5163 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5220 px, need 7348)",
+        "seq": 164,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5220 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5328 px, need 7348)",
+        "seq": 165,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5328 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5413 px, need 7348)",
+        "seq": 166,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5413 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5574 px, need 7348)",
+        "seq": 167,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5574 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5674 px, need 7348)",
+        "seq": 168,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5674 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5751 px, need 7348)",
+        "seq": 169,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5751 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5861 px, need 7348)",
+        "seq": 170,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5861 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (5926 px, need 7348)",
+        "seq": 171,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (5926 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6034 px, need 7348)",
+        "seq": 172,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6034 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6122 px, need 7348)",
+        "seq": 173,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6122 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6198 px, need 7348)",
+        "seq": 174,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6198 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6296 px, need 7348)",
+        "seq": 175,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6296 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6488 px, need 7348)",
+        "seq": 176,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6488 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6564 px, need 7348)",
+        "seq": 177,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6564 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6648 px, need 7348)",
+        "seq": 178,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6648 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6731 px, need 7348)",
+        "seq": 179,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6731 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6824 px, need 7348)",
+        "seq": 180,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6824 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (6910 px, need 7348)",
+        "seq": 181,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (6910 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (7003 px, need 7348)",
+        "seq": 182,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (7003 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (7106 px, need 7348)",
+        "seq": 183,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (7106 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (7162 px, need 7348)",
+        "seq": 184,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (7162 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (7254 px, need 7348)",
+        "seq": 185,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (7254 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (7336 px, need 7348)",
+        "seq": 186,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (7336 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||only 1 white component(s); lettering expected",
+        "seq": 187,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "only 1 white component(s); lettering expected",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 155
+      },
+      {
+        "key": "banner||only 0 white component(s); lettering expected",
+        "seq": 188,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "only 0 white component(s); lettering expected",
+        "via": "",
+        "read": false,
+        "stage": "FAILED",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 27
+      }
+    ],
+    "gimbal": {
+      "pitch_deg": 0.0
+    },
+    "arena_dimensions": {
+      "sent": {
+        "corridor": {
+          "length_m": 10.0,
+          "width_m": 3.5,
+          "wall_height_m": 3.6,
+          "nav_height_m": 3.0,
+          "spacing_m": 4.0,
+          "return_side": "right"
+        },
+        "hall": {
+          "length_m": 80.0,
+          "width_m": 45.0,
+          "ceiling_m": 30.0
+        },
+        "banner": {
+          "width_m": 3.7,
+          "height_m": 1.15,
+          "border_m": 0.07619999999999999,
+          "suspended_bottom_m": 2.805,
+          "placement": "suspended"
+        },
+        "qr": {
+          "target_m": 3.0,
+          "start_m": 2.2,
+          "border_m": 0.07619999999999999
+        },
+        "red_zone": {
+          "side_m": 1.524,
+          "border_m": 0.1524
+        },
+        "payload": {
+          "length_m": 0.1,
+          "width_m": 0.055,
+          "mass_kg": 0.1
+        },
+        "obstacle": {
+          "reach_frac": 0.5
+        }
+      },
+      "applied": {
+        "corridor": {
+          "length_m": 10.0,
+          "width_m": 3.5,
+          "wall_height_m": 3.6,
+          "nav_height_m": 3.0,
+          "spacing_m": 4.0,
+          "return_side": "right"
+        },
+        "hall": {
+          "length_m": 80.0,
+          "width_m": 45.0,
+          "ceiling_m": 30.0
+        },
+        "banner": {
+          "width_m": 3.7,
+          "height_m": 1.15,
+          "border_m": 0.07619999999999999,
+          "suspended_bottom_m": 2.805,
+          "placement": "suspended"
+        },
+        "qr": {
+          "target_m": 3.0,
+          "start_m": 2.2,
+          "border_m": 0.07619999999999999
+        },
+        "red_zone": {
+          "side_m": 1.524,
+          "border_m": 0.1524
+        },
+        "payload": {
+          "length_m": 0.1,
+          "width_m": 0.055,
+          "mass_kg": 0.1
+        },
+        "obstacle": {
+          "reach_frac": 0.5
+        }
+      },
+      "params": {
+        "corridor_alt": 3.0,
+        "corridor_wall_m": 3.6,
+        "gate_advance_m": 10.0,
+        "return_lane_offset_m": -4.0,
+        "banner_w_m": 3.7,
+        "banner_h_m": 1.15,
+        "banner_bottom_m": 2.805,
+        "target_marker_m": 3.0,
+        "start_marker_m": 2.2,
+        "payload_size_m": 0.1,
+        "banner_placement": "suspended",
+        "takeoff_alt": 5.0,
+        "search_alt": 10.0,
+        "drop_alt": 5.0
+      },
+      "ok": true,
+      "reason": ""
+    },
+    "dimension_presets": {
+      "builtin": {
+        "Simulator arena": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.6,
+            "nav_height_m": 3.0,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.7,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.805,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 2.2,
+            "start_m": 2.2,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "SAE Aerothon 2026 (clarified)": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.8980000000000001,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        }
+      },
+      "saved": {
+        "Aerothon 2026 sim h030L5_both": {
+          "corridor": {
+            "length_m": 5.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h030_both": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h030_ground": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "ground"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h030_suspended": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115L5_both": {
+          "corridor": {
+            "length_m": 5.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115_both": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115_ground": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "ground"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115_suspended": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        }
+      }
+    },
+    "dimension_fields": [
+      {
+        "group": "corridor",
+        "key": "length_m",
+        "label": "Corridor length",
+        "default": 10.0,
+        "min": 2.0,
+        "max": 30.0,
+        "used_by": "clear distance needed to cross the gate"
+      },
+      {
+        "group": "corridor",
+        "key": "width_m",
+        "label": "Corridor width",
+        "default": 3.5,
+        "min": 1.0,
+        "max": 10.0,
+        "used_by": null
+      },
+      {
+        "group": "corridor",
+        "key": "wall_height_m",
+        "label": "Corridor wall height",
+        "default": 3.6,
+        "min": 1.0,
+        "max": 8.0,
+        "used_by": "upper bound on the navigation height"
+      },
+      {
+        "group": "corridor",
+        "key": "nav_height_m",
+        "label": "Navigation height",
+        "default": 3.0,
+        "min": 0.8,
+        "max": 7.0,
+        "used_by": "corridor flying altitude"
+      },
+      {
+        "group": "corridor",
+        "key": "spacing_m",
+        "label": "Corridor spacing, centre to centre",
+        "default": 4.0,
+        "min": 1.0,
+        "max": 30.0,
+        "used_by": "where the return lane is found"
+      },
+      {
+        "group": "hall",
+        "key": "length_m",
+        "label": "Hall length",
+        "default": 80.0,
+        "min": 10.0,
+        "max": 500.0,
+        "used_by": null
+      },
+      {
+        "group": "hall",
+        "key": "width_m",
+        "label": "Hall width",
+        "default": 45.0,
+        "min": 10.0,
+        "max": 500.0,
+        "used_by": null
+      },
+      {
+        "group": "hall",
+        "key": "ceiling_m",
+        "label": "Hall ceiling / max altitude",
+        "default": 30.0,
+        "min": 3.0,
+        "max": 120.0,
+        "used_by": "caps take-off, search and drop altitudes"
+      },
+      {
+        "group": "banner",
+        "key": "width_m",
+        "label": "Banner width",
+        "default": 3.7,
+        "min": 0.3,
+        "max": 10.0,
+        "used_by": "range to the banner"
+      },
+      {
+        "group": "banner",
+        "key": "height_m",
+        "label": "Banner height",
+        "default": 1.15,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "range to the banner"
+      },
+      {
+        "group": "banner",
+        "key": "border_m",
+        "label": "Banner border",
+        "default": 0.07619999999999999,
+        "min": 0.0,
+        "max": 0.5,
+        "used_by": null
+      },
+      {
+        "group": "banner",
+        "key": "suspended_bottom_m",
+        "label": "Hung banner lower edge",
+        "default": 2.805,
+        "min": 0.5,
+        "max": 8.0,
+        "used_by": "the height the square-up scans the hung banner at"
+      },
+      {
+        "group": "qr",
+        "key": "target_m",
+        "label": "Target QR side",
+        "default": 2.2,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "search altitude and landing"
+      },
+      {
+        "group": "qr",
+        "key": "start_m",
+        "label": "Start QR side",
+        "default": 2.2,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "precision landing on the start QR"
+      },
+      {
+        "group": "qr",
+        "key": "border_m",
+        "label": "QR white border",
+        "default": 0.07619999999999999,
+        "min": 0.0,
+        "max": 0.5,
+        "used_by": null
+      },
+      {
+        "group": "red_zone",
+        "key": "side_m",
+        "label": "Red zone side",
+        "default": 1.524,
+        "min": 0.3,
+        "max": 20.0,
+        "used_by": null
+      },
+      {
+        "group": "red_zone",
+        "key": "border_m",
+        "label": "Red zone border",
+        "default": 0.1524,
+        "min": 0.0,
+        "max": 2.0,
+        "used_by": null
+      },
+      {
+        "group": "payload",
+        "key": "length_m",
+        "label": "Payload length",
+        "default": 0.1,
+        "min": 0.02,
+        "max": 0.5,
+        "used_by": "drop confirmation blob size"
+      },
+      {
+        "group": "payload",
+        "key": "width_m",
+        "label": "Payload width",
+        "default": 0.055,
+        "min": 0.02,
+        "max": 0.5,
+        "used_by": "drop confirmation blob size"
+      },
+      {
+        "group": "payload",
+        "key": "mass_kg",
+        "label": "Payload mass (kg)",
+        "default": 0.1,
+        "min": 0.01,
+        "max": 2.0,
+        "used_by": null
+      },
+      {
+        "group": "obstacle",
+        "key": "reach_frac",
+        "label": "Obstacle reach, fraction of corridor width",
+        "default": 0.5,
+        "min": 0.1,
+        "max": 0.9,
+        "used_by": null
+      }
+    ],
+    "sample_age_s": {
+      "gps": 0.019,
+      "magnetic": 0.918,
+      "lidar": 0.043,
+      "readiness": 0.877,
+      "winch": 0.123,
+      "state": 1.402,
+      "sats": 0.916,
+      "vibration": 0.912,
+      "power": 0.52,
+      "fence": 131.797,
+      "pose": 0.011,
+      "velocity": 0.011,
+      "slam_pose": 2.249,
+      "mission": 12.81,
+      "devices": 0.0
+    },
+    "devices": {
+      "identity": {
+        "ok": true,
+        "value": 1,
+        "session": "08df12cf14944f22a146a76aad594a2a",
+        "streams_reopened": {}
+      },
+      "camera": {
+        "ok": true,
+        "hz": 8.68,
+        "receipt_age_s": 0.058994472000449605,
+        "capture_age_s": 0.05299999999999727,
+        "vehicle_hz": 18.33333333333336,
+        "required_vehicle_hz": 10,
+        "reason": ""
+      },
+      "lidar": {
+        "ok": true,
+        "hz": 4.59,
+        "receipt_age_s": 0.020383819000016956,
+        "capture_age_s": 0.05299999999999727,
+        "vehicle_hz": 10.000000000000009,
+        "required_vehicle_hz": 8,
+        "reason": ""
+      },
+      "clock": {
+        "ok": true,
+        "reason": "vehicle clock must be advancing"
+      },
+      "camera_calibration": {
+        "ok": true,
+        "value": {
+          "width": 640,
+          "height": 360,
+          "hfov": 0.8519190161604344
+        }
+      },
+      "camera_actuator": {
+        "ok": true,
+        "reason": "SITL output and measured model joint required"
+      },
+      "winch_actuator": {
+        "ok": true,
+        "reason": "SITL output and measured model joint required"
+      }
+    },
+    "runtime_health": {
+      "controller_pid": 13809,
+      "state": "ready",
+      "fresh": true
+    },
+    "winch": {
+      "state": "FAULT",
+      "payout_m": 0.0,
+      "at_limit": false,
+      "ground": null,
+      "payout_estimate_m": 0.0,
+      "measured_payout_m": 5.159422869990523e-06,
+      "measurement_age_s": 0.02600000000001046,
+      "payout_basis": "integrated commanded motor rate; no encoder",
+      "released": null,
+      "release_requested": false,
+      "hook": "gravity",
+      "hook_open": null,
+      "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+      "release_ok": false,
+      "blockers": [
+        "payload not down (payout 0.00 m, alt -0.03)",
+        "altitude -0.03 m outside [1.0, 8.0]",
+        "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+      ]
+    },
+    "detector_rates": {
+      "qr": {
+        "hz": 18.148148148148127,
+        "capture_stamp": 93.8,
+        "processed_stamp": 93.81400000000001,
+        "received": 1792336751.8274744
+      },
+      "red": {
+        "hz": 18.148148148148127,
+        "capture_stamp": 93.8,
+        "processed_stamp": 93.81400000000001,
+        "received": 1792336751.830072
+      },
+      "banner": {
+        "hz": 18.148148148148127,
+        "capture_stamp": 93.8,
+        "processed_stamp": 93.81400000000001,
+        "received": 1792336751.8358448
+      }
+    },
+    "slam_pose": {
+      "x": 0.001,
+      "y": 0.068,
+      "yaw": 0.2286,
+      "frame": "map"
+    },
+    "geofence_vertices": [
+      [
+        -35.36345051251535,
+        149.16513368355777
+      ],
+      [
+        -35.36345051251535,
+        149.16587723153788
+      ],
+      [
+        -35.36307322009602,
+        149.16587723153788
+      ],
+      [
+        -35.36307322009602,
+        149.16513368355777
+      ]
+    ],
+    "banner_colours": {
+      "green": "#039E3D",
+      "orange": "#FF8000",
+      "red": "#F20A0A"
+    },
+    "execution": {
+      "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+      "task": "mechanism",
+      "params": {
+        "action": "release"
+      },
+      "state": "Failed",
+      "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+      "control_owner": "Runtime",
+      "stage": "Mechanism"
+    }
+  },
+  "receipts": [
+    {
+      "kind": "receipt",
+      "data": {
+        "command_id": "local_12269b52e4234da1930846be97a055f5",
+        "state": "Failed",
+        "reason": "required devices or measured actuator feedback are unavailable: winch_actuator (SITL output and measured model joint required)"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "kind": "execution",
+      "data": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    }
+  ],
+  "history": [
+    {
+      "wall": 1792336746.9109902,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:130s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 10.0,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.29,
+          "receipt_age_s": 0.05733359199984989,
+          "capture_age_s": 0.04999999999999716,
+          "vehicle_hz": 17.678571428571402,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.53,
+          "receipt_age_s": 0.14832009700057824,
+          "capture_age_s": 0.09999999999999432,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.083023448691093e-13,
+        "measurement_age_s": 0.021000000000000796,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336747.4125574,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:131s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 10.0,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.33,
+          "receipt_age_s": 0.037167305999901146,
+          "capture_age_s": 0.03999999999999204,
+          "vehicle_hz": 17.678571428571402,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.53,
+          "receipt_age_s": 0.12105771300048218,
+          "capture_age_s": 0.09000000000000341,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.158565184456291e-06,
+        "measurement_age_s": 0.02400000000000091,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336747.913336,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:131s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 10.0,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.36,
+          "receipt_age_s": 0.05929554699923756,
+          "capture_age_s": 0.05700000000000216,
+          "vehicle_hz": 17.837837837837846,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.51,
+          "receipt_age_s": 0.026766098000734928,
+          "capture_age_s": 0.05700000000000216,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0830187307175766e-13,
+        "measurement_age_s": 0.012000000000000455,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336748.4137824,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:132s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.52,
+          "receipt_age_s": 0.07682342299995071,
+          "capture_age_s": 0.06200000000001182,
+          "vehicle_hz": 18.165137614678937,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.5,
+          "receipt_age_s": 0.04016106699964439,
+          "capture_age_s": 0.06200000000001182,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.1587681204911944e-06,
+        "measurement_age_s": 0.01099999999999568,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336748.9150634,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:132s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.49,
+          "receipt_age_s": 0.015778076000060537,
+          "capture_age_s": 0.027000000000001023,
+          "vehicle_hz": 18.16513761467889,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.5,
+          "receipt_age_s": 0.18103562099986448,
+          "capture_age_s": 0.12700000000000955,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.158842722272084e-06,
+        "measurement_age_s": 0.0,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336749.4158874,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:133s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.5,
+          "receipt_age_s": 0.03712506700048834,
+          "capture_age_s": 0.03900000000000148,
+          "vehicle_hz": 18.0,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.54,
+          "receipt_age_s": 0.009250656999938656,
+          "capture_age_s": 0.03900000000000148,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0830032215443124e-13,
+        "measurement_age_s": 0.015000000000000568,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336749.9165137,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:133s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.55,
+          "receipt_age_s": 0.127261659999931,
+          "capture_age_s": 0.1039999999999992,
+          "vehicle_hz": 18.0,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.59,
+          "receipt_age_s": 0.022466503999567067,
+          "capture_age_s": 0.053999999999987836,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.083000815970742e-13,
+        "measurement_age_s": 0.012000000000000455,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336750.4174776,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:134s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.6,
+          "receipt_age_s": 0.062463451999974495,
+          "capture_age_s": 0.05700000000000216,
+          "vehicle_hz": 18.0,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.64,
+          "receipt_age_s": 0.041024470999218465,
+          "capture_age_s": 0.05700000000000216,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0829985289817846e-13,
+        "measurement_age_s": 0.03700000000000614,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336750.9184203,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:134s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.68,
+          "receipt_age_s": 0.0065494110003783135,
+          "capture_age_s": 0.02599999999999625,
+          "vehicle_hz": 18.16513761467889,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.64,
+          "receipt_age_s": 0.22230070899968268,
+          "capture_age_s": 0.12600000000000477,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0829849764546285e-13,
+        "measurement_age_s": 0.02200000000000557,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336751.4216688,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:135s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.69,
+          "receipt_age_s": 0.112162532000184,
+          "capture_age_s": 0.058000000000006935,
+          "vehicle_hz": 18.16513761467889,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.63,
+          "receipt_age_s": 0.17182523499923263,
+          "capture_age_s": 0.10800000000000409,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.159300164559562e-06,
+        "measurement_age_s": 0.02600000000001046,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336751.920875,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:135s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": false,
+            "value": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+            "reason": "winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [
+          "Winch health: winch fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.68,
+          "receipt_age_s": 0.058994472000449605,
+          "capture_age_s": 0.05299999999999727,
+          "vehicle_hz": 18.33333333333336,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.59,
+          "receipt_age_s": 0.020383819000016956,
+          "capture_age_s": 0.05299999999999727,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.159422869990523e-06,
+        "measurement_age_s": 0.02600000000001046,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "state": "CLOSED_REJECTED_TRAVERSAL_PROTOTYPES",
+  "results": [
+    {
+      "label": "receipt_tracking_dirty0",
+      "source": "logs/delayed_control_review_smith_dirty0_20261007.json",
+      "grade_pass": false,
+      "failure": "AssertionError: airframe touched something at (7.32, 1.20) t=9.8s; detail {'state': 'BLOCKED', 'front_m': 1.34, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 1.39, 'side_right_m': 0.4, 'open_depth_m': 1.76, 'open_width_m': 1.79, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.0, 'cmd_vy_left': 0.0, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 0, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [0.011861131479557252, 0.40538791397828416], 'disturbance_rate_world_mps2': [0.10448406278583162, -0.13224367559125821], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [-0.021634462687715385, 0.39182926147362557], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 3.552713678800501e-15, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': -0.41, 'planner_state': 'aircraft lacks required surface clearance', 'required_clearance_m': 0.7, 'observed_clearance_m': 0.37663301274077055, 'scan_age_s': 0.05, 'pose_age_s': 0.0, 'planner_path_body_m': [], 'axis_progress_m': 0.977, 'note': 'no navigable gap', 'blocked_ticks': 16, 'diagnostic_policy': 'causal direct residual and receipt position control', 'diagnostic_mode': 'bootstrap measured-position hold', 'diagnostic_receipt_position_world_m': [7.32543618473274, 1.331886931388492], 'diagnostic_target_world_m': [8.3, 0.0], 'diagnostic_observer': {'residual_world_mps': [0.011861131479557252, 0.40538791397828416], 'causal_rate_world_mps2': [0.10448406278583162, -0.13224367559125821]}, 'diagnostic_assumptions': 'point forecasts only; no qualified future uncertainty bound', 'braking_clearance_available': False, 'recovery_reason': 'travel limited by observed braking clearance'}; track tail [(9.5, 7.33, 1.1), (9.55, 7.33, 1.12), (9.6, 7.32, 1.14), (9.65, 7.32, 1.16), (9.7, 7.32, 1.18), (9.75, 7.32, 1.2)]",
+      "actual_minimum_clearance_m": 0.3985044791818342,
+      "preintegration_minimum_clearance_m": 0.4172715871420969,
+      "records": 195,
+      "final_observation_s": 9.700000000000003,
+      "first_observed_clearance_violation_s": 9.049999999999994,
+      "first_uncertified_raw_zero_s": 2.4499999999999993,
+      "uncertified_raw_zero_observations": 30,
+      "first_recovery_exhaustion_s": null,
+      "finite_early_hold_component_clear": false,
+      "traversal_qualified": false,
+      "automatic_rejection_policy_qualified": false,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/delayed_control_review_smith_probe_20261007.py": "bd31efe11a2cd2e9c0b851fb9c7a40149bd55991a7d78d66972d43c698dd0ee8"
+      },
+      "options": {
+        "kind": "dirty",
+        "seed": 0,
+        "out": "logs/delayed_control_review_smith_dirty0_20261007.json",
+        "wind": "default",
+        "speed": 0.25,
+        "bootstrap": 3.0,
+        "rate_filter": 0.3,
+        "predict_position": true,
+        "fixed_heading": true
+      }
+    },
+    {
+      "label": "early_hold_late1",
+      "source": "logs/delayed_control_review_early_hold_late1_20261007.json",
+      "grade_pass": false,
+      "failure": "AssertionError: did not get through in 150 s; stuck near (8.35, -0.11), yaw 3.142; detail {'state': 'CRUISE', 'front_m': 1.17, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 1.56, 'side_right_m': 1.64, 'open_depth_m': 1.17, 'open_width_m': 3.2, 'gap_bearing_deg': -49.9, 'cmd_vx': 0.09, 'cmd_vy_left': -0.69, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 0, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [0.03169360273095169, -0.15188014220510146], 'disturbance_rate_world_mps2': [0.0357651569459954, -0.4574585308248771], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [-0.005535526714496239, -0.2274751170856507], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.15, 'planner_state': 'freshly revalidated lidar path', 'required_clearance_m': 0.7, 'observed_clearance_m': 1.1639606541515501, 'scan_age_s': 0.2, 'pose_age_s': 0.0, 'planner_path_body_m': [(0, 0), (0.5997232236642757, -0.7113737558542825), (1.699723223664276, -0.7613737558542825), (2.8997232236642763, 0.28862624414571747)], 'axis_progress_m': -0.051, 'gap_width_deg': 0.0, 'gap_depth_m': 1.73, 'reach_m': 1.73, 'diagnostic_policy': 'causal direct residual and receipt position control', 'diagnostic_mode': 'bootstrap measured-position hold', 'diagnostic_receipt_position_world_m': [8.33985153033229, -0.12226970039830168], 'diagnostic_target_world_m': [8.300153244878041, -0.000368587770316397], 'diagnostic_observer': {'residual_world_mps': [0.03169360273095169, -0.15188014220510146], 'causal_rate_world_mps2': [0.0357651569459954, -0.4574585308248771]}, 'diagnostic_assumptions': 'point forecasts only; no qualified future uncertainty bound'}; track tail [(149.8, 8.35, -0.04), (149.85, 8.35, -0.06), (149.9, 8.35, -0.08), (149.95, 8.35, -0.09), (150.0, 8.35, -0.1), (150.05, 8.35, -0.11)]",
+      "actual_minimum_clearance_m": 0.9637795794913613,
+      "preintegration_minimum_clearance_m": 0.9637795794913613,
+      "records": 3001,
+      "final_observation_s": 149.99999999999986,
+      "first_observed_clearance_violation_s": null,
+      "first_uncertified_raw_zero_s": 9.650000000000002,
+      "uncertified_raw_zero_observations": 134,
+      "first_recovery_exhaustion_s": null,
+      "finite_early_hold_component_clear": true,
+      "traversal_qualified": false,
+      "automatic_rejection_policy_qualified": false,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/delayed_control_review_smith_probe_20261007.py": "bd31efe11a2cd2e9c0b851fb9c7a40149bd55991a7d78d66972d43c698dd0ee8"
+      },
+      "options": {
+        "kind": "late",
+        "seed": 1,
+        "out": "logs/delayed_control_review_early_hold_late1_20261007.json",
+        "wind": "default",
+        "speed": 0.25,
+        "bootstrap": 151.0,
+        "rate_filter": 0.3,
+        "predict_position": true,
+        "fixed_heading": true
+      }
+    },
+    {
+      "label": "feedback_reserved_dirty0",
+      "source": "logs/delayed_control_review_feedback_reserved_dirty0_20261007.json",
+      "grade_pass": false,
+      "failure": "AssertionError: did not get through in 150 s; stuck near (8.40, -0.23), yaw 3.142; detail {'state': 'STUCK', 'front_m': 1.2, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 1.1, 'side_right_m': 1.86, 'open_depth_m': 0.61, 'open_width_m': 2.95, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.32, 'cmd_vy_left': -0.66, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 3, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [0.12575688116896033, -0.22299494288438348], 'disturbance_rate_world_mps2': [0.021983432982743537, -0.1820238403336248], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [0.07875421334709784, -0.11661175093803683], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.22, 'planner_state': 'aircraft lacks required surface clearance', 'required_clearance_m': 0.7799999999999999, 'observed_clearance_m': 1.198361873626709, 'scan_age_s': 0.0, 'pose_age_s': 0.0, 'planner_path_body_m': [], 'axis_progress_m': -0.102, 'recovery_reason': 'recovery exhausted', 'diagnostic_policy': 'causal direct residual and receipt position control', 'diagnostic_mode': 'bootstrap measured-position hold', 'diagnostic_receipt_position_world_m': [8.400726357686045, -0.22905635209402572], 'diagnostic_target_world_m': [8.3, 0.0], 'diagnostic_observer': {'residual_world_mps': [0.12575688116896033, -0.22299494288438348], 'causal_rate_world_mps2': [0.021983432982743537, -0.1820238403336248]}, 'diagnostic_assumptions': 'point forecasts only; no qualified future uncertainty bound'}; track tail [(149.8, 8.38, -0.19), (149.85, 8.39, -0.2), (149.9, 8.39, -0.21), (149.95, 8.4, -0.22), (150.0, 8.4, -0.22), (150.05, 8.4, -0.23)]",
+      "actual_minimum_clearance_m": 0.6195942860875299,
+      "preintegration_minimum_clearance_m": 0.6195942860875299,
+      "records": 3001,
+      "final_observation_s": 149.99999999999986,
+      "first_observed_clearance_violation_s": 8.84999999999999,
+      "first_uncertified_raw_zero_s": 1.3500000000000005,
+      "uncertified_raw_zero_observations": 708,
+      "first_recovery_exhaustion_s": 24.90000000000022,
+      "finite_early_hold_component_clear": false,
+      "traversal_qualified": false,
+      "automatic_rejection_policy_qualified": false,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/delayed_control_review_smith_feedback_reserved_probe_20261007.py": "c603dcd1bfa081e52019d7bf18e1bf4d096203d0c5ff460cecf8285c95a79ee9"
+      },
+      "options": {
+        "kind": "dirty",
+        "seed": 0,
+        "out": "logs/delayed_control_review_feedback_reserved_dirty0_20261007.json",
+        "wind": "default",
+        "speed": 0.25,
+        "bootstrap": 3.0,
+        "rate_filter": 0.3,
+        "predict_position": true,
+        "fixed_heading": true,
+        "feedforward": 0.4,
+        "feedback": 0.8,
+        "reserve": 0.08
+      }
+    }
+  ],
+  "production_source_unchanged": true,
+  "original_motion_check_retained": true,
+  "original_minimum_clearance_m": 0.7,
+  "sampling_reserve_m": 0.025,
+  "native_fcu_hold_qualified": false,
+  "default_gust_traversals_passed": 0,
+  "early_hold_component_is_finite_trial_only": true,
+  "uncertainty": "Historical derivative point forecasts cannot bound future Gaussian disturbances.",
+  "archive": ".scratch/simulation-reliability/delayed_control_review_sources_20261007.zip",
+  "archive_sha256": "34008df10f7cf4f6b7bf9bf825926c589d44c85d5997536c546ae779aef898ca",
+  "source_files": 15,
+  "manifest": {
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": {
+      "sha256": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+      "bytes": 59639
+    },
+    "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": {
+      "sha256": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+      "bytes": 8490
+    },
+    "src/aerothon_avoidance/avoidance/avoidance/scan_geometry.py": {
+      "sha256": "c9faabc6ade09c5a877cbd19189aea28553ff943dfa6ce58d4cf789010675eb7",
+      "bytes": 1865
+    },
+    "src/aerothon_sim/sim_gazebo/sim_gazebo/corruptions.py": {
+      "sha256": "3857a80869f086261af49f09a6300da0297371e2db15230f49ff2dd25a20e238",
+      "bytes": 8363
+    },
+    "sim/test_slalom_traverse.py": {
+      "sha256": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+      "bytes": 14245
+    },
+    "sim/test_corridor_stress.py": {
+      "sha256": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+      "bytes": 7664
+    },
+    ".scratch/simulation-reliability/probe_gust_margin.py": {
+      "sha256": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9",
+      "bytes": 4938
+    },
+    ".scratch/simulation-reliability/delayed_control_review_analyse_smith_20261007.py": {
+      "sha256": "8645157ab3667542a1338d653ba139861ab1f01374add0ce5f5cb8d44e143eb3",
+      "bytes": 788
+    },
+    ".scratch/simulation-reliability/delayed_control_review_close_20261007.py": {
+      "sha256": "96811e057af9dcd15f647ccc9799470e44aa8199c034db2467b1c54ed1dc6413",
+      "bytes": 4127
+    },
+    ".scratch/simulation-reliability/delayed_control_review_smith_feedback_probe_20261007.py": {
+      "sha256": "9b76413ef45ae6b828f1e544bf89ac5ebf0562d00b11aee556724f659d3d5ae2",
+      "bytes": 8290
+    },
+    ".scratch/simulation-reliability/delayed_control_review_smith_feedback_reserved_probe_20261007.py": {
+      "sha256": "c603dcd1bfa081e52019d7bf18e1bf4d096203d0c5ff460cecf8285c95a79ee9",
+      "bytes": 8409
+    },
+    ".scratch/simulation-reliability/delayed_control_review_smith_probe_20261007.py": {
+      "sha256": "bd31efe11a2cd2e9c0b851fb9c7a40149bd55991a7d78d66972d43c698dd0ee8",
+      "bytes": 8043
+    },
+    ".scratch/simulation-reliability/delayed_control_review_run_smith_20261007.sh": {
+      "sha256": "bb2881a2b2908d833802a363241d5650dea1da27913ea078e35a41969f0b18c2",
+      "bytes": 358
+    },
+    ".scratch/simulation-reliability/delayed_control_review_run_smith_feedback_20261007.sh": {
+      "sha256": "0c8367ca78c6fcde33817453f0807560f0915458384ae07a33d88e678b69cae7",
+      "bytes": 367
+    },
+    ".scratch/simulation-reliability/delayed_control_review_run_smith_feedback_reserved_20261007.sh": {
+      "sha256": "e2862088acd4fe2f7fb47ddee0aa03bc734803ba1f0d980db69fd0cf80571526",
+      "bytes": 376
+    }
+  }
+}

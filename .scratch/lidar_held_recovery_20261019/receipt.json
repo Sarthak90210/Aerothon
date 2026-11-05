@@ -1,0 +1,50 @@
+{
+  "problem": "LiDAR mapping odometry initialised in a POSHOLD hover then stayed Held (insufficient overlap) for the rest of the flight.",
+  "scope": "Mapping-only scan odometry (lidar_odometry.py). No flight-decision, avoidance, launch or parameter change.",
+  "status": "fixed_locally; not_deployed; not_flown",
+  "root_causes": [
+    "Fixed 40 mm RMSE gate sits at the RPLIDAR C1 noise floor (adjacent-pair median 37 mm, 38% > 40 mm); 20 mm recovery gate unreachable.",
+    "Aircraft drifted ~1.4 m (FCU local position, up to 0.86 m/s, pitch +3..-6 deg); held mapper kept a stale seed against a keyframe it had left and recovery required <=0.15 m from the last pose.",
+    "ICP limit-cycled at sub-mm steps on noisy scans, failing the 0.2 mm convergence test."
+  ],
+  "changes": [
+    "noise-scaled tracking/recovery RMSE gates",
+    "1 mm / 0.0005 rad convergence, 40 iterations",
+    "fallback registration to the previous accepted scan when the keyframe fails",
+    "held dead reckoning via anchor/previous-scan registration seeding keyframe re-registration",
+    "chain re-acquisition with <=1 constant-velocity scan under the 2 m/s / 90 deg/s average bound"
+  ],
+  "evidence": {
+    "source_capture": ".scratch/pi_deploy_20261019/held_observation.jsonl",
+    "full_replay": {
+      "new_tracked": 332,
+      "old_tracked": 46,
+      "scans": 339,
+      "new_longest_hold_scans": 6
+    },
+    "robustness": "30 replays (5 mm jitter x 6 seeds incl. none, 5 start points): new 0 ended held, longest hold 8, >=97% tracked; old 30/30 ended held",
+    "error_vs_fcu_local_position_m": {
+      "rms": 0.43,
+      "max": 0.72,
+      "note": "FCU is 2 Hz interpolated EKF output, not ground truth; attitude-induced 2D bias remains"
+    },
+    "cost_ms_per_scan_laptop": {
+      "median": 3.2,
+      "p95": 6.8,
+      "max": 20.7
+    },
+    "tests": "WSL Jazzy: sim/test_lidar_odometry.py 11 passed; against original module 4 new tests fail (noise floor, real drift fixture, two new-path safety tests)",
+    "reproduce": "python .scratch/lidar_held_recovery_20261019/replay.py ; python .scratch/lidar_held_recovery_20261019/robust.py (scripts read the capture and the working-tree module)"
+  },
+  "hashes": {
+    "src/aerothon_mission/mission_bringup/mission_bringup/lidar_odometry.py": "24b3b234a567905571fa746dfce0e741cb37152b093370cc9a5bfa972a5c72a9",
+    "sim/test_lidar_odometry.py": "9a6ce828d35db20ce721f9b51b74fffb0079cafcf357fd6a67c6c815ef4ae708",
+    "sim/fixtures/lidar_held_poshold_drift_20261019.json": "f581830042302c2089feee568642d6b5ea76c53e5d3c0fd76bc676dc491c6453",
+    ".scratch/lidar_held_recovery_20261019/old_lidar_odometry.py": "929e421193a3ea02bb7353cfb3abb987707ad53d10c34df980e9333d7b16b2b1"
+  },
+  "blockers": [
+    "Pi unreachable on 19 Oct; bundle not rebuilt or deployed",
+    "No live flight confirmation of re-acquisition"
+  ],
+  "completion": "Deploy to Pi, hover/drift flight with /slam/status observer; expect Tracking to resume within ~1 s after drift."
+}

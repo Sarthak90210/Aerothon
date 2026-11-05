@@ -1,0 +1,79 @@
+Hit:1 http://deb.debian.org/debian trixie InRelease
+Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+Get:4 http://archive.raspberrypi.com/debian trixie InRelease [54.9 kB]
+Get:5 http://deb.debian.org/debian-security trixie-security/main armhf Packages [247 kB]
+Get:6 http://deb.debian.org/debian-security trixie-security/main arm64 Packages [267 kB]
+Get:7 http://deb.debian.org/debian-security trixie-security/main Translation-en [164 kB]
+Get:8 http://archive.raspberrypi.com/debian trixie/main armhf Packages [481 kB]
+Get:9 http://archive.raspberrypi.com/debian trixie/main arm64 Packages [492 kB]
+Fetched 1,796 kB in 4s (498 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+python3-serial is already the newest version (3.5-2).
+python3-serial set to manually installed.
+The following additional packages will be installed:
+  containerd iptables libip4tc2 libip6tc2 runc tini
+Suggested packages:
+  containernetworking-plugins docker-doc aufs-tools btrfs-progs cgroupfs-mount
+  debootstrap rinse rootlesskit xfsprogs zfs-fuse | zfsutils-linux firewalld
+Recommended packages:
+  docker-cli needrestart criu
+The following NEW packages will be installed:
+  containerd docker.io iptables libip4tc2 libip6tc2 runc tini
+0 upgraded, 7 newly installed, 0 to remove and 54 not upgraded.
+Need to get 38.1 MB of archives.
+After this operation, 176 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian trixie/main arm64 runc arm64 1.1.15+ds1-2+b4 [2,764 kB]
+Get:2 http://deb.debian.org/debian trixie/main arm64 containerd arm64 1.7.24~ds1-6+deb13u1 [19.7 MB]
+Get:3 http://deb.debian.org/debian trixie/main arm64 libip4tc2 arm64 1.8.11-2 [19.6 kB]
+Get:4 http://deb.debian.org/debian trixie/main arm64 libip6tc2 arm64 1.8.11-2 [19.8 kB]
+Get:5 http://deb.debian.org/debian trixie/main arm64 iptables arm64 1.8.11-2 [354 kB]
+Get:6 http://deb.debian.org/debian trixie/main arm64 tini arm64 0.19.0-3+b8 [234 kB]
+Get:7 http://deb.debian.org/debian trixie/main arm64 docker.io arm64 26.1.5+dfsg1-9+deb13u1 [15.1 MB]
+Fetched 38.1 MB in 6s (6,294 kB/s)
+Selecting previously unselected package runc.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 132108 files and directories currently installed.)
+Preparing to unpack .../0-runc_1.1.15+ds1-2+b4_arm64.deb ...
+Unpacking runc (1.1.15+ds1-2+b4) ...
+Selecting previously unselected package containerd.
+Preparing to unpack .../1-containerd_1.7.24~ds1-6+deb13u1_arm64.deb ...
+Unpacking containerd (1.7.24~ds1-6+deb13u1) ...
+Selecting previously unselected package libip4tc2:arm64.
+Preparing to unpack .../2-libip4tc2_1.8.11-2_arm64.deb ...
+Unpacking libip4tc2:arm64 (1.8.11-2) ...
+Selecting previously unselected package libip6tc2:arm64.
+Preparing to unpack .../3-libip6tc2_1.8.11-2_arm64.deb ...
+Unpacking libip6tc2:arm64 (1.8.11-2) ...
+Selecting previously unselected package iptables.
+Preparing to unpack .../4-iptables_1.8.11-2_arm64.deb ...
+Unpacking iptables (1.8.11-2) ...
+Selecting previously unselected package tini.
+Preparing to unpack .../5-tini_0.19.0-3+b8_arm64.deb ...
+Unpacking tini (0.19.0-3+b8) ...
+Selecting previously unselected package docker.io.
+Preparing to unpack .../6-docker.io_26.1.5+dfsg1-9+deb13u1_arm64.deb ...
+Unpacking docker.io (26.1.5+dfsg1-9+deb13u1) ...
+Setting up libip4tc2:arm64 (1.8.11-2) ...
+Setting up libip6tc2:arm64 (1.8.11-2) ...
+Setting up runc (1.1.15+ds1-2+b4) ...
+Setting up tini (0.19.0-3+b8) ...
+Setting up containerd (1.7.24~ds1-6+deb13u1) ...
+Created symlink '/etc/systemd/system/multi-user.target.wants/containerd.service' → '/usr/lib/systemd/system/containerd.service'.
+Setting up iptables (1.8.11-2) ...
+update-alternatives: using /usr/sbin/iptables-legacy to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-legacy to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/iptables-nft to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-nft to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/arptables-nft to provide /usr/sbin/arptables (arptables) in auto mode
+update-alternatives: using /usr/sbin/ebtables-nft to provide /usr/sbin/ebtables (ebtables) in auto mode
+Setting up docker.io (26.1.5+dfsg1-9+deb13u1) ...
+Created symlink '/etc/systemd/system/multi-user.target.wants/docker.service' → '/usr/lib/systemd/system/docker.service'.
+Created symlink '/etc/systemd/system/sockets.target.wants/docker.socket' → '/usr/lib/systemd/system/docker.socket'.
+Processing triggers for libc-bin (2.41-12+rpt1+deb13u4) ...
+Processing triggers for man-db (2.13.1-1) ...
+Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable docker
+bash: line 14: docker: command not found

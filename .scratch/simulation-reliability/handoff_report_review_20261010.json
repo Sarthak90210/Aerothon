@@ -1,0 +1,20 @@
+{
+  "report": "D:\\MY DOCUMENTS\\VIT\\Team Rotor Fpv\\AEROTHON\\.scratch\\simulation-reliability\\EXECUTIVE_HANDOFF_20261010.md",
+  "report_sha256": "cc06243f165b92b030d32f143230e9bae6f3cdc384e260b17ce5d812306d3ecd",
+  "words": 6161,
+  "linked_evidence": 41,
+  "issue_count": 42,
+  "controlled_source_unchanged": true,
+  "source_files": 951,
+  "historical_provenance": {
+    "v34": "34aad95e05f1fface7dd8b931892fb1d909d86e7004d2b7af554e2cc694dbd15",
+    "v35": "b97b74647bb4531e0b7f359d9653e726ab4276e7c0045bf19844c1dfd0aaa510",
+    "v36": "7a0e5214e6f25a3180c8ff4e10f79731074e55b8584d34db7634794a85d65dc2",
+    "v37": "de2a300afd15027061feebdba752efb8c0ab294041bfbd471a96cf5cd59722fb",
+    "v38": "eb38b8d828445196fa6716461bd42f66c94ce90fb4b72b696d22b40129f2d213",
+    "v39": "000dd0834aff203801af9fa8980597634b846ab7806084ed907719478ff2671e"
+  },
+  "qualification_complete": false,
+  "accepted_source": null,
+  "scope": "Report integrity only; no mission, qualification test or source fix run"
+}

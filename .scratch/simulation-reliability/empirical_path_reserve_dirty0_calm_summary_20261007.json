@@ -1,0 +1,657 @@
+{
+  "status": "SAFE_DIAGNOSTIC_HORIZON_WITH_TRAVERSAL_FAILURE",
+  "diagnostic_only": true,
+  "original_traversal_passed": false,
+  "original_failure": "AssertionError: did not get through in 150 s; stuck near (6.84, 0.58), yaw 3.290; detail {'state': 'CRUISE', 'front_m': 1.91, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 0.8, 'side_right_m': 1.01, 'open_depth_m': 1.91, 'open_width_m': 1.81, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.0, 'cmd_vy_left': 0.0, 'cmd_vz': 0.0, 'cmd_yaw_rate': -0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 0, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [2.2205580825924773e-19, 7.382752403158283e-20], 'disturbance_rate_world_mps2': [-1.7150762820670576e-19, -5.846512569523471e-20], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [4.274804960907667e-09, -1.238943659617908e-08], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': -2.9391523179536476e-16, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': -0.0, 'planner_state': 'freshly revalidated lidar path', 'required_clearance_m': 0.7, 'observed_clearance_m': 0.8038094639778138, 'scan_age_s': 0.0, 'pose_age_s': 0.0, 'planner_path_body_m': [(0, 0), (0.9270724235243271, 0.114178497240638), (1.2926121551821028, 0.8684203050049395), (2.0713333191546295, 1.0047777352435336), (3.9060913552025127, 0.4271420809096672)], 'axis_progress_m': 1.457, 'gap_width_deg': 0.0, 'gap_depth_m': 1.73, 'reach_m': 1.73, 'diagnostic_control_policy': 'empirical forecast-error path reserve', 'diagnostic_mode': 'EMPIRICAL_HOLD', 'diagnostic_error_max_m': 0.00010028432104350853, 'diagnostic_error_samples': 2984, 'diagnostic_raw_residual_rate_max_mps2': 2.117220479550533e-13, 'diagnostic_travel_reserve_m': 0.00010028432114936955, 'diagnostic_travel_speed_mps': 0.06855154520796053, 'diagnostic_path_minimum_m': 0.7936518295291098, 'diagnostic_queue_clear': True, 'diagnostic_path_body_m': [(0, 0), (0.7565422357995524, -0.011993825693327895), (1.3568485285554959, 0.9599281644260518), (2.0713333191546295, 1.0047777352435336), (2.5163870851427403, 0.9382409380573199), (3.8566409367593897, 0.4345350583748022)], 'diagnostic_hold_count': 23, 'diagnostic_hold_target_world_m': [6.842526478664219, 0.5762414617115978], 'diagnostic_reserve_is_empirical': True}; track tail [(149.8, 6.84, 0.58), (149.85, 6.84, 0.58), (149.9, 6.84, 0.58), (149.95, 6.84, 0.58), (150.0, 6.84, 0.58), (150.05, 6.84, 0.58)]",
+  "seed": 0,
+  "kind": "dirty",
+  "wind_profile": "calm",
+  "actual_minimum_clearance_m": 0.8213712506479043,
+  "first_recorded_clearance_failure": null,
+  "last_stamp": 149.99999999999986,
+  "records": 3001,
+  "observed_forecast_error_max_m": 0.00010028432104350853,
+  "observed_raw_residual_rate_max_mps2": 2.117220479550533e-13,
+  "transitions": [
+    {
+      "stamp": 0.0,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        8.3,
+        0.0
+      ],
+      "actual_clearance_m": 1.1280514172678482,
+      "observed_clearance_m": 1.0845361948013306,
+      "empirical_forecast_error_max_m": 0.0,
+      "empirical_raw_residual_rate_max_mps2": 0.0,
+      "empirical_travel_reserve_m": 0.0,
+      "permitted_speed_mps": 0.3019906150494932
+    },
+    {
+      "stamp": 2.25,
+      "mode": "TRAVEL",
+      "pose": [
+        8.3,
+        0.0
+      ],
+      "actual_clearance_m": 1.1280514172678482,
+      "observed_clearance_m": 1.1374242305755615,
+      "empirical_forecast_error_max_m": 0.0,
+      "empirical_raw_residual_rate_max_mps2": 0.0,
+      "empirical_travel_reserve_m": 0.0,
+      "permitted_speed_mps": 0.1977805760966145
+    },
+    {
+      "stamp": 4.249999999999993,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        8.165260138516008,
+        0.19423182332826086
+      ],
+      "actual_clearance_m": 1.0625766079984504,
+      "observed_clearance_m": 0.4974306821823121,
+      "empirical_forecast_error_max_m": 1.7817696036042146e-15,
+      "empirical_raw_residual_rate_max_mps2": 1.9160647057153806e-15,
+      "empirical_travel_reserve_m": 2.739801956461905e-15,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 5.399999999999989,
+      "mode": "TRAVEL",
+      "pose": [
+        8.069121295397263,
+        0.300950584169517
+      ],
+      "actual_clearance_m": 1.0290375951877309,
+      "observed_clearance_m": 1.0321662571109491,
+      "empirical_forecast_error_max_m": 3.5566146649215975e-15,
+      "empirical_raw_residual_rate_max_mps2": 2.5589376332604546e-15,
+      "empirical_travel_reserve_m": 4.836083481551825e-15,
+      "permitted_speed_mps": 0.1789305847143395
+    },
+    {
+      "stamp": 8.649999999999988,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.75451691179789,
+        0.44798724648130395
+      ],
+      "actual_clearance_m": 0.891445568568503,
+      "observed_clearance_m": 0.7377622723579408,
+      "empirical_forecast_error_max_m": 2.3150365342497876e-05,
+      "empirical_raw_residual_rate_max_mps2": 3.236828524569423e-15,
+      "empirical_travel_reserve_m": 2.315036534411629e-05,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 9.750000000000004,
+      "mode": "TRAVEL",
+      "pose": [
+        7.659598407716213,
+        0.49903959355819166
+      ],
+      "actual_clearance_m": 0.8788008927470994,
+      "observed_clearance_m": 0.8698452711105346,
+      "empirical_forecast_error_max_m": 2.837009295526065e-05,
+      "empirical_raw_residual_rate_max_mps2": 2.6325398974911726e-14,
+      "empirical_travel_reserve_m": 2.837009296842335e-05,
+      "permitted_speed_mps": 0.12827598906375207
+    },
+    {
+      "stamp": 16.150000000000095,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.132342597347743,
+        0.5826931342255367
+      ],
+      "actual_clearance_m": 0.8326931342255367,
+      "observed_clearance_m": 0.7853652834892271,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 2.6325398974911726e-14,
+      "empirical_travel_reserve_m": 0.00010028432105667123,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 18.150000000000123,
+      "mode": "TRAVEL",
+      "pose": [
+        7.088363108036339,
+        0.5824555959873721
+      ],
+      "actual_clearance_m": 0.8324555959873721,
+      "observed_clearance_m": 0.8082640171051027,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 2.6325398974911726e-14,
+      "empirical_travel_reserve_m": 0.00010028432105667123,
+      "permitted_speed_mps": 0.07408968149993848
+    },
+    {
+      "stamp": 18.65000000000013,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.0947388273282215,
+        0.5824719839445053
+      ],
+      "actual_clearance_m": 0.8324719839445053,
+      "observed_clearance_m": 0.7881253957748416,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 3.519758712290269e-14,
+      "empirical_travel_reserve_m": 0.00010028432106110732,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 24.750000000000217,
+      "mode": "TRAVEL",
+      "pose": [
+        7.095710708142445,
+        0.5824773616871374
+      ],
+      "actual_clearance_m": 0.8324773616871374,
+      "observed_clearance_m": 0.7989563345909121,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 3.519758712290269e-14,
+      "empirical_travel_reserve_m": 0.00010028432106110732,
+      "permitted_speed_mps": 0.07325304048425602
+    },
+    {
+      "stamp": 24.95000000000022,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.095297189654583,
+        0.5824765227901152
+      ],
+      "actual_clearance_m": 0.8324765227901152,
+      "observed_clearance_m": 0.7837699055671691,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 3.519758712290269e-14,
+      "empirical_travel_reserve_m": 0.00010028432106110732,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 26.35000000000024,
+      "mode": "TRAVEL",
+      "pose": [
+        7.08245047070781,
+        0.5848495169334168
+      ],
+      "actual_clearance_m": 0.8348495169334168,
+      "observed_clearance_m": 0.8051998019218446,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 4.1572669114827e-14,
+      "empirical_travel_reserve_m": 0.00010028432106429486,
+      "permitted_speed_mps": 0.0722854040622328
+    },
+    {
+      "stamp": 26.550000000000242,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.082900860255497,
+        0.5847768525899342
+      ],
+      "actual_clearance_m": 0.8347768525899342,
+      "observed_clearance_m": 0.7767205238342286,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 4.1572669114827e-14,
+      "empirical_travel_reserve_m": 0.00010028432106429486,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 31.650000000000315,
+      "mode": "TRAVEL",
+      "pose": [
+        7.084414042699905,
+        0.5849165793675745
+      ],
+      "actual_clearance_m": 0.8349165793675745,
+      "observed_clearance_m": 0.8151952624320986,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 5.4065250637190936e-14,
+      "empirical_travel_reserve_m": 0.00010028432107054116,
+      "permitted_speed_mps": 0.08061037284911471
+    },
+    {
+      "stamp": 31.95000000000032,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.084176575909481,
+        0.5848887320924709
+      ],
+      "actual_clearance_m": 0.8348887320924709,
+      "observed_clearance_m": 0.7832103371620179,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 5.4065250637190936e-14,
+      "empirical_travel_reserve_m": 0.00010028432107054116,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 33.55000000000023,
+      "mode": "TRAVEL",
+      "pose": [
+        7.06648036008762,
+        0.5851680423305898
+      ],
+      "actual_clearance_m": 0.8351680423305898,
+      "observed_clearance_m": 0.817954182624817,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 6.480927417790574e-14,
+      "empirical_travel_reserve_m": 0.00010028432107591316,
+      "permitted_speed_mps": 0.09260825149114417
+    },
+    {
+      "stamp": 33.70000000000022,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.0675120341169935,
+        0.5851582094613444
+      ],
+      "actual_clearance_m": 0.8351582094613444,
+      "observed_clearance_m": 0.7675976157188416,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 6.480927417790574e-14,
+      "empirical_travel_reserve_m": 0.00010028432107591316,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 37.899999999999984,
+      "mode": "TRAVEL",
+      "pose": [
+        7.068003786062843,
+        0.5851139042912473
+      ],
+      "actual_clearance_m": 0.8351139042912473,
+      "observed_clearance_m": 0.7969940304756165,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.06672345688875941
+    },
+    {
+      "stamp": 38.49999999999995,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.065685229086093,
+        0.5851003271178474
+      ],
+      "actual_clearance_m": 0.8351003271178474,
+      "observed_clearance_m": 0.7822130918502807,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 39.69999999999988,
+      "mode": "TRAVEL",
+      "pose": [
+        7.034033853734994,
+        0.5869372795575054
+      ],
+      "actual_clearance_m": 0.8369372795575054,
+      "observed_clearance_m": 0.8030483126640321,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.07794802834294817
+    },
+    {
+      "stamp": 40.74999999999982,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        7.019270212660264,
+        0.5863845763157821
+      ],
+      "actual_clearance_m": 0.8363845763157821,
+      "observed_clearance_m": 0.7860437631607056,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 46.149999999999515,
+      "mode": "TRAVEL",
+      "pose": [
+        7.023696219066871,
+        0.5867681812151033
+      ],
+      "actual_clearance_m": 0.8367681812151033,
+      "observed_clearance_m": 0.8116415143013,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0726695157088379
+    },
+    {
+      "stamp": 48.69999999999937,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.90302764666117,
+        0.5895456529195805
+      ],
+      "actual_clearance_m": 0.8395456529195805,
+      "observed_clearance_m": 0.7889503240585329,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 50.049999999999294,
+      "mode": "TRAVEL",
+      "pose": [
+        6.853780391768748,
+        0.5779397291388243
+      ],
+      "actual_clearance_m": 0.8279397291388243,
+      "observed_clearance_m": 0.8131277561187745,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0880274717976906
+    },
+    {
+      "stamp": 50.199999999999285,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.855504271204118,
+        0.5783579896027021
+      ],
+      "actual_clearance_m": 0.8283579896027021,
+      "observed_clearance_m": 0.7824865579605103,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 59.199999999998774,
+      "mode": "TRAVEL",
+      "pose": [
+        6.855445419588243,
+        0.578369871972465
+      ],
+      "actual_clearance_m": 0.828369871972465,
+      "observed_clearance_m": 0.8102796077728273,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.07197304249378927
+    },
+    {
+      "stamp": 59.79999999999874,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.852737712112796,
+        0.5777434878942012
+      ],
+      "actual_clearance_m": 0.8277434878942012,
+      "observed_clearance_m": 0.7902801632881163,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 71.44999999999808,
+      "mode": "TRAVEL",
+      "pose": [
+        6.852863895388403,
+        0.5777681154342081
+      ],
+      "actual_clearance_m": 0.8277681154342081,
+      "observed_clearance_m": 0.8108407269647999,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.07173281662304659
+    },
+    {
+      "stamp": 71.79999999999806,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.852847427472744,
+        0.5777647033196233
+      ],
+      "actual_clearance_m": 0.8277647033196233,
+      "observed_clearance_m": 0.7877348661422732,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 75.64999999999785,
+      "mode": "TRAVEL",
+      "pose": [
+        6.855090325647044,
+        0.5781832767032146
+      ],
+      "actual_clearance_m": 0.8281832767032146,
+      "observed_clearance_m": 0.8194425675547754,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.09390809860099375
+    },
+    {
+      "stamp": 75.69999999999784,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.855306920486749,
+        0.5782238999243706
+      ],
+      "actual_clearance_m": 0.8282238999243706,
+      "observed_clearance_m": 0.7684461474418638,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 84.14999999999736,
+      "mode": "TRAVEL",
+      "pose": [
+        6.85524132563407,
+        0.5782234124933798
+      ],
+      "actual_clearance_m": 0.8282234124933798,
+      "observed_clearance_m": 0.7943252014735293,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.06853001928136121
+    },
+    {
+      "stamp": 84.29999999999735,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.855245795494855,
+        0.5782231327196399
+      ],
+      "actual_clearance_m": 0.8282231327196399,
+      "observed_clearance_m": 0.773142218589783,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 87.14999999999719,
+      "mode": "TRAVEL",
+      "pose": [
+        6.85248000073962,
+        0.578057932625974
+      ],
+      "actual_clearance_m": 0.828057932625974,
+      "observed_clearance_m": 0.8075194650456098,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.07767324502497502
+    },
+    {
+      "stamp": 87.99999999999714,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.844967103890835,
+        0.5765478392321262
+      ],
+      "actual_clearance_m": 0.8265478392321262,
+      "observed_clearance_m": 0.7682324647903442,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 106.64999999999608,
+      "mode": "TRAVEL",
+      "pose": [
+        6.844970866115611,
+        0.5765483534196801
+      ],
+      "actual_clearance_m": 0.8265483534196801,
+      "observed_clearance_m": 0.8052771532322968,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.07040256858094746
+    },
+    {
+      "stamp": 106.69999999999608,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.844970763725977,
+        0.5765483401524909
+      ],
+      "actual_clearance_m": 0.8265483401524909,
+      "observed_clearance_m": 0.7806624770164494,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 112.14999999999577,
+      "mode": "TRAVEL",
+      "pose": [
+        6.845289252217509,
+        0.576588152511532
+      ],
+      "actual_clearance_m": 0.826588152511532,
+      "observed_clearance_m": 0.7955630602664064,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0677153215910869
+    },
+    {
+      "stamp": 112.39999999999576,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.845228368281032,
+        0.5765805416903605
+      ],
+      "actual_clearance_m": 0.8265805416903605,
+      "observed_clearance_m": 0.7903689146041871,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 123.04999999999515,
+      "mode": "TRAVEL",
+      "pose": [
+        6.845310725502602,
+        0.5765853555979624
+      ],
+      "actual_clearance_m": 0.8265853555979624,
+      "observed_clearance_m": 0.8015814426195423,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.07648115829845842
+    },
+    {
+      "stamp": 123.29999999999514,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.845317714527776,
+        0.5765857451081928
+      ],
+      "actual_clearance_m": 0.8265857451081928,
+      "observed_clearance_m": 0.7881990671157838,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 129.69999999999524,
+      "mode": "TRAVEL",
+      "pose": [
+        6.845629372567448,
+        0.5766072295952396
+      ],
+      "actual_clearance_m": 0.8266072295952396,
+      "observed_clearance_m": 0.8017153143882754,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.06695869096776558
+    },
+    {
+      "stamp": 129.79999999999526,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.845507023114171,
+        0.5766006448658076
+      ],
+      "actual_clearance_m": 0.8266006448658076,
+      "observed_clearance_m": 0.7907916903495791,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 8.09152184261409e-14,
+      "empirical_travel_reserve_m": 0.00010028432108396614,
+      "permitted_speed_mps": 0.0
+    },
+    {
+      "stamp": 132.0999999999958,
+      "mode": "TRAVEL",
+      "pose": [
+        6.841821485225434,
+        0.5761581393663364
+      ],
+      "actual_clearance_m": 0.8261581393663364,
+      "observed_clearance_m": 0.8172571063041689,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 1.9675017072631388e-13,
+      "empirical_travel_reserve_m": 0.00010028432114188361,
+      "permitted_speed_mps": 0.06946883850416528
+    },
+    {
+      "stamp": 132.29999999999583,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        6.842526478664219,
+        0.5762414617115978
+      ],
+      "actual_clearance_m": 0.8262414617115978,
+      "observed_clearance_m": 0.7733464837074281,
+      "empirical_forecast_error_max_m": 0.00010028432104350853,
+      "empirical_raw_residual_rate_max_mps2": 1.9675017072631388e-13,
+      "empirical_travel_reserve_m": 0.00010028432114188361,
+      "permitted_speed_mps": 0.0
+    }
+  ],
+  "capture_sha256": "590df194b5f2fe1f4cccdfce071da405671776125bd02369434d26d27114d6ab",
+  "analysis_sha256": "7ba9bcae9ee59510460339c7ee17da21fe7c84e8c4d0408b0f2a760b625690a4",
+  "source_hashes": {
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+    "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+    "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+    "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+    ".scratch/simulation-reliability/probe_gust_empirical_path_reserve_20261007.py": "da0127421714199fb632ff2220dcb8c97876ea264dcb563d455161c37ca5cd9c"
+  },
+  "current_source_hashes_match": true
+}

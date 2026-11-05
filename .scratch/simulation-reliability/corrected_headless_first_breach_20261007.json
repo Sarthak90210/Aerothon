@@ -1,0 +1,5417 @@
+{
+  "run": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/logs/reliability_corrected_headless_focus_20261007/my_world_calm_s1",
+  "independent_truth_first_below_070": {
+    "row": {
+      "t": 833.7,
+      "x": 15.622,
+      "y": -15.397,
+      "z": 2.079,
+      "armed": true,
+      "state": "RETURN_CORRIDOR",
+      "roll": 0.462,
+      "pitch": -11.553,
+      "mode": "GUIDED",
+      "pay": [
+        11.361,
+        -9.962,
+        1.879
+      ]
+    },
+    "clearance": {
+      "m": 0.6406090346122099,
+      "source": "obstacle_0"
+    }
+  },
+  "independent_truth_minimum": {
+    "row": {
+      "t": 834.2,
+      "x": 15.461,
+      "y": -15.346,
+      "z": 2.081,
+      "armed": true,
+      "state": "RETURN_CORRIDOR",
+      "roll": 0.038,
+      "pitch": -6.217,
+      "mode": "GUIDED",
+      "pay": [
+        11.2,
+        -9.911,
+        1.881
+      ]
+    },
+    "clearance": {
+      "m": 0.5028028772238747,
+      "source": "obstacle_0"
+    }
+  },
+  "independent_truth_return_window": [
+    {
+      "row": {
+        "t": 831.0,
+        "x": 20.121,
+        "y": -16.254,
+        "z": 2.177,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.008,
+        "pitch": 0.0,
+        "mode": "GUIDED",
+        "pay": [
+          15.86,
+          -10.819,
+          1.977
+        ]
+      },
+      "clearance": {
+        "m": 5.172137847270839,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.1,
+        "x": 20.121,
+        "y": -16.254,
+        "z": 2.154,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.007,
+        "pitch": 0.0,
+        "mode": "GUIDED",
+        "pay": [
+          15.86,
+          -10.819,
+          1.954
+        ]
+      },
+      "clearance": {
+        "m": 5.172137847270839,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.2,
+        "x": 20.116,
+        "y": -16.253,
+        "z": 2.134,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.002,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.855,
+          -10.818,
+          1.934
+        ]
+      },
+      "clearance": {
+        "m": 5.167047811998512,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.3,
+        "x": 20.088,
+        "y": -16.248,
+        "z": 2.117,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.003,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.827,
+          -10.812,
+          1.917
+        ]
+      },
+      "clearance": {
+        "m": 5.1386263164970325,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.4,
+        "x": 20.035,
+        "y": -16.238,
+        "z": 2.103,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.003,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.774,
+          -10.802,
+          1.903
+        ]
+      },
+      "clearance": {
+        "m": 5.084755810385489,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.5,
+        "x": 19.958,
+        "y": -16.223,
+        "z": 2.092,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.003,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.696,
+          -10.788,
+          1.892
+        ]
+      },
+      "clearance": {
+        "m": 5.0064294303336485,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.6,
+        "x": 19.856,
+        "y": -16.204,
+        "z": 2.082,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.003,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.595,
+          -10.768,
+          1.882
+        ]
+      },
+      "clearance": {
+        "m": 4.902795739620114,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.7,
+        "x": 19.729,
+        "y": -16.179,
+        "z": 2.075,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.004,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.468,
+          -10.744,
+          1.875
+        ]
+      },
+      "clearance": {
+        "m": 4.773589619685677,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.8,
+        "x": 19.578,
+        "y": -16.151,
+        "z": 2.07,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.004,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.317,
+          -10.716,
+          1.87
+        ]
+      },
+      "clearance": {
+        "m": 4.620210327849818,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 831.9,
+        "x": 19.402,
+        "y": -16.117,
+        "z": 2.066,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.004,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          15.141,
+          -10.682,
+          1.866
+        ]
+      },
+      "clearance": {
+        "m": 4.44127734544657,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.0,
+        "x": 19.202,
+        "y": -16.079,
+        "z": 2.064,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.005,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          14.941,
+          -10.644,
+          1.864
+        ]
+      },
+      "clearance": {
+        "m": 4.238057896740075,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.1,
+        "x": 18.978,
+        "y": -16.037,
+        "z": 2.062,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.005,
+        "pitch": 14.297,
+        "mode": "GUIDED",
+        "pay": [
+          14.716,
+          -10.602,
+          1.862
+        ]
+      },
+      "clearance": {
+        "m": 4.010564337397174,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.2,
+        "x": 18.729,
+        "y": -15.99,
+        "z": 2.061,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.005,
+        "pitch": 10.319,
+        "mode": "GUIDED",
+        "pay": [
+          14.468,
+          -10.555,
+          1.861
+        ]
+      },
+      "clearance": {
+        "m": 3.75770192727138,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.3,
+        "x": 18.464,
+        "y": -15.939,
+        "z": 2.061,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.004,
+        "pitch": 5.885,
+        "mode": "GUIDED",
+        "pay": [
+          14.203,
+          -10.504,
+          1.861
+        ]
+      },
+      "clearance": {
+        "m": 3.4885649478197123,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.4,
+        "x": 18.19,
+        "y": -15.887,
+        "z": 2.062,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.003,
+        "pitch": 1.97,
+        "mode": "GUIDED",
+        "pay": [
+          13.929,
+          -10.452,
+          1.862
+        ]
+      },
+      "clearance": {
+        "m": 3.21049416235403,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.5,
+        "x": 17.913,
+        "y": -15.835,
+        "z": 2.063,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.003,
+        "pitch": -1.392,
+        "mode": "GUIDED",
+        "pay": [
+          13.652,
+          -10.4,
+          1.863
+        ]
+      },
+      "clearance": {
+        "m": 2.929594095680076,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.6,
+        "x": 17.639,
+        "y": -15.783,
+        "z": 2.064,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.002,
+        "pitch": -4.201,
+        "mode": "GUIDED",
+        "pay": [
+          13.378,
+          -10.348,
+          1.864
+        ]
+      },
+      "clearance": {
+        "m": 2.6518810185972694,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.7,
+        "x": 17.372,
+        "y": -15.732,
+        "z": 2.066,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.001,
+        "pitch": -6.484,
+        "mode": "GUIDED",
+        "pay": [
+          13.111,
+          -10.297,
+          1.866
+        ]
+      },
+      "clearance": {
+        "m": 2.3815013841667247,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.8,
+        "x": 17.116,
+        "y": -15.684,
+        "z": 2.067,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.001,
+        "pitch": -8.28,
+        "mode": "GUIDED",
+        "pay": [
+          12.855,
+          -10.249,
+          1.867
+        ]
+      },
+      "clearance": {
+        "m": 2.122668080027223,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 832.9,
+        "x": 16.875,
+        "y": -15.638,
+        "z": 2.069,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": -0.0,
+        "pitch": -9.635,
+        "mode": "GUIDED",
+        "pay": [
+          12.614,
+          -10.203,
+          1.869
+        ]
+      },
+      "clearance": {
+        "m": 1.8793702774852483,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.0,
+        "x": 16.65,
+        "y": -15.595,
+        "z": 2.07,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": 0.0,
+        "pitch": -10.598,
+        "mode": "GUIDED",
+        "pay": [
+          12.389,
+          -10.16,
+          1.87
+        ]
+      },
+      "clearance": {
+        "m": 1.6527712540986552,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.1,
+        "x": 16.443,
+        "y": -15.556,
+        "z": 2.072,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": 0.0,
+        "pitch": -11.217,
+        "mode": "GUIDED",
+        "pay": [
+          12.182,
+          -10.121,
+          1.872
+        ]
+      },
+      "clearance": {
+        "m": 1.4449943116428579,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.2,
+        "x": 16.255,
+        "y": -15.521,
+        "z": 2.073,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": 0.001,
+        "pitch": -11.535,
+        "mode": "GUIDED",
+        "pay": [
+          11.994,
+          -10.085,
+          1.873
+        ]
+      },
+      "clearance": {
+        "m": 1.2571080797942413,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.3,
+        "x": 16.087,
+        "y": -15.489,
+        "z": 2.075,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": 0.001,
+        "pitch": -11.596,
+        "mode": "GUIDED",
+        "pay": [
+          11.826,
+          -10.054,
+          1.875
+        ]
+      },
+      "clearance": {
+        "m": 1.0902291659695347,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.4,
+        "x": 15.939,
+        "y": -15.461,
+        "z": 2.076,
+        "armed": true,
+        "state": "GATE_CROSSING",
+        "roll": 0.001,
+        "pitch": -11.439,
+        "mode": "GUIDED",
+        "pay": [
+          11.678,
+          -10.026,
+          1.876
+        ]
+      },
+      "clearance": {
+        "m": 0.944428834348341,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.5,
+        "x": 15.811,
+        "y": -15.436,
+        "z": 2.077,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.697,
+        "pitch": -13.414,
+        "mode": "GUIDED",
+        "pay": [
+          11.55,
+          -10.001,
+          1.877
+        ]
+      },
+      "clearance": {
+        "m": 0.8198406908719587,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.6,
+        "x": 15.706,
+        "y": -15.415,
+        "z": 2.078,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.575,
+        "pitch": -12.53,
+        "mode": "GUIDED",
+        "pay": [
+          11.445,
+          -9.98,
+          1.878
+        ]
+      },
+      "clearance": {
+        "m": 0.719271537640828,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.7,
+        "x": 15.622,
+        "y": -15.397,
+        "z": 2.079,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.462,
+        "pitch": -11.553,
+        "mode": "GUIDED",
+        "pay": [
+          11.361,
+          -9.962,
+          1.879
+        ]
+      },
+      "clearance": {
+        "m": 0.6406090346122099,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.8,
+        "x": 15.558,
+        "y": -15.381,
+        "z": 2.08,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.358,
+        "pitch": -10.511,
+        "mode": "GUIDED",
+        "pay": [
+          11.297,
+          -9.946,
+          1.88
+        ]
+      },
+      "clearance": {
+        "m": 0.5826804782279115,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 833.9,
+        "x": 15.512,
+        "y": -15.369,
+        "z": 2.08,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.263,
+        "pitch": -9.434,
+        "mode": "GUIDED",
+        "pay": [
+          11.251,
+          -9.934,
+          1.88
+        ]
+      },
+      "clearance": {
+        "m": 0.5423400298839535,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.0,
+        "x": 15.482,
+        "y": -15.359,
+        "z": 2.081,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.178,
+        "pitch": -8.345,
+        "mode": "GUIDED",
+        "pay": [
+          11.221,
+          -9.924,
+          1.881
+        ]
+      },
+      "clearance": {
+        "m": 0.5174569166067079,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.1,
+        "x": 15.466,
+        "y": -15.351,
+        "z": 2.081,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.103,
+        "pitch": -7.266,
+        "mode": "GUIDED",
+        "pay": [
+          11.205,
+          -9.916,
+          1.881
+        ]
+      },
+      "clearance": {
+        "m": 0.5054974602813679,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.2,
+        "x": 15.461,
+        "y": -15.346,
+        "z": 2.081,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": 0.038,
+        "pitch": -6.217,
+        "mode": "GUIDED",
+        "pay": [
+          11.2,
+          -9.911,
+          1.881
+        ]
+      },
+      "clearance": {
+        "m": 0.5028028772238747,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.3,
+        "x": 15.468,
+        "y": -15.343,
+        "z": 2.082,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.018,
+        "pitch": -5.212,
+        "mode": "GUIDED",
+        "pay": [
+          11.207,
+          -9.907,
+          1.882
+        ]
+      },
+      "clearance": {
+        "m": 0.510418591618406,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.4,
+        "x": 15.479,
+        "y": -15.34,
+        "z": 2.082,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.399,
+        "pitch": 0.985,
+        "mode": "GUIDED",
+        "pay": [
+          11.218,
+          -9.905,
+          1.882
+        ]
+      },
+      "clearance": {
+        "m": 0.5217192481463424,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.5,
+        "x": 15.488,
+        "y": -15.338,
+        "z": 2.082,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.337,
+        "pitch": 0.832,
+        "mode": "GUIDED",
+        "pay": [
+          11.227,
+          -9.903,
+          1.882
+        ]
+      },
+      "clearance": {
+        "m": 0.5307933934080632,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.6,
+        "x": 15.497,
+        "y": -15.337,
+        "z": 2.082,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.285,
+        "pitch": 0.704,
+        "mode": "GUIDED",
+        "pay": [
+          11.236,
+          -9.901,
+          1.882
+        ]
+      },
+      "clearance": {
+        "m": 0.5394912523973678,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.7,
+        "x": 15.503,
+        "y": -15.335,
+        "z": 2.082,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.241,
+        "pitch": 0.595,
+        "mode": "GUIDED",
+        "pay": [
+          11.242,
+          -9.9,
+          1.882
+        ]
+      },
+      "clearance": {
+        "m": 0.5458011465670196,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.8,
+        "x": 15.509,
+        "y": -15.334,
+        "z": 2.083,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.204,
+        "pitch": 0.503,
+        "mode": "GUIDED",
+        "pay": [
+          11.248,
+          -9.899,
+          1.883
+        ]
+      },
+      "clearance": {
+        "m": 0.5517331819845884,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 834.9,
+        "x": 15.514,
+        "y": -15.333,
+        "z": 2.083,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.172,
+        "pitch": 0.425,
+        "mode": "GUIDED",
+        "pay": [
+          11.253,
+          -9.898,
+          1.883
+        ]
+      },
+      "clearance": {
+        "m": 0.5567416448757118,
+        "source": "obstacle_0"
+      }
+    },
+    {
+      "row": {
+        "t": 835.0,
+        "x": 15.518,
+        "y": -15.332,
+        "z": 2.083,
+        "armed": true,
+        "state": "RETURN_CORRIDOR",
+        "roll": -0.146,
+        "pitch": 0.359,
+        "mode": "GUIDED",
+        "pay": [
+          11.257,
+          -9.897,
+          1.883
+        ]
+      },
+      "clearance": {
+        "m": 0.5608245328996408,
+        "source": "obstacle_0"
+      }
+    }
+  ],
+  "mission_transitions": [
+    {
+      "recorded_stamp": 826.339999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 826.319999999,
+      "position": {
+        "x": 20.12275906756182,
+        "y": -16.24745155848997,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9545098517133788,
+      "velocity_capture": 826.319999999,
+      "velocity": {
+        "x": 0.010712823040393005,
+        "y": 0.041944356914669356,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 833.499999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 833.489999999,
+      "position": {
+        "x": 15.823026216803571,
+        "y": -15.43855810792523,
+        "z": 2.076817697318146
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 833.489999999,
+      "velocity": {
+        "x": -1.198535842126347,
+        "y": 0.233487195469273,
+        "z": 0.010616641772775992
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 0.95,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 1.57,
+        "side_right_m": 1.83,
+        "open_depth_m": 1.03,
+        "open_width_m": 3.4
+      }
+    },
+    {
+      "recorded_stamp": 846.1799999990001,
+      "mission": "FAILED",
+      "pose_capture": 846.149999999,
+      "position": {
+        "x": 15.540957511386445,
+        "y": -15.327794491501676,
+        "z": 2.102777559951997
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 846.149999999,
+      "velocity": {
+        "x": 2.7906565946977935e-10,
+        "y": 5.5777604757167865e-11,
+        "z": 0.4583711432399884
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 2.93,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.86,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.93,
+        "open_width_m": 2.62
+      }
+    },
+    {
+      "recorded_stamp": 846.389999999,
+      "mission": "WAITING",
+      "pose_capture": 846.359999999,
+      "position": {
+        "x": 15.5409575114354,
+        "y": -15.327794491491883,
+        "z": 2.299426454584125
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 846.359999999,
+      "velocity": {
+        "x": 1.9610979506978765e-10,
+        "y": 3.9257486150745535e-11,
+        "z": 1.3002970544396586
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 2.93,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.86,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.93,
+        "open_width_m": 2.62
+      }
+    }
+  ],
+  "onboard_return_window": [
+    {
+      "recorded_stamp": 825.109999999,
+      "mission": "BANNER_ALIGN",
+      "pose_capture": 825.089999999,
+      "position": {
+        "x": 20.069152716976372,
+        "y": -16.456589145847108,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.938880092436957,
+      "velocity_capture": 825.089999999,
+      "velocity": {
+        "x": 0.07969277889152693,
+        "y": 0.31059133603754674,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.87,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.87,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 825.3099999990001,
+      "mission": "BANNER_ALIGN",
+      "pose_capture": 825.299999999,
+      "position": {
+        "x": 20.084686911598766,
+        "y": -16.396033919768772,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9447752402332545,
+      "velocity_capture": 825.299999999,
+      "velocity": {
+        "x": 0.06835989839935053,
+        "y": 0.26653329114267876,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.87,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.87,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 825.5199999990001,
+      "mission": "BANNER_ALIGN",
+      "pose_capture": 825.509999999,
+      "position": {
+        "x": 20.09762282673167,
+        "y": -16.34558659045388,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9486321749434667,
+      "velocity_capture": 825.509999999,
+      "velocity": {
+        "x": 0.05531196827739393,
+        "y": 0.21575009282095436,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 825.729999999,
+      "mission": "BANNER_ALIGN",
+      "pose_capture": 825.719999999,
+      "position": {
+        "x": 20.10777085279736,
+        "y": -16.305993983077666,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9511555968953633,
+      "velocity_capture": 825.719999999,
+      "velocity": {
+        "x": 0.04202966028223898,
+        "y": 0.16401948719675374,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 825.9299999990001,
+      "mission": "BANNER_ALIGN",
+      "pose_capture": 825.899999999,
+      "position": {
+        "x": 20.114301279872926,
+        "y": -16.2805030652761,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9526113565370764,
+      "velocity_capture": 825.899999999,
+      "velocity": {
+        "x": 0.03127297964304887,
+        "y": 0.12210210098331231,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 826.139999999,
+      "mission": "BANNER_ALIGN",
+      "pose_capture": 826.109999999,
+      "position": {
+        "x": 20.119607319185832,
+        "y": -16.259777760724486,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9537589995812557,
+      "velocity_capture": 826.109999999,
+      "velocity": {
+        "x": 0.020074415478177343,
+        "y": 0.07845048255887832,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 826.339999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 826.319999999,
+      "position": {
+        "x": 20.12275906756182,
+        "y": -16.24745155848997,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9545098517133788,
+      "velocity_capture": 826.319999999,
+      "velocity": {
+        "x": 0.010712823040393005,
+        "y": 0.041944356914669356,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 826.5399999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 826.529999999,
+      "position": {
+        "x": 20.124482513878338,
+        "y": -16.24070149951982,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.954423925331227,
+      "velocity_capture": 826.529999999,
+      "velocity": {
+        "x": 0.0063650615075516725,
+        "y": 0.024930868220351954,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 826.749999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 826.739999999,
+      "position": {
+        "x": 20.12544782389481,
+        "y": -16.236920259871326,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.954318861965211,
+      "velocity_capture": 826.739999999,
+      "velocity": {
+        "x": 0.0031059257640464466,
+        "y": 0.012167810685781433,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.89,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 826.949999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 826.919999999,
+      "position": {
+        "x": 20.125789310207523,
+        "y": -16.23558214124891,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.954258251012706,
+      "velocity_capture": 826.919999999,
+      "velocity": {
+        "x": 0.0009005609236112377,
+        "y": 0.003531125525668699,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.89,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 827.1499999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 827.129999999,
+      "position": {
+        "x": 20.12575615701517,
+        "y": -16.235711094606103,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9542104685793653,
+      "velocity_capture": 827.129999999,
+      "velocity": {
+        "x": -0.001011292962260768,
+        "y": -0.003956408991712124,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.89,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 827.359999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 827.339999999,
+      "position": {
+        "x": 20.12539384600214,
+        "y": -16.23712918952384,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.954179206644625,
+      "velocity_capture": 827.339999999,
+      "velocity": {
+        "x": -0.0022793554983024933,
+        "y": -0.008922927783316936,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.89,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 827.5599999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 827.549999999,
+      "position": {
+        "x": 20.12482721690705,
+        "y": -16.239347559331684,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.954158753342117,
+      "velocity_capture": 827.549999999,
+      "velocity": {
+        "x": -0.0030007506769180736,
+        "y": -0.011748688764257054,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.89,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 827.7699999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 827.759999999,
+      "position": {
+        "x": 20.124159182970946,
+        "y": -16.24196318751972,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9541453716500694,
+      "velocity_capture": 827.759999999,
+      "velocity": {
+        "x": -0.0032843857241005026,
+        "y": -0.012860117309188013,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 827.979999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 827.969999999,
+      "position": {
+        "x": 20.123469595865906,
+        "y": -16.24466335745694,
+        "z": 3.0000000000000044
+      },
+      "yaw_rad": 2.9541366166002696,
+      "velocity_capture": 827.969999999,
+      "velocity": {
+        "x": -0.003239345291206064,
+        "y": -0.012684354778613738,
+        "z": 0.0
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 828.1799999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 828.149999999,
+      "position": {
+        "x": 20.122905665806336,
+        "y": -16.24687158452254,
+        "z": 2.998830156067718
+      },
+      "yaw_rad": 2.9541315658206546,
+      "velocity_capture": 828.149999999,
+      "velocity": {
+        "x": -0.003016106125031115,
+        "y": -0.011810587076865886,
+        "z": -0.046194712148661665
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 828.389999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 828.359999999,
+      "position": {
+        "x": 20.122314026374525,
+        "y": -16.24918838883527,
+        "z": 2.9682934243538917
+      },
+      "yaw_rad": 2.954127584056131,
+      "velocity_capture": 828.359999999,
+      "velocity": {
+        "x": -0.002619006824744474,
+        "y": -0.010255946249415615,
+        "z": -0.2181083898984859
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 828.589999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 828.569999999,
+      "position": {
+        "x": 20.121815376531924,
+        "y": -16.251141117366007,
+        "z": 2.912498980626265
+      },
+      "yaw_rad": 2.9541249789635495,
+      "velocity_capture": 828.569999999,
+      "velocity": {
+        "x": -0.0021451714534492794,
+        "y": -0.008400694288113186,
+        "z": -0.2967128454914203
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 828.7899999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 828.779999999,
+      "position": {
+        "x": 20.121419204363537,
+        "y": -16.25269259222212,
+        "z": 2.8475967220860605
+      },
+      "yaw_rad": 2.9541232745665855,
+      "velocity_capture": 828.779999999,
+      "velocity": {
+        "x": -0.0016479328195373455,
+        "y": -0.00645368138130209,
+        "z": -0.3124085142974131
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 828.999999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 828.989999999,
+      "position": {
+        "x": 20.121130060516982,
+        "y": -16.25382494557827,
+        "z": 2.7840126920738504
+      },
+      "yaw_rad": 2.9541221594549665,
+      "velocity_capture": 828.989999999,
+      "velocity": {
+        "x": -0.0011578585034754951,
+        "y": -0.004534438404846242,
+        "z": -0.2895246080370839
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 829.199999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 829.169999999,
+      "position": {
+        "x": 20.120951726159085,
+        "y": -16.25452334366314,
+        "z": 2.7351967615775745
+      },
+      "yaw_rad": 2.95412151614817,
+      "velocity_capture": 829.169999999,
+      "velocity": {
+        "x": -0.0008555968797452351,
+        "y": -0.0033507128371468298,
+        "z": -0.2531987130650837
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.88,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 3.88,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 829.3999999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 829.379999999,
+      "position": {
+        "x": 20.120813108544493,
+        "y": -16.25506622474717,
+        "z": 2.6874838814545585
+      },
+      "yaw_rad": 2.954121008999497,
+      "velocity_capture": 829.379999999,
+      "velocity": {
+        "x": -0.0004891657717109865,
+        "y": -0.0019158901007898521,
+        "z": -0.20296562090917902
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 829.609999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 829.589999999,
+      "position": {
+        "x": 20.120744411111307,
+        "y": -16.25533531909652,
+        "z": 2.650455878674277
+      },
+      "yaw_rad": 2.9541206771945303,
+      "velocity_capture": 829.589999999,
+      "velocity": {
+        "x": -0.00019178567214339637,
+        "y": -0.0007514192766677752,
+        "z": -0.15258834328242266
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 829.8099999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 829.799999999,
+      "position": {
+        "x": 20.120729950898333,
+        "y": -16.25539202943839,
+        "z": 2.6169739494306925
+      },
+      "yaw_rad": 2.9541204601092,
+      "velocity_capture": 829.799999999,
+      "velocity": {
+        "x": 3.142432731806366e-05,
+        "y": 0.00012265090454377514,
+        "z": -0.23356328841184215
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 830.0199999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 830.009999999,
+      "position": {
+        "x": 20.120754674142013,
+        "y": -16.25529529739044,
+        "z": 2.548996451835053
+      },
+      "yaw_rad": 2.9541203180798625,
+      "velocity_capture": 830.009999999,
+      "velocity": {
+        "x": 0.00018591684352031734,
+        "y": 0.0007276596800664947,
+        "z": -0.3859953855148479
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 830.229999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 830.219999999,
+      "position": {
+        "x": 20.120805089013057,
+        "y": -16.255097950686544,
+        "z": 2.46101000420003
+      },
+      "yaw_rad": 2.954120225156341,
+      "velocity_capture": 830.219999999,
+      "velocity": {
+        "x": 0.0002806348589956542,
+        "y": 0.001098615792116675,
+        "z": -0.435897899569504
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 830.4299999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 830.399999999,
+      "position": {
+        "x": 20.120860053250716,
+        "y": -16.25488276951893,
+        "z": 2.382973295728718
+      },
+      "yaw_rad": 2.9541201715488548,
+      "velocity_capture": 830.399999999,
+      "velocity": {
+        "x": 0.0003223605627766801,
+        "y": 0.0012620597669155131,
+        "z": -0.4254635300282139
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 830.639999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 830.609999999,
+      "position": {
+        "x": 20.120929721432315,
+        "y": -16.25461000627569,
+        "z": 2.298466232531974
+      },
+      "yaw_rad": 2.9541201292875794,
+      "velocity_capture": 830.609999999,
+      "velocity": {
+        "x": 0.0003349114439998857,
+        "y": 0.0013112688588279298,
+        "z": -0.3769892080301318
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 830.839999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 830.819999999,
+      "position": {
+        "x": 20.12099417156444,
+        "y": -16.25435766356775,
+        "z": 2.226514289482507
+      },
+      "yaw_rad": 2.954120101637894,
+      "velocity_capture": 830.819999999,
+      "velocity": {
+        "x": 0.00026256646172839737,
+        "y": 0.0010280331817824617,
+        "z": -0.30976058134810636
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 831.0399999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 831.029999999,
+      "position": {
+        "x": 20.121040241086078,
+        "y": -16.25417728639157,
+        "z": 2.1693346730522363
+      },
+      "yaw_rad": 2.954120083547929,
+      "velocity_capture": 831.029999999,
+      "velocity": {
+        "x": 0.00018448252667724319,
+        "y": 0.0007223091543551163,
+        "z": -0.23842079476708022
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.18,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 831.249999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 831.239999999,
+      "position": {
+        "x": 20.107564467005563,
+        "y": -16.251484761173128,
+        "z": 2.126712070310343
+      },
+      "yaw_rad": 2.954120078365662,
+      "velocity_capture": 831.239999999,
+      "velocity": {
+        "x": -0.2454736786106082,
+        "y": 0.047155368909912454,
+        "z": -0.17199697433953887
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.89,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.17,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 831.449999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 831.419999999,
+      "position": {
+        "x": 20.02137685560605,
+        "y": -16.235036571315224,
+        "z": 2.1005561434274806
+      },
+      "yaw_rad": 2.954120079047591,
+      "velocity_capture": 831.419999999,
+      "velocity": {
+        "x": -0.6876040271421857,
+        "y": 0.1309453139825223,
+        "z": -0.1227004871473536
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.9,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 5.09,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 831.6499999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 831.629999999,
+      "position": {
+        "x": 19.82023967351415,
+        "y": -16.19678646359586,
+        "z": 2.0801477271029847
+      },
+      "yaw_rad": 2.954120078914272,
+      "velocity_capture": 831.629999999,
+      "velocity": {
+        "x": -1.2034258287531685,
+        "y": 0.22868409314789062,
+        "z": -0.07585248271646527
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.9,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 4.91,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 831.859999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 831.839999999,
+      "position": {
+        "x": 19.510779493106547,
+        "y": -16.138013428879276,
+        "z": 2.0682985999769574
+      },
+      "yaw_rad": 2.9541200789347917,
+      "velocity_capture": 831.839999999,
+      "velocity": {
+        "x": -1.7192515986057089,
+        "y": 0.32640192728017325,
+        "z": -0.040528086494440174
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.62,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 4.62,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 832.0599999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 832.049999999,
+      "position": {
+        "x": 19.09299534279228,
+        "y": -16.058722596099386,
+        "z": 2.062696850920212
+      },
+      "yaw_rad": 2.954120078931995,
+      "velocity_capture": 832.049999999,
+      "velocity": {
+        "x": -2.2350827906588933,
+        "y": 0.4240911344499665,
+        "z": -0.015605574928168053
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 4.24,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 12.0,
+        "open_depth_m": 4.24,
+        "open_width_m": 24.0
+      }
+    },
+    {
+      "recorded_stamp": 832.2699999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 832.259999999,
+      "position": {
+        "x": 18.571908146472556,
+        "y": -15.959873506492047,
+        "z": 2.061341894947854
+      },
+      "yaw_rad": 2.9541200789322417,
+      "velocity_capture": 832.259999999,
+      "velocity": {
+        "x": -2.659378300867843,
+        "y": 0.5043921831038745,
+        "z": 0.0006432273748302464
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.76,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 11.83,
+        "open_depth_m": 3.76,
+        "open_width_m": 23.83
+      }
+    },
+    {
+      "recorded_stamp": 832.479999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 832.469999999,
+      "position": {
+        "x": 17.996066282243177,
+        "y": -15.850670935520398,
+        "z": 2.0626216938085142
+      },
+      "yaw_rad": 2.9541200789322133,
+      "velocity_capture": 832.469999999,
+      "velocity": {
+        "x": -2.772322957153861,
+        "y": 0.5256879330376663,
+        "z": 0.010125250434134259
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 3.21,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 12.0,
+        "side_right_m": 11.63,
+        "open_depth_m": 3.21,
+        "open_width_m": 23.63
+      }
+    },
+    {
+      "recorded_stamp": 832.6799999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 832.649999999,
+      "position": {
+        "x": 17.504054672060786,
+        "y": -15.757383168689733,
+        "z": 2.0648824201763087
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 832.649999999,
+      "velocity": {
+        "x": -2.6750723221685035,
+        "y": 0.5071724551010348,
+        "z": 0.01424940451322243
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 2.65,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 2.28,
+        "side_right_m": 2.35,
+        "open_depth_m": 2.65,
+        "open_width_m": 4.63
+      }
+    },
+    {
+      "recorded_stamp": 832.889999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 832.859999999,
+      "position": {
+        "x": 16.969429194195527,
+        "y": -15.656030032152902,
+        "z": 2.06809568600328
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 832.859999999,
+      "velocity": {
+        "x": -2.4073484820224422,
+        "y": 0.4563491340336512,
+        "z": 0.015802620204796725
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 2.13,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 1.85,
+        "side_right_m": 2.02,
+        "open_depth_m": 2.13,
+        "open_width_m": 3.87
+      }
+    },
+    {
+      "recorded_stamp": 833.089999999,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 833.069999999,
+      "position": {
+        "x": 16.503081398428225,
+        "y": -15.56763272736257,
+        "z": 2.0713657616228165
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 833.069999999,
+      "velocity": {
+        "x": -2.040159250680773,
+        "y": 0.38669213385205126,
+        "z": 0.015091246843912387
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 1.66,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 1.69,
+        "side_right_m": 1.87,
+        "open_depth_m": 1.66,
+        "open_width_m": 3.57
+      }
+    },
+    {
+      "recorded_stamp": 833.2899999990001,
+      "mission": "GATE_CROSSING",
+      "pose_capture": 833.279999999,
+      "position": {
+        "x": 16.119398060470534,
+        "y": -15.494914244919944,
+        "z": 2.074333146006437
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 833.279999999,
+      "velocity": {
+        "x": -1.6303996434373857,
+        "y": 0.30898414796709517,
+        "z": 0.013122264174381115
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 1.26,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 1.66,
+        "side_right_m": 1.84,
+        "open_depth_m": 1.26,
+        "open_width_m": 3.5
+      }
+    },
+    {
+      "recorded_stamp": 833.499999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 833.489999999,
+      "position": {
+        "x": 15.823026216803571,
+        "y": -15.43855810792523,
+        "z": 2.076817697318146
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 833.489999999,
+      "velocity": {
+        "x": -1.198535842126347,
+        "y": 0.233487195469273,
+        "z": 0.010616641772775992
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 0.95,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 1.57,
+        "side_right_m": 1.83,
+        "open_depth_m": 1.03,
+        "open_width_m": 3.4
+      }
+    },
+    {
+      "recorded_stamp": 833.699999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 833.669999999,
+      "position": {
+        "x": 15.645431596069956,
+        "y": -15.401895462692728,
+        "z": 2.0785180260925196
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 833.669999999,
+      "velocity": {
+        "x": -0.8055145462561697,
+        "y": 0.17756749879982436,
+        "z": 0.008410289177529506
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 0.95,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 1.57,
+        "side_right_m": 1.83,
+        "open_depth_m": 1.03,
+        "open_width_m": 3.4
+      }
+    },
+    {
+      "recorded_stamp": 833.8999999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 833.879999999,
+      "position": {
+        "x": 15.5201284245765,
+        "y": -15.371260231746884,
+        "z": 2.0800172737247697
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 833.879999999,
+      "velocity": {
+        "x": -0.41990775590683427,
+        "y": 0.11832101545188323,
+        "z": 0.0060318242321333315
+      },
+      "avoidance": {
+        "state": "OBSERVING",
+        "front_m": 0.95,
+        "corridor_entered": true,
+        "corridor_exited": true,
+        "side_left_m": 1.57,
+        "side_right_m": 1.83,
+        "open_depth_m": 1.03,
+        "open_width_m": 3.4
+      }
+    },
+    {
+      "recorded_stamp": 834.109999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 834.089999999,
+      "position": {
+        "x": 15.466643779551887,
+        "y": -15.352127823048946,
+        "z": 2.0810549458079333
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 834.089999999,
+      "velocity": {
+        "x": -0.1177385237575379,
+        "y": 0.06789176413057874,
+        "z": 0.004014283867181945
+      },
+      "avoidance": {
+        "state": "BLOCKED",
+        "front_m": 0.83,
+        "corridor_entered": false,
+        "corridor_exited": false,
+        "side_left_m": 0.76,
+        "side_right_m": 1.81,
+        "open_depth_m": 2.85,
+        "open_width_m": 2.57,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": 0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 0,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.07160348319886434,
+          -0.005750145441544688
+        ],
+        "disturbance_rate_world_mps2": [
+          0.6409076489609951,
+          -0.05340102340639129
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          -0.19557434759036596,
+          0.08131155233712661
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.029999999999972715,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.01,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5131346520803111,
+        "scan_age_s": 0.06,
+        "pose_age_s": 0.03,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.433,
+        "note": "no navigable gap",
+        "blocked_ticks": 3,
+        "braking_clearance_available": false,
+        "recovery_reason": "travel limited by observed braking clearance"
+      }
+    },
+    {
+      "recorded_stamp": 834.3099999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 834.299999999,
+      "position": {
+        "x": 15.467598474144184,
+        "y": -15.342500706331897,
+        "z": 2.0817147424914424
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 834.299999999,
+      "velocity": {
+        "x": 0.1033280007410653,
+        "y": 0.02740905250675496,
+        "z": 0.002416177839714706
+      },
+      "avoidance": {
+        "state": "BLOCKED",
+        "front_m": 2.84,
+        "corridor_entered": false,
+        "corridor_exited": false,
+        "side_left_m": 0.72,
+        "side_right_m": 1.8,
+        "open_depth_m": 2.84,
+        "open_width_m": 2.53,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 0,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.24053551361437978,
+          -0.02301325163437029
+        ],
+        "disturbance_rate_world_mps2": [
+          0.7948745174626228,
+          -0.09041294978354893
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.04807106240303227,
+          0.037940639285949374
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.01999999999998181,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.02,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5070504760852113,
+        "scan_age_s": 0.06,
+        "pose_age_s": 0.02,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.448,
+        "note": "no navigable gap",
+        "blocked_ticks": 7,
+        "braking_clearance_available": false,
+        "recovery_reason": "travel limited by observed braking clearance"
+      }
+    },
+    {
+      "recorded_stamp": 834.5199999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 834.509999999,
+      "position": {
+        "x": 15.489340794100528,
+        "y": -15.338118522329582,
+        "z": 2.082168328067035
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 834.509999999,
+      "velocity": {
+        "x": 0.08748596178058676,
+        "y": 0.017498357391154684,
+        "z": 0.0018492270270620281
+      },
+      "avoidance": {
+        "state": "BLOCKED",
+        "front_m": 2.87,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.75,
+        "side_right_m": 1.79,
+        "open_depth_m": 2.87,
+        "open_width_m": 2.55,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 0,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.23083834929932942,
+          -0.023105234446122037
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.41328552774150945,
+          0.042466415717652486
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.09676845408286283,
+          0.019354979465013855
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.009999999999990905,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.02,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.532370839019109,
+        "scan_age_s": 0.06,
+        "pose_age_s": 0.01,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.429,
+        "note": "no navigable gap",
+        "blocked_ticks": 11,
+        "braking_clearance_available": false,
+        "recovery_reason": "travel limited by observed braking clearance"
+      }
+    },
+    {
+      "recorded_stamp": 834.729999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 834.719999999,
+      "position": {
+        "x": 15.504690951101376,
+        "y": -15.335048286514082,
+        "z": 2.082479196267038
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 834.719999999,
+      "velocity": {
+        "x": 0.06146874652479539,
+        "y": 0.012294567873460949,
+        "z": 0.0011571201835369749
+      },
+      "avoidance": {
+        "state": "BLOCKED",
+        "front_m": 2.89,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.79,
+        "side_right_m": 1.78,
+        "open_depth_m": 2.89,
+        "open_width_m": 2.58,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 0,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.15366890934866956,
+          -0.015262878063281728
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.3334672866946496,
+          0.03379975768982138
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.06464755037942638,
+          0.012930370975894334
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.020000000000095497,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.01,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5498287315575053,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.02,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.411,
+        "note": "no navigable gap",
+        "blocked_ticks": 16,
+        "braking_clearance_available": false,
+        "recovery_reason": "travel limited by observed braking clearance"
+      }
+    },
+    {
+      "recorded_stamp": 834.9299999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 834.899999999,
+      "position": {
+        "x": 15.514158420062072,
+        "y": -15.33315466664533,
+        "z": 2.082636795551957
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 834.899999999,
+      "velocity": {
+        "x": 0.04542218896439465,
+        "y": 0.00908504267211896,
+        "z": 0.0006383289358424804
+      },
+      "avoidance": {
+        "state": "BLOCKED",
+        "front_m": 2.9,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.81,
+        "side_right_m": 1.78,
+        "open_depth_m": 2.9,
+        "open_width_m": 2.59,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 0,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.10758719417758852,
+          -0.010602743425403845
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.1926084789542968,
+          0.01949507667845146
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.04542218896439465,
+          0.00908504267211896
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.009999999999990905,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.01,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.561532424855775,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.01,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.4,
+        "note": "no navigable gap",
+        "blocked_ticks": 20,
+        "braking_clearance_available": false,
+        "recovery_reason": "travel limited by observed braking clearance"
+      }
+    },
+    {
+      "recorded_stamp": 835.139999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 835.109999999,
+      "position": {
+        "x": 15.522128129918771,
+        "y": -15.33156061854277,
+        "z": 2.0827144299157307
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 835.109999999,
+      "velocity": {
+        "x": 0.031914206156358205,
+        "y": 0.006383266227061313,
+        "z": 0.00014288323639810585
+      },
+      "avoidance": {
+        "state": "BLOCKED",
+        "front_m": 2.91,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.82,
+        "side_right_m": 1.78,
+        "open_depth_m": 2.91,
+        "open_width_m": 2.6,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 0,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.0809469166165927,
+          -0.007933940774537726
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.10911062003883597,
+          0.010890534976420868
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.033564622136594835,
+          0.006713371401367851
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.029999999999972715,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.01,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5701932030508435,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.03,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.393,
+        "note": "no navigable gap",
+        "blocked_ticks": 24,
+        "braking_clearance_available": false,
+        "recovery_reason": "travel limited by observed braking clearance"
+      }
+    },
+    {
+      "recorded_stamp": 835.339999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 835.319999999,
+      "position": {
+        "x": 15.527727749161535,
+        "y": -15.330440620125078,
+        "z": 2.0826999517455085
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 835.319999999,
+      "velocity": {
+        "x": 0.022423326083931272,
+        "y": 0.00448496382432495,
+        "z": -0.00024212267990542102
+      },
+      "avoidance": {
+        "state": "BLOCKED",
+        "front_m": 2.91,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.83,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.91,
+        "open_width_m": 2.61,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 0,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.05553118553006848,
+          -0.005401179113984789
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.12049698947951579,
+          0.011965902026754916
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.02358292928743566,
+          0.004716899907108996
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.01999999999998181,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.01,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5763807548519694,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.02,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.388,
+        "note": "no navigable gap",
+        "blocked_ticks": 28,
+        "braking_clearance_available": false,
+        "recovery_reason": "travel limited by observed braking clearance"
+      }
+    },
+    {
+      "recorded_stamp": 835.5399999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 835.529999999,
+      "position": {
+        "x": 15.531662112673851,
+        "y": -15.329653695029387,
+        "z": 2.0826170568677935
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 835.529999999,
+      "velocity": {
+        "x": 0.015754913351173627,
+        "y": 0.0031511924756699727,
+        "z": -0.0005165955084152074
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.84,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.61,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.038879631541436366,
+          -0.0037514588846008015
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.06959857060795371,
+          0.0069015154342398
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.016569665271859435,
+          0.003314153709688128
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.009999999999990905,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5808008859504188,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.01,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.384,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    },
+    {
+      "recorded_stamp": 835.749999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 835.739999999,
+      "position": {
+        "x": 15.534426446385837,
+        "y": -15.329100791474849,
+        "z": 2.0824878504516895
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 835.739999999,
+      "velocity": {
+        "x": 0.011069601974966758,
+        "y": 0.002214067806960429,
+        "z": -0.0006901682002791176
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.84,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.62,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.029252920961065965,
+          -0.002806865083255678
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.03942858965925458,
+          0.0038542970806100486
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.012244116068771405,
+          0.0024489862664012207
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.030000000000086402,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5839585062082847,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.03,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.381,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    },
+    {
+      "recorded_stamp": 835.949999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 835.919999999,
+      "position": {
+        "x": 15.536131395958257,
+        "y": -15.328759778855853,
+        "z": 2.0823550550129455
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 835.919999999,
+      "velocity": {
+        "x": 0.008179856936862961,
+        "y": 0.0016360803170911709,
+        "z": -0.0007718510621756991
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.85,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.62,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.02006855870365075,
+          -0.0019105181767023966
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.04354390643000015,
+          0.004234439325214597
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.008602871269047796,
+          0.0017206888166754197
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.01999999999998181,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5856802492457863,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.02,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.379,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    },
+    {
+      "recorded_stamp": 836.1499999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 836.129999999,
+      "position": {
+        "x": 15.53756662151526,
+        "y": -15.328472714631804,
+        "z": 2.0821891816020415
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 836.129999999,
+      "velocity": {
+        "x": 0.005747271247180663,
+        "y": 0.0011495307848718994,
+        "z": -0.0007965465073311861
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.85,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.62,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.014051155077911203,
+          -0.0013267507620910186
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.025150896782755977,
+          0.00244220456865058
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.006044486482892353,
+          0.001208977789879384
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.009999999999990905,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5866982689052257,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.01,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.378,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    },
+    {
+      "recorded_stamp": 836.359999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 836.339999999,
+      "position": {
+        "x": 15.53857502919775,
+        "y": -15.328271019666524,
+        "z": 2.08202410570479
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 836.339999999,
+      "velocity": {
+        "x": 0.004038105683612514,
+        "y": 0.0008076749114849235,
+        "z": -0.0007686378569626839
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.85,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.62,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.010572227744798624,
+          -0.0009925652124716643
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.014248979015068167,
+          0.001363495201287794
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.00446655939381202,
+          0.0008933713591119385
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.029999999999972715,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5874255918918247,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.03,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.377,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    },
+    {
+      "recorded_stamp": 836.5599999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 836.549999999,
+      "position": {
+        "x": 15.539283549227331,
+        "y": -15.328129306225366,
+        "z": 2.0818697360050797
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 836.549999999,
+      "velocity": {
+        "x": 0.002837224277563166,
+        "y": 0.000567482638302863,
+        "z": -0.0006989790467315515
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.85,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.62,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.007253102091667576,
+          -0.000675484567704731
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.015736454185000227,
+          0.0014978101141417946
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.0031382612894148565,
+          0.0006276940496263705
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.01999999999998181,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5879452548631368,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.02,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.376,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    },
+    {
+      "recorded_stamp": 836.7699999990001,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 836.759999999,
+      "position": {
+        "x": 15.53978136438784,
+        "y": -15.328029736563947,
+        "z": 2.081733378866436
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 836.759999999,
+      "velocity": {
+        "x": 0.0019934697681023295,
+        "y": 0.00039872050034972517,
+        "z": -0.0006023729039572601
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.85,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.62,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.00507843978510877,
+          -0.0004690041785431971
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.009089394148028748,
+          0.0008638322152523528
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.0022049821915004486,
+          0.0004410258016562807
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.009999999999990905,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5883165167164506,
+        "scan_age_s": 0.01,
+        "pose_age_s": 0.01,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.376,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    },
+    {
+      "recorded_stamp": 836.979999999,
+      "mission": "RETURN_CORRIDOR",
+      "pose_capture": 836.969999999,
+      "position": {
+        "x": 15.540131135634505,
+        "y": -15.327959777656769,
+        "z": 2.0816187050769783
+      },
+      "yaw_rad": 2.954120078932224,
+      "velocity_capture": 836.969999999,
+      "velocity": {
+        "x": 0.0014006371467090162,
+        "y": 0.0002801460814438883,
+        "z": -0.0004939537740611399
+      },
+      "avoidance": {
+        "state": "BACKOFF",
+        "front_m": 2.92,
+        "corridor_entered": true,
+        "corridor_exited": false,
+        "side_left_m": 0.85,
+        "side_right_m": 1.77,
+        "open_depth_m": 2.92,
+        "open_width_m": 2.62,
+        "gap_bearing_deg": 0.0,
+        "cmd_vx": 0.0,
+        "cmd_vy_left": 0.0,
+        "cmd_vz": -0.0,
+        "cmd_yaw_rate": 0.0,
+        "hold_alt_m": 2.08,
+        "alt_m": 2.08,
+        "backoffs": 1,
+        "disturbance_estimate_valid": true,
+        "disturbance_world_mps": [
+          0.0033810232102122265,
+          -0.0003096191725234362
+        ],
+        "disturbance_rate_world_mps2": [
+          -0.00733516886253647,
+          0.0006867879746493684
+        ],
+        "command_response_state": "observed own velocity response",
+        "ground_velocity_world_mps": [
+          0.001473069903390467,
+          0.0002946335973419423
+        ],
+        "ground_velocity_basis": "fresh FCU EKF velocity_local",
+        "fcu_velocity_age_s": 0.020000000000095497,
+        "command_delay_s": 0.4,
+        "commanded_yaw_rate_rad_s": 0.0,
+        "command_receipt_turn_rad": 0.0,
+        "drift_left_mps": -0.0,
+        "planner_state": "aircraft lacks required surface clearance",
+        "required_clearance_m": 0.7,
+        "observed_clearance_m": 0.5886741690132761,
+        "scan_age_s": 0.06,
+        "pose_age_s": 0.02,
+        "planner_path_body_m": [],
+        "axis_progress_m": 0.375,
+        "recovery_reason": "travel limited by observed braking clearance",
+        "braking_clearance_available": false
+      }
+    }
+  ],
+  "position_commands": [
+    {
+      "header_stamp": 825.009999999,
+      "recorder_stamp": 825.009999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.109999999,
+      "recorder_stamp": 825.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.209999999,
+      "recorder_stamp": 825.209999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.309999999,
+      "recorder_stamp": 825.3199999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.409999999,
+      "recorder_stamp": 825.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.509999999,
+      "recorder_stamp": 825.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.609999999,
+      "recorder_stamp": 825.609999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.709999999,
+      "recorder_stamp": 825.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.809999999,
+      "recorder_stamp": 825.8099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 825.909999999,
+      "recorder_stamp": 825.9099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 826.009999999,
+      "recorder_stamp": 826.009999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 826.109999999,
+      "recorder_stamp": 826.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 826.209999999,
+      "recorder_stamp": 826.209999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.11185976132837,
+          "y": -16.289830919893888,
+          "z": 3.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956942981817014,
+          "w": 0.09269770530303886
+        }
+      }
+    },
+    {
+      "header_stamp": 826.329999999,
+      "recorder_stamp": 826.339999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 826.409999999,
+      "recorder_stamp": 826.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 826.509999999,
+      "recorder_stamp": 826.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 826.609999999,
+      "recorder_stamp": 826.609999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 826.709999999,
+      "recorder_stamp": 826.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 826.809999999,
+      "recorder_stamp": 826.8099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 826.909999999,
+      "recorder_stamp": 826.9099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.009999999,
+      "recorder_stamp": 827.009999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.109999999,
+      "recorder_stamp": 827.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.209999999,
+      "recorder_stamp": 827.219999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.309999999,
+      "recorder_stamp": 827.3099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.409999999,
+      "recorder_stamp": 827.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.509999999,
+      "recorder_stamp": 827.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.609999999,
+      "recorder_stamp": 827.609999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.709999999,
+      "recorder_stamp": 827.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.809999999,
+      "recorder_stamp": 827.8099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 827.909999999,
+      "recorder_stamp": 827.9099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.009999999,
+      "recorder_stamp": 828.009999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 3.0000000000000044
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.109999999,
+      "recorder_stamp": 828.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.209999999,
+      "recorder_stamp": 828.209999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.309999999,
+      "recorder_stamp": 828.3099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.409999999,
+      "recorder_stamp": 828.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.509999999,
+      "recorder_stamp": 828.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.609999999,
+      "recorder_stamp": 828.609999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.709999999,
+      "recorder_stamp": 828.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.809999999,
+      "recorder_stamp": 828.8099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 828.909999999,
+      "recorder_stamp": 828.9099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.009999999,
+      "recorder_stamp": 829.009999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.109999999,
+      "recorder_stamp": 829.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.209999999,
+      "recorder_stamp": 829.209999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.309999999,
+      "recorder_stamp": 829.3099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.409999999,
+      "recorder_stamp": 829.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.509999999,
+      "recorder_stamp": 829.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.609999999,
+      "recorder_stamp": 829.629999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.6000000000000045
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.709999999,
+      "recorder_stamp": 829.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.809999999,
+      "recorder_stamp": 829.8099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 829.909999999,
+      "recorder_stamp": 829.9199999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.009999999,
+      "recorder_stamp": 830.0199999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.109999999,
+      "recorder_stamp": 830.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.209999999,
+      "recorder_stamp": 830.209999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.309999999,
+      "recorder_stamp": 830.3099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.409999999,
+      "recorder_stamp": 830.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.509999999,
+      "recorder_stamp": 830.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.609999999,
+      "recorder_stamp": 830.609999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.709999999,
+      "recorder_stamp": 830.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.809999999,
+      "recorder_stamp": 830.8099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 830.909999999,
+      "recorder_stamp": 830.9099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 831.009999999,
+      "recorder_stamp": 831.009999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 20.121198872696663,
+          "y": -16.253556068426647,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099686589783,
+          "w": 0.09359909351520583
+        }
+      }
+    },
+    {
+      "header_stamp": 831.129999999,
+      "recorder_stamp": 831.139999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099703611129,
+          "w": 0.0935990754096643
+        }
+      }
+    },
+    {
+      "header_stamp": 831.209999999,
+      "recorder_stamp": 831.209999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099703611129,
+          "w": 0.0935990754096643
+        }
+      }
+    },
+    {
+      "header_stamp": 831.309999999,
+      "recorder_stamp": 831.3099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099699970778,
+          "w": 0.09359907928189061
+        }
+      }
+    },
+    {
+      "header_stamp": 831.409999999,
+      "recorder_stamp": 831.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099699970778,
+          "w": 0.09359907928189061
+        }
+      }
+    },
+    {
+      "header_stamp": 831.509999999,
+      "recorder_stamp": 831.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700537318,
+          "w": 0.09359907867926576
+        }
+      }
+    },
+    {
+      "header_stamp": 831.609999999,
+      "recorder_stamp": 831.609999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700537318,
+          "w": 0.09359907867926576
+        }
+      }
+    },
+    {
+      "header_stamp": 831.709999999,
+      "recorder_stamp": 831.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700435628,
+          "w": 0.09359907878743301
+        }
+      }
+    },
+    {
+      "header_stamp": 831.809999999,
+      "recorder_stamp": 831.8199999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700435628,
+          "w": 0.09359907878743301
+        }
+      }
+    },
+    {
+      "header_stamp": 831.909999999,
+      "recorder_stamp": 831.9199999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700452185,
+          "w": 0.09359907876982171
+        }
+      }
+    },
+    {
+      "header_stamp": 832.009999999,
+      "recorder_stamp": 832.009999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700452185,
+          "w": 0.09359907876982171
+        }
+      }
+    },
+    {
+      "header_stamp": 832.109999999,
+      "recorder_stamp": 832.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700449608,
+          "w": 0.09359907877256253
+        }
+      }
+    },
+    {
+      "header_stamp": 832.209999999,
+      "recorder_stamp": 832.209999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700449608,
+          "w": 0.09359907877256253
+        }
+      }
+    },
+    {
+      "header_stamp": 832.309999999,
+      "recorder_stamp": 832.3099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450071,
+          "w": 0.09359907877207
+        }
+      }
+    },
+    {
+      "header_stamp": 832.409999999,
+      "recorder_stamp": 832.4099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450071,
+          "w": 0.09359907877207
+        }
+      }
+    },
+    {
+      "header_stamp": 832.509999999,
+      "recorder_stamp": 832.509999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700449994,
+          "w": 0.09359907877215135
+        }
+      }
+    },
+    {
+      "header_stamp": 832.609999999,
+      "recorder_stamp": 832.619999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700449994,
+          "w": 0.09359907877215135
+        }
+      }
+    },
+    {
+      "header_stamp": 832.709999999,
+      "recorder_stamp": 832.709999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    },
+    {
+      "header_stamp": 832.809999999,
+      "recorder_stamp": 832.8099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    },
+    {
+      "header_stamp": 832.909999999,
+      "recorder_stamp": 832.9099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    },
+    {
+      "header_stamp": 833.009999999,
+      "recorder_stamp": 833.0199999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    },
+    {
+      "header_stamp": 833.109999999,
+      "recorder_stamp": 833.109999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    },
+    {
+      "header_stamp": 833.209999999,
+      "recorder_stamp": 833.219999999,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    },
+    {
+      "header_stamp": 833.309999999,
+      "recorder_stamp": 833.3099999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.750005283483894,
+          "y": -15.425014225179444,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    },
+    {
+      "header_stamp": 833.409999999,
+      "recorder_stamp": 833.4399999990001,
+      "topic": "/mavros/setpoint_position/local",
+      "payload": {
+        "position": {
+          "x": 15.984638081175241,
+          "y": -15.40341895847535,
+          "z": 2.081541839765747
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.9956099700450008,
+          "w": 0.09359907877213543
+        }
+      }
+    }
+  ],
+  "raw_commands": [
+    {
+      "header_stamp": 833.459999999,
+      "recorder_stamp": 833.9199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.004303667168775505
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 833.919999999,
+      "recorder_stamp": 833.9399999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.001521968347076097
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 833.959999999,
+      "recorder_stamp": 833.959999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0009474843399232214
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.009999999,
+      "recorder_stamp": 834.0199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0007041101866803956
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.059999999,
+      "recorder_stamp": 834.0599999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0005927095238128289
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.109999999,
+      "recorder_stamp": 834.109999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0003894646793369816
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.159999999,
+      "recorder_stamp": 834.1599999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.00021091453347601432
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.209999999,
+      "recorder_stamp": 834.209999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.00013037819593719746
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.259999999,
+      "recorder_stamp": 834.259999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -1.4261425499029202e-05
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.309999999,
+      "recorder_stamp": 834.3199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.00013837266747032117
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.359999999,
+      "recorder_stamp": 834.359999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.00019415577586414658
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.409999999,
+      "recorder_stamp": 834.4199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0003058146024599751
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.459999999,
+      "recorder_stamp": 834.459999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0004084772768337075
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.509999999,
+      "recorder_stamp": 834.5199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.00045607982885194077
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.559999999,
+      "recorder_stamp": 834.5599999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0005440187981932354
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.609999999,
+      "recorder_stamp": 834.619999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0006222068785319834
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.659999999,
+      "recorder_stamp": 834.6599999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0006576159547897475
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.709999999,
+      "recorder_stamp": 834.709999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0007214377922078797
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.759999999,
+      "recorder_stamp": 834.7699999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0007761777288511241
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.809999999,
+      "recorder_stamp": 834.8099999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008002243236120421
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.859999999,
+      "recorder_stamp": 834.859999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008421058446312912
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.909999999,
+      "recorder_stamp": 834.9099999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008760151158821117
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 834.959999999,
+      "recorder_stamp": 834.959999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008900901276508223
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.009999999,
+      "recorder_stamp": 835.0199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0009128489782842309
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.059999999,
+      "recorder_stamp": 835.0599999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0009287225567874203
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.109999999,
+      "recorder_stamp": 835.109999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0009341965839563927
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.159999999,
+      "recorder_stamp": 835.1599999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.000940531797721178
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.209999999,
+      "recorder_stamp": 835.219999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0009410632815612275
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.259999999,
+      "recorder_stamp": 835.2699999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0009362515164703212
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.309999999,
+      "recorder_stamp": 835.3099999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.000931978638902109
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.359999999,
+      "recorder_stamp": 835.359999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0009199810540938103
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.409999999,
+      "recorder_stamp": 835.459999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.00091236121800371
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.459999999,
+      "recorder_stamp": 835.469999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008941713087335046
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.509999999,
+      "recorder_stamp": 835.509999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008723632790207603
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.559999999,
+      "recorder_stamp": 835.5699999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008473330548799396
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.609999999,
+      "recorder_stamp": 835.609999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008337411705387155
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.659999999,
+      "recorder_stamp": 835.6599999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0008046342170420218
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.709999999,
+      "recorder_stamp": 835.719999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0007892117965560886
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.759999999,
+      "recorder_stamp": 835.759999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0007568590356680006
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.809999999,
+      "recorder_stamp": 835.8199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0007227800356073288
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.859999999,
+      "recorder_stamp": 835.859999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.000705193486611222
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.909999999,
+      "recorder_stamp": 835.9199999990001,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0006690711928001747
+        },
+        "yaw_rate": 0.0
+      }
+    },
+    {
+      "header_stamp": 835.959999999,
+      "recorder_stamp": 835.959999999,
+      "topic": "/mavros/setpoint_raw/local",
+      "payload": {
+        "coordinate_frame": 9,
+        "type_mask": 1479,
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -0.0006319796422005197
+        },
+        "yaw_rate": 0.0
+      }
+    }
+  ],
+  "recorded_disarm": {
+    "capture_stamp": 890.679999999,
+    "received_stamp": 890.6799999990001,
+    "recorded_stamp": 890.7699999990001,
+    "connected": true,
+    "armed": false
+  },
+  "limits": [
+    "Truth geometry here is for independent evaluation only.",
+    "Command headers are transmission times; recorder stamps are independent DDS callback times.",
+    "The actual world command callback time and pending queue contents were not recorded.",
+    "Avoidance details are cached recorder observations without their own capture stamps."
+  ]
+}

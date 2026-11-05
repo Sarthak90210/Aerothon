@@ -1,0 +1,15 @@
+{
+  "x": 27.991893768310547,
+  "y": -17.605436325073242,
+  "alt": 1.6541496515274048,
+  "yaw": -1.5530423363062997,
+  "source": "logs/reliability_render_split_corridors_s20261003_early_red_clipped_bearing_fixture_clock_20261007/onboard.jsonl",
+  "source_sha256": "4fbe503a3fc37c0ce0863fd7514b316539fc6774c039dea49181cda41388b5b6",
+  "captured_stamp": 436.62,
+  "purpose": "Recorded FCU return entry; no world geometry supplied to control",
+  "approach": {
+    "x": 27.91777801513672,
+    "y": -12.329172134399414,
+    "captured_stamp": 420.754
+  }
+}

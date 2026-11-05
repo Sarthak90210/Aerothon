@@ -1,0 +1,6 @@
+{
+  "staging": "/home/pi5/aerothon_ws.staging-380beb23c6d9",
+  "bundle_sha256": "380beb23c6d959cd340f5baf2b4b7b0df4a1f73625c4310c45e7d07f25770a73",
+  "verified_payload_files": 240,
+  "verified_external_driver_files": 29
+}

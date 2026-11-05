@@ -1,0 +1,19 @@
+{
+  "kind": "native ROS synthetic-scan integration, no FCU/GPS",
+  "map_messages": 27,
+  "tracking_scans": 119,
+  "scans": 120,
+  "resolution_m": 0.05000000074505806,
+  "width": 181,
+  "height": 141,
+  "occupied_cells": 630,
+  "occupied_within_120mm_of_wall": 1.0,
+  "interior_free_fraction": 0.9740773060931164,
+  "wall_coverage_within_150mm": 1.0,
+  "synthetic_range_noise_m": 0.002,
+  "held_reasons": [
+    "capture gap; map held until consecutive scans revalidate the previous scene"
+  ],
+  "hardware_qualified": false,
+  "pass_check": true
+}

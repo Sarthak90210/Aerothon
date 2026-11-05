@@ -1,0 +1,982 @@
+{
+  "qualification_pair": {
+    "standard_seeds": [
+      20261003,
+      1001
+    ],
+    "both_full_acceptances_passed": true,
+    "full_offline_suite_exit_code": 0,
+    "source_unchanged": true,
+    "broader_campaigns_started": false,
+    "note": "Broader campaigns, changing-gust qualification and deferred hardware remain outstanding"
+  },
+  "all_combined_disturbance_trials_failed": true,
+  "trials": [
+    {
+      "seed": 0,
+      "kind": "dirty",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 122,
+      "minimum_logged_preintegration_clearance_m": 0.40251151685111003,
+      "contact_failure_s": 6.1,
+      "first_physical_clearance_violation": {
+        "stamp": 5.1999999999999895,
+        "independent_preintegration_clearance_m": 0.6997897363130583,
+        "pose": [
+          7.280433239817341,
+          0.44515190353014633
+        ],
+        "observed_clearance_m": 0.6917409449750591,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.25650381648720255,
+          -0.2602079350160636
+        ],
+        "disturbance_world_mps": [
+          -0.04579260360362974,
+          -0.16447394251488123
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.05,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 2.3999999999999995,
+        "independent_preintegration_clearance_m": 1.114356539929721,
+        "pose": [
+          8.134009319585843,
+          0.35779691428217303
+        ],
+        "observed_clearance_m": 0.20716816186904904,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.12005154479809707,
+          0.34904379967753213
+        ],
+        "disturbance_world_mps": [
+          0.05831795104663226,
+          0.19263193995265027
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.0,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_dirty_s0_delay040.json"
+    },
+    {
+      "seed": 0,
+      "kind": "late",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 122,
+      "minimum_logged_preintegration_clearance_m": 0.405968713061726,
+      "contact_failure_s": 6.1,
+      "first_physical_clearance_violation": {
+        "stamp": 5.1999999999999895,
+        "independent_preintegration_clearance_m": 0.6939604324006234,
+        "pose": [
+          7.240661478711737,
+          0.4427681617154727
+        ],
+        "observed_clearance_m": 0.6951428459225969,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.2631558739772523,
+          -0.24645478652499306
+        ],
+        "disturbance_world_mps": [
+          -0.04579260360362946,
+          -0.16447394251488148
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.25,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 4.749999999999991,
+        "independent_preintegration_clearance_m": 0.8141864668378066,
+        "pose": [
+          7.3973767400215715,
+          0.5399000096722925
+        ],
+        "observed_clearance_m": 0.817813216878975,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.47070363914442825,
+          -0.13987211871934438
+        ],
+        "disturbance_world_mps": [
+          -0.05470692724547733,
+          0.08958610594442393
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.2,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_late_s0_delay040.json"
+    },
+    {
+      "seed": 1,
+      "kind": "dirty",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 330,
+      "minimum_logged_preintegration_clearance_m": 0.4124415048443069,
+      "contact_failure_s": 16.5,
+      "first_physical_clearance_violation": {
+        "stamp": 7.699999999999981,
+        "independent_preintegration_clearance_m": 0.6992935811789679,
+        "pose": [
+          6.126117808214355,
+          -0.06319982796506599
+        ],
+        "observed_clearance_m": 0.6687838385342514,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.04901977633785162,
+          -0.2538176678389126
+        ],
+        "disturbance_world_mps": [
+          0.013193895610628455,
+          -0.24843058081691918
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.05,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 5.14999999999999,
+        "independent_preintegration_clearance_m": 0.86729195800122,
+        "pose": [
+          6.989344802546078,
+          0.61729195800122
+        ],
+        "observed_clearance_m": 0.7033355236053468,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.5462629469532059,
+          -0.1350497170645219
+        ],
+        "disturbance_world_mps": [
+          0.03308479757055682,
+          0.24507706599057577
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.0,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_dirty_s1_delay040.json"
+    },
+    {
+      "seed": 1,
+      "kind": "late",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 380,
+      "minimum_logged_preintegration_clearance_m": 0.4000777082488898,
+      "contact_failure_s": 19.0,
+      "first_physical_clearance_violation": {
+        "stamp": 5.999999999999987,
+        "independent_preintegration_clearance_m": 0.695721206974324,
+        "pose": [
+          6.667000561378064,
+          0.4328902892559391
+        ],
+        "observed_clearance_m": 0.6964030920982661,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.4388401573059232,
+          -0.24454391624070626
+        ],
+        "disturbance_world_mps": [
+          -0.0017605572656221751,
+          -0.16610918179606268
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.25,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 5.699999999999988,
+        "independent_preintegration_clearance_m": 0.7601949501928866,
+        "pose": [
+          6.805324370368216,
+          0.5101949501928866
+        ],
+        "observed_clearance_m": 0.7601954679384298,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.48501128979562025,
+          -0.2619225922040366
+        ],
+        "disturbance_world_mps": [
+          0.017538083799270025,
+          -0.02039418577746002
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.25,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_late_s1_delay040.json"
+    },
+    {
+      "seed": 2,
+      "kind": "dirty",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 242,
+      "minimum_logged_preintegration_clearance_m": 0.40202117092361583,
+      "contact_failure_s": 12.1,
+      "first_physical_clearance_violation": {
+        "stamp": 10.050000000000008,
+        "independent_preintegration_clearance_m": 0.6981958939907886,
+        "pose": [
+          5.141195333841472,
+          -0.5731061285619715
+        ],
+        "observed_clearance_m": 0.6811373233795165,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.16776844879986932,
+          0.10928682768923803
+        ],
+        "disturbance_world_mps": [
+          -0.01904631159940451,
+          0.011626749495244768
+        ],
+        "fcu_velocity_age_s": 7.105427357601002e-15,
+        "scan_age_s": 0.0,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 9.45,
+        "independent_preintegration_clearance_m": 0.785962574594444,
+        "pose": [
+          5.261588006534477,
+          -0.611863987702419
+        ],
+        "observed_clearance_m": 0.7797284722328185,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.24382786384494903,
+          0.0032838781067571765
+        ],
+        "disturbance_world_mps": [
+          0.009372971014954268,
+          -0.16951302633378698
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.0,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_dirty_s2_delay040.json"
+    },
+    {
+      "seed": 2,
+      "kind": "late",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 241,
+      "minimum_logged_preintegration_clearance_m": 0.412608137694763,
+      "contact_failure_s": 12.1,
+      "first_physical_clearance_violation": {
+        "stamp": 10.000000000000007,
+        "independent_preintegration_clearance_m": 0.6989517553218906,
+        "pose": [
+          4.974442741647168,
+          -0.6196609027505535
+        ],
+        "observed_clearance_m": 0.7014744437468301,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.39852607997549,
+          0.11342587824480507
+        ],
+        "disturbance_world_mps": [
+          -0.024555110378689182,
+          0.0011837831538532156
+        ],
+        "fcu_velocity_age_s": 7.105427357601002e-15,
+        "scan_age_s": 0.15,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 9.650000000000002,
+        "independent_preintegration_clearance_m": 0.763802370643766,
+        "pose": [
+          5.11134355438204,
+          -0.6540194165794456
+        ],
+        "observed_clearance_m": 0.7667207192512727,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.33190657183616135,
+          0.0421622191731441
+        ],
+        "disturbance_world_mps": [
+          -0.012380054618980063,
+          -0.12318920168742288
+        ],
+        "fcu_velocity_age_s": 1.7763568394002505e-15,
+        "scan_age_s": 0.2,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_late_s2_delay040.json"
+    },
+    {
+      "seed": 3,
+      "kind": "dirty",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 258,
+      "minimum_logged_preintegration_clearance_m": 0.4090715854244968,
+      "contact_failure_s": 12.9,
+      "first_physical_clearance_violation": {
+        "stamp": 11.750000000000032,
+        "independent_preintegration_clearance_m": 0.6949518553499983,
+        "pose": [
+          5.166621713634918,
+          -0.5584198519696922
+        ],
+        "observed_clearance_m": 0.6972545385360718,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.0260896891584352,
+          0.14388336176588365
+        ],
+        "disturbance_world_mps": [
+          0.05163956770470197,
+          0.05248753938642392
+        ],
+        "fcu_velocity_age_s": 3.197442310920451e-14,
+        "scan_age_s": 0.0,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 0.8500000000000002,
+        "independent_preintegration_clearance_m": 1.1276461051877198,
+        "pose": [
+          8.245879720567325,
+          0.17157009933230313
+        ],
+        "observed_clearance_m": 0.6730211973190309,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.11851626636264614,
+          0.46288991773443044
+        ],
+        "disturbance_world_mps": [
+          0.016715016562884377,
+          0.2511638583071876
+        ],
+        "fcu_velocity_age_s": 1.1102230246251565e-16,
+        "scan_age_s": 0.0,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_dirty_s3_delay040.json"
+    },
+    {
+      "seed": 3,
+      "kind": "late",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 256,
+      "minimum_logged_preintegration_clearance_m": 0.4132488798000648,
+      "contact_failure_s": 12.8,
+      "first_physical_clearance_violation": {
+        "stamp": 11.800000000000033,
+        "independent_preintegration_clearance_m": 0.690176743166807,
+        "pose": [
+          5.15235731430933,
+          -0.5596243174795988
+        ],
+        "observed_clearance_m": 0.6946215862366609,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.12659859246319652,
+          0.16391910721792963
+        ],
+        "disturbance_world_mps": [
+          0.04754395554987262,
+          0.08407584616464253
+        ],
+        "fcu_velocity_age_s": 3.197442310920451e-14,
+        "scan_age_s": 0.15,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 11.400000000000027,
+        "independent_preintegration_clearance_m": 0.7454614404356057,
+        "pose": [
+          5.199393815022414,
+          -0.5987805788249849
+        ],
+        "observed_clearance_m": 0.7511119194312167,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.08778191550523547,
+          0.035145647374045935
+        ],
+        "disturbance_world_mps": [
+          0.031216284540714095,
+          -0.11299611574734336
+        ],
+        "fcu_velocity_age_s": 2.6645352591003757e-14,
+        "scan_age_s": 0.15,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_late_s3_delay040.json"
+    },
+    {
+      "seed": 4,
+      "kind": "dirty",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 109,
+      "minimum_logged_preintegration_clearance_m": 0.40663877134446763,
+      "contact_failure_s": 5.4,
+      "first_physical_clearance_violation": {
+        "stamp": 4.299999999999993,
+        "independent_preintegration_clearance_m": 0.6935628114272739,
+        "pose": [
+          7.373353372659434,
+          0.42154894206044574
+        ],
+        "observed_clearance_m": 0.6464882680734001,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.22442328498793013,
+          -0.20154577550245745
+        ],
+        "disturbance_world_mps": [
+          -0.027388329282806163,
+          -0.19629691672237654
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.05,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 3.599999999999995,
+        "independent_preintegration_clearance_m": 0.8574721917811298,
+        "pose": [
+          7.585291467195152,
+          0.5160346238810242
+        ],
+        "observed_clearance_m": 0.8598626852035524,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.30767788632886506,
+          0.039673618185317464
+        ],
+        "disturbance_world_mps": [
+          0.05213669760168001,
+          0.016850372627562473
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.0,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_dirty_s4_delay040.json"
+    },
+    {
+      "seed": 4,
+      "kind": "late",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 213,
+      "minimum_logged_preintegration_clearance_m": 0.41201570441687085,
+      "contact_failure_s": 10.7,
+      "first_physical_clearance_violation": {
+        "stamp": 10.050000000000008,
+        "independent_preintegration_clearance_m": 0.6899489688937138,
+        "pose": [
+          5.655028530333465,
+          -0.9100510311062863
+        ],
+        "observed_clearance_m": 0.6899501785017644,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.1546891495832163,
+          -0.4639027149496981
+        ],
+        "disturbance_world_mps": [
+          -0.09550114863102668,
+          -0.5679858236232648
+        ],
+        "fcu_velocity_age_s": 7.105427357601002e-15,
+        "scan_age_s": 0.2,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 9.45,
+        "independent_preintegration_clearance_m": 0.9801178129181872,
+        "pose": [
+          5.810941272985696,
+          -0.6198821870818129
+        ],
+        "observed_clearance_m": 0.9801192632265947,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.39275983774409345,
+          -0.6014795513794242
+        ],
+        "disturbance_world_mps": [
+          -0.02463950360315037,
+          -0.3111594232218984
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.2,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_late_s4_delay040.json"
+    },
+    {
+      "seed": 5,
+      "kind": "dirty",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 109,
+      "minimum_logged_preintegration_clearance_m": 0.41157848807605907,
+      "contact_failure_s": 5.4,
+      "first_physical_clearance_violation": {
+        "stamp": 4.599999999999992,
+        "independent_preintegration_clearance_m": 0.6902277862341696,
+        "pose": [
+          7.4539364291511125,
+          0.3918182662091385
+        ],
+        "observed_clearance_m": 0.6826630767395518,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.20529062202115878,
+          -0.2971798478434006
+        ],
+        "disturbance_world_mps": [
+          0.07819223228868609,
+          -0.22105609170453372
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.05,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 0.0,
+        "independent_preintegration_clearance_m": 1.1280514172678482,
+        "pose": [
+          8.3,
+          0.0
+        ],
+        "observed_clearance_m": 0.6706686019897461,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          0.0,
+          0.0
+        ],
+        "disturbance_world_mps": null,
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.0,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_dirty_s5_delay040.json"
+    },
+    {
+      "seed": 5,
+      "kind": "late",
+      "passed": false,
+      "command_delay_s": 0.4,
+      "source_sha256": {
+        "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+        "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+        "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+        "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+        ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9"
+      },
+      "records": 116,
+      "minimum_logged_preintegration_clearance_m": 0.40660395111096925,
+      "contact_failure_s": 5.8,
+      "first_physical_clearance_violation": {
+        "stamp": 4.699999999999991,
+        "independent_preintegration_clearance_m": 0.6923656699777841,
+        "pose": [
+          7.522130726028228,
+          0.3628637828362127
+        ],
+        "observed_clearance_m": 0.6981340903519824,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.15671991638681504,
+          -0.2884575930205473
+        ],
+        "disturbance_world_mps": [
+          0.09036253391017236,
+          -0.2625884038250065
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.25,
+        "state": "BLOCKED",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "first_uncertified_raw_zero": {
+        "stamp": 4.149999999999993,
+        "independent_preintegration_clearance_m": 0.8726892974051719,
+        "pose": [
+          7.661239199999363,
+          0.49084074549762735
+        ],
+        "observed_clearance_m": 0.8781137784767348,
+        "command_body_mps": [
+          0.0,
+          0.0
+        ],
+        "braking_clearance_available": false,
+        "ground_velocity_world_mps": [
+          -0.2839926560993076,
+          -0.14901578823793266
+        ],
+        "disturbance_world_mps": [
+          0.05859070469934403,
+          0.05424102717842775
+        ],
+        "fcu_velocity_age_s": 0.0,
+        "scan_age_s": 0.25,
+        "state": "CRUISE",
+        "reason": "travel limited by observed braking clearance"
+      },
+      "output": "logs/reliability_remaining_qualification_20261006/gust_late_s5_delay040.json"
+    }
+  ],
+  "independent_reproduction": {
+    "rows_identical": true,
+    "failure_identical": true,
+    "source_sha256_identical": true
+  },
+  "qualified_source_manifests_identical": true,
+  "qualified_archive_manifests_identical": true,
+  "archives": [
+    {
+      "run": "reliability_render_my_world_s20261003_handover_guard_20261006",
+      "archive_sha256": "d3f93345289d050b4fe27e9cf0b83d8952c8fb0cbcd6e3efdec905dc1c8feac1",
+      "archive_sha256_matches": true,
+      "source_entries_checked": 756,
+      "byte_hash_failures": []
+    },
+    {
+      "run": "reliability_render_my_world_s1001_handover_guard_20261006",
+      "archive_sha256": "3b7c310ae51758f59a47f7fe445a5105aba7d85b1c601191fd42c5ea4df190f3",
+      "archive_sha256_matches": true,
+      "source_entries_checked": 756,
+      "byte_hash_failures": []
+    }
+  ],
+  "snapshot": {
+    "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006",
+    "exists": true,
+    "source_entries_checked": 756,
+    "missing": [],
+    "mismatched": [],
+    "symlinked": [],
+    "core_matches_both_qualified_runs": true,
+    "snapshot_verification.json": {
+      "source": "exact standard-pair qualified archive",
+      "snapshot": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006",
+      "source_entries_verified": 756,
+      "standard_seeds": [
+        20261003,
+        1001
+      ],
+      "archive": {
+        "source_files": 756,
+        "runtime_assets_verified": 53,
+        "archive": "recorded_source.zip",
+        "archive_sha256": "d3f93345289d050b4fe27e9cf0b83d8952c8fb0cbcd6e3efdec905dc1c8feac1",
+        "archive_verified": true
+      },
+      "qualification_pair": {
+        "standard_seeds": [
+          20261003,
+          1001
+        ],
+        "both_full_acceptances_passed": true,
+        "full_offline_suite_exit_code": 0,
+        "source_unchanged": true,
+        "broader_campaigns_started": false,
+        "note": "Broader campaigns, changing-gust qualification and deferred hardware remain outstanding"
+      },
+      "limitations": [
+        "Current-source coupled narrow-corridor gust/delay tests fail.",
+        "This snapshot campaign cannot qualify a later producer repair.",
+        "Headless navigation cannot qualify rendered perception or motor delivery."
+      ]
+    },
+    "decision_import_verification.json": {
+      "mission_bt.mission_tree": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_mission/mission_bt/mission_bt/mission_tree.py",
+        "sha256": "e6eb77c904644d413ffcc1a612e4867d68cf27db29927e280b8b3c43ca1753c3"
+      },
+      "avoidance.velocity_controller": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py",
+        "sha256": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93"
+      },
+      "camera_ctrl.camera_ctrl_node": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/camera_ctrl/camera_ctrl/camera_ctrl_node.py",
+        "sha256": "2361a2e5047ec689196cf9eb31e6c3c2e8b7685a545aa481f8e24eafbcc81e4a"
+      },
+      "winch_ctrl.winch_node": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py",
+        "sha256": "733b40e790807f712a34096d2398669aeca4868473405f8dfa367a3cb99bc67b"
+      },
+      "sim.navigation_mission": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/navigation_mission.py",
+        "sha256": "30856c204bd282314067a2ffb0c408b41bdb99f1319067b8d0786279cb2abfa1"
+      },
+      "sim.headless_world": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/headless_world.py",
+        "sha256": "44f78a9b48f88bd79e6fee2107e58de3a9405267babc4cbc7d421fa6c3de1346"
+      },
+      "perception_qr.qr_node": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/perception_qr/perception_qr/qr_node.py",
+        "sha256": "4e7418b8f967d7722df86f595ce1aa49b7abf6d9ed08c4ff4199c2d1cbe317a6"
+      },
+      "perception_redzone.redzone_node": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/perception_redzone/perception_redzone/redzone_node.py",
+        "sha256": "1276b4722be4b10b56a4bef01a8725333ed40b843d51034f58ceb682d06024e6"
+      },
+      "perception_banner.banner_node": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/src/aerothon_perception/perception_banner/perception_banner/banner_node.py",
+        "sha256": "81b5cef79358b085e5fe6626b53a32b46d0b46a6c96b1a4bf27cb4fc70a88678"
+      },
+      "world_spec": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/scripts/world_spec.py",
+        "sha256": "fdbb3acc14ec3219c0da6b6a57278bd1b6a2c358a25784dd952096a75418d5f8"
+      },
+      "materialize_world": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/scripts/materialize_world.py",
+        "sha256": "60962484fc8f019d50d43e0b0740c419a05beb29d6fc4563ff971c1fc29cde85"
+      },
+      "test_corridor_stress": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/test_corridor_stress.py",
+        "sha256": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d"
+      },
+      "campaign_record": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/campaign_record.py",
+        "sha256": "a288fc19b8db13ad7d06f247bdc5e31462a7773db14a4b88c1d97c3cf2d318b3"
+      },
+      "check_corridor_clearance": {
+        "path": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/scripts/check_corridor_clearance.py",
+        "sha256": "576b5b26e7cda04ac64bea17e9646739c50f3f78ec4770ae65e971285f26cfb0"
+      }
+    },
+    "runtime_import_audit": {
+      "modules_checked": 14,
+      "failures": []
+    },
+    "additional_assets": {
+      "provenance": "Current workspace non-code materials frozen at campaign setup",
+      "entries_checked": 10,
+      "failures": [],
+      "already_present_in_qualified_archive": [
+        "src/aerothon_sim/sim_gazebo/materials/qr_matrices.json"
+      ],
+      "unarchived_entries": 9
+    }
+  },
+  "limits": [
+    "Recorded minimum is pre-integration and excludes the final contact integration step.",
+    "This review does not qualify headless rendered perception or delivery.",
+    "Finite seed failures are control failures on feasible geometry, not proof of dynamic impossibility.",
+    "Gaussian OU turbulence has no deterministic configured disturbance/derivative maximum."
+  ]
+}

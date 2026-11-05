@@ -1,0 +1,3 @@
+Pi GCS readiness on bundle 20261015d (fa5dfc0f...), profile laptop-sim, 2026-10-15T05:00:43Z:
+FCU link Ready true; GPS satellites Ready 18; GPS HDOP Ready 0.8; Battery voltage Ready 16.8; EKF health Ready true; Lidar rate Ready 10; MAVLink latency Ready 0; Camera pose Ready true; Detector health Ready qr 0.1 s banner 0.1 s redzone 0.1 s; Winch health Ready healthy; RC failsafe Ready false; Delivery-zone boundary Ready loaded; Arena geofence Ready loaded; Banner colours Ready green=#07A03D orange=#EB5A0A red=#C4161C; Arena dimensions Ready QR 1.00 m, corridor 10.0 m at 2.44 m
+Header: Live FCU, STABILIZE, Transmitter/FCU owner, Armed No, Execution idle.

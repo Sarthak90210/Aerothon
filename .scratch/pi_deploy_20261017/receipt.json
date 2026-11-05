@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-17",
+  "triage": "ready-for-human",
+  "problem": "Pi SD slot failed (mmc0 error -110 whilst initialising SD card on two different cards, drop to initramfs); Pi reflashed onto a USB drive and needed the AEROTHON runtime rebuilt from source",
+  "scope": "Destination rebuild only; no flight, mission or threshold change. Source = commit 3c3334b plus the uncommitted MASTER_DOCUMENTATION.md notes.",
+  "destination": {
+    "host": "pi5@192.168.0.100 (Wi-Fi on the router LAN, no Internet)",
+    "os": "Debian GNU/Linux 13 (trixie), kernel 6.18.50+rpt-rpi-2712, 8 GB",
+    "boot": "USB 3 drive PNY USB 3.2.2 FD 931.5 GB (/dev/sda1 boot, /dev/sda2 root); SD slot empty; EEPROM BOOT_ORDER 0xf461 unchanged",
+    "config_txt": "added under [pi5]: dtoverlay=uart2-pi5, usb_max_current_enable=1; backup /boot/firmware/config.txt.before-aerothon-20261017",
+    "verified_after_reboot": "usb_max_current_enable=1 (firmware and device tree); /dev/ttyAMA2 present; GPIO4=TXD2, GPIO5=RXD2; GPIO14/15 unassigned; throttled 0x0, EXT5V 4.91 V"
+  },
+  "install": {
+    "internet": "temporary loopback-only SSH reverse proxy (127.0.0.1:3128 on the Pi) from the laptop, which had Internet through iPhone USB tethering; laptop on wired Ethernet 192.168.0.102 because its Wi-Fi kept hopping to the drone receiver's 'ExpressLRS RX' AP; first DNS lookup ~12 s on the laptop",
+    "clock": "set from the laptop (NTP unreachable); image date had been 6 Oct",
+    "host_packages": "docker.io 26.1.5, docker-cli, python3-serial, git, v4l-utils, usbutils; pi5 added to the docker group",
+    "bundle": "361 files (scripts/package_pi_runtime.py payload, text LF-normalised, + sllidar_ros2) uploaded as one archive and hash-verified 361/361",
+    "external_drivers": {
+      "sllidar_ros2": "Slamtec/sllidar_ros2 34300099fadfc772965962dec837bf436706188f from the WSL checkout (git archive), inventory EXTERNAL_DRIVER.json",
+      "ldlidar_stl_ros2": "ldrobotSensorTeam/ldlidar_stl_ros2 bf668a89baf722a787dadc442860dcbf33a82f5a + scripts/pi_runtime/ldlidar-pthread.patch, inventory EXTERNAL_DRIVER.json"
+    },
+    "images": {
+      "base": "ros:jazzy-ros-base-noble@sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca (arm64)",
+      "aerothon-dependencies:20261014": "e8d26b4821df, 613 packages (358 MB downloaded)",
+      "aerothon-runtime:20261014": "ef516a1ec31f, 2.71 GB"
+    },
+    "workspace": "colcon --symlink-install --parallel-workers 2: 14 packages finished in 29.1 s; only sllidar vendor SDK warnings",
+    "runtime_check": "run_container.sh check: all PASS (21 ROS packages, Python imports, tesseract, MAVROS geoid data, built GCS)",
+    "services": "install_services.sh; aerothon-router and aerothon-gcs active and enabled; runtime.env AEROTHON_FCU_DEVICE=/dev/ttyAMA2 (was /dev/ttyAMA0)",
+    "state": "/home/pi5/.aerothon/sitl_delivery_load_20261005.json = logs/delivery_profile_20261005.json (sha256 ab8a664d...)",
+    "profiles": {
+      "drone": "serial /dev/ttyAMA2 115200, vehicle drone, camera /dev/video0, lidar /dev/ttyUSB0, slam true, marker 3.0 m, gcs_host empty (LAN broadcast), hardware_reviewed false",
+      "laptop-sim": "tcp 192.168.0.102:5762, gateway http://192.168.0.102:19090, delivery sitl_delivery_load_20261005.json, slam false"
+    },
+    "gcs": "http://192.168.0.100:8899 answers from the laptop (HTTP 200); profiles listed, runtime stopped"
+  },
+  "wifi_lost_after_power_cut": {
+    "found": "after the 05:23 cold boot (drone runtime start at 4.76 V, throttled 0x50000) /etc/netplan held two 0-byte 90-NM-*.yaml files and no Wi-Fi config; ext4 'orphan cleanup' logged; NetworkManager had only the wired connection; Wi-Fi hardware fine (brcmfmac BCM4345/6, 'iphone' at signal 100)",
+    "fix": "restored /etc/netplan/50-cloud-init.yaml (0600) from Imager's /boot/firmware/network-config, netplan generate, nmcli reload/up; wlan0 connected 'netplan-wlan0-iphone' at 192.168.0.102, eth0 at 192.168.0.104; old dir backed up to ~/.local/state/aerothon/backup-netplan-20261017_052808",
+    "secrets": "Wi-Fi password copied file-to-file on the Pi, never printed or entered"
+  },
+  "mission_planner_udp": "router-only (no runtime): owns /dev/ttyAMA2, LAN broadcast 192.168.0.255:14550, MP counted as GCS endpoint; laptop PARAM_REQUEST_LIST over UDP to 192.168.0.104:14550 returned all 1036 params in <30 s, 1973 FC frames, 0.4% sequence loss",
+  "pixhawk_uart2": {
+    "wiring_found": "lgpio edge capture: GPIO6 (header 31) 305 edges in 4 bursts / 4 s = FC TX one pin off; GPIO5 (header 29) none. GPIO4 (header 7) drives low/high correctly into the FC RX pull-up",
+    "after_move_to_29": "direct /dev/ttyAMA2 115200 test without the runtime: 3 heartbeats (sys 1, comp 1) in 3 s; PARAM_REQUEST_LIST -> 1037 PARAM_VALUE frames covering all 1036 parameters in under 25 s; STATUSTEXT x12, TIMESYNC x3; throttled 0x0",
+    "connect_note": "the drone profile was still saved with hardware_reviewed false, so the earlier Connect was refused; tick, Save profile, then Connect"
+  },
+  "blockers": [
+    "operator must tick 'Secured props-off wiring reviewed' on the drone profile before Connect",
+    "GPIO14 (header 8) suspected damaged; UART0 left disabled",
+    "camera and lidar not attached at verification",
+    "Pi 5 supply still ~4.90 V at idle; earlier full-runtime loads browned it out",
+    "SD slot hardware fault unresolved; SanDisk 3.2Gen1 stick works again after a replug"
+  ]
+}

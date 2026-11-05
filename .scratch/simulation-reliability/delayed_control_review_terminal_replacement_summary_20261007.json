@@ -1,0 +1,27 @@
+{
+  "source": "logs/delayed_control_review_terminal_replacement_dirty0_20261007.json",
+  "source_sha256": "240f3c162dbe5848a9a75bf389e82b0982002e06c7e02f7455861ee3ac4401bc",
+  "passed": false,
+  "failure": "AssertionError: airframe touched something at (7.55, -0.08) t=19.1s; detail {'state': 'BLOCKED', 'front_m': 0.61, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 0.65, 'side_right_m': 1.62, 'open_depth_m': 2.7, 'open_width_m': 2.27, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.0, 'cmd_vy_left': 0.0, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 2, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [-0.014663985923898577, -0.2916705746699598], 'disturbance_rate_world_mps2': [-0.025359239014268828, 0.08210010025408453], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [-0.014664041890456631, -0.2916707063969942], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 1.3500311979441904e-13, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.29, 'planner_state': 'aircraft lacks required surface clearance', 'required_clearance_m': 0.7, 'observed_clearance_m': 0.3814322985298428, 'scan_age_s': 0.05, 'pose_age_s': 0.0, 'planner_path_body_m': [], 'axis_progress_m': 0.745, 'note': 'no navigable gap', 'blocked_ticks': 18, 'diagnostic_policy': 'causal direct residual and receipt position control', 'diagnostic_mode': 'bootstrap measured-position hold', 'diagnostic_receipt_position_world_m': [7.5471815807570435, -0.1733211899081956], 'diagnostic_target_world_m': [7.693533494685409, 0.5470962597963835], 'diagnostic_observer': {'residual_world_mps': [-0.014663985923898577, -0.2916705746699598], 'causal_rate_world_mps2': [-0.025359239014268828, 0.08210010025408453]}, 'diagnostic_assumptions': 'point forecasts only; no qualified future uncertainty bound', 'braking_clearance_available': False, 'recovery_reason': 'travel limited by observed braking clearance'}; track tail [(18.8, 7.56, -0.0), (18.85, 7.56, -0.02), (18.9, 7.56, -0.03), (18.95, 7.56, -0.05), (19.0, 7.55, -0.06), (19.05, 7.55, -0.08)]",
+  "actual_minimum_clearance_m": 0.3945426220446239,
+  "observations": 381,
+  "final_observation_s": 19.000000000000135,
+  "first_observed_clearance_violation": {
+    "stamp": 11.60000000000003,
+    "pose": [
+      7.653163144577528,
+      0.2809493779946771
+    ],
+    "clearance_m": 0.6980430342008491
+  },
+  "first_uncertified_raw_zero_s": 4.249999999999993,
+  "original_and_replacement_comparisons": 2037,
+  "replacement_accepted_legacy_refused": 0,
+  "first_replacement_accepted_legacy_refused": null,
+  "replacement_refused_legacy_accepted": 94,
+  "empirical_error_max_m": 0.09182330813404889,
+  "empirical_error_samples": 373,
+  "held_out_trials_run": 0,
+  "qualified_future_uncertainty_bound": false,
+  "production_adoption_supported": false
+}

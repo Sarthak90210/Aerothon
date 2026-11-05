@@ -1,0 +1,31 @@
+{
+  "packages": {
+    "code": 1,
+    "stdout": "labwc 0.20.2-1~bpo13+1 install ok installed\nlightdm 1.32.0-6+rpt2 install ok installed\nraspi-config 20261026 install ok installed\nrealvnc-vnc-server 7.13.1.57 install ok installed\nwayvnc 0.10.2-1+rpt1 install ok installed",
+    "stderr": "dpkg-query: no packages found matching tigervnc-standalone-server"
+  },
+  "services": {
+    "code": 3,
+    "stdout": "\u25cf lightdm.service - Light Display Manager\n     Loaded: loaded (/usr/lib/systemd/system/lightdm.service; enabled; preset: enabled)\n     Active: active (running) since Wed 2026-10-14 05:06:17 IST; 12h ago\n Invocation: 5e104a43e0e2440bbd5ed7eaecc142c3\n       Docs: man:lightdm(1)\n   Main PID: 1191 (lightdm)\n      Tasks: 4 (limit: 9626)\n        CPU: 27ms\n     CGroup: /system.slice/lightdm.service\n             \u2514\u25001191 /usr/sbin/lightdm\n\nOct 14 05:06:17 pi5 systemd[1]: Starting lightdm.service - Light Display Manager...\nOct 14 05:06:17 pi5 systemd[1]: Started lightdm.service - Light Display Manager.\n\n\u25cb wayvnc.service - VNC Server\n     Loaded: loaded (/usr/lib/systemd/system/wayvnc.service; disabled; preset: enabled)\n     Active: inactive (dead)\n       Docs: man:wayvnc\n\n\u25cb vncserver-x11-serviced.service - VNC Server in Service Mode daemon\n     Loaded: loaded (/usr/lib/systemd/system/vncserver-x11-serviced.service; disabled; preset: enabled)\n     Active: inactive (dead)",
+    "stderr": ""
+  },
+  "sessions": {
+    "code": 0,
+    "stdout": "1 1000 pi5 seat0 1200 user    tty1 yes -\n2 1000 pi5 -     1217 manager -    no  -\n8 1000 pi5 -     3436 user    -    no  -\n9 1000 pi5 -     3532 user    -    no  -",
+    "stderr": ""
+  },
+  "desktop_processes": {
+    "code": 0,
+    "stdout": "3603 sudo -S -p  bash -c python3 - <<'PY' import json,shutil,subprocess from pathlib import Path def run(args):  p=subprocess.run(args,capture_output=True,text=True,timeout=20)  return {'code':p.returncode,'stdout':p.stdout.strip(),'stderr':p.stderr.strip()} print(json.dumps({'packages':run(['dpkg-query','-W','-f=${Package} ${Version} ${Status}\\n','wayvnc','realvnc-vnc-server','raspi-config','labwc','lightdm','tigervnc-standalone-server']),'services':run(['systemctl','status','display-manager','wayvnc','vncserver-x11-serviced','--no-pager']),'sessions':run(['loginctl','list-sessions','--no-legend']),'desktop_processes':run(['pgrep','-a','-f','labwc|wayfire|Xorg|Xwayland|wayvnc|vncserver']),'wayvnc_configuration':{str(p):p.read_text() for p in [Path('/etc/wayvnc/config'),Path('/home/pi5/.config/wayvnc/config')] if p.exists()},'raspi_config':shutil.which('raspi-config'),'vnc_listener':run(['ss','-lntp','sport = :5900'])},indent=2)) PY\n3607 bash -c python3 - <<'PY' import json,shutil,subprocess from pathlib import Path def run(args):  p=subprocess.run(args,capture_output=True,text=True,timeout=20)  return {'code':p.returncode,'stdout':p.stdout.strip(),'stderr':p.stderr.strip()} print(json.dumps({'packages':run(['dpkg-query','-W','-f=${Package} ${Version} ${Status}\\n','wayvnc','realvnc-vnc-server','raspi-config','labwc','lightdm','tigervnc-standalone-server']),'services':run(['systemctl','status','display-manager','wayvnc','vncserver-x11-serviced','--no-pager']),'sessions':run(['loginctl','list-sessions','--no-legend']),'desktop_processes':run(['pgrep','-a','-f','labwc|wayfire|Xorg|Xwayland|wayvnc|vncserver']),'wayvnc_configuration':{str(p):p.read_text() for p in [Path('/etc/wayvnc/config'),Path('/home/pi5/.config/wayvnc/config')] if p.exists()},'raspi_config':shutil.which('raspi-config'),'vnc_listener':run(['ss','-lntp','sport = :5900'])},indent=2)) PY",
+    "stderr": ""
+  },
+  "wayvnc_configuration": {
+    "/etc/wayvnc/config": "use_relative_paths=true\naddress=::\nenable_auth=true\nenable_pam=true\nprivate_key_file=tls_key.pem\ncertificate_file=tls_cert.pem\nrsa_private_key_file=rsa_key.pem\n"
+  },
+  "raspi_config": "/usr/bin/raspi-config",
+  "vnc_listener": {
+    "code": 0,
+    "stdout": "State Recv-Q Send-Q Local Address:Port Peer Address:PortProcess",
+    "stderr": ""
+  }
+}

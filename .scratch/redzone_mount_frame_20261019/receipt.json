@@ -1,0 +1,69 @@
+{
+  "feature": "redzone_mount_frame_20261019",
+  "date": "2026-10-19",
+  "triage": "ready-for-human",
+  "problem": "Does the red-zone georeference double-count aircraft pitch on the real drone? camera_ctrl's actual_rad goes to redzone_node as _cam_pitch = -actual_rad, and georef.ground_point_q rotates that by the full aircraft quaternion, so it is treated as BODY-relative tilt.",
+  "scope": "Investigation only. No src/ file was changed. The proposed fix and its tests live in this directory and use the unmodified georef.ground_point_q.",
+  "status": "finding complete; fix proposed, not applied; awaiting user approval",
+  "source_examined": {
+    "git_head": "21ae45b3780e684374574b6ec7892b68e4425023",
+    "files_unmodified_in_worktree": {
+      "src/aerothon_perception/camera_ctrl/camera_ctrl/camera_ctrl_node.py": "f9f3396f967dc8d66c24346e9bcc679f45b1037d6b535c04ca1d037f0262bf99",
+      "src/aerothon_perception/perception_redzone/perception_redzone/redzone_node.py": "860ccb7bfda3124cb4489a070b401f137b257fabd623a8a94141f7bd78a888fe",
+      "src/aerothon_perception/perception_redzone/perception_redzone/georef.py": "c8d672204bc9b57ef840c985aa0299c0edbc7d4f8dadb7e0eb7ec74d553d7f30",
+      "src/aerothon_mission/mission_bringup/config/aerothon_hardware.parm": "b375402174a10bea69746746bc0cfaac77ed3fb18ac035eb5ff05a3eaefaaa6d"
+    },
+    "ardupilot_reference": "WSL ~/ardupilot at 744d5e1378 (master, 2026-06-02) plus tags Copter-4.5.7 and Copter-4.6.0..4.6.3, libraries/AP_Mount/{AP_Mount.cpp,AP_Mount_Servo.cpp,AP_Mount_Backend.cpp}",
+    "real_drone_route": "web.py launches camera_backend:=mavlink with no remote gateway, so external_joint_feedback=false. readback is 'mount' when /mavros/gimbal_control/device/attitude_status is fresh (<=1 s), otherwise 'timed'."
+  },
+  "ardupilot_facts": {
+    "do_mount_control": "MAV_CMD_DO_MOUNT_CONTROL in MAVLINK_TARGETING calls set_angle_target(roll, pitch, yaw, yaw_ef=false). Pitch is EARTH-frame (pitch_is_ef defaults true; source comment says 'param1: pitch (earth-frame, degrees)').",
+    "servo_stabilisation": "MNT1_TYPE 1 builds AP_Mount_Servo with requires_stabilization=true (4.5.7 and master). update_angle_outputs sets body tilt = target_ef_pitch - ahrs_pitch, then move_servo clamps it to [MNT1_PITCH_MIN, MNT1_PITCH_MAX] = [-90, +30]. Only SERVO9 (mount tilt) is assigned, so roll compensation drives no servo and the camera rolls with the airframe.",
+    "gimbal_device_attitude_status_copter_4_5": "Copter-4.5.7 AP_Mount_Servo::get_attitude_quaternion reports mnt_target.angle_rad, i.e. the EARTH-frame TARGET. It echoes the command and measures nothing.",
+    "gimbal_device_attitude_status_copter_4_6_plus": "Since 0af4649705 (2024-05-16; first in Copter-4.6.0) it reports the clamped BODY-frame servo demand. That is still a demand, not a measurement. get_gimbal_device_flags still sets GIMBAL_DEVICE_FLAGS_PITCH_LOCK ('pitch angle is always earth-frame'), so the message flags cannot tell camera_ctrl which frame the quaternion is in.",
+    "project_sitl_firmware": "~/aerothon_stack/src/ardupilot is Copter-4.5.7-3-gb72075518f, which has the 4.5 behaviour: mount status = EF target echo.",
+    "fc_firmware_on_drone": "UNMEASURED. aerothon_hardware.parm says 'Copter 4.5', but no AUTOPILOT_VERSION or parameter dump from the CUAV X7+ is recorded in the repo. Whether the FC streams GIMBAL_DEVICE_ATTITUDE_STATUS on the companion link is also unmeasured."
+  },
+  "readback_frames": [
+    {"route": "real drone, readback=timed", "actual_rad_frame": "earth (requested EF target, after servo_settle_s)", "georef_correct": false, "notes": "Double-counts pitch whenever the servo is not saturated."},
+    {"route": "real drone, readback=mount, Copter <=4.5", "actual_rad_frame": "earth (EF target echo)", "georef_correct": false, "notes": "Same error as timed. The settled gate passes because the echo equals the request."},
+    {"route": "real drone, readback=mount, Copter >=4.6", "actual_rad_frame": "body (clamped servo demand)", "georef_correct": true, "notes": "The projection is right, but camera_ctrl compares a body demand with the EF request. With nose-down lean >2 deg (tolerance_deg), settled=false, so redzone drops _cam_pitch (NOT_VISIBLE) and settled-gated stages stall in forward flight. This is the same body/earth mismatch the parent session found in the laptop-sim route."},
+    {"route": "laptop-sim via remote gateway (SITL MNT1_TYPE 1 -> SERVO9 PWM -> Gazebo joint)", "actual_rad_frame": "body (Gazebo joint)", "georef_correct": true, "notes": "The settled check mismatches (parent session's finding)."},
+    {"route": "Gazebo backend:=sim and headless_world", "actual_rad_frame": "body joint, never stabilised", "georef_correct": true, "notes": "The camera never stabilises, so no simulator route exercises the real drone's earth-frame mount. That is why this was not caught. Existing test sim/test_redzone_georef.py::test_a_pitched_airframe_moves_the_ground_point encodes the body-fixed assumption."}
+  ],
+  "error_size": {
+    "method": "frame_error_calc.py: truth = AP_Mount_Servo model (body tilt = clamp(EF - pitch)) with an independent rotation-matrix ray. Compared with the unmodified georef.ground_point_q fed the way redzone_node feeds it. Image-centre pixel, yaw 30 deg. Output: frame_error_calc.out.json.",
+    "nadir_nose_down_unsaturated_current_error_m": {"5m_2deg": 0.175, "5m_4deg": 0.35, "5m_8deg": 0.703, "10m_2deg": 0.349, "10m_4deg": 0.699, "10m_8deg": 1.405, "10m_15deg": 2.679},
+    "rule": "error = altitude * tan(|nose-down pitch|), placed backward along the nose. Forward flight and lane-start acceleration lean nose-down, so this is the common case during the search sweep (search_alt_max 10 m).",
+    "nadir_nose_up": "The servo saturates at MNT1_PITCH_MIN -90 (it cannot reach -90-p), so the camera is body-nadir and the current code is exactly right. The error appears only for nose-down lean, which means braking frames and cruising frames disagree.",
+    "oblique_ALIGN_-45": "At 10 m: 1.31 m (4 deg nose-down), 1.50 m (4 deg nose-up), 2.46 m (8 deg nose-down). redzone only georeferences within 0.35 rad of nadir, so this matters for other consumers, not the red-zone map.",
+    "roll": "Not double-counted. The tilt-only mount does not compensate roll, and the quaternion correctly includes it.",
+    "footprint_inconsistency": "redzone's 'observed' footprint() uses yaw only. At nadir it is right for nose-down lean and wrong for nose-up (saturated) lean and any roll (0.87 m at 10 m / 5 deg). That is the opposite of project_polygon, so the CLEAR area and the RED polygons are projected with different geometry.",
+    "impact": "With cell_m 1.0, confirm_hits 3 and inflate_m 1.0, a 0.35-0.7 m systematic shift in cruise eats most of the 1.0 m inflation. Frames taken at different leans also smear one zone across cells and can delay confirmation. The 1.50 m restricted-zone clearance assumes the exclusion is where the red is."
+  },
+  "proposed_fix": {
+    "summary": "Carry the reading's frame explicitly and convert earth-frame readings to body tilt in redzone with the FC's own law, using the capture-time quaternion.",
+    "steps": [
+      "camera_ctrl: add pose_state field 'pitch_frame'. Use 'earth' for timed; for mount, take it from a new parameter mount_status_frame (earth|body) that must be set from the MEASURED FC firmware (<=4.5 earth, >=4.6 body), because the message flags lie. Use 'body' for joint readback.",
+      "camera_ctrl: evaluate settled in the request's frame (convert a body reading to earth with the aircraft pitch, or compare against the clamped body demand). This is the shared fix for the parent session's laptop-sim finding.",
+      "georef: add body_tilt_from_earth(pitch_ef, quat, min, max) = clamp(pitch_ef - aircraft_pitch_up(quat)). See proposed_mount_frame.py.",
+      "redzone_node: keep the reading and its frame. Per frame, when the frame is earth, project with -body_tilt_from_earth(actual, pose_at(capture).quat, MNT1 limits as node parameters). Also make the nadir-tolerance check and footprint() use the same full-attitude geometry (add footprint_q).",
+      "Review other actual_rad consumers for the same frame question: banner_orbit.py:173 treats it as earth (alt/tan(down), no attitude), and mission_tree.py around lines 2567, 5356 and 5750 gates on |actual_rad|."
+    ],
+    "tests": "test_proposed_mount_frame.py, 7 tests, passing against unmodified georef: pitch sign, level unchanged, nose-down stabilised nadir lands under the aircraft (<1 cm), current treatment double-counts (= h*tan p), nose-up saturation, roll not compensated, oblique EF hold. Applying the fix also needs redzone_node tests for pitch_frame handling and an update to test_a_pitched_airframe_moves_the_ground_point to name the body-frame case.",
+    "verification_needed": "Changes a decision path (red-zone exclusions), so per AGENTS.md: reduced offline suite plus renewed rendered evidence. A sim route that reproduces earth-frame readback (remote gateway with MNT1_TYPE 1 already stabilises; publish pitch_frame=body there) should also be checked."
+  },
+  "blockers": [
+    "User approval before changing camera_ctrl/redzone/georef decision code.",
+    "FC firmware version on the CUAV X7+ (AUTOPILOT_VERSION) is unmeasured, and so is whether GIMBAL_DEVICE_ATTITUDE_STATUS arrives on the companion link; together they decide mount_status_frame.",
+    "Physical check still owed: tilt the airframe on the bench at FORWARD/NADIR and confirm the servo counter-rotates (MNT1_TYPE 1 stabilisation) and saturates at the endpoints."
+  ],
+  "evidence": ["frame_error_calc.py", "frame_error_calc.out.json", "proposed_mount_frame.py", "test_proposed_mount_frame.py"],
+  "evidence_sha256": {
+    "frame_error_calc.py": "610ea771cb11c511da0cae48aa0ab9d779f3d57340604f6d706fd1451f6cc202",
+    "frame_error_calc.out.json": "275c09928093ed212ce24fabc208c60d8ee47f6555a1e29a97c1db2b6de4b7b2",
+    "proposed_mount_frame.py": "5fdc939e45e223e1ff0350ea81ec617f1fe9f3c19cfa80d2a3c0362152dc1671",
+    "test_proposed_mount_frame.py": "99a939fa6ac8c82623cd048d77371e3e521dd8b3b147a5867fb27c2f349b790c"
+  },
+  "completion": "Question answered: yes on Copter <=4.5 or timed readback (the current hardware assumption), and no on Copter >=4.6 with a fresh mount status, where the settled gate breaks instead. No code changed and nothing committed."
+}

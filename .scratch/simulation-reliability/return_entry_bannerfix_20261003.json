@@ -1,0 +1,40 @@
+{
+  "x": 16.0013370513916,
+  "y": -15.442790985107422,
+  "alt": 1.6725294589996338,
+  "yaw": 2.9339302341130113,
+  "source": "logs/reliability_render_my_world_s20261003_bannerfix_20261006/onboard.jsonl",
+  "source_sha256": "4b77841fb21f3dfd5d41dc195ea3999d7114474136f3b2016e46645ec6cd8b43",
+  "captured_stamp": 868.408,
+  "purpose": "focused operator starting condition from FCU pose; no geometry input to planner",
+  "approach": {
+    "x": 21.33992576599121,
+    "y": -16.300443649291992,
+    "captured_stamp": 852.9810000000001
+  },
+  "recorded_entry_velocity": {
+    "received_stamp": 868.3910000000001,
+    "received_wall_s": 3914.500861583,
+    "data": {
+      "header": {
+        "stamp": {
+          "sec": 868,
+          "nanosec": 391000000
+        },
+        "frame_id": "base_link"
+      },
+      "twist": {
+        "linear": {
+          "x": -0.3073583245277405,
+          "y": 0.06863142549991608,
+          "z": -0.003437673905864358
+        },
+        "angular": {
+          "x": 0.005344428202270348,
+          "y": 0.23129458759916102,
+          "z": -0.025059517314436716
+        }
+      }
+    }
+  }
+}

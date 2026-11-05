@@ -1,0 +1,8 @@
+{"cmd": "set_arena_dimensions", "id": "pi-d-set-arena-dimensions-0", "res": {"command_id": "pi-d-set-arena-dimensions-0", "state": "Submitted", "reason": ""}}
+{"cmd": "set_banner_colours", "id": "pi-d-set-banner-colours-0", "res": {"command_id": "pi-d-set-banner-colours-0", "state": "Submitted", "reason": ""}}
+{"cmd": "set_delivery_zone", "id": "pi-d-set-delivery-zone-0", "res": {"command_id": "pi-d-set-delivery-zone-0", "state": "Submitted", "reason": ""}}
+{"cmd": "set_geofence", "id": "pi-d-set-geofence-0", "res": {"command_id": "pi-d-set-geofence-0", "state": "Submitted", "reason": ""}}
+{"cmd": "set_arena_dimensions", "id": "pi-d2-set-arena-dimensions-0", "res": {"command_id": "pi-d2-set-arena-dimensions-0", "state": "Submitted", "reason": ""}}
+{"cmd": "set_banner_colours", "id": "pi-d2-set-banner-colours-0", "res": {"command_id": "pi-d2-set-banner-colours-0", "state": "Submitted", "reason": ""}}
+{"cmd": "set_delivery_zone", "id": "pi-d2-set-delivery-zone-0", "res": {"command_id": "pi-d2-set-delivery-zone-0", "state": "Submitted", "reason": ""}}
+{"cmd": "set_geofence", "id": "pi-d2-set-geofence-0", "res": {"command_id": "pi-d2-set-geofence-0", "state": "Submitted", "reason": ""}}

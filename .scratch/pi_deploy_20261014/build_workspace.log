@@ -1,0 +1,827 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            BuildKit is currently disabled; enable it by removing the DOCKER_BUILDKIT=0
+            environment-variable.
+
+Sending build context to Docker daemon  1.406MB
+Step 1/6 : FROM ros:jazzy-ros-base-noble@sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca
+ ---> c3c5545ce255
+Step 2/6 : ENV DEBIAN_FRONTEND=noninteractive
+ ---> Running in eed7035ac6a6
+ ---> Removed intermediate container eed7035ac6a6
+ ---> 0f6d78de3a6e
+Step 3/6 : RUN apt-get update && apt-get install -y --no-install-recommends     ros-jazzy-mavros ros-jazzy-mavros-extras ros-jazzy-cv-bridge     ros-jazzy-web-video-server ros-jazzy-usb-cam ros-jazzy-xacro     ros-jazzy-robot-state-publisher ros-jazzy-py-trees     python3-opencv python3-numpy python3-scipy python3-serial     python3-websockets python3-pyzbar tesseract-ocr libzbar0     geographiclib-tools     && /opt/ros/jazzy/lib/mavros/install_geographiclib_datasets.sh     && rm -rf /var/lib/apt/lists/*
+ ---> Running in 1d3f133612b4
+Get:1 http://ports.ubuntu.com/ubuntu-ports noble InRelease [256 kB]
+Get:2 http://packages.ros.org/ros2/ubuntu noble InRelease [4679 B]
+Get:3 http://packages.ros.org/ros2/ubuntu noble/main Sources [2238 kB]
+Get:4 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease [126 kB]
+Get:5 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease [126 kB]
+Get:6 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease [126 kB]
+Get:7 http://packages.ros.org/ros2/ubuntu noble/main arm64 Packages [2098 kB]
+Get:8 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 Packages [1776 kB]
+Get:9 http://ports.ubuntu.com/ubuntu-ports noble/multiverse arm64 Packages [274 kB]
+Get:10 http://ports.ubuntu.com/ubuntu-ports noble/restricted arm64 Packages [113 kB]
+Get:11 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 Packages [19.0 MB]
+Get:12 http://ports.ubuntu.com/ubuntu-ports noble-updates/multiverse arm64 Packages [104 kB]
+Get:13 http://ports.ubuntu.com/ubuntu-ports noble-updates/restricted arm64 Packages [3251 kB]
+Get:14 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 Packages [2212 kB]
+Get:15 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 Packages [1786 kB]
+Get:16 http://ports.ubuntu.com/ubuntu-ports noble-backports/main arm64 Packages [49.0 kB]
+Get:17 http://ports.ubuntu.com/ubuntu-ports noble-backports/universe arm64 Packages [36.3 kB]
+Get:18 http://ports.ubuntu.com/ubuntu-ports noble-backports/multiverse arm64 Packages [669 B]
+Get:19 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 Packages [1474 kB]
+Get:20 http://ports.ubuntu.com/ubuntu-ports noble-security/universe arm64 Packages [1636 kB]
+Get:21 http://ports.ubuntu.com/ubuntu-ports noble-security/multiverse arm64 Packages [99.1 kB]
+Get:22 http://ports.ubuntu.com/ubuntu-ports noble-security/restricted arm64 Packages [3129 kB]
+Fetched 39.9 MB in 35s (1142 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+python3-numpy is already the newest version (1:1.26.4+ds-6ubuntu1).
+python3-numpy set to manually installed.
+The following additional packages will be installed:
+  autoconf automake autotools-dev ffmpeg gdal-data gdal-plugins gfortran-13
+  gfortran-13-aarch64-linux-gnu ibverbs-providers icu-devtools iso-codes
+  libaec0 libarmadillo12 libarpack2t64 libasio-dev libasound2-data
+  libasound2t64 libass9 libasyncns0 libavc1394-0 libavcodec-dev libavcodec60
+  libavdevice60 libavfilter9 libavformat-dev libavformat60 libavutil-dev
+  libavutil58 libblosc1 libbluray2 libboost-all-dev libboost-atomic-dev
+  libboost-atomic1.83-dev libboost-atomic1.83.0 libboost-chrono-dev
+  libboost-chrono1.83-dev libboost-chrono1.83.0t64 libboost-container-dev
+  libboost-container1.83-dev libboost-container1.83.0 libboost-context-dev
+  libboost-context1.83-dev libboost-context1.83.0 libboost-coroutine-dev
+  libboost-coroutine1.83-dev libboost-coroutine1.83.0 libboost-date-time-dev
+  libboost-date-time1.83-dev libboost-date-time1.83.0 libboost-dev
+  libboost-exception-dev libboost-exception1.83-dev libboost-fiber-dev
+  libboost-fiber1.83-dev libboost-fiber1.83.0 libboost-filesystem-dev
+  libboost-filesystem1.83-dev libboost-filesystem1.83.0 libboost-graph-dev
+  libboost-graph-parallel-dev libboost-graph-parallel1.83-dev
+  libboost-graph-parallel1.83.0 libboost-graph1.83-dev libboost-graph1.83.0
+  libboost-iostreams-dev libboost-iostreams1.83-dev libboost-iostreams1.83.0
+  libboost-json-dev libboost-json1.83-dev libboost-json1.83.0
+  libboost-locale-dev libboost-locale1.83-dev libboost-locale1.83.0
+  libboost-log-dev libboost-log1.83-dev libboost-log1.83.0 libboost-math-dev
+  libboost-math1.83-dev libboost-math1.83.0 libboost-mpi-dev
+  libboost-mpi-python-dev libboost-mpi-python1.83-dev
+  libboost-mpi-python1.83.0 libboost-mpi1.83-dev libboost-mpi1.83.0
+  libboost-nowide-dev libboost-nowide1.83-dev libboost-nowide1.83.0
+  libboost-numpy-dev libboost-numpy1.83-dev libboost-numpy1.83.0
+  libboost-program-options-dev libboost-program-options1.83-dev
+  libboost-program-options1.83.0 libboost-python-dev libboost-python1.83-dev
+  libboost-python1.83.0 libboost-random-dev libboost-random1.83-dev
+  libboost-random1.83.0 libboost-regex-dev libboost-regex1.83-dev
+  libboost-regex1.83.0 libboost-serialization-dev
+  libboost-serialization1.83-dev libboost-serialization1.83.0
+  libboost-stacktrace-dev libboost-stacktrace1.83-dev
+  libboost-stacktrace1.83.0 libboost-system-dev libboost-system1.83-dev
+  libboost-system1.83.0 libboost-test-dev libboost-test1.83-dev
+  libboost-test1.83.0 libboost-thread-dev libboost-thread1.83-dev
+  libboost-thread1.83.0 libboost-timer-dev libboost-timer1.83-dev
+  libboost-timer1.83.0 libboost-tools-dev libboost-type-erasure-dev
+  libboost-type-erasure1.83-dev libboost-type-erasure1.83.0 libboost-url-dev
+  libboost-url1.83-dev libboost-url1.83.0 libboost-wave-dev
+  libboost-wave1.83-dev libboost-wave1.83.0 libboost1.83-dev
+  libboost1.83-tools-dev libbs2b0 libcaca0 libcairo-gobject2 libcap2-bin
+  libcbor0.10 libcdio-cdda2t64 libcdio-paranoia2t64 libcdio19t64
+  libcfitsio10t64 libcharls2 libchromaprint1 libcjson1 libcodec2-1.2 libdav1d7
+  libdc1394-25 libdc1394-dev libdecor-0-0 libdeflate-dev libdouble-conversion3
+  libdrm-amdgpu1 libdrm-common libdrm2 libdw1t64 libedit2 libegl-mesa0 libegl1
+  libelf1t64 libevdev2 libevent-2.1-7t64 libevent-core-2.1-7t64 libevent-dev
+  libevent-extra-2.1-7t64 libevent-openssl-2.1-7t64 libevent-pthreads-2.1-7t64
+  libexif-dev libexif12 libfabric1 libfftw3-double3 libfido2-1 libflac12t64
+  libflite1 libfreexl1 libfyba0t64 libgbm1 libgdal34t64 libgdcm-dev
+  libgdcm3.0t64 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-common
+  libgeographiclib-dev libgeographiclib26 libgeos-c1t64 libgeos3.12.1t64
+  libgeotiff5 libgfortran-13-dev libgif7 libgl1 libgl1-mesa-dri libgl2ps1.4
+  libglew2.2 libglvnd0 libglx-mesa0 libglx0 libgme0 libgphoto2-6t64
+  libgphoto2-dev libgphoto2-port12t64 libgsm1 libgstreamer-plugins-base1.0-0
+  libgstreamer1.0-0 libgudev-1.0-0 libhdf4-0-alt libhdf5-103-1t64
+  libhdf5-hl-100t64 libhwloc-dev libhwloc-plugins libhwloc15 libhwy1t64
+  libibverbs-dev libibverbs1 libicu-dev libiec61883-0 libimath-3-1-29t64
+  libimath-dev libinput-bin libinput10 libjack-jackd2-0 libjbig-dev
+  libjpeg-dev libjpeg-turbo8-dev libjpeg8-dev libjs-jquery-ui libjson-c5
+  libjxl0.7 libkmlbase1t64 libkmldom1t64 libkmlengine1t64 liblbfgsb0
+  liblcms2-2 liblept5 liblerc-dev liblilv-0-0 libllvm20 libltdl-dev
+  liblzma-dev libmbedcrypto7t64 libmd4c0 libminizip1t64 libmp3lame0
+  libmpg123-0t64 libmtdev1t64 libmunge2 libmysofa1 libmysqlclient21
+  libnetcdf19t64 libnl-3-200 libnl-3-dev libnl-route-3-200 libnl-route-3-dev
+  libnorm1t64 libnspr4 libnss3 libnuma-dev libodbc2 libodbcinst2 libogdi4.1
+  libogg-dev libogg0 libopenal-data libopenal1 libopencv-calib3d-dev
+  libopencv-calib3d406t64 libopencv-contrib-dev libopencv-contrib406t64
+  libopencv-core-dev libopencv-core406t64 libopencv-dev libopencv-dnn-dev
+  libopencv-dnn406t64 libopencv-features2d-dev libopencv-features2d406t64
+  libopencv-flann-dev libopencv-flann406t64 libopencv-highgui-dev
+  libopencv-highgui406t64 libopencv-imgcodecs-dev libopencv-imgcodecs406t64
+  libopencv-imgproc-dev libopencv-imgproc406t64 libopencv-ml-dev
+  libopencv-ml406t64 libopencv-objdetect-dev libopencv-objdetect406t64
+  libopencv-photo-dev libopencv-photo406t64 libopencv-shape-dev
+  libopencv-shape406t64 libopencv-stitching-dev libopencv-stitching406t64
+  libopencv-superres-dev libopencv-superres406t64 libopencv-video-dev
+  libopencv-video406t64 libopencv-videoio-dev libopencv-videoio406t64
+  libopencv-videostab-dev libopencv-videostab406t64 libopencv-viz-dev
+  libopencv-viz406t64 libopenexr-3-1-30 libopenexr-dev libopengl0 libopenjp2-7
+  libopenmpi-dev libopenmpi3t64 libopenmpt0t64 libopus0 liborc-0.4-0t64
+  libpciaccess0 libpcre2-16-0 libpgm-5.3-0t64 libplacebo338 libpmix-dev
+  libpmix2t64 libpng-dev libpng16-16t64 libpocketsphinx3 libpoppler134
+  libpostproc57 libpq5 libproj25 libprotobuf32t64 libpulse0 libqhull-r8.0
+  libqt5core5t64 libqt5dbus5t64 libqt5gui5t64 libqt5network5t64
+  libqt5opengl5t64 libqt5test5t64 libqt5widgets5t64 librabbitmq4 librav1e0
+  libraw1394-11 libraw1394-dev librdmacm1t64 librist4 librsvg2-2 librttopo1
+  librubberband2 libsamplerate0 libsdl2-2.0-0 libsensors-config libsensors5
+  libserd-0-0 libsharpyuv-dev libshine3 libslang2 libsnappy1v5 libsndfile1
+  libsndio7.0 libsocket++1 libsodium23 libsord-0-0 libsoxr0 libspatialite8t64
+  libspeex1 libsphinxbase3t64 libsratom-0-0 libsrt1.5-gnutls libssh-gcrypt-4
+  libsuperlu6 libsvtav1enc1d1 libswresample-dev libswresample4 libswscale-dev
+  libswscale7 libsz2 libtbb-dev libtbb12 libtbbbind-2-5 libtbbmalloc2
+  libtcl8.6 libtesseract5 libtheora-dev libtheora0 libtiff-dev libtiffxx6
+  libtirpc-common libtirpc3t64 libtk8.6 libtwolame0 libucx0 libudfread0
+  libunibreak5 libunwind8 liburiparser1 libusb-1.0-0 libv4l-0t64
+  libv4l2rds0t64 libv4lconvert0t64 libva-drm2 libva-x11-2 libva2 libvdpau1
+  libvidstab1.1 libvorbis0a libvorbisenc2 libvorbisfile3 libvpx9 libvtk9.1t64
+  libvulkan1 libwacom-common libwacom9 libwayland-client0 libwayland-cursor0
+  libwayland-egl1 libwebp-dev libwebpdecoder3 libwebpdemux2 libwebpmux3
+  libx11-6 libx11-data libx11-xcb1 libx264-164 libx265-199 libxcb-dri3-0
+  libxcb-glx0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-present0
+  libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-sync1 libxcb-util1
+  libxcb-xfixes0 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 libxcursor1
+  libxerces-c3.2t64 libxfixes3 libxft2 libxi6 libxkbcommon-x11-0 libxkbcommon0
+  libxnvctrl0 libxrandr2 libxshmfence1 libxss1 libxv1 libxvidcore4 libxxf86vm1
+  libzimg2 libzix-0-0 libzmq5 libzvbi-common libzvbi0t64 m4 mesa-libgallium
+  mpi-default-bin mpi-default-dev mysql-common ocl-icd-libopencl1 openmpi-bin
+  openmpi-common openssh-client proj-data python3-click python3-colorama
+  python3-decorator python3-pydot ros-jazzy-async-web-server-cpp
+  ros-jazzy-camera-calibration-parsers ros-jazzy-camera-info-manager
+  ros-jazzy-compressed-depth-image-transport
+  ros-jazzy-compressed-image-transport ros-jazzy-diagnostic-updater
+  ros-jazzy-eigen-stl-containers ros-jazzy-geographic-msgs
+  ros-jazzy-image-transport ros-jazzy-image-transport-plugins
+  ros-jazzy-libmavconn ros-jazzy-mavlink ros-jazzy-mavros-msgs
+  ros-jazzy-theora-image-transport ros-jazzy-zstd-image-transport
+  shared-mime-info tesseract-ocr-eng tesseract-ocr-osd unixodbc-common
+  v4l-utils wget xkb-data
+Suggested packages:
+  autoconf-archive gnu-standards autoconf-doc libtool gettext ffmpeg-doc
+  proj-bin geographiclib-doc gfortran-13-doc libcoarrays-dev isoquery
+  alsa-utils libasound2-plugins libcuda1 libnvcuvid1 libnvidia-encode1
+  libbluray-bdj libboost-doc libboost1.83-doc gccxml libboost-contract1.83-dev
+  libmpfrc++-dev libntl-dev xsltproc doxygen docbook-xml docbook-xsl
+  default-jdk fop libfftw3-bin libfftw3-dev geotiff-bin gdal-bin
+  libgeotiff-epsg glew-utils gphoto2 libvisual-0.4-plugins gstreamer1.0-tools
+  libhdf4-doc libhdf4-alt-dev hdf4-tools icu-doc jackd2 libjs-jquery-ui-docs
+  liblcms2-utils libtool-doc liblzma-doc odbc-postgresql tdsodbc ogdi-bin
+  libportaudio2 opencv-doc openmpi-doc opus-tools pciutils pulseaudio
+  qgnomeplatform-qt5 qt5-image-formats-plugins libraw1394-doc librsvg2-bin
+  xdg-utils lm-sensors serdi sndiod sordi speex libtbb-doc tcl8.6 tk8.6
+  vtk9-doc vtk9-examples libwacom-bin m4-doc opencl-icd gfortran
+  | fortran-compiler keychain libpam-ssh monkeysphere ssh-askpass python3-pil
+  python-scipy-doc python3-wxgtk3.0 | python3-wxgtk
+Recommended packages:
+  alsa-ucm-conf alsa-topology-conf libaacs0 libpam-cap
+  default-libdecor-0-plugin-1 | libdecor-0-plugin-1 libexif-doc proj-bin
+  libgdk-pixbuf2.0-bin libgphoto2-l10n gstreamer1.0-plugins-base
+  javascript-common libtool opencv-data libopencv-java libcoarrays-openmpi-dev
+  libpng-tools pocketsphinx-en-us poppler-data qttranslations5-l10n libqt5svg5
+  qt5-gtk-platformtheme qtwayland5 libraw1394-tools librsvg2-common
+  va-driver-all | va-driver vdpau-driver-all | vdpau-driver
+  mesa-vulkan-drivers | vulkan-icd libmagickcore-6.q16-7-extra xauth
+  python3-pil
+The following NEW packages will be installed:
+  autoconf automake autotools-dev ffmpeg gdal-data gdal-plugins
+  geographiclib-tools gfortran-13 gfortran-13-aarch64-linux-gnu
+  ibverbs-providers icu-devtools iso-codes libaec0 libarmadillo12
+  libarpack2t64 libasio-dev libasound2-data libasound2t64 libass9 libasyncns0
+  libavc1394-0 libavcodec-dev libavcodec60 libavdevice60 libavfilter9
+  libavformat-dev libavformat60 libavutil-dev libavutil58 libblosc1 libbluray2
+  libboost-all-dev libboost-atomic-dev libboost-atomic1.83-dev
+  libboost-atomic1.83.0 libboost-chrono-dev libboost-chrono1.83-dev
+  libboost-chrono1.83.0t64 libboost-container-dev libboost-container1.83-dev
+  libboost-container1.83.0 libboost-context-dev libboost-context1.83-dev
+  libboost-context1.83.0 libboost-coroutine-dev libboost-coroutine1.83-dev
+  libboost-coroutine1.83.0 libboost-date-time-dev libboost-date-time1.83-dev
+  libboost-date-time1.83.0 libboost-dev libboost-exception-dev
+  libboost-exception1.83-dev libboost-fiber-dev libboost-fiber1.83-dev
+  libboost-fiber1.83.0 libboost-filesystem-dev libboost-filesystem1.83-dev
+  libboost-filesystem1.83.0 libboost-graph-dev libboost-graph-parallel-dev
+  libboost-graph-parallel1.83-dev libboost-graph-parallel1.83.0
+  libboost-graph1.83-dev libboost-graph1.83.0 libboost-iostreams-dev
+  libboost-iostreams1.83-dev libboost-iostreams1.83.0 libboost-json-dev
+  libboost-json1.83-dev libboost-json1.83.0 libboost-locale-dev
+  libboost-locale1.83-dev libboost-locale1.83.0 libboost-log-dev
+  libboost-log1.83-dev libboost-log1.83.0 libboost-math-dev
+  libboost-math1.83-dev libboost-math1.83.0 libboost-mpi-dev
+  libboost-mpi-python-dev libboost-mpi-python1.83-dev
+  libboost-mpi-python1.83.0 libboost-mpi1.83-dev libboost-mpi1.83.0
+  libboost-nowide-dev libboost-nowide1.83-dev libboost-nowide1.83.0
+  libboost-numpy-dev libboost-numpy1.83-dev libboost-numpy1.83.0
+  libboost-program-options-dev libboost-program-options1.83-dev
+  libboost-program-options1.83.0 libboost-python-dev libboost-python1.83-dev
+  libboost-python1.83.0 libboost-random-dev libboost-random1.83-dev
+  libboost-random1.83.0 libboost-regex-dev libboost-regex1.83-dev
+  libboost-regex1.83.0 libboost-serialization-dev
+  libboost-serialization1.83-dev libboost-serialization1.83.0
+  libboost-stacktrace-dev libboost-stacktrace1.83-dev
+  libboost-stacktrace1.83.0 libboost-system-dev libboost-system1.83-dev
+  libboost-system1.83.0 libboost-test-dev libboost-test1.83-dev
+  libboost-test1.83.0 libboost-thread-dev libboost-thread1.83-dev
+  libboost-thread1.83.0 libboost-timer-dev libboost-timer1.83-dev
+  libboost-timer1.83.0 libboost-tools-dev libboost-type-erasure-dev
+  libboost-type-erasure1.83-dev libboost-type-erasure1.83.0 libboost-url-dev
+  libboost-url1.83-dev libboost-url1.83.0 libboost-wave-dev
+  libboost-wave1.83-dev libboost-wave1.83.0 libboost1.83-dev
+  libboost1.83-tools-dev libbs2b0 libcaca0 libcairo-gobject2 libcap2-bin
+  libcbor0.10 libcdio-cdda2t64 libcdio-paranoia2t64 libcdio19t64
+  libcfitsio10t64 libcharls2 libchromaprint1 libcjson1 libcodec2-1.2 libdav1d7
+  libdc1394-25 libdc1394-dev libdecor-0-0 libdeflate-dev libdouble-conversion3
+  libdrm-amdgpu1 libdrm-common libdrm2 libdw1t64 libedit2 libegl-mesa0 libegl1
+  libelf1t64 libevdev2 libevent-2.1-7t64 libevent-core-2.1-7t64 libevent-dev
+  libevent-extra-2.1-7t64 libevent-openssl-2.1-7t64 libevent-pthreads-2.1-7t64
+  libexif-dev libexif12 libfabric1 libfftw3-double3 libfido2-1 libflac12t64
+  libflite1 libfreexl1 libfyba0t64 libgbm1 libgdal34t64 libgdcm-dev
+  libgdcm3.0t64 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-common
+  libgeographiclib-dev libgeographiclib26 libgeos-c1t64 libgeos3.12.1t64
+  libgeotiff5 libgfortran-13-dev libgif7 libgl1 libgl1-mesa-dri libgl2ps1.4
+  libglew2.2 libglvnd0 libglx-mesa0 libglx0 libgme0 libgphoto2-6t64
+  libgphoto2-dev libgphoto2-port12t64 libgsm1 libgstreamer-plugins-base1.0-0
+  libgstreamer1.0-0 libgudev-1.0-0 libhdf4-0-alt libhdf5-103-1t64
+  libhdf5-hl-100t64 libhwloc-dev libhwloc-plugins libhwloc15 libhwy1t64
+  libibverbs-dev libibverbs1 libicu-dev libiec61883-0 libimath-3-1-29t64
+  libimath-dev libinput-bin libinput10 libjack-jackd2-0 libjbig-dev
+  libjpeg-dev libjpeg-turbo8-dev libjpeg8-dev libjs-jquery-ui libjson-c5
+  libjxl0.7 libkmlbase1t64 libkmldom1t64 libkmlengine1t64 liblbfgsb0
+  liblcms2-2 liblept5 liblerc-dev liblilv-0-0 libllvm20 libltdl-dev
+  liblzma-dev libmbedcrypto7t64 libmd4c0 libminizip1t64 libmp3lame0
+  libmpg123-0t64 libmtdev1t64 libmunge2 libmysofa1 libmysqlclient21
+  libnetcdf19t64 libnl-3-200 libnl-3-dev libnl-route-3-200 libnl-route-3-dev
+  libnorm1t64 libnspr4 libnss3 libnuma-dev libodbc2 libodbcinst2 libogdi4.1
+  libogg-dev libogg0 libopenal-data libopenal1 libopencv-calib3d-dev
+  libopencv-calib3d406t64 libopencv-contrib-dev libopencv-contrib406t64
+  libopencv-core-dev libopencv-core406t64 libopencv-dev libopencv-dnn-dev
+  libopencv-dnn406t64 libopencv-features2d-dev libopencv-features2d406t64
+  libopencv-flann-dev libopencv-flann406t64 libopencv-highgui-dev
+  libopencv-highgui406t64 libopencv-imgcodecs-dev libopencv-imgcodecs406t64
+  libopencv-imgproc-dev libopencv-imgproc406t64 libopencv-ml-dev
+  libopencv-ml406t64 libopencv-objdetect-dev libopencv-objdetect406t64
+  libopencv-photo-dev libopencv-photo406t64 libopencv-shape-dev
+  libopencv-shape406t64 libopencv-stitching-dev libopencv-stitching406t64
+  libopencv-superres-dev libopencv-superres406t64 libopencv-video-dev
+  libopencv-video406t64 libopencv-videoio-dev libopencv-videoio406t64
+  libopencv-videostab-dev libopencv-videostab406t64 libopencv-viz-dev
+  libopencv-viz406t64 libopenexr-3-1-30 libopenexr-dev libopengl0 libopenjp2-7
+  libopenmpi-dev libopenmpi3t64 libopenmpt0t64 libopus0 liborc-0.4-0t64
+  libpciaccess0 libpcre2-16-0 libpgm-5.3-0t64 libplacebo338 libpmix-dev
+  libpmix2t64 libpng-dev libpocketsphinx3 libpoppler134 libpostproc57 libpq5
+  libproj25 libprotobuf32t64 libpulse0 libqhull-r8.0 libqt5core5t64
+  libqt5dbus5t64 libqt5gui5t64 libqt5network5t64 libqt5opengl5t64
+  libqt5test5t64 libqt5widgets5t64 librabbitmq4 librav1e0 libraw1394-11
+  libraw1394-dev librdmacm1t64 librist4 librsvg2-2 librttopo1 librubberband2
+  libsamplerate0 libsdl2-2.0-0 libsensors-config libsensors5 libserd-0-0
+  libsharpyuv-dev libshine3 libslang2 libsnappy1v5 libsndfile1 libsndio7.0
+  libsocket++1 libsodium23 libsord-0-0 libsoxr0 libspatialite8t64 libspeex1
+  libsphinxbase3t64 libsratom-0-0 libsrt1.5-gnutls libssh-gcrypt-4 libsuperlu6
+  libsvtav1enc1d1 libswresample-dev libswresample4 libswscale-dev libswscale7
+  libsz2 libtbb-dev libtbb12 libtbbbind-2-5 libtbbmalloc2 libtcl8.6
+  libtesseract5 libtheora-dev libtheora0 libtiff-dev libtiffxx6
+  libtirpc-common libtirpc3t64 libtk8.6 libtwolame0 libucx0 libudfread0
+  libunibreak5 libunwind8 liburiparser1 libusb-1.0-0 libv4l-0t64
+  libv4l2rds0t64 libv4lconvert0t64 libva-drm2 libva-x11-2 libva2 libvdpau1
+  libvidstab1.1 libvorbis0a libvorbisenc2 libvorbisfile3 libvpx9 libvtk9.1t64
+  libvulkan1 libwacom-common libwacom9 libwayland-client0 libwayland-cursor0
+  libwayland-egl1 libwebp-dev libwebpdecoder3 libwebpdemux2 libwebpmux3
+  libx11-xcb1 libx264-164 libx265-199 libxcb-dri3-0 libxcb-glx0 libxcb-icccm4
+  libxcb-image0 libxcb-keysyms1 libxcb-present0 libxcb-randr0
+  libxcb-render-util0 libxcb-shape0 libxcb-sync1 libxcb-util1 libxcb-xfixes0
+  libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 libxcursor1 libxerces-c3.2t64
+  libxfixes3 libxft2 libxi6 libxkbcommon-x11-0 libxkbcommon0 libxnvctrl0
+  libxrandr2 libxshmfence1 libxss1 libxv1 libxvidcore4 libxxf86vm1 libzbar0t64
+  libzimg2 libzix-0-0 libzmq5 libzvbi-common libzvbi0t64 m4 mesa-libgallium
+  mpi-default-bin mpi-default-dev mysql-common ocl-icd-libopencl1 openmpi-bin
+  openmpi-common openssh-client proj-data python3-click python3-colorama
+  python3-decorator python3-opencv python3-pydot python3-pyzbar python3-scipy
+  python3-serial python3-websockets ros-jazzy-async-web-server-cpp
+  ros-jazzy-camera-calibration-parsers ros-jazzy-camera-info-manager
+  ros-jazzy-compressed-depth-image-transport
+  ros-jazzy-compressed-image-transport ros-jazzy-cv-bridge
+  ros-jazzy-diagnostic-updater ros-jazzy-eigen-stl-containers
+  ros-jazzy-geographic-msgs ros-jazzy-image-transport
+  ros-jazzy-image-transport-plugins ros-jazzy-libmavconn ros-jazzy-mavlink
+  ros-jazzy-mavros ros-jazzy-mavros-extras ros-jazzy-mavros-msgs
+  ros-jazzy-py-trees ros-jazzy-theora-image-transport ros-jazzy-usb-cam
+  ros-jazzy-web-video-server ros-jazzy-xacro ros-jazzy-zstd-image-transport
+  shared-mime-info tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd
+  unixodbc-common v4l-utils wget xkb-data
+The following packages will be upgraded:
+  libpng16-16t64 libx11-6 libx11-data ros-jazzy-robot-state-publisher
+4 upgraded, 501 newly installed, 0 to remove and 134 not upgraded.
+Need to get 320 MB of archives.
+After this operation, 1549 MB of additional disk space will be used.
+Get:1 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 iso-codes all 4.16.0-1 [3492 kB]
+Get:2 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-async-web-server-cpp arm64 2.0.1-1noble.20260911.044944 [174 kB]
+Get:3 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-camera-calibration-parsers arm64 5.1.8-1noble.20260911.140133 [53.7 kB]
+Get:4 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libcap2-bin arm64 1:2.66-5ubuntu2.4 [33.5 kB]
+Get:5 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-camera-info-manager arm64 5.1.8-1noble.20260911.140457 [39.5 kB]
+Get:6 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libelf1t64 arm64 0.190-1.1ubuntu0.1 [58.4 kB]
+Get:7 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-cv-bridge arm64 4.1.0-1noble.20260911.140139 [120 kB]
+Get:8 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libjson-c5 arm64 0.17-1build1 [36.4 kB]
+Get:9 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libslang2 arm64 2.3.3-3build2 [476 kB]
+Get:10 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-image-transport arm64 5.1.8-1noble.20260911.145925 [388 kB]
+Get:11 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libtirpc-common all 1.3.4+ds-1.1build1 [8094 B]
+Get:12 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-compressed-depth-image-transport arm64 4.0.7-1noble.20260911.193927 [190 kB]
+Get:13 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libtirpc3t64 arm64 1.3.4+ds-1.1build1 [83.6 kB]
+Get:14 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 shared-mime-info arm64 2.4-4 [472 kB]
+Get:15 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-compressed-image-transport arm64 4.0.7-1noble.20260911.193953 [190 kB]
+Get:16 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 xkb-data all 2.41-2ubuntu1.1 [397 kB]
+Get:17 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-diagnostic-updater arm64 4.2.7-1noble.20260911.112913 [107 kB]
+Get:18 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libnl-3-200 arm64 3.7.0-0.3build1.1 [57.5 kB]
+Get:19 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-eigen-stl-containers arm64 1.1.0-1noble.20260305.212614 [9588 B]
+Get:20 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-geographic-msgs arm64 1.0.6-2noble.20260911.082247 [319 kB]
+Get:21 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libnl-route-3-200 arm64 3.7.0-0.3build1.1 [182 kB]
+Get:22 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libibverbs1 arm64 50.0-2ubuntu0.2 [67.5 kB]
+Get:23 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-theora-image-transport arm64 4.0.7-1noble.20260911.150954 [287 kB]
+Get:24 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 ibverbs-providers arm64 50.0-2ubuntu0.2 [375 kB]
+Get:25 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-zstd-image-transport arm64 4.0.7-1noble.20260911.194816 [111 kB]
+Get:26 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libcbor0.10 arm64 0.10.2-1.2ubuntu2 [26.0 kB]
+Get:27 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-image-transport-plugins arm64 4.0.7-1noble.20260911.195143 [6128 B]
+Get:28 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libdrm-common all 2.4.125-1ubuntu0.1~24.04.2 [9250 B]
+Get:29 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libdrm2 arm64 2.4.125-1ubuntu0.1~24.04.2 [42.9 kB]
+Get:30 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-mavlink arm64 2026.9.9-1noble.20260912.174303 [958 kB]
+Get:31 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libedit2 arm64 3.1-20230828-1build1 [97.5 kB]
+Get:32 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libevdev2 arm64 1.13.1+dfsg-1build1 [35.8 kB]
+Get:33 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-libmavconn arm64 2.16.0-1noble.20260927.161034 [122 kB]
+Get:34 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libfido2-1 arm64 1.14.0-1build3 [82.5 kB]
+Get:35 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-mavros-msgs arm64 2.16.0-1noble.20260927.163051 [1931 kB]
+Get:36 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libpng16-16t64 arm64 1.6.43-5ubuntu0.7 [187 kB]
+Get:37 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libsensors-config all 1:3.6.0-9build1 [5546 B]
+Get:38 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libsensors5 arm64 1:3.6.0-9build1 [27.0 kB]
+Get:39 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-mavros arm64 2.16.0-1noble.20260927.172210 [1574 kB]
+Get:40 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libusb-1.0-0 arm64 2:1.0.27-1 [54.1 kB]
+Get:41 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 libx11-data all 2:1.8.7-1ubuntu0.1 [116 kB]
+Get:42 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-mavros-extras arm64 2.16.0-1noble.20260927.181038 [1593 kB]
+Get:43 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 libx11-6 arm64 2:1.8.7-1ubuntu0.1 [651 kB]
+Get:44 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxkbcommon0 arm64 1.6.0-1build1 [122 kB]
+Get:45 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-py-trees arm64 2.6.0-1noble.20260911.043757 [232 kB]
+Get:46 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 openssh-client arm64 1:9.6p1-3ubuntu13.19 [890 kB]
+Get:47 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-robot-state-publisher arm64 3.3.4-1noble.20260916.083553 [168 kB]
+Get:48 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 wget arm64 1.21.4-1ubuntu4.5 [331 kB]
+Get:49 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-usb-cam arm64 0.8.1-1noble.20260911.195239 [160 kB]
+Get:50 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 m4 arm64 1.4.19-4build1 [240 kB]
+Get:51 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-web-video-server arm64 3.1.0-1noble.20260911.150551 [285 kB]
+Get:52 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 autoconf all 2.71-3 [339 kB]
+Get:53 http://packages.ros.org/ros2/ubuntu noble/main arm64 ros-jazzy-xacro arm64 2.1.1-1noble.20260519.011649 [29.4 kB]
+Get:54 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 autotools-dev all 20220109.1 [44.9 kB]
+Get:55 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 automake all 1:1.16.5-1.3ubuntu1 [558 kB]
+Get:56 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libva2 arm64 2.20.0-2ubuntu0.2 [66.7 kB]
+Get:57 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libva-drm2 arm64 2.20.0-2ubuntu0.2 [7076 B]
+Get:58 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 libx11-xcb1 arm64 2:1.8.7-1ubuntu0.1 [7870 B]
+Get:59 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-dri3-0 arm64 1.15-1ubuntu2 [7196 B]
+Get:60 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxfixes3 arm64 1:6.0.0-2build1 [11.2 kB]
+Get:61 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libva-x11-2 arm64 2.20.0-2ubuntu0.2 [12.1 kB]
+Get:62 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libvdpau1 arm64 1.5-2build1 [26.4 kB]
+Get:63 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 ocl-icd-libopencl1 arm64 2.3.2-1build1 [37.6 kB]
+Get:64 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavutil58 arm64 7:6.1.1-3ubuntu5 [388 kB]
+Get:65 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libcodec2-1.2 arm64 1.2.0-2build1 [8996 kB]
+Get:66 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libdav1d7 arm64 1.4.1-1build1 [298 kB]
+Get:67 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgsm1 arm64 1.0.22-1build1 [27.0 kB]
+Get:68 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libhwy1t64 arm64 1.0.7-8.1build1 [437 kB]
+Get:69 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 liblcms2-2 arm64 2.14-2ubuntu0.1 [161 kB]
+Get:70 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libjxl0.7 arm64 0.7.0-10.2ubuntu6.1 [690 kB]
+Get:71 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libmp3lame0 arm64 3.100-6build1 [141 kB]
+Get:72 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libopenjp2-7 arm64 2.5.0-2ubuntu0.5 [171 kB]
+Get:73 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libopus0 arm64 1.4-1build1 [198 kB]
+Get:74 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 librav1e0 arm64 0.7.1-2 [760 kB]
+Get:75 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libcairo-gobject2 arm64 1.18.0-3build1 [127 kB]
+Get:76 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgdk-pixbuf2.0-common all 2.42.10+dfsg-3ubuntu3.3 [8302 B]
+Get:77 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgdk-pixbuf-2.0-0 arm64 2.42.10+dfsg-3ubuntu3.3 [146 kB]
+Get:78 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 librsvg2-2 arm64 2.58.0+dfsg-1ubuntu0.1 [2037 kB]
+Get:79 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libshine3 arm64 3.1.1-2build1 [25.8 kB]
+Get:80 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libsnappy1v5 arm64 1.1.10-1build1 [28.6 kB]
+Get:81 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libspeex1 arm64 1.2.1-2ubuntu2.24.04.1 [56.2 kB]
+Get:82 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsvtav1enc1d1 arm64 1.7.0+dfsg-2build1 [1276 kB]
+Get:83 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsoxr0 arm64 0.1.3-4build3 [56.4 kB]
+Get:84 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libswresample4 arm64 7:6.1.1-3ubuntu5 [57.9 kB]
+Get:85 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libogg0 arm64 1.3.5-3build1 [22.6 kB]
+Get:86 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libtheora0 arm64 1.1.1+dfsg.1-16.1build3 [224 kB]
+Get:87 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libtwolame0 arm64 0.4.0-2build3 [51.7 kB]
+Get:88 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libvorbis0a arm64 1.3.7-1build3 [94.0 kB]
+Get:89 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libvorbisenc2 arm64 1.3.7-1build3 [80.0 kB]
+Get:90 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libvpx9 arm64 1.14.0-1ubuntu2.3 [1233 kB]
+Get:91 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwebpmux3 arm64 1.3.2-0.4build3 [25.0 kB]
+Get:92 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libx264-164 arm64 2:0.164.3108+git31e19f9-1 [542 kB]
+Get:93 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libx265-199 arm64 3.5-2build1 [714 kB]
+Get:94 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libxvidcore4 arm64 2:1.3.7-1build1 [180 kB]
+Get:95 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libzvbi-common all 0.2.42-2 [42.4 kB]
+Get:96 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libzvbi0t64 arm64 0.2.42-2 [259 kB]
+Get:97 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavcodec60 arm64 7:6.1.1-3ubuntu5 [5769 kB]
+Get:98 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libasound2-data all 1.2.11-1ubuntu0.3 [21.4 kB]
+Get:99 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libasound2t64 arm64 1.2.11-1ubuntu0.3 [387 kB]
+Get:100 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libraw1394-11 arm64 2.1.2-2build3 [26.9 kB]
+Get:101 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libavc1394-0 arm64 0.5.4-5build3 [15.8 kB]
+Get:102 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libunibreak5 arm64 5.1-2build1 [25.3 kB]
+Get:103 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libass9 arm64 1:0.17.1-2build1 [91.7 kB]
+Get:104 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libudfread0 arm64 1.1.2-1build1 [17.0 kB]
+Get:105 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libbluray2 arm64 1:1.3.4-1build1 [149 kB]
+Get:106 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libchromaprint1 arm64 1.5.1-5 [29.3 kB]
+Get:107 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgme0 arm64 0.6.3-7build1 [129 kB]
+Get:108 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libmpg123-0t64 arm64 1.32.5-1ubuntu1.1 [172 kB]
+Get:109 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libvorbisfile3 arm64 1.3.7-1build3 [17.1 kB]
+Get:110 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopenmpt0t64 arm64 0.7.3-1.1build3 [618 kB]
+Get:111 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 librabbitmq4 arm64 0.11.0-1ubuntu0.2 [38.9 kB]
+Get:112 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libcjson1 arm64 1.7.17-1 [25.1 kB]
+Get:113 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libmbedcrypto7t64 arm64 2.28.8-1 [209 kB]
+Get:114 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 librist4 arm64 0.2.10+dfsg-2 [76.2 kB]
+Get:115 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsrt1.5-gnutls arm64 1.5.3-1build2 [306 kB]
+Get:116 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libssh-gcrypt-4 arm64 0.10.6-2ubuntu0.5 [227 kB]
+Get:117 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libnorm1t64 arm64 1.5.9+dfsg-3.1build1 [150 kB]
+Get:118 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libpgm-5.3-0t64 arm64 5.3.128~dfsg-2.1build1 [162 kB]
+Get:119 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libsodium23 arm64 1.0.18-1ubuntu0.24.04.1 [119 kB]
+Get:120 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libzmq5 arm64 4.3.5-1build2 [247 kB]
+Get:121 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavformat60 arm64 7:6.1.1-3ubuntu5 [1188 kB]
+Get:122 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libbs2b0 arm64 3.1.0+dfsg-7build1 [9976 B]
+Get:123 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libflite1 arm64 2.2-6build3 [13.6 MB]
+Get:124 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libserd-0-0 arm64 0.32.2-1 [42.9 kB]
+Get:125 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libzix-0-0 arm64 0.4.2-2build1 [24.0 kB]
+Get:126 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsord-0-0 arm64 0.16.16-2build1 [15.7 kB]
+Get:127 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsratom-0-0 arm64 0.6.16-1build1 [15.8 kB]
+Get:128 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 liblilv-0-0 arm64 0.24.22-1build1 [41.1 kB]
+Get:129 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libmysofa1 arm64 1.3.2+dfsg-2ubuntu2 [1157 kB]
+Get:130 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libvulkan1 arm64 1.3.275.0-1build1 [150 kB]
+Get:131 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libplacebo338 arm64 6.338.2-2build1 [2570 kB]
+Get:132 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libasyncns0 arm64 0.8-6build4 [11.2 kB]
+Get:133 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libflac12t64 arm64 1.4.3+ds-2.1ubuntu2 [170 kB]
+Get:134 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libsndfile1 arm64 1.2.2-1ubuntu5.24.04.1 [208 kB]
+Get:135 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libpulse0 arm64 1:16.1+dfsg1-2ubuntu10.1 [271 kB]
+Get:136 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsphinxbase3t64 arm64 0.8+5prealpha+1-17build2 [124 kB]
+Get:137 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libpocketsphinx3 arm64 0.8.0+real5prealpha+1-15ubuntu5 [129 kB]
+Get:138 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libpostproc57 arm64 7:6.1.1-3ubuntu5 [41.2 kB]
+Get:139 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libfftw3-double3 arm64 3.3.10-1ubuntu3 [384 kB]
+Get:140 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libsamplerate0 arm64 0.2.2-4build1 [1343 kB]
+Get:141 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 librubberband2 arm64 3.3.0+dfsg-2build1 [120 kB]
+Get:142 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libswscale7 arm64 7:6.1.1-3ubuntu5 [173 kB]
+Get:143 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libvidstab1.1 arm64 1.1.0-2build1 [38.7 kB]
+Get:144 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libzimg2 arm64 3.0.5+ds1-1build1 [119 kB]
+Get:145 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavfilter9 arm64 7:6.1.1-3ubuntu5 [4089 kB]
+Get:146 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libcaca0 arm64 0.99.beta20-4ubuntu0.2 [206 kB]
+Get:147 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libcdio19t64 arm64 2.1.0-4.1ubuntu1.2 [64.2 kB]
+Get:148 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libcdio-cdda2t64 arm64 10.2+2.0.1-1.1build2 [16.2 kB]
+Get:149 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libcdio-paranoia2t64 arm64 10.2+2.0.1-1.1build2 [15.8 kB]
+Get:150 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libdc1394-25 arm64 2.2.6-4build1 [90.3 kB]
+Get:151 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libglvnd0 arm64 1.7.0-1build1 [60.6 kB]
+Get:152 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-glx0 arm64 1.15-1ubuntu2 [25.5 kB]
+Get:153 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-present0 arm64 1.15-1ubuntu2 [5866 B]
+Get:154 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-xfixes0 arm64 1.15-1ubuntu2 [10.6 kB]
+Get:155 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxxf86vm1 arm64 1:1.1.4-1build4 [9130 B]
+Get:156 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libdrm-amdgpu1 arm64 2.4.125-1ubuntu0.1~24.04.2 [21.9 kB]
+Get:157 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libllvm20 arm64 1:20.1.2-0ubuntu1~24.04.3 [29.3 MB]
+Get:158 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-randr0 arm64 1.15-1ubuntu2 [18.4 kB]
+Get:159 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-sync1 arm64 1.15-1ubuntu2 [9682 B]
+Get:160 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxshmfence1 arm64 1.3-1build5 [4938 B]
+Get:161 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 mesa-libgallium arm64 25.2.8-0ubuntu0.24.04.4 [12.1 MB]
+Get:162 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgbm1 arm64 25.2.8-0ubuntu0.24.04.4 [35.0 kB]
+Get:163 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgl1-mesa-dri arm64 25.2.8-0ubuntu0.24.04.4 [37.0 kB]
+Get:164 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libglx-mesa0 arm64 25.2.8-0ubuntu0.24.04.4 [111 kB]
+Get:165 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libglx0 arm64 1.7.0-1build1 [33.2 kB]
+Get:166 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libgl1 arm64 1.7.0-1build1 [106 kB]
+Get:167 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libiec61883-0 arm64 1.2.0-6build1 [24.3 kB]
+Get:168 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libjack-jackd2-0 arm64 1.9.21~dfsg-3ubuntu3 [285 kB]
+Get:169 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopenal-data all 1:1.23.1-4build1 [161 kB]
+Get:170 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsndio7.0 arm64 1.9.0-0.3build3 [29.0 kB]
+Get:171 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopenal1 arm64 1:1.23.1-4build1 [510 kB]
+Get:172 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwayland-client0 arm64 1.22.0-2.1build1 [25.9 kB]
+Get:173 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libdecor-0-0 arm64 0.2.2-1build2 [16.5 kB]
+Get:174 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwayland-cursor0 arm64 1.22.0-2.1build1 [10.3 kB]
+Get:175 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwayland-egl1 arm64 1.22.0-2.1build1 [5622 B]
+Get:176 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcursor1 arm64 1:1.2.1-1build1 [21.1 kB]
+Get:177 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxi6 arm64 2:1.8.1-1build1 [31.9 kB]
+Get:178 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxrandr2 arm64 2:1.5.2-2build1 [19.6 kB]
+Get:179 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxss1 arm64 1:1.2.3-1build3 [7244 B]
+Get:180 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libsdl2-2.0-0 arm64 2.30.0+dfsg-1ubuntu3.1 [671 kB]
+Get:181 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-shape0 arm64 1.15-1ubuntu2 [6250 B]
+Get:182 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxv1 arm64 2:1.0.11-1.1build1 [10.7 kB]
+Get:183 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavdevice60 arm64 7:6.1.1-3ubuntu5 [81.6 kB]
+Get:184 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 ffmpeg arm64 7:6.1.1-3ubuntu5 [1880 kB]
+Get:185 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 gdal-data all 3.8.4+dfsg-3ubuntu3 [261 kB]
+Get:186 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 gdal-plugins arm64 3.8.4+dfsg-3ubuntu3 [24.8 kB]
+Get:187 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgeographiclib26 arm64 2.3-1build1 [218 kB]
+Get:188 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 geographiclib-tools arm64 2.3-1build1 [183 kB]
+Get:189 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgfortran-13-dev arm64 13.3.0-6ubuntu2~24.04.1 [481 kB]
+Get:190 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 gfortran-13-aarch64-linux-gnu arm64 13.3.0-6ubuntu2~24.04.1 [10.3 MB]
+Get:191 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 gfortran-13 arm64 13.3.0-6ubuntu2~24.04.1 [13.9 kB]
+Get:192 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 icu-devtools arm64 74.2-1ubuntu3.1 [209 kB]
+Get:193 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libaec0 arm64 1.1.2-1build1 [22.1 kB]
+Get:194 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libarpack2t64 arm64 3.9.1-1.1build2 [90.6 kB]
+Get:195 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsuperlu6 arm64 6.0.1+dfsg1-1build1 [166 kB]
+Get:196 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libarmadillo12 arm64 1:12.6.7+dfsg-1build2 [105 kB]
+Get:197 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libasio-dev all 1:1.28.1-0.2 [443 kB]
+Get:198 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavutil-dev arm64 7:6.1.1-3ubuntu5 [536 kB]
+Get:199 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libswresample-dev arm64 7:6.1.1-3ubuntu5 [70.2 kB]
+Get:200 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavcodec-dev arm64 7:6.1.1-3ubuntu5 [6460 kB]
+Get:201 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libavformat-dev arm64 7:6.1.1-3ubuntu5 [1469 kB]
+Get:202 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libblosc1 arm64 1.21.5+ds-1build1 [25.7 kB]
+Get:203 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost1.83-dev arm64 1.83.0-2.1ubuntu3.2 [10.7 MB]
+Get:204 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libboost-dev arm64 1.83.0.1ubuntu2 [4308 B]
+Get:205 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost1.83-tools-dev arm64 1.83.0-2.1ubuntu3.2 [1363 kB]
+Get:206 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-tools-dev arm64 1.83.0.1ubuntu2 [4238 B]
+Get:207 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-atomic1.83.0 arm64 1.83.0-2.1ubuntu3.2 [239 kB]
+Get:208 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-atomic1.83-dev arm64 1.83.0-2.1ubuntu3.2 [235 kB]
+Get:209 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-atomic-dev arm64 1.83.0.1ubuntu2 [4358 B]
+Get:210 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-chrono1.83.0t64 arm64 1.83.0-2.1ubuntu3.2 [244 kB]
+Get:211 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-chrono1.83-dev arm64 1.83.0-2.1ubuntu3.2 [245 kB]
+Get:212 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-chrono-dev arm64 1.83.0.1ubuntu2 [4672 B]
+Get:213 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-container1.83.0 arm64 1.83.0-2.1ubuntu3.2 [261 kB]
+Get:214 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-container1.83-dev arm64 1.83.0-2.1ubuntu3.2 [270 kB]
+Get:215 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-container-dev arm64 1.83.0.1ubuntu2 [4530 B]
+Get:216 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-date-time1.83.0 arm64 1.83.0-2.1ubuntu3.2 [236 kB]
+Get:217 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-serialization1.83.0 arm64 1.83.0-2.1ubuntu3.2 [335 kB]
+Get:218 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-serialization1.83-dev arm64 1.83.0-2.1ubuntu3.2 [392 kB]
+Get:219 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-date-time1.83-dev arm64 1.83.0-2.1ubuntu3.2 [239 kB]
+Get:220 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-system1.83.0 arm64 1.83.0-2.1ubuntu3.2 [236 kB]
+Get:221 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-system1.83-dev arm64 1.83.0-2.1ubuntu3.2 [231 kB]
+Get:222 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-thread1.83.0 arm64 1.83.0-2.1ubuntu3.2 [275 kB]
+Get:223 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-thread1.83-dev arm64 1.83.0-2.1ubuntu3.2 [284 kB]
+Get:224 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-context1.83.0 arm64 1.83.0-2.1ubuntu3.2 [237 kB]
+Get:225 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-context1.83-dev arm64 1.83.0-2.1ubuntu3.2 [232 kB]
+Get:226 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-context-dev arm64 1.83.0.1ubuntu2 [4276 B]
+Get:227 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-coroutine1.83.0 arm64 1.83.0-2.1ubuntu3.2 [234 kB]
+Get:228 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-coroutine1.83-dev arm64 1.83.0-2.1ubuntu3.2 [237 kB]
+Get:229 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-coroutine-dev arm64 1.83.0.1ubuntu2 [4342 B]
+Get:230 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-date-time-dev arm64 1.83.0.1ubuntu2 [4058 B]
+Get:231 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-exception1.83-dev arm64 1.83.0-2.1ubuntu3.2 [230 kB]
+Get:232 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-exception-dev arm64 1.83.0.1ubuntu2 [4058 B]
+Get:233 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-filesystem1.83.0 arm64 1.83.0-2.1ubuntu3.2 [281 kB]
+Get:234 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-filesystem1.83-dev arm64 1.83.0-2.1ubuntu3.2 [301 kB]
+Get:235 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-fiber1.83.0 arm64 1.83.0-2.1ubuntu3.2 [255 kB]
+Get:236 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-fiber1.83-dev arm64 1.83.0-2.1ubuntu3.2 [270 kB]
+Get:237 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-fiber-dev arm64 1.83.0.1ubuntu2 [4486 B]
+Get:238 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-filesystem-dev arm64 1.83.0.1ubuntu2 [4094 B]
+Get:239 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-graph1.83.0 arm64 1.83.0-2.1ubuntu3.2 [354 kB]
+Get:240 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-regex1.83.0 arm64 1.83.0-2.1ubuntu3.2 [329 kB]
+Get:241 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libicu-dev arm64 74.2-1ubuntu3.1 [11.9 MB]
+Get:242 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-regex1.83-dev arm64 1.83.0-2.1ubuntu3.2 [349 kB]
+Get:243 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-test1.83.0 arm64 1.83.0-2.1ubuntu3.2 [444 kB]
+Get:244 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-test1.83-dev arm64 1.83.0-2.1ubuntu3.2 [572 kB]
+Get:245 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-graph1.83-dev arm64 1.83.0-2.1ubuntu3.2 [397 kB]
+Get:246 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-graph-dev arm64 1.83.0.1ubuntu2 [4160 B]
+Get:247 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libevent-core-2.1-7t64 arm64 2.1.12-stable-9ubuntu2.2 [90.6 kB]
+Get:248 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libevent-pthreads-2.1-7t64 arm64 2.1.12-stable-9ubuntu2.2 [7928 B]
+Get:249 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 librdmacm1t64 arm64 50.0-2ubuntu0.2 [70.6 kB]
+Get:250 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libfabric1 arm64 1.17.0-3build2 [541 kB]
+Get:251 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libhwloc15 arm64 2.10.0-1build1 [159 kB]
+Get:252 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libmunge2 arm64 0.5.15-4ubuntu0.1 [15.1 kB]
+Get:253 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libpciaccess0 arm64 0.17-3ubuntu0.24.04.3 [19.5 kB]
+Get:254 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libxnvctrl0 arm64 510.47.03-0ubuntu4.24.04.1 [12.6 kB]
+Get:255 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libhwloc-plugins arm64 2.10.0-1build1 [15.7 kB]
+Get:256 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libpmix2t64 arm64 5.0.1-4.1build1 [655 kB]
+Get:257 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libucx0 arm64 1.16.0+ds-5ubuntu1 [1074 kB]
+Get:258 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopenmpi3t64 arm64 4.1.6-7ubuntu2 [2463 kB]
+Get:259 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-mpi1.83.0 arm64 1.83.0-2.1ubuntu3.2 [269 kB]
+Get:260 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-graph-parallel1.83.0 arm64 1.83.0-2.1ubuntu3.2 [276 kB]
+Get:261 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-graph-parallel1.83-dev arm64 1.83.0-2.1ubuntu3.2 [291 kB]
+Get:262 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-graph-parallel-dev arm64 1.83.0.1ubuntu2 [4192 B]
+Get:263 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-iostreams1.83.0 arm64 1.83.0-2.1ubuntu3.2 [258 kB]
+Get:264 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-iostreams1.83-dev arm64 1.83.0-2.1ubuntu3.2 [265 kB]
+Get:265 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-iostreams-dev arm64 1.83.0.1ubuntu2 [4046 B]
+Get:266 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-json1.83.0 arm64 1.83.0-2.1ubuntu3.2 [365 kB]
+Get:267 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-json1.83-dev arm64 1.83.0-2.1ubuntu3.2 [387 kB]
+Get:268 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-json-dev arm64 1.83.0.1ubuntu2 [4172 B]
+Get:269 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-locale1.83.0 arm64 1.83.0-2.1ubuntu3.2 [403 kB]
+Get:270 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-locale1.83-dev arm64 1.83.0-2.1ubuntu3.2 [588 kB]
+Get:271 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-locale-dev arm64 1.83.0.1ubuntu2 [4378 B]
+Get:272 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-log1.83.0 arm64 1.83.0-2.1ubuntu3.2 [655 kB]
+Get:273 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-log1.83-dev arm64 1.83.0-2.1ubuntu3.2 [946 kB]
+Get:274 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-log-dev arm64 1.83.0.1ubuntu2 [4260 B]
+Get:275 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-math1.83.0 arm64 1.83.0-2.1ubuntu3.2 [431 kB]
+Get:276 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-math1.83-dev arm64 1.83.0-2.1ubuntu3.2 [573 kB]
+Get:277 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-math-dev arm64 1.83.0.1ubuntu2 [4264 B]
+Get:278 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 openmpi-common all 4.1.6-7ubuntu2 [170 kB]
+Get:279 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libnl-3-dev arm64 3.7.0-0.3build1.1 [105 kB]
+Get:280 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libnl-route-3-dev arm64 3.7.0-0.3build1.1 [225 kB]
+Get:281 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libibverbs-dev arm64 50.0-2ubuntu0.2 [695 kB]
+Get:282 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libnuma-dev arm64 2.0.18-1ubuntu0.24.04.1 [39.6 kB]
+Get:283 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libltdl-dev arm64 2.4.7-7build1 [170 kB]
+Get:284 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libhwloc-dev arm64 2.10.0-1build1 [261 kB]
+Get:285 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libevent-2.1-7t64 arm64 2.1.12-stable-9ubuntu2.2 [141 kB]
+Get:286 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libevent-extra-2.1-7t64 arm64 2.1.12-stable-9ubuntu2.2 [62.5 kB]
+Get:287 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libevent-openssl-2.1-7t64 arm64 2.1.12-stable-9ubuntu2.2 [14.7 kB]
+Get:288 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libevent-dev arm64 2.1.12-stable-9ubuntu2.2 [283 kB]
+Get:289 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libpmix-dev arm64 5.0.1-4.1build1 [4022 kB]
+Get:290 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libjs-jquery-ui all 1.13.2+dfsg-1 [252 kB]
+Get:291 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 openmpi-bin arm64 4.1.6-7ubuntu2 [113 kB]
+Get:292 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopenmpi-dev arm64 4.1.6-7ubuntu2 [865 kB]
+Get:293 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 mpi-default-dev arm64 1.15build1 [3154 B]
+Get:294 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-mpi1.83-dev arm64 1.83.0-2.1ubuntu3.2 [299 kB]
+Get:295 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-mpi-dev arm64 1.83.0.1ubuntu2 [4144 B]
+Get:296 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-python1.83.0 arm64 1.83.0-2.1ubuntu3.2 [307 kB]
+Get:297 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 mpi-default-bin arm64 1.15build1 [2376 B]
+Get:298 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-mpi-python1.83.0 arm64 1.83.0-2.1ubuntu3.2 [353 kB]
+Get:299 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-mpi-python1.83-dev arm64 1.83.0-2.1ubuntu3.2 [237 kB]
+Get:300 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-mpi-python-dev arm64 1.83.0.1ubuntu2 [4196 B]
+Get:301 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-numpy1.83.0 arm64 1.83.0-2.1ubuntu3.2 [242 kB]
+Get:302 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-numpy1.83-dev arm64 1.83.0-2.1ubuntu3.2 [248 kB]
+Get:303 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-numpy-dev arm64 1.83.0.1ubuntu2 [4098 B]
+Get:304 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-program-options1.83.0 arm64 1.83.0-2.1ubuntu3.2 [317 kB]
+Get:305 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-program-options1.83-dev arm64 1.83.0-2.1ubuntu3.2 [391 kB]
+Get:306 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libboost-program-options-dev arm64 1.83.0.1ubuntu2 [4084 B]
+Get:307 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-python1.83-dev arm64 1.83.0-2.1ubuntu3.2 [336 kB]
+Get:308 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-python-dev arm64 1.83.0.1ubuntu2 [4346 B]
+Get:309 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-random1.83.0 arm64 1.83.0-2.1ubuntu3.2 [242 kB]
+Get:310 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-random1.83-dev arm64 1.83.0-2.1ubuntu3.2 [242 kB]
+Get:311 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-random-dev arm64 1.83.0.1ubuntu2 [4062 B]
+Get:312 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libboost-regex-dev arm64 1.83.0.1ubuntu2 [4324 B]
+Get:313 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-serialization-dev arm64 1.83.0.1ubuntu2 [4280 B]
+Get:314 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-stacktrace1.83.0 arm64 1.83.0-2.1ubuntu3.2 [288 kB]
+Get:315 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-stacktrace1.83-dev arm64 1.83.0-2.1ubuntu3.2 [246 kB]
+Get:316 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-stacktrace-dev arm64 1.83.0.1ubuntu2 [4066 B]
+Get:317 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-system-dev arm64 1.83.0.1ubuntu2 [4204 B]
+Get:318 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-test-dev arm64 1.83.0.1ubuntu2 [4090 B]
+Get:319 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libboost-thread-dev arm64 1.83.0.1ubuntu2 [4088 B]
+Get:320 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-timer1.83.0 arm64 1.83.0-2.1ubuntu3.2 [241 kB]
+Get:321 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-timer1.83-dev arm64 1.83.0-2.1ubuntu3.2 [237 kB]
+Get:322 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-timer-dev arm64 1.83.0.1ubuntu2 [4190 B]
+Get:323 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-type-erasure1.83.0 arm64 1.83.0-2.1ubuntu3.2 [244 kB]
+Get:324 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-type-erasure1.83-dev arm64 1.83.0-2.1ubuntu3.2 [251 kB]
+Get:325 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-type-erasure-dev arm64 1.83.0.1ubuntu2 [4162 B]
+Get:326 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libboost-url1.83.0 arm64 1.83.0-2.1ubuntu3.2 [342 kB]
+Get:327 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-url1.83-dev arm64 1.83.0-2.1ubuntu3.2 [451 kB]
+Get:328 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-url-dev arm64 1.83.0.1ubuntu2 [4190 B]
+Get:329 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-wave1.83.0 arm64 1.83.0-2.1ubuntu3.2 [449 kB]
+Get:330 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-wave1.83-dev arm64 1.83.0-2.1ubuntu3.2 [516 kB]
+Get:331 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-wave-dev arm64 1.83.0.1ubuntu2 [4096 B]
+Get:332 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-nowide1.83.0 arm64 1.83.0-2.1ubuntu3.2 [241 kB]
+Get:333 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libboost-nowide1.83-dev arm64 1.83.0-2.1ubuntu3.2 [237 kB]
+Get:334 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-nowide-dev arm64 1.83.0.1ubuntu2 [4136 B]
+Get:335 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libboost-all-dev arm64 1.83.0.1ubuntu2 [2286 B]
+Get:336 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libcfitsio10t64 arm64 4.3.1-1.1build2 [520 kB]
+Get:337 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libcharls2 arm64 2.4.2-2build2 [85.7 kB]
+Get:338 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libraw1394-dev arm64 2.1.2-2build3 [40.8 kB]
+Get:339 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libdc1394-dev arm64 2.2.6-4build1 [126 kB]
+Get:340 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libdeflate-dev arm64 1.19-1build1.1 [51.2 kB]
+Get:341 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libdouble-conversion3 arm64 3.3.0-1build1 [38.0 kB]
+Get:342 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libdw1t64 arm64 0.190-1.1ubuntu0.1 [258 kB]
+Get:343 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libegl-mesa0 arm64 25.2.8-0ubuntu0.24.04.4 [117 kB]
+Get:344 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libexif12 arm64 0.6.24-1ubuntu0.24.04.1 [86.8 kB]
+Get:345 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libexif-dev arm64 0.6.24-1ubuntu0.24.04.1 [112 kB]
+Get:346 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libfyba0t64 arm64 4.1.1-11build1 [120 kB]
+Get:347 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 libminizip1t64 arm64 1:1.3.dfsg-3.1ubuntu2.2 [22.7 kB]
+Get:348 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libfreexl1 arm64 2.0.0-1build2 [41.9 kB]
+Get:349 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgeos3.12.1t64 arm64 3.12.1-3build1 [828 kB]
+Get:350 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgeos-c1t64 arm64 3.12.1-3build1 [88.7 kB]
+Get:351 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 proj-data all 9.4.0-1build2 [7885 kB]
+Get:352 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libproj25 arm64 9.4.0-1build2 [1293 kB]
+Get:353 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgeotiff5 arm64 1.7.1-5build1 [60.3 kB]
+Get:354 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgif7 arm64 5.2.2-1ubuntu1.2 [36.1 kB]
+Get:355 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libhdf4-0-alt arm64 4.2.16-4build1 [269 kB]
+Get:356 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsz2 arm64 1.1.2-1build1 [5284 B]
+Get:357 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libhdf5-103-1t64 arm64 1.10.10+repack-3.1ubuntu4 [1192 kB]
+Get:358 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 liburiparser1 arm64 0.9.7+dfsg-2build1 [35.4 kB]
+Get:359 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libkmlbase1t64 arm64 1.3.0-12build1 [47.8 kB]
+Get:360 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libkmldom1t64 arm64 1.3.0-12build1 [146 kB]
+Get:361 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libkmlengine1t64 arm64 1.3.0-12build1 [68.1 kB]
+Get:362 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 mysql-common all 5.8+1.1.0build1 [6746 B]
+Get:363 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libmysqlclient21 arm64 8.0.46-0ubuntu0.24.04.4 [1246 kB]
+Get:364 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libhdf5-hl-100t64 arm64 1.10.10+repack-3.1ubuntu4 [55.8 kB]
+Get:365 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libnetcdf19t64 arm64 1:4.9.2-5ubuntu4 [471 kB]
+Get:366 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libodbc2 arm64 2.3.12-1ubuntu0.24.04.1 [145 kB]
+Get:367 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 unixodbc-common all 2.3.12-1ubuntu0.24.04.1 [8806 B]
+Get:368 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libodbcinst2 arm64 2.3.12-1ubuntu0.24.04.1 [29.8 kB]
+Get:369 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libogdi4.1 arm64 4.1.1+ds-3build1 [211 kB]
+Get:370 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libnspr4 arm64 2:4.35-1.1build1 [114 kB]
+Get:371 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libnss3 arm64 2:3.98-1ubuntu0.2 [1406 kB]
+Get:372 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libpoppler134 arm64 24.02.0-1ubuntu9.10 [1074 kB]
+Get:373 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libpq5 arm64 16.15-0ubuntu0.24.04.1 [149 kB]
+Get:374 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqhull-r8.0 arm64 2020.2-6build1 [189 kB]
+Get:375 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 librttopo1 arm64 1.1.0-3build2 [187 kB]
+Get:376 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libspatialite8t64 arm64 5.1.0-3build1 [1814 kB]
+Get:377 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libxerces-c3.2t64 arm64 3.2.4+debian-1.2ubuntu2 [874 kB]
+Get:378 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgdal34t64 arm64 3.8.4+dfsg-3ubuntu3 [7886 kB]
+Get:379 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libsocket++1 arm64 1.12.13+git20131030.5d039ba-1build1 [81.5 kB]
+Get:380 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgdcm3.0t64 arm64 3.0.22-2.1ubuntu1 [2050 kB]
+Get:381 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgdcm-dev arm64 3.0.22-2.1ubuntu1 [268 kB]
+Get:382 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgeographiclib-dev arm64 2.3-1build1 [392 kB]
+Get:383 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libgl2ps1.4 arm64 1.4.2+dfsg1-2build1 [40.6 kB]
+Get:384 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libglew2.2 arm64 2.2.0-4build1 [191 kB]
+Get:385 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgphoto2-port12t64 arm64 2.5.31-2.1ubuntu1.1 [59.6 kB]
+Get:386 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgphoto2-6t64 arm64 2.5.31-2.1ubuntu1.1 [733 kB]
+Get:387 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgphoto2-dev arm64 2.5.31-2.1ubuntu1.1 [33.2 kB]
+Get:388 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libunwind8 arm64 1.6.2-3build1.1 [53.6 kB]
+Get:389 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgstreamer1.0-0 arm64 1.24.2-1ubuntu0.1 [1147 kB]
+Get:390 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 liborc-0.4-0t64 arm64 1:0.4.38-1ubuntu0.1 [205 kB]
+Get:391 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libgstreamer-plugins-base1.0-0 arm64 1.24.2-1ubuntu0.5 [830 kB]
+Get:392 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libgudev-1.0-0 arm64 1:238-5ubuntu1 [15.1 kB]
+Get:393 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libimath-3-1-29t64 arm64 3.1.9-3.1ubuntu2 [68.2 kB]
+Get:394 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libimath-dev arm64 3.1.9-3.1ubuntu2 [115 kB]
+Get:395 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwacom-common all 2.10.0-2 [63.4 kB]
+Get:396 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwacom9 arm64 2.10.0-2 [23.7 kB]
+Get:397 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libinput-bin arm64 1.25.0-1ubuntu3.7 [23.6 kB]
+Get:398 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libmtdev1t64 arm64 1.1.6-1.1build1 [14.3 kB]
+Get:399 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libinput10 arm64 1.25.0-1ubuntu3.7 [129 kB]
+Get:400 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libjpeg-turbo8-dev arm64 2.1.5-2ubuntu2 [305 kB]
+Get:401 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libjpeg8-dev arm64 8c-2ubuntu11 [1484 B]
+Get:402 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libjpeg-dev arm64 8c-2ubuntu11 [1482 B]
+Get:403 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 liblbfgsb0 arm64 3.0+dfsg.4-1build1 [27.7 kB]
+Get:404 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 liblept5 arm64 1.82.0-3build4 [1112 kB]
+Get:405 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 liblerc-dev arm64 4.0.0+ds-4ubuntu2 [168 kB]
+Get:406 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libmd4c0 arm64 0.4.8-1build1 [40.9 kB]
+Get:407 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libogg-dev arm64 1.3.5-3build1 [161 kB]
+Get:408 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libtbbmalloc2 arm64 2021.11.0-2ubuntu2 [43.8 kB]
+Get:409 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libtbbbind-2-5 arm64 2021.11.0-2ubuntu2 [16.4 kB]
+Get:410 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libtbb12 arm64 2021.11.0-2ubuntu2 [79.9 kB]
+Get:411 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-core406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [995 kB]
+Get:412 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-flann406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [126 kB]
+Get:413 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-imgproc406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [1051 kB]
+Get:414 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-features2d406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [223 kB]
+Get:415 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-calib3d406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [655 kB]
+Get:416 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libtbb-dev arm64 2021.11.0-2ubuntu2 [253 kB]
+Get:417 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-core-dev arm64 4.6.0+dfsg-13.1ubuntu1 [1822 kB]
+Get:418 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-flann-dev arm64 4.6.0+dfsg-13.1ubuntu1 [208 kB]
+Get:419 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopenexr-3-1-30 arm64 3.1.5-5.1build3 [939 kB]
+Get:420 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-imgcodecs406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [119 kB]
+Get:421 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libopengl0 arm64 1.7.0-1build1 [35.1 kB]
+Get:422 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libpcre2-16-0 arm64 10.42-4ubuntu2.1 [196 kB]
+Get:423 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqt5core5t64 arm64 5.15.13+dfsg-1ubuntu1 [1973 kB]
+Get:424 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libegl1 arm64 1.7.0-1build1 [29.5 kB]
+Err:425 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqt5dbus5t64 arm64 5.15.13+dfsg-1ubuntu1
+  502  Bad Gateway [IP: 127.0.0.1 3128]
+Get:426 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqt5network5t64 arm64 5.15.13+dfsg-1ubuntu1 [741 kB]
+Get:427 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-icccm4 arm64 0.4.1-1.1build3 [10.5 kB]
+Get:428 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-util1 arm64 0.4.0-1build3 [10.7 kB]
+Get:429 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-image0 arm64 0.4.0-2build1 [10.8 kB]
+Get:430 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-keysyms1 arm64 0.4.0-1build4 [7984 B]
+Get:431 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-render-util0 arm64 0.3.9-1build4 [9648 B]
+Get:432 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-xinerama0 arm64 1.15-1ubuntu2 [5598 B]
+Get:433 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-xinput0 arm64 1.15-1ubuntu2 [34.2 kB]
+Get:434 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxcb-xkb1 arm64 1.15-1ubuntu2 [32.6 kB]
+Get:435 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxkbcommon-x11-0 arm64 1.6.0-1build1 [13.6 kB]
+Get:436 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqt5gui5t64 arm64 5.15.13+dfsg-1ubuntu1 [3617 kB]
+Get:437 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqt5widgets5t64 arm64 5.15.13+dfsg-1ubuntu1 [2564 kB]
+Get:438 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqt5opengl5t64 arm64 5.15.13+dfsg-1ubuntu1 [148 kB]
+Get:439 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libqt5test5t64 arm64 5.15.13+dfsg-1ubuntu1 [144 kB]
+Get:440 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-highgui406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [110 kB]
+Get:441 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-imgproc-dev arm64 4.6.0+dfsg-13.1ubuntu1 [1382 kB]
+Get:442 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-imgcodecs-dev arm64 4.6.0+dfsg-13.1ubuntu1 [198 kB]
+Get:443 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-videoio406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [188 kB]
+Get:444 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-videoio-dev arm64 4.6.0+dfsg-13.1ubuntu1 [316 kB]
+Get:445 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopenexr-dev arm64 3.1.5-5.1build3 [106 kB]
+Get:446 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libpng-dev arm64 1.6.43-5ubuntu0.7 [268 kB]
+Get:447 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libswscale-dev arm64 7:6.1.1-3ubuntu5 [197 kB]
+Get:448 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libjbig-dev arm64 2.1-6.1ubuntu2 [27.5 kB]
+Get:449 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 liblzma-dev arm64 5.6.1+really5.4.5-1ubuntu0.3 [178 kB]
+Get:450 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwebpdemux2 arm64 1.3.2-0.4build3 [12.3 kB]
+Get:451 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwebpdecoder3 arm64 1.3.2-0.4build3 [88.7 kB]
+Get:452 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libsharpyuv-dev arm64 1.3.2-0.4build3 [15.1 kB]
+Get:453 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libwebp-dev arm64 1.3.2-0.4build3 [334 kB]
+Get:454 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libtiffxx6 arm64 4.5.1+git230720-4ubuntu2.5 [5646 B]
+Get:455 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libtiff-dev arm64 4.5.1+git230720-4ubuntu2.5 [337 kB]
+Get:456 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-highgui-dev arm64 4.6.0+dfsg-13.1ubuntu1 [168 kB]
+Get:457 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-ml406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [195 kB]
+Get:458 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-ml-dev arm64 4.6.0+dfsg-13.1ubuntu1 [301 kB]
+Get:459 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-features2d-dev arm64 4.6.0+dfsg-13.1ubuntu1 [326 kB]
+Get:460 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-calib3d-dev arm64 4.6.0+dfsg-13.1ubuntu1 [1008 kB]
+Get:461 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libprotobuf32t64 arm64 3.21.12-8.2ubuntu0.3 [859 kB]
+Get:462 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-dnn406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [1048 kB]
+Get:463 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-objdetect406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [210 kB]
+Get:464 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-video406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [166 kB]
+Get:465 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libtesseract5 arm64 5.3.4-1build5 [1230 kB]
+Get:466 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-contrib406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [3753 kB]
+Get:467 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-dnn-dev arm64 4.6.0+dfsg-13.1ubuntu1 [1788 kB]
+Get:468 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-objdetect-dev arm64 4.6.0+dfsg-13.1ubuntu1 [273 kB]
+Get:469 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-photo406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [180 kB]
+Get:470 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-photo-dev arm64 4.6.0+dfsg-13.1ubuntu1 [219 kB]
+Get:471 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-shape406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [47.6 kB]
+Get:472 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-video-dev arm64 4.6.0+dfsg-13.1ubuntu1 [247 kB]
+Get:473 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-shape-dev arm64 4.6.0+dfsg-13.1ubuntu1 [71.6 kB]
+Get:474 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-stitching406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [187 kB]
+Get:475 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-stitching-dev arm64 4.6.0+dfsg-13.1ubuntu1 [262 kB]
+Get:476 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-superres406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [43.7 kB]
+Get:477 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-superres-dev arm64 4.6.0+dfsg-13.1ubuntu1 [59.9 kB]
+Get:478 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-videostab406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [73.7 kB]
+Get:479 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-videostab-dev arm64 4.6.0+dfsg-13.1ubuntu1 [109 kB]
+Get:480 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libtcl8.6 arm64 8.6.14+dfsg-1build1 [978 kB]
+Get:481 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libxft2 arm64 2.3.6-1build1 [44.1 kB]
+Get:482 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libtk8.6 arm64 8.6.14-1build1 [767 kB]
+Get:483 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libvtk9.1t64 arm64 9.1.0+really9.1.0+dfsg2-7.1build3 [19.2 MB]
+Get:484 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-viz406t64 arm64 4.6.0+dfsg-13.1ubuntu1 [102 kB]
+Get:485 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-viz-dev arm64 4.6.0+dfsg-13.1ubuntu1 [182 kB]
+Get:486 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-contrib-dev arm64 4.6.0+dfsg-13.1ubuntu1 [5416 kB]
+Get:487 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libopencv-dev arm64 4.6.0+dfsg-13.1ubuntu1 [80.6 kB]
+Get:488 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libtheora-dev arm64 1.1.1+dfsg.1-16.1build3 [190 kB]
+Get:489 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libv4lconvert0t64 arm64 1.26.1-4build3 [88.6 kB]
+Get:490 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libv4l-0t64 arm64 1.26.1-4build3 [46.4 kB]
+Get:491 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 libv4l2rds0t64 arm64 1.26.1-4build3 [20.1 kB]
+Get:492 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 libzbar0t64 arm64 0.23.93-4build3 [119 kB]
+Get:493 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 python3-colorama all 0.4.6-4 [32.1 kB]
+Get:494 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 python3-click all 8.1.6-2 [79.0 kB]
+Get:495 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 python3-decorator all 5.1.1-5 [10.1 kB]
+Get:496 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 python3-opencv arm64 4.6.0+dfsg-13.1ubuntu1 [1641 kB]
+Get:497 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 python3-pydot all 1.4.2-2 [24.4 kB]
+Get:498 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 python3-pyzbar all 0.1.9-1ubuntu1 [13.4 kB]
+Get:499 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 python3-serial all 3.5-2 [78.6 kB]
+Get:500 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 python3-websockets all 10.4-1 [64.0 kB]
+Get:501 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 v4l-utils arm64 1.26.1-4build3 [687 kB]
+Get:502 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 tesseract-ocr-eng all 1:4.1.0-2 [1818 kB]
+Get:503 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 tesseract-ocr-osd all 1:4.1.0-2 [3841 kB]
+Get:504 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 tesseract-ocr arm64 5.3.4-1build5 [314 kB]
+Get:505 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 python3-scipy arm64 1.11.4-6build1 [15.0 MB]
+Fetched 320 MB in 12min 55s (412 kB/s)
+[91mE: Failed to fetch http://ports.ubuntu.com/ubuntu-ports/pool/universe/q/qtbase-opensource-src/libqt5dbus5t64_5.15.13%2bdfsg-1ubuntu1_arm64.deb  502  Bad Gateway [IP: 127.0.0.1 3128]
+E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
+[0mThe command '/bin/sh -c apt-get update && apt-get install -y --no-install-recommends     ros-jazzy-mavros ros-jazzy-mavros-extras ros-jazzy-cv-bridge     ros-jazzy-web-video-server ros-jazzy-usb-cam ros-jazzy-xacro     ros-jazzy-robot-state-publisher ros-jazzy-py-trees     python3-opencv python3-numpy python3-scipy python3-serial     python3-websockets python3-pyzbar tesseract-ocr libzbar0     geographiclib-tools     && /opt/ros/jazzy/lib/mavros/install_geographiclib_datasets.sh     && rm -rf /var/lib/apt/lists/*' returned a non-zero code: 100

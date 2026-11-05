@@ -1,0 +1,15 @@
+{
+  "verified": true,
+  "moves": [
+    {
+      "destination": "logs\\archived_phase2_20261014",
+      "files": 2116,
+      "bytes": 6806488763
+    },
+    {
+      "destination": ".scratch\\worktree_consolidation_20261014\\phase2-scratch",
+      "files": 22,
+      "bytes": 299954
+    }
+  ]
+}

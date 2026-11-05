@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Content-Type: text/javascript
+Content-Encoding: gzip
+Vary: Accept-Encoding
+Etag: "18df56d5f6e1e754-463e9"
+Last-Modified: Sat, 17 Oct 2026 14:17:34 GMT
+Content-Length: 287721
+Accept-Ranges: bytes
+Date: Sat, 17 Oct 2026 14:18:35 GMT
+Server: Python/3.12 aiohttp/3.9.1
+

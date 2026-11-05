@@ -1,0 +1,26 @@
+Removed '/etc/systemd/system/multi-user.target.wants/aerothon-telemetry-streams.service'.
+Removed '/etc/systemd/system/multi-user.target.wants/aerothon-gcs-standalone.service'.
+Removed '/etc/systemd/system/multi-user.target.wants/aerothon-mavlink-router.service'.
+uninstalled mavproxy! ✨ 🌟 ✨
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages were automatically installed and are no longer required:
+  docutils-common libadwaita-1-0 mypy pylint python3-astroid python3-asttokens
+  python3-dill python3-docutils python3-isort python3-jedi
+  python3-logilab-common python3-mccabe python3-mypy python3-mypy-extensions
+  python3-orjson python3-parso python3-roman python3-send2trash
+  python3-tomlkit xsel zenity zenity-common
+Use 'sudo apt autoremove' to remove them.
+The following packages will be REMOVED:
+  thonny*
+0 upgraded, 0 newly installed, 1 to remove and 54 not upgraded.
+After this operation, 8,297 kB disk space will be freed.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 132619 files and directories currently installed.)
+Removing thonny (4.1.7-1) ...
+Processing triggers for hicolor-icon-theme (0.18-2) ...
+Processing triggers for man-db (2.13.1-1) ...
+Processing triggers for mailcap (3.74) ...
+Processing triggers for desktop-file-utils (0.28-1) ...
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root        29G  9.2G   19G  34% /

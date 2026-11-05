@@ -1,0 +1,208 @@
+{
+  "title": "SLAM operator-view research and design recommendations",
+  "date": "2026-10-18",
+  "status": "research_complete",
+  "scope": "Browser SLAM/map presentation only. No Pi connection, sensor configuration, mapping algorithm, flight decision or hardware action was performed.",
+  "method": "Official product documentation, ROS message definitions, ROS REPs and W3C guidance were opened and read. Source facts below describe those references. Recommendations are design judgments for this GCS, not claims that all robotics products use the proposed layout.",
+  "sources": [
+    {
+      "id": "rviz_map",
+      "title": "RViz2 map display features",
+      "url": "https://github.com/ros2/rviz/blob/rolling/docs/FEATURES.md#map-display",
+      "source_fact": "RViz's map palette maps occupancy 0 to white and 100 to black, with a muted color for unknown cells. The map display supports drawing behind other scene elements and a separate costmap palette.",
+      "relevance": "Occupancy is a map of observations. Red/green heatmap colors would borrow a different meaning from costmaps."
+    },
+    {
+      "id": "rviz_guide",
+      "title": "RViz2 user guide",
+      "url": "https://github.com/ros2/rviz/blob/rolling/rviz2/doc/index.rst",
+      "source_fact": "RViz has a top-down orthographic camera, display-specific health states, grouped display visibility, pan/zoom controls and a reset to a known view. Its fixed frame is stationary; its target frame may follow robot position without following orientation.",
+      "relevance": "Separating display health, coordinate frame and camera behavior is established robotics practice."
+    },
+    {
+      "id": "foxglove_3d",
+      "title": "Foxglove 3D panel",
+      "url": "https://docs.foxglove.dev/docs/visualization/panels/3d",
+      "source_fact": "Foxglove transforms objects using their source timestamps and coordinate frames. It exposes individual topic visibility, scan-point persistence, fixed-frame 2D viewing and several camera-follow modes, including position-only following.",
+      "relevance": "A scan, map, track and pose are separate layers with different lifetimes and coordinate requirements."
+    },
+    {
+      "id": "qgc_center",
+      "title": "QGroundControl Fly View settings",
+      "url": "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/settings_view/general.html#fly-view",
+      "source_fact": "QGroundControl exposes a Fly View option that keeps the map centered on the selected vehicle.",
+      "relevance": "Following an aircraft is a useful operator choice that should be visible in the view controls."
+    },
+    {
+      "id": "rep103",
+      "title": "ROS REP 103 coordinate conventions",
+      "url": "https://github.com/ros-infrastructure/rep/blob/master/rep-0103.rst#axis-orientation",
+      "source_fact": "ROS body axes use X forward, Y left and Z up. Geographic Cartesian frames use east/north/up. ROS yaw increases counterclockwise, unlike a traditional compass bearing.",
+      "relevance": "A body-relative scan and a map-relative view need different orientation labels."
+    },
+    {
+      "id": "rep105",
+      "title": "ROS REP 105 map-frame conventions",
+      "url": "https://github.com/ros-infrastructure/rep/blob/master/rep-0105.rst#map",
+      "source_fact": "A map frame may use a global reference or an application-specific reference. A robot without an external reference can initialize a local map; structured environments may align the map to the building.",
+      "relevance": "A local SLAM map is not automatically aligned to geographic north."
+    },
+    {
+      "id": "ros_grid",
+      "title": "ROS Jazzy OccupancyGrid definition",
+      "url": "https://github.com/ros2/common_interfaces/blob/jazzy/nav_msgs/msg/OccupancyGrid.msg",
+      "source_fact": "The occupancy grid stores cells in row-major order with X advancing first. Its value interpretation is application-dependent, and negative one commonly marks unknown space.",
+      "relevance": "The renderer must preserve the producer's semantics and must not convert unknown cells into observed free space."
+    },
+    {
+      "id": "ros_grid_metadata",
+      "title": "ROS Jazzy MapMetaData definition",
+      "url": "https://github.com/ros2/common_interfaces/blob/jazzy/nav_msgs/msg/MapMetaData.msg",
+      "source_fact": "Map metadata includes cell resolution in metres, grid dimensions and the real-world pose of the bottom-left corner of cell zero.",
+      "relevance": "The viewport, scale and grid placement must respect resolution, origin and origin rotation."
+    },
+    {
+      "id": "ros_scan",
+      "title": "ROS Jazzy LaserScan definition",
+      "url": "https://github.com/ros2/common_interfaces/blob/jazzy/sensor_msgs/msg/LaserScan.msg",
+      "source_fact": "A scan timestamp represents its first acquired ray. Scan angle zero points along positive X, angles increase around positive Z, and out-of-range readings should be discarded.",
+      "relevance": "A scan has acquisition-time and body-frame meaning, even if it is drawn on a persistent map."
+    },
+    {
+      "id": "canvas_performance",
+      "title": "MDN canvas optimization guidance",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas",
+      "source_fact": "MDN recommends caching repeated drawing in an offscreen canvas, separating static and frequently changing layers, avoiding unnecessary canvas state changes and using requestAnimationFrame for animation.",
+      "relevance": "The existing raster cache and coalesced drawing prevent telemetry updates from rebuilding every map cell."
+    },
+    {
+      "id": "w3c_target",
+      "title": "W3C target size guidance",
+      "url": "https://www.w3.org/WAI/WCAG21/Understanding/target-size/",
+      "source_fact": "The enhanced target-size criterion calls for pointer targets of at least 44 by 44 CSS pixels, with specified exceptions, to reduce difficulty and accidental activation.",
+      "relevance": "The SLAM controls are used on phones and tablets as well as laptops. This is an appropriate design target, not a claim of audited WCAG conformance."
+    },
+    {
+      "id": "w3c_drag",
+      "title": "W3C alternatives to dragging",
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html",
+      "source_fact": "The dragging criterion requires a single-pointer alternative where dragging is not essential. Its map example provides directional pan buttons in addition to dragging. Keyboard support alone does not satisfy this requirement.",
+      "relevance": "A map that only permits dragging cannot be fully operated through simple taps."
+    }
+  ],
+  "patterns": [
+    {
+      "id": "semantic_occupancy",
+      "priority": 1,
+      "name": "Use a quiet occupancy palette and distinct overlay colors",
+      "source_refs": ["rviz_map", "ros_grid"],
+      "recommendation": "Keep free, occupied and unknown cells visually distinct. Use pale free space and dark walls in the light theme, the inverse contrast in the dark theme, and a quiet midtone for unexplored space. Reserve cyan for current scan points and amber for the aircraft. Keep intermediate occupancy values visible without turning the map into a rainbow.",
+      "reason": "Walls and explored boundaries remain readable while color points to changing operator information. The legend retains the meaning of the underlying grid."
+    },
+    {
+      "id": "layers_and_hierarchy",
+      "priority": 1,
+      "name": "Make the map dominant and give layers explicit visibility controls",
+      "source_refs": ["rviz_map", "rviz_guide", "foxglove_3d"],
+      "recommendation": "Use most of the SLAM panel for one canvas. Draw occupancy first, then subtle metric grid lines, the track, scan points and aircraft marker. Add compact Scan, Track and Grid switches with clear selected states. Keep routine status in a small HUD and put frame, resolution, dimensions and origin in a quieter details row.",
+      "reason": "Operators can inspect map geometry without scan or grid clutter and then restore the layers. Reducing the current surrounding prose gives the map more usable space."
+    },
+    {
+      "id": "coordinates_and_scale",
+      "priority": 1,
+      "name": "Keep metric geometry truthful and label the actual frame",
+      "source_refs": ["rep103", "rep105", "ros_grid_metadata", "ros_scan"],
+      "recommendation": "Keep the map in a top-down orthographic view. Show a small +X right / +Y up orientation widget and the actual map frame ID. Label the bare scan Forward and Left, with nose up. Only show N/E cardinal directions when a measured geographic alignment exists. Use an adaptive 1/2/5 metric scale bar that stays inside the viewport at every zoom level.",
+      "reason": "A local LiDAR map must not imply a compass heading. A constant one-metre scale bar can exceed the screen at close zoom, while an adaptive length remains legible."
+    },
+    {
+      "id": "fit_follow_pan",
+      "priority": 1,
+      "name": "Separate fitting the map from following the aircraft",
+      "source_refs": ["rviz_guide", "foxglove_3d", "qgc_center"],
+      "recommendation": "Provide Fit map, Follow aircraft and zoom controls. Fit frames the map bounds with padding. Follow keeps a valid mapped pose in view without rotating the map. Manual pan or zoom leaves follow mode and visibly marks the view as manual. A later Fit or Follow click restores the intended behavior. Disable follow while there is no pose.",
+      "reason": "Fitting a growing map and tracking aircraft motion are different tasks. Explicit modes stop automatic recentering from fighting an operator who is inspecting a wall."
+    },
+    {
+      "id": "independent_freshness",
+      "priority": 1,
+      "name": "Treat map, scan and pose freshness independently",
+      "source_refs": ["foxglove_3d", "ros_scan", "rviz_guide"],
+      "recommendation": "Show separate map age, scan availability and last mapped pose age. Only label scan points live when lidarFresh is true. Gray or suppress stale scans on both scan and map views. Use 'Last mapped pose' for an old pose; do not claim the aircraft has not moved. A map-space scan overlay also needs a compatible frame and pose timestamp. If that relationship is unavailable, suppress the overlay or label it as unregistered while retaining the body-relative scan view.",
+      "reason": "A fresh scan does not establish fresh registration, and a retained pose does not prove a stationary aircraft. The view should preserve useful history without presenting it as a new measurement.",
+      "implementation_boundary": "A full acquisition-time transform solution may need backend message fields. Frontend work can immediately fix independent colors, labels and conservative visibility without changing flight or mapping behavior."
+    },
+    {
+      "id": "empty_and_held_states",
+      "priority": 1,
+      "name": "Explain missing or held data in the selected view",
+      "source_refs": ["rviz_guide", "foxglove_3d"],
+      "recommendation": "Use explicit view states for mapping disabled, waiting for first map, live mapping, map retained while registration is held, and map stale. Display the backend reason as secondary text when present. Keep the map tab identifiable when no grid exists and offer a clear way to inspect the live scan. Avoid silently presenting a scan as though it were the selected map. Do not invent a pose or map preview to fill an empty canvas.",
+      "reason": "The operator can tell whether to wait, examine sensor returns or correct a profile. A connection badge alone cannot describe all mapping layers."
+    },
+    {
+      "id": "mobile_and_keyboard",
+      "priority": 2,
+      "name": "Make map controls usable through taps and keyboard",
+      "source_refs": ["w3c_target", "w3c_drag"],
+      "recommendation": "Use 44 CSS pixel touch targets for the primary map controls. Let controls wrap on narrow screens and keep status text from covering them. Retain explicit plus/minus zoom buttons, visible focus indicators and descriptive accessible labels. Add a compact tap-operated pan control or another single-pointer pan alternative if drag-to-pan remains. Keyboard arrows, plus/minus and a fit shortcut are useful alongside pointer controls.",
+      "reason": "The view remains workable on tablets, touchscreens and keyboard-only desktop sessions. Avoid claiming full accessibility compliance from target sizing alone."
+    },
+    {
+      "id": "low_cost_rendering",
+      "priority": 1,
+      "name": "Preserve the cached raster and draw only when data or the view changes",
+      "source_refs": ["canvas_performance"],
+      "recommendation": "Keep one rasterization per new grid or palette change, and reuse that image for telemetry redraws. Coalesce work through requestAnimationFrame. Keep controls and status in HTML, avoid animated glow or continuous decorative loops, and cap expensive display resolution if profiling warrants it. Cache transformed scan points and map bounds when their inputs are unchanged. Add another canvas layer only if measured rendering cost justifies it.",
+      "reason": "The visual redesign should retain the recent fix for browser stalls. A clean 2D map does not need a 3D renderer or a new dependency."
+    }
+  ],
+  "current_component_observations": [
+    {
+      "file": "src/aerothon_gcs/tauri_app/src/LidarView.tsx",
+      "observation": "The existing code already caches its occupancy raster with useMemo and coalesces redraws through requestAnimationFrame. Preserve these behavior fixes.",
+      "type": "verified_local_source"
+    },
+    {
+      "file": "src/aerothon_gcs/tauri_app/src/LidarView.tsx",
+      "observation": "The component describes a local map as north-up and describes a retained old pose as evidence that the aircraft has not moved. Neither conclusion follows from the frontend inputs.",
+      "type": "verified_local_source_and_design_inference"
+    },
+    {
+      "file": "src/aerothon_gcs/tauri_app/src/LidarView.tsx",
+      "observation": "The map branch draws scan points in the live scan color whenever a pose exists, while its fresh flag describes map age. It needs an independent scan freshness input for truthful overlay styling.",
+      "type": "verified_local_source"
+    },
+    {
+      "file": "MASTER_DOCUMENTATION.md",
+      "observation": "The current Sensors and mechanism section describes LiDAR-only mapping independent of FCU flight pose and says failed registration holds updates. An older memory note that mapping requires GPS is superseded.",
+      "type": "verified_current_documentation"
+    }
+  ],
+  "suggested_visual_structure": {
+    "top_row": "SLAM map / Live lidar mode selector and one concise mapping-state label",
+    "canvas": "Large neutral map with a clear aircraft marker, scan points, a restrained track, optional grid, small axes and adaptive scale bar",
+    "view_controls": "Fit map, Follow aircraft, zoom in/out and a compact tap-pan alternative",
+    "layer_controls": "Scan, Track and Grid switches with selected states",
+    "secondary_details": "Map age, scan state, pose age, frame and metres per cell; deeper dimensions and origin in a quiet details row",
+    "recommendation_type": "Design proposal derived from the patterns above, not a copied product specification"
+  },
+  "review_cases": [
+    "Light and dark theme map with free, occupied, intermediate and unknown cells",
+    "Nonzero grid origin and grid yaw, checked against pose and scan positions",
+    "Close zoom and distant zoom with the scale bar contained in the canvas",
+    "Map growth while fitted, then map growth after manual pan",
+    "Follow mode with valid pose, no pose and held registration",
+    "Fresh map with stale scan, stale map with fresh scan and old pose",
+    "Mapping disabled, first map pending, held registration and disconnected source",
+    "Each layer toggled independently without changing telemetry or mapping",
+    "Phone width and tablet width, including long backend status text",
+    "Tap-only and keyboard navigation, visible focus and useful button names",
+    "Large grid while telemetry updates; rasterization count follows grid changes rather than telemetry frequency"
+  ],
+  "memory_use": {
+    "purpose": "Used the prior GCS verification boundary as a reminder to separate browser display from live sensor proof. Current master documentation was read to reject the older GPS prerequisite.",
+    "citation": "MEMORY.md:119-125",
+    "rollout_id": "01a14498-e4d3-72f3-9b89-f514248a0e30"
+  }
+}

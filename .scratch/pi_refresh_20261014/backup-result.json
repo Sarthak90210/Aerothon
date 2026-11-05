@@ -1,0 +1,20 @@
+{
+  "archive": "/home/pi5/aerothon-pre-refresh-20261014.tar.gz",
+  "bytes": 8382703,
+  "sha256": "7bdcde275ab76471d438b23b494d38b2db053f565c25f74402304f981ae0cd9f",
+  "entries": 1482,
+  "included": [
+    "home/pi5/aerothon_ws",
+    "home/pi5/aerothon-deploy",
+    "home/pi5/.aerothon",
+    "home/pi5/.local/state/aerothon",
+    "home/pi5/.mavproxy",
+    "home/pi5/.tilecache",
+    "boot/firmware/config.txt",
+    "boot/firmware/cmdline.txt",
+    "etc/systemd/system/aerothon-gcs.service",
+    "etc/systemd/system/aerothon-router.service",
+    "etc/systemd/system/aerothon-console.service",
+    "etc/systemd/system/aerothon-stack.service"
+  ]
+}

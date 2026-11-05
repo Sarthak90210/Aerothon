@@ -1,0 +1,3979 @@
+{
+  "scope": "Continue original GCS Testing options locally using actual ArduCopter SITL, Gazebo, production runtime and local gateway. No Pi or physical hardware accessed.",
+  "head": "9e76672377373b3bdafb28ff09e859f5bba3d414",
+  "source_sha256": {
+    "src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py": "d9dfdbed41a7fb995266e19395ae1e2c10ea4ae34dfd5c3e3d4845cba4761e78",
+    "src/aerothon_runtime/aerothon_runtime/execution_node.py": "b773a600e998ebc4e3c80b8596823900f236d523529ebfd95a74ac191949ddd9",
+    "sim/test_winch.py": "5ef14993e0f2f55f0a4d2504f022bd68351b1432a68a5bafb43a59c8d17c4456",
+    "sim/test_gcs_merge_contract.py": "4df5dbf2a6ecb608a68f251b7f9c68860e02ef6dfd95bc59bcb14eb8cf22363c"
+  },
+  "fixes": [
+    {
+      "problem": "A refused ground release stayed latched during safe stop/stow and blocked readiness.",
+      "change": "A replacement lower/stow/stop command clears the superseded release-refusal diagnostic; all physical release preconditions remain."
+    },
+    {
+      "problem": "A release during an encoder/backend fault relabeled the genuine fault as transient and later cleared it.",
+      "change": "Release preserves an existing backend/encoder fault. Tests assert stop/stow also retain genuine faults."
+    },
+    {
+      "problem": "Completed bench tasks displayed the previous execution failure reason.",
+      "change": "Successful passive/mechanism receipts have an empty reason; failed and unconfirmed-release reasons remain."
+    }
+  ],
+  "regression": {
+    "initial_reproduction": "3 failed, 1 passed for refused-release stop/stow and true fault preservation before fix",
+    "receipt_reproduction": "1 failed before receipt fix",
+    "affected": "51 passed in20.19s; sim/test_winch.py, test_winch_gpio.py, test_remote_device_link.py, test_gcs_merge_contract.py",
+    "log": ".scratch/slam_ui_20261018/local_backend_tests.log"
+  },
+  "setup": {
+    "camera": "640x360 rendered by Gazebo; measured17-18Hz vehicle time against10Hz requirement",
+    "lidar": "measured10Hz vehicle time against8Hz requirement",
+    "profile": "local_sitl_state/profiles.json",
+    "venue": "local_sitl_venue.yaml",
+    "constraints": "No threshold changed. Test venue supplies measured camera dimensions and shipped SITL WINCH_RATE_MAX1.0. Early inconsistent-resolution mission attempt was operator-interrupted and remains separate."
+  },
+  "known_issues": [
+    "Avoidance route armed and reached3m but made under1m progress toward local(14,0)/(20,0) in112s; production Stop recovered/disarmed. Navigation algorithms unchanged.",
+    "Gateway actuator capability flags intermittently not-ok caused known Failed starts even when the operator snapshot appeared good. No capability gate bypassed.",
+    "Full mission reached decoded start QR and AlignToBanner, then remained in banner surface fitting/relocation at300s. Operator-interrupted and recovered/disarmed, not a completed or accepted mission.",
+    "Delivery GPS5m: actual3m marker could not fit the camera vertical field at that selected height. Setup-limited attempt, operator-stopped; not classified as runtime defect.",
+    "Delivery GPS7m retry: refused before arming because camera/winch actuator feedback capability flags were not-ok. Successful feasible-altitude GPS delivery remains pending.",
+    "Delivery here: reached WinchDrop; production automatically raised tracking to6.76m for the configured3m pad and selected5.5m release height. It then reported payload not confirmed: load calibration missing or unqualified. No delivery success claimed.",
+    "Final Stop arrived during Delivery-here failure recovery, so a terminal Completed/operator-stopped receipt must not hide the earlier calibration failure in runtime.log.",
+    "A large host wall-clock gap appears between recorded events on18 and19October. Interrupted/paused intervals are retained; none of these attempts is qualification evidence.",
+    "Mechanism lower and manual transmitter flight were not freshly completed; transmitter RC mapping is unconfigured. Prior-context options remain prior evidence, not fresh passes."
+  ],
+  "commands": [
+    {
+      "command_id": "local_e5949797df4f47e09f1e685b5e02f220",
+      "request": {
+        "args": {
+          "vertices": [
+            {
+              "lat": -35.36345051251535,
+              "lon": 149.16513368355777
+            },
+            {
+              "lat": -35.36345051251535,
+              "lon": 149.16587723153788
+            },
+            {
+              "lat": -35.36307322009602,
+              "lon": 149.16587723153788
+            },
+            {
+              "lat": -35.36307322009602,
+              "lon": 149.16513368355777
+            }
+          ]
+        },
+        "cmd": "set_geofence",
+        "command_id": "local_e5949797df4f47e09f1e685b5e02f220",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_e5949797df4f47e09f1e685b5e02f220",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_3f183dc6705440e0bf1281b5b4595589",
+      "request": {
+        "args": {
+          "vertices": [
+            {
+              "lat": -35.3633966135983,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3633966135983,
+              "lon": 149.16581113838407
+            },
+            {
+              "lat": -35.363127119013065,
+              "lon": 149.16581113838407
+            },
+            {
+              "lat": -35.363127119013065,
+              "lon": 149.16537051735884
+            }
+          ]
+        },
+        "cmd": "set_delivery_zone",
+        "command_id": "local_3f183dc6705440e0bf1281b5b4595589",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_3f183dc6705440e0bf1281b5b4595589",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_43b4f4f4a3c04a9f8571c8111c9da2a3",
+      "request": {
+        "args": {
+          "colours": {
+            "green": "#039E3D",
+            "orange": "#FF8000",
+            "red": "#F20A0A"
+          }
+        },
+        "cmd": "set_banner_colours",
+        "command_id": "local_43b4f4f4a3c04a9f8571c8111c9da2a3",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_43b4f4f4a3c04a9f8571c8111c9da2a3",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_6a9dd2f3db9d4d6cab39d82ad59bfc33",
+      "request": {
+        "args": {
+          "dimensions": {
+            "banner": {
+              "border_m": 0.07619999999999999,
+              "height_m": 1.15,
+              "placement": "suspended",
+              "suspended_bottom_m": 2.805,
+              "width_m": 3.7
+            },
+            "corridor": {
+              "length_m": 10.0,
+              "nav_height_m": 3.0,
+              "return_side": "right",
+              "spacing_m": 4.0,
+              "wall_height_m": 3.6,
+              "width_m": 3.5
+            },
+            "hall": {
+              "ceiling_m": 30.0,
+              "length_m": 80.0,
+              "width_m": 45.0
+            },
+            "obstacle": {
+              "reach_frac": 0.5
+            },
+            "payload": {
+              "length_m": 0.1,
+              "mass_kg": 0.1,
+              "width_m": 0.055
+            },
+            "qr": {
+              "border_m": 0.07619999999999999,
+              "start_m": 2.2,
+              "target_m": 3.0
+            },
+            "red_zone": {
+              "border_m": 0.1524,
+              "side_m": 1.524
+            }
+          }
+        },
+        "cmd": "set_arena_dimensions",
+        "command_id": "local_6a9dd2f3db9d4d6cab39d82ad59bfc33",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_6a9dd2f3db9d4d6cab39d82ad59bfc33",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+      "request": {
+        "args": {
+          "params": {
+            "action": "release"
+          },
+          "task": "mechanism"
+        },
+        "cmd": "start",
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "command_id": "local_12269b52e4234da1930846be97a055f5",
+      "request": {
+        "args": {
+          "params": {
+            "action": "stow"
+          },
+          "task": "mechanism"
+        },
+        "cmd": "start",
+        "command_id": "local_12269b52e4234da1930846be97a055f5",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_12269b52e4234da1930846be97a055f5",
+        "state": "Failed",
+        "reason": "required devices or measured actuator feedback are unavailable: winch_actuator (SITL output and measured model joint required)"
+      }
+    },
+    {
+      "command_id": "local_64f5a5005c914bd0bf2a882d07795136",
+      "request": {
+        "args": {
+          "params": {
+            "action": "stow"
+          },
+          "task": "mechanism"
+        },
+        "cmd": "start",
+        "command_id": "local_64f5a5005c914bd0bf2a882d07795136",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_64f5a5005c914bd0bf2a882d07795136",
+        "task": "mechanism",
+        "params": {
+          "action": "stow"
+        },
+        "state": "Completed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "command_id": "local_66c43370910a4df3aa16484162168550",
+      "request": {
+        "args": {
+          "params": {
+            "action": "stop"
+          },
+          "task": "mechanism"
+        },
+        "cmd": "start",
+        "command_id": "local_66c43370910a4df3aa16484162168550",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_66c43370910a4df3aa16484162168550",
+        "task": "mechanism",
+        "params": {
+          "action": "stop"
+        },
+        "state": "Completed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      }
+    },
+    {
+      "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+      "request": {
+        "args": {
+          "params": {
+            "height": 3.0,
+            "waypoints": [
+              {
+                "lat": -35.3632439,
+                "lon": 149.16537051735884
+              },
+              {
+                "lat": -35.3632439,
+                "lon": 149.16543661051261
+              }
+            ]
+          },
+          "task": "avoidance_route"
+        },
+        "cmd": "start",
+        "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+        "task": "avoidance_route",
+        "params": {
+          "height": 3.0,
+          "waypoints": [
+            {
+              "lat": -35.3632439,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3632439,
+              "lon": 149.16543661051261
+            }
+          ]
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_8ec682f7e5884cd4a8fe0b1b5e786f70",
+      "request": {
+        "args": {},
+        "cmd": "stop",
+        "command_id": "local_8ec682f7e5884cd4a8fe0b1b5e786f70",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_8ec682f7e5884cd4a8fe0b1b5e786f70",
+        "state": "Completed",
+        "reason": "operator stopped test"
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_4a8abc38fffe4988926c66c0c59a1a58",
+      "request": {
+        "args": {
+          "params": {
+            "height": 5.0
+          },
+          "task": "mission"
+        },
+        "cmd": "start",
+        "command_id": "local_4a8abc38fffe4988926c66c0c59a1a58",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_4a8abc38fffe4988926c66c0c59a1a58",
+        "state": "Failed",
+        "reason": "required devices or measured actuator feedback are unavailable: camera_actuator (SITL output and measured model joint required), winch_actuator (SITL output and measured model joint required)"
+      }
+    },
+    {
+      "command_id": "local_2adb917a8b8546c19c96b9657a652aa3",
+      "request": {
+        "args": {
+          "params": {
+            "height": 5.0
+          },
+          "task": "mission"
+        },
+        "cmd": "start",
+        "command_id": "local_2adb917a8b8546c19c96b9657a652aa3",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_2adb917a8b8546c19c96b9657a652aa3",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_3e92596e640e45c381813bb5bd8b9abd",
+      "request": {
+        "args": {},
+        "cmd": "stop",
+        "command_id": "local_3e92596e640e45c381813bb5bd8b9abd",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_3e92596e640e45c381813bb5bd8b9abd",
+        "state": "Completed",
+        "reason": "operator stopped test"
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_779a47cf52f84eb1b73542e731535e92",
+      "request": {
+        "args": {
+          "vertices": [
+            {
+              "lat": -35.36345051251535,
+              "lon": 149.16513368355777
+            },
+            {
+              "lat": -35.36345051251535,
+              "lon": 149.16587723153788
+            },
+            {
+              "lat": -35.36307322009602,
+              "lon": 149.16587723153788
+            },
+            {
+              "lat": -35.36307322009602,
+              "lon": 149.16513368355777
+            }
+          ]
+        },
+        "cmd": "set_geofence",
+        "command_id": "local_779a47cf52f84eb1b73542e731535e92",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_779a47cf52f84eb1b73542e731535e92",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_160ae6b4536e4934a03b95aed2b1feff",
+      "request": {
+        "args": {
+          "vertices": [
+            {
+              "lat": -35.3633966135983,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3633966135983,
+              "lon": 149.16581113838407
+            },
+            {
+              "lat": -35.363127119013065,
+              "lon": 149.16581113838407
+            },
+            {
+              "lat": -35.363127119013065,
+              "lon": 149.16537051735884
+            }
+          ]
+        },
+        "cmd": "set_delivery_zone",
+        "command_id": "local_160ae6b4536e4934a03b95aed2b1feff",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_160ae6b4536e4934a03b95aed2b1feff",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_81ba183ac219489b8eb783f9cdc7d287",
+      "request": {
+        "args": {
+          "colours": {
+            "green": "#039E3D",
+            "orange": "#FF8000",
+            "red": "#F20A0A"
+          }
+        },
+        "cmd": "set_banner_colours",
+        "command_id": "local_81ba183ac219489b8eb783f9cdc7d287",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_81ba183ac219489b8eb783f9cdc7d287",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_ac597c377c5c4362a3a736411c5752ba",
+      "request": {
+        "args": {
+          "dimensions": {
+            "banner": {
+              "border_m": 0.07619999999999999,
+              "height_m": 1.15,
+              "placement": "suspended",
+              "suspended_bottom_m": 2.805,
+              "width_m": 3.7
+            },
+            "corridor": {
+              "length_m": 10.0,
+              "nav_height_m": 3.0,
+              "return_side": "right",
+              "spacing_m": 4.0,
+              "wall_height_m": 3.6,
+              "width_m": 3.5
+            },
+            "hall": {
+              "ceiling_m": 30.0,
+              "length_m": 80.0,
+              "width_m": 45.0
+            },
+            "obstacle": {
+              "reach_frac": 0.5
+            },
+            "payload": {
+              "length_m": 0.1,
+              "mass_kg": 0.1,
+              "width_m": 0.055
+            },
+            "qr": {
+              "border_m": 0.07619999999999999,
+              "start_m": 2.2,
+              "target_m": 3.0
+            },
+            "red_zone": {
+              "border_m": 0.1524,
+              "side_m": 1.524
+            }
+          }
+        },
+        "cmd": "set_arena_dimensions",
+        "command_id": "local_ac597c377c5c4362a3a736411c5752ba",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_ac597c377c5c4362a3a736411c5752ba",
+        "state": "Accepted",
+        "reason": ""
+      }
+    },
+    {
+      "command_id": "local_b03a887104324fa88507d0072ff53299",
+      "request": {
+        "args": {
+          "params": {
+            "height": 5.0
+          },
+          "task": "mission"
+        },
+        "cmd": "start",
+        "command_id": "local_b03a887104324fa88507d0072ff53299",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_b03a887104324fa88507d0072ff53299",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_6dbf3c40e9ae4380bb7f3ce74d67e8e6",
+      "request": {
+        "args": {},
+        "cmd": "stop",
+        "command_id": "local_6dbf3c40e9ae4380bb7f3ce74d67e8e6",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_6dbf3c40e9ae4380bb7f3ce74d67e8e6",
+        "state": "Completed",
+        "reason": "operator stopped test"
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+      "request": {
+        "args": {
+          "params": {
+            "height": 5.0,
+            "target": "AEROTHON2026:M2:TARGET_C",
+            "waypoints": [
+              {
+                "lat": -35.36325288315284,
+                "lon": 149.16549168814078
+              }
+            ]
+          },
+          "task": "delivery_gps"
+        },
+        "cmd": "start",
+        "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+        "task": "delivery_gps",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C",
+          "waypoints": [
+            {
+              "lat": -35.36325288315284,
+              "lon": 149.16549168814078
+            }
+          ]
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_1b4f74b962e042b99342a53373d0e240",
+      "request": {
+        "args": {},
+        "cmd": "stop",
+        "command_id": "local_1b4f74b962e042b99342a53373d0e240",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_1b4f74b962e042b99342a53373d0e240",
+        "state": "Completed",
+        "reason": "operator stopped test"
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_371fff05ff004ed09411c0cc22ed61c7",
+      "request": {
+        "args": {
+          "params": {
+            "height": 7.0,
+            "target": "AEROTHON2026:M2:TARGET_C",
+            "waypoints": [
+              {
+                "lat": -35.36325288315284,
+                "lon": 149.16549168814078
+              }
+            ]
+          },
+          "task": "delivery_gps"
+        },
+        "cmd": "start",
+        "command_id": "local_371fff05ff004ed09411c0cc22ed61c7",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_371fff05ff004ed09411c0cc22ed61c7",
+        "state": "Failed",
+        "reason": "required devices or measured actuator feedback are unavailable: camera_actuator (SITL output and measured model joint required), winch_actuator (SITL output and measured model joint required)"
+      }
+    },
+    {
+      "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+      "request": {
+        "args": {
+          "params": {
+            "height": 5.0,
+            "target": "AEROTHON2026:M2:TARGET_C"
+          },
+          "task": "delivery_here"
+        },
+        "cmd": "start",
+        "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+        "task": "delivery_here",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C"
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    },
+    {
+      "command_id": "local_c29af5b7302c46309b8c9dc2844086f1",
+      "request": {
+        "args": {},
+        "cmd": "stop",
+        "command_id": "local_c29af5b7302c46309b8c9dc2844086f1",
+        "confirm": true
+      },
+      "result": {
+        "command_id": "local_c29af5b7302c46309b8c9dc2844086f1",
+        "state": "Completed",
+        "reason": "operator stopped test"
+      },
+      "interpretation": "operator-interrupted; Completed confirms recovery/disarm, not task completion"
+    }
+  ],
+  "snapshots": [
+    {
+      "path": ".scratch/slam_ui_20261018/local_avoidance_recovery_1792336998702365555.json",
+      "telemetry_messages": 90,
+      "fcu_connected_messages": 90,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+        "task": "avoidance_route",
+        "params": {
+          "height": 3.0,
+          "waypoints": [
+            {
+              "lat": -35.3632439,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3632439,
+              "lon": 149.16543661051261
+            }
+          ]
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.05,
+        "y": 0.04,
+        "alt": -0.02,
+        "gs": 0.01,
+        "roll_deg": -0.0,
+        "pitch_deg": -0.2,
+        "yaw_deg": 175.9
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.99,
+          "receipt_age_s": 0.05753997499959951,
+          "capture_age_s": 0.04800000000000182,
+          "vehicle_hz": 17.52212389380538,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 5.21,
+          "receipt_age_s": 0.13344343899916566,
+          "capture_age_s": 0.09799999999998477,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.067003616127544e-06,
+        "measurement_age_s": 0.02800000000002001,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_avoidance_route_1792336935923970546.json",
+      "telemetry_messages": 238,
+      "fcu_connected_messages": 238,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+        "task": "avoidance_route",
+        "params": {
+          "height": 3.0,
+          "waypoints": [
+            {
+              "lat": -35.3632439,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3632439,
+              "lon": 149.16543661051261
+            }
+          ]
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "WaypointRoute"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "WaypointRoute",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 111.7,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": -0.73,
+        "y": -0.3,
+        "alt": 3.03,
+        "gs": 0.01,
+        "roll_deg": -0.0,
+        "pitch_deg": -0.1,
+        "yaw_deg": 176.0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.01,
+          "receipt_age_s": 0.009722771999804536,
+          "capture_age_s": 0.027999999999991587,
+          "vehicle_hz": 17.368421052631614,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.64,
+          "receipt_age_s": 0.16432462400007353,
+          "capture_age_s": 0.1279999999999859,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5256551707655613e-13,
+        "measurement_age_s": 0.027000000000015234,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 3.03)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_configure_1792337212371157058.json",
+      "telemetry_messages": 1,
+      "fcu_connected_messages": 1,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_2adb917a8b8546c19c96b9657a652aa3",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.03,
+        "y": 0.06,
+        "alt": -0.03,
+        "gs": 0.04,
+        "roll_deg": -0.0,
+        "pitch_deg": -0.1,
+        "yaw_deg": 181.0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 7.04,
+          "receipt_age_s": 0.03798796099908941,
+          "capture_age_s": 0.028999999999996362,
+          "vehicle_hz": 18.0,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.11,
+          "receipt_age_s": 0.26837666900064505,
+          "capture_age_s": 0.12899999999996226,
+          "vehicle_hz": 9.999999999999966,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.077833665814753e-06,
+        "measurement_age_s": 0.020999999999958163,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_delivery_gps_1792357747436443093.json",
+      "telemetry_messages": 595,
+      "fcu_connected_messages": 595,
+      "map_messages": 304,
+      "final_execution": {
+        "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+        "task": "delivery_gps",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C",
+          "waypoints": [
+            {
+              "lat": -35.36325288315284,
+              "lon": 149.16549168814078
+            }
+          ]
+        },
+        "state": "Running",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "CENTER_TARGET",
+        "armed": true,
+        "mode": "RTL",
+        "elapsed": 291.3,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.03,
+        "y": 0.0,
+        "alt": 0.01,
+        "gs": 0.02,
+        "roll_deg": 0.0,
+        "pitch_deg": -0.0,
+        "yaw_deg": 337.5
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 4.64,
+          "receipt_age_s": 0.09833350199915003,
+          "capture_age_s": 0.06200000000001182,
+          "vehicle_hz": 16.638655462185064,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 3.39,
+          "receipt_age_s": 0.18450654600019334,
+          "capture_age_s": 0.11199999999996635,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5458101437298999e-13,
+        "measurement_age_s": 0.017999999999915417,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 0.01)",
+          "altitude 0.01 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": {
+        "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+        "task": "delivery_gps",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C",
+          "waypoints": [
+            {
+              "lat": -35.36325288315284,
+              "lon": 149.16549168814078
+            }
+          ]
+        },
+        "state": "Running",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land"
+      }
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_delivery_gps_7m_1792357753959804294.json",
+      "telemetry_messages": 9,
+      "fcu_connected_messages": 9,
+      "map_messages": 5,
+      "final_execution": {
+        "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+        "task": "delivery_gps",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C",
+          "waypoints": [
+            {
+              "lat": -35.36325288315284,
+              "lon": 149.16549168814078
+            }
+          ]
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.03,
+        "y": -0.01,
+        "alt": -0.03,
+        "gs": 0.03,
+        "roll_deg": 0.0,
+        "pitch_deg": -0.0,
+        "yaw_deg": 335.6
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 4.51,
+          "receipt_age_s": 0.0731415409991314,
+          "capture_age_s": 0.06799999999998363,
+          "vehicle_hz": 17.217391304347824,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 3.18,
+          "receipt_age_s": 0.03757432800011884,
+          "capture_age_s": 0.06799999999998363,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.032554747938739e-06,
+        "measurement_age_s": 0.029999999999972715,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": {
+        "command_id": "local_371fff05ff004ed09411c0cc22ed61c7",
+        "state": "Failed",
+        "reason": "required devices or measured actuator feedback are unavailable: camera_actuator (SITL output and measured model joint required), winch_actuator (SITL output and measured model joint required)"
+      }
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_delivery_gps_framing_recovery_1792357751038201596.json",
+      "telemetry_messages": 216,
+      "fcu_connected_messages": 216,
+      "map_messages": 115,
+      "final_execution": {
+        "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+        "task": "delivery_gps",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C",
+          "waypoints": [
+            {
+              "lat": -35.36325288315284,
+              "lon": 149.16549168814078
+            }
+          ]
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.03,
+        "y": -0.01,
+        "alt": -0.01,
+        "gs": 0.04,
+        "roll_deg": 0.1,
+        "pitch_deg": -0.0,
+        "yaw_deg": 336.7
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 4.44,
+          "receipt_age_s": 0.08428278800056432,
+          "capture_age_s": 0.06200000000001182,
+          "vehicle_hz": 16.779661016949216,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 3.25,
+          "receipt_age_s": 0.21177440700012085,
+          "capture_age_s": 0.11200000000008004,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 4.6183984422273426e-06,
+        "measurement_age_s": 0.019000000000005457,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.01)",
+          "altitude -0.01 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": {
+        "command_id": "local_1b4f74b962e042b99342a53373d0e240",
+        "state": "Completed",
+        "reason": "operator stopped test"
+      }
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_delivery_here_1792357895221996513.json",
+      "telemetry_messages": 279,
+      "fcu_connected_messages": 279,
+      "map_messages": 142,
+      "final_execution": {
+        "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+        "task": "delivery_here",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C"
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.04,
+        "y": -0.01,
+        "alt": -0.23,
+        "gs": 0.08,
+        "roll_deg": 0.2,
+        "pitch_deg": -0.1,
+        "yaw_deg": 321.4
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.63,
+          "receipt_age_s": 0.1477524820002145,
+          "capture_age_s": 0.08600000000001273,
+          "vehicle_hz": 18.67924528301903,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.67,
+          "receipt_age_s": 0.11182962100065197,
+          "capture_age_s": 0.08600000000001273,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.2838527751400835e-13,
+        "measurement_age_s": 0.009999999999990905,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "altitude -0.23 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": {
+        "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+        "task": "delivery_here",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C"
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      }
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_final_delivery_here_recovery_1792357895164916332.json",
+      "telemetry_messages": 81,
+      "fcu_connected_messages": 81,
+      "map_messages": 42,
+      "final_execution": {
+        "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+        "task": "delivery_here",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C"
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.05,
+        "y": -0.01,
+        "alt": -0.23,
+        "gs": 0.08,
+        "roll_deg": 0.2,
+        "pitch_deg": -0.1,
+        "yaw_deg": 321.2
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.68,
+          "receipt_age_s": 0.10937335900052858,
+          "capture_age_s": 0.06700000000000728,
+          "vehicle_hz": 18.67924528301903,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.68,
+          "receipt_age_s": 0.1737534619987855,
+          "capture_age_s": 0.1169999999999618,
+          "vehicle_hz": 9.999999999999908,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 4.370431511040452e-06,
+        "measurement_age_s": 0.011999999999943611,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "altitude -0.24 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": {
+        "command_id": "local_c29af5b7302c46309b8c9dc2844086f1",
+        "state": "Completed",
+        "reason": "operator stopped test"
+      }
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_full_mission_1792337265039934736.json",
+      "telemetry_messages": 393,
+      "fcu_connected_messages": 393,
+      "map_messages": 0,
+      "final_execution": null,
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.02,
+        "y": 0.03,
+        "alt": -0.02,
+        "gs": 0.01,
+        "roll_deg": -0.1,
+        "pitch_deg": -0.1,
+        "yaw_deg": 195.0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 5.12,
+          "receipt_age_s": 0.06690497099953063,
+          "capture_age_s": 0.031999999999982265,
+          "vehicle_hz": 16.0,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 3.2,
+          "receipt_age_s": 0.4011818340004538,
+          "capture_age_s": 0.132000000000005,
+          "vehicle_hz": 10.000000000000119,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.078311134963337e-06,
+        "measurement_age_s": 0.007000000000005002,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_full_mission_calibrated_1792337592969300249.json",
+      "telemetry_messages": 600,
+      "fcu_connected_messages": 600,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_b03a887104324fa88507d0072ff53299",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "AlignToBanner"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "BANNER_ALIGN",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 292.4,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.0,
+        "y": -14.99,
+        "alt": 3.0,
+        "gs": 0.02,
+        "roll_deg": -0.1,
+        "pitch_deg": 0.1,
+        "yaw_deg": 357.4
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.33,
+          "receipt_age_s": 0.05850196800020058,
+          "capture_age_s": 0.055999999999983174,
+          "vehicle_hz": 17.52212389380538,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 5.32,
+          "receipt_age_s": 0.02193307199922856,
+          "capture_age_s": 0.055999999999983174,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5308228956103972e-13,
+        "measurement_age_s": 0.03100000000000591,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 3.0)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_full_mission_retry1_1792337312032556759.json",
+      "telemetry_messages": 394,
+      "fcu_connected_messages": 394,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_b03a887104324fa88507d0072ff53299",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "FindStartQR"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "START_QR",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 17.5,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.12,
+        "y": 0.02,
+        "alt": 4.99,
+        "gs": 0.22,
+        "roll_deg": -0.2,
+        "pitch_deg": -2.0,
+        "yaw_deg": 206.7
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 10.29,
+          "receipt_age_s": 0.020818250999582233,
+          "capture_age_s": 0.036000000000001364,
+          "vehicle_hz": 18.165137614678937,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 5.71,
+          "receipt_age_s": 0.193307518000438,
+          "capture_age_s": 0.13599999999996726,
+          "vehicle_hz": 9.999999999999966,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5517587181304505e-13,
+        "measurement_age_s": 0.013000000000033651,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 4.98)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_mission_calibrated_recovery_1792337691614157668.json",
+      "telemetry_messages": 180,
+      "fcu_connected_messages": 180,
+      "map_messages": 92,
+      "final_execution": {
+        "command_id": "local_b03a887104324fa88507d0072ff53299",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Running",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "BANNER_ALIGN",
+        "armed": true,
+        "mode": "RTL",
+        "elapsed": 389.3,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.01,
+        "y": -0.0,
+        "alt": 0.06,
+        "gs": 0.03,
+        "roll_deg": -0.1,
+        "pitch_deg": 0.1,
+        "yaw_deg": 357.3
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.32,
+          "receipt_age_s": 0.02047067999956198,
+          "capture_age_s": 0.027000000000043656,
+          "vehicle_hz": 16.779661016949216,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.96,
+          "receipt_age_s": 0.19236532299873943,
+          "capture_age_s": 0.1269999999999527,
+          "vehicle_hz": 9.999999999999908,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5395393405812196e-13,
+        "measurement_age_s": 0.027000000000043656,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 0.06)",
+          "altitude 0.06 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_mission_setup_recovery_1792337180804203805.json",
+      "telemetry_messages": 101,
+      "fcu_connected_messages": 101,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_2adb917a8b8546c19c96b9657a652aa3",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.04,
+        "y": 0.03,
+        "alt": -0.02,
+        "gs": 0.02,
+        "roll_deg": 0.0,
+        "pitch_deg": -0.2,
+        "yaw_deg": 172.0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 7.99,
+          "receipt_age_s": 0.09056485599830921,
+          "capture_age_s": 0.060000000000002274,
+          "vehicle_hz": 18.0,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.73,
+          "receipt_age_s": 0.18912187299974903,
+          "capture_age_s": 0.1099999999999568,
+          "vehicle_hz": 9.999999999999966,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 6.033401081650884e-06,
+        "measurement_age_s": 0.016999999999995907,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.01)",
+          "altitude -0.01 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_refused_release_1792336742073308925.json",
+      "telemetry_messages": 11,
+      "fcu_connected_messages": 11,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": -0.04,
+        "y": 0.09,
+        "alt": -0.02,
+        "gs": 0.08,
+        "roll_deg": 0.2,
+        "pitch_deg": -0.1,
+        "yaw_deg": 359.2
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.3,
+          "receipt_age_s": 0.10565466299976833,
+          "capture_age_s": 0.06499999999999773,
+          "vehicle_hz": 18.333333333333314,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.57,
+          "receipt_age_s": 0.07421400299972447,
+          "capture_age_s": 0.06499999999999773,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.083067850158188e-13,
+        "measurement_age_s": 0.015000000000000568,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_setup_1792336708367439545.json",
+      "telemetry_messages": 15,
+      "fcu_connected_messages": 15,
+      "map_messages": 0,
+      "final_execution": null,
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.12,
+        "y": 0.06,
+        "alt": -0.02,
+        "gs": 0.21,
+        "roll_deg": 0.0,
+        "pitch_deg": -0.1,
+        "yaw_deg": 291.1
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.27,
+          "receipt_age_s": 0.038338628000019526,
+          "capture_age_s": 0.04000000000000625,
+          "vehicle_hz": 18.16513761467889,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.79,
+          "receipt_age_s": 0.09498758699919563,
+          "capture_age_s": 0.09000000000000341,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0830995546014036e-13,
+        "measurement_age_s": 0.0309999999999917,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_setup_1792337277982436441.json",
+      "telemetry_messages": 21,
+      "fcu_connected_messages": 21,
+      "map_messages": 0,
+      "final_execution": null,
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.02,
+        "y": 0.02,
+        "alt": -0.02,
+        "gs": 0.01,
+        "roll_deg": -0.2,
+        "pitch_deg": -0.1,
+        "yaw_deg": 200.3
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 7.52,
+          "receipt_age_s": 0.11663747900092858,
+          "capture_age_s": 0.09100000000000819,
+          "vehicle_hz": 17.368421052631614,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 3.99,
+          "receipt_age_s": 0.08743939099986164,
+          "capture_age_s": 0.09100000000000819,
+          "vehicle_hz": 10.000000000000044,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0814834919710076e-13,
+        "measurement_age_s": 0.0,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792336598262686969.json",
+      "telemetry_messages": 0,
+      "fcu_connected_messages": 0,
+      "map_messages": 0,
+      "final_execution": null,
+      "final_mission": null,
+      "final_flight": null,
+      "final_devices": null,
+      "final_winch": null,
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792336616496394654.json",
+      "telemetry_messages": 17,
+      "fcu_connected_messages": 17,
+      "map_messages": 0,
+      "final_execution": null,
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0,
+        "y": 0,
+        "alt": 0,
+        "gs": 0,
+        "roll_deg": 0,
+        "pitch_deg": 0,
+        "yaw_deg": 0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.31,
+          "receipt_age_s": 0.1885479499997018,
+          "capture_age_s": 0.06299999999999883,
+          "vehicle_hz": 17.368421052631582,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.81,
+          "receipt_age_s": 0.300879243000054,
+          "capture_age_s": 0.11299999999999955,
+          "vehicle_hz": 10.000000000000004,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0831409067498886e-13,
+        "measurement_age_s": 0.009000000000000341,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt None)",
+          "no altitude"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792336838552400352.json",
+      "telemetry_messages": 5,
+      "fcu_connected_messages": 5,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+        "task": "avoidance_route",
+        "params": {
+          "height": 3.0,
+          "waypoints": [
+            {
+              "lat": -35.3632439,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3632439,
+              "lon": 149.16543661051261
+            }
+          ]
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "WaypointRoute"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "WaypointRoute",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 17.2,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": -0.03,
+        "y": 0.06,
+        "alt": 3.09,
+        "gs": 0.07,
+        "roll_deg": 0.0,
+        "pitch_deg": -1.5,
+        "yaw_deg": 175.8
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.86,
+          "receipt_age_s": 0.0946262299994487,
+          "capture_age_s": 0.07200000000000273,
+          "vehicle_hz": 17.678571428571356,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 5.27,
+          "receipt_age_s": 0.1499513359995035,
+          "capture_age_s": 0.1220000000000141,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.50558004864534e-13,
+        "measurement_age_s": 0.011000000000024102,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 3.08)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792336924315710924.json",
+      "telemetry_messages": 3,
+      "fcu_connected_messages": 3,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+        "task": "avoidance_route",
+        "params": {
+          "height": 3.0,
+          "waypoints": [
+            {
+              "lat": -35.3632439,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3632439,
+              "lon": 149.16543661051261
+            }
+          ]
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "WaypointRoute"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "WaypointRoute",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 100.9,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": -0.6,
+        "y": -0.25,
+        "alt": 3.05,
+        "gs": 0.01,
+        "roll_deg": -0.1,
+        "pitch_deg": -0.3,
+        "yaw_deg": 176.0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.12,
+          "receipt_age_s": 0.052435450999837485,
+          "capture_age_s": 0.03500000000002501,
+          "vehicle_hz": 17.678571428571445,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.31,
+          "receipt_age_s": 0.004685313999289065,
+          "capture_age_s": 0.03500000000002501,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.52629259490681e-13,
+        "measurement_age_s": 0.02600000000001046,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 3.05)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792336980894951921.json",
+      "telemetry_messages": 3,
+      "fcu_connected_messages": 3,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_b2ecc5de6c8348eeba919296b8d70890",
+        "task": "avoidance_route",
+        "params": {
+          "height": 3.0,
+          "waypoints": [
+            {
+              "lat": -35.3632439,
+              "lon": 149.16537051735884
+            },
+            {
+              "lat": -35.3632439,
+              "lon": 149.16543661051261
+            }
+          ]
+        },
+        "state": "Running",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "WaypointRoute",
+        "armed": true,
+        "mode": "RTL",
+        "elapsed": 155.5,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.05,
+        "y": 0.05,
+        "alt": 1.36,
+        "gs": 0.02,
+        "roll_deg": 0.0,
+        "pitch_deg": -0.2,
+        "yaw_deg": 176.0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 10.13,
+          "receipt_age_s": 0.06474422099927324,
+          "capture_age_s": 0.05500000000000682,
+          "vehicle_hz": 17.837837837837892,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 5.71,
+          "receipt_age_s": 0.13038897899969015,
+          "capture_age_s": 0.10499999999998977,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.520810834028254e-13,
+        "measurement_age_s": 0.014000000000010004,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 1.41)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792337107563235730.json",
+      "telemetry_messages": 3,
+      "fcu_connected_messages": 3,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_2adb917a8b8546c19c96b9657a652aa3",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "FindStartQR"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "START_QR",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 31.1,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.36,
+        "y": -0.05,
+        "alt": 4.99,
+        "gs": 0.04,
+        "roll_deg": 0.1,
+        "pitch_deg": -0.2,
+        "yaw_deg": 171.8
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.83,
+          "receipt_age_s": 0.07108025399975304,
+          "capture_age_s": 0.06399999999996453,
+          "vehicle_hz": 17.8378378378378,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.85,
+          "receipt_age_s": 0.031139089000134845,
+          "capture_age_s": 0.06399999999996453,
+          "vehicle_hz": 9.999999999999966,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5276435709276433e-13,
+        "measurement_age_s": 0.013999999999953161,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 4.99)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792337199073896933.json",
+      "telemetry_messages": 3,
+      "fcu_connected_messages": 3,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_2adb917a8b8546c19c96b9657a652aa3",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "RTL",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.04,
+        "y": 0.02,
+        "alt": -0.03,
+        "gs": 0.02,
+        "roll_deg": 0.0,
+        "pitch_deg": -0.2,
+        "yaw_deg": 177.7
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 7.28,
+          "receipt_age_s": 0.14416398200046388,
+          "capture_age_s": 0.06599999999997408,
+          "vehicle_hz": 17.678571428571356,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.2,
+          "receipt_age_s": 0.22930048299895134,
+          "capture_age_s": 0.11599999999998545,
+          "vehicle_hz": 9.999999999999966,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.077792531438984e-06,
+        "measurement_age_s": 0.016999999999995907,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792337358978201985.json",
+      "telemetry_messages": 40,
+      "fcu_connected_messages": 40,
+      "map_messages": 22,
+      "final_execution": {
+        "command_id": "local_b03a887104324fa88507d0072ff53299",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "OutboundCameraBannerSearch"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "CAMERA_BANNER",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 62.6,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 1.01,
+        "y": 0.29,
+        "alt": 4.99,
+        "gs": 0.02,
+        "roll_deg": -0.1,
+        "pitch_deg": -0.0,
+        "yaw_deg": 196.8
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 7.8,
+          "receipt_age_s": 0.04161299199950008,
+          "capture_age_s": 0.04099999999999682,
+          "vehicle_hz": 17.678571428571537,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.46,
+          "receipt_age_s": 0.001527804999568616,
+          "capture_age_s": 0.04099999999999682,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5004339924109973e-13,
+        "measurement_age_s": 0.012000000000000455,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 4.99)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792337465964088327.json",
+      "telemetry_messages": 3,
+      "fcu_connected_messages": 3,
+      "map_messages": 3,
+      "final_execution": {
+        "command_id": "local_b03a887104324fa88507d0072ff53299",
+        "task": "mission",
+        "params": {
+          "height": 5.0
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "AlignToBanner"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "BANNER_ALIGN",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 167.3,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 2.49,
+        "y": -3.68,
+        "alt": 3.0,
+        "gs": 0.03,
+        "roll_deg": -0.2,
+        "pitch_deg": 0.0,
+        "yaw_deg": 290.9
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.54,
+          "receipt_age_s": 0.27732559200012474,
+          "capture_age_s": 0.10800000000000409,
+          "vehicle_hz": 18.0,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 5.52,
+          "receipt_age_s": 0.224260733999472,
+          "capture_age_s": 0.10800000000000409,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5264437770148675e-13,
+        "measurement_age_s": 0.010999999999967258,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 3.0)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_status_1792337774929601459.json",
+      "telemetry_messages": 20,
+      "fcu_connected_messages": 20,
+      "map_messages": 11,
+      "final_execution": {
+        "command_id": "local_eed44913a59c4391a80daf26ad5bc4d9",
+        "task": "delivery_gps",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C",
+          "waypoints": [
+            {
+              "lat": -35.36325288315284,
+              "lon": 149.16549168814078
+            }
+          ]
+        },
+        "state": "Running",
+        "reason": "",
+        "control_owner": "Runtime",
+        "stage": "CenterOnTarget"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "CENTER_TARGET",
+        "armed": true,
+        "mode": "GUIDED",
+        "elapsed": 69.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 25.17,
+        "y": -0.98,
+        "alt": 4.96,
+        "gs": 0.02,
+        "roll_deg": 0.0,
+        "pitch_deg": 0.1,
+        "yaw_deg": 340.1
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.49,
+          "receipt_age_s": 0.023347119000391103,
+          "capture_age_s": 0.04499999999995907,
+          "vehicle_hz": 17.217391304347824,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.94,
+          "receipt_age_s": 0.18191180500070914,
+          "capture_age_s": 0.1449999999999818,
+          "vehicle_hz": 10.000000000000023,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 1.5542902749088795e-13,
+        "measurement_age_s": 0.011999999999943611,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt 4.96)"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_stop_winch_1792336790933796551.json",
+      "telemetry_messages": 9,
+      "fcu_connected_messages": 9,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_66c43370910a4df3aa16484162168550",
+        "task": "mechanism",
+        "params": {
+          "action": "stop"
+        },
+        "state": "Completed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.09,
+        "y": -0.02,
+        "alt": -0.02,
+        "gs": 0.16,
+        "roll_deg": 0.3,
+        "pitch_deg": -0.1,
+        "yaw_deg": 97.1
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.15,
+          "receipt_age_s": 0.17708364699956292,
+          "capture_age_s": 0.11599999999999966,
+          "vehicle_hz": 17.068965517241345,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 5.09,
+          "receipt_age_s": 0.1455244769995261,
+          "capture_age_s": 0.11599999999999966,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.082765120582839e-13,
+        "measurement_age_s": 0.013999999999995794,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_stow_after_refusal_1792336751978168828.json",
+      "telemetry_messages": 11,
+      "fcu_connected_messages": 11,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_2394a7146f7a4e36a0dde5fac6e39b7e",
+        "task": "mechanism",
+        "params": {
+          "action": "release"
+        },
+        "state": "Failed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "FAILED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": 0.0,
+        "y": -0.07,
+        "alt": -0.03,
+        "gs": 0.17,
+        "roll_deg": 0.0,
+        "pitch_deg": -0.0,
+        "yaw_deg": 18.4
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.68,
+          "receipt_age_s": 0.058994472000449605,
+          "capture_age_s": 0.05299999999999727,
+          "vehicle_hz": 18.33333333333336,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.59,
+          "receipt_age_s": 0.020383819000016956,
+          "capture_age_s": 0.05299999999999727,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "FAULT",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.159422869990523e-06,
+        "measurement_age_s": 0.02600000000001046,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.03)",
+          "altitude -0.03 m outside [1.0, 8.0]",
+          "fault: release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    },
+    {
+      "path": ".scratch/slam_ui_20261018/local_stow_after_refusal_retry1_1792336777862694553.json",
+      "telemetry_messages": 11,
+      "fcu_connected_messages": 11,
+      "map_messages": 0,
+      "final_execution": {
+        "command_id": "local_64f5a5005c914bd0bf2a882d07795136",
+        "task": "mechanism",
+        "params": {
+          "action": "stow"
+        },
+        "state": "Completed",
+        "reason": "release refused: payload not down (payout 0.00 m, alt -0.02); altitude -0.02 m outside [1.0, 8.0]",
+        "control_owner": "Runtime",
+        "stage": "Mechanism"
+      },
+      "final_mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "COMPLETED",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "final_flight": {
+        "x": -0.04,
+        "y": 0.01,
+        "alt": -0.02,
+        "gs": 0.02,
+        "roll_deg": 0.2,
+        "pitch_deg": 0.0,
+        "yaw_deg": 67.0
+      },
+      "final_devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 7.99,
+          "receipt_age_s": 0.08078960399961943,
+          "capture_age_s": 0.0660000000000025,
+          "vehicle_hz": 17.522123893805336,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.33,
+          "receipt_age_s": 0.14259130600021308,
+          "capture_age_s": 0.11599999999999966,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "final_winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.08280268649405e-13,
+        "measurement_age_s": 0.013999999999995794,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      },
+      "command_outcome": null
+    }
+  ],
+  "status": "Local continuation finished with explicit pending outcomes; recorded disarm and owned runtime/simulator shutdown complete. No Pi access or deployment.",
+  "shutdown": {
+    "wall_time": 1792358244.6851873,
+    "confirmed_disarm_before_disconnect": {
+      "profiles": [
+        {
+          "id": "sitl",
+          "name": "Laptop SITL",
+          "transport": "tcp",
+          "host": "127.0.0.1",
+          "port": 5762,
+          "bind_port": 14555,
+          "system_id": 1,
+          "component_id": 1,
+          "gateway": "http://127.0.0.1:8090",
+          "device": "/dev/ttyAMA0",
+          "baud": 115200,
+          "camera_device": "/dev/video0",
+          "lidar_port": "/dev/ttyUSB0",
+          "lidar_yaw_deg": 0.0,
+          "lidar_mirrored": false,
+          "camera_hfov": 0.851919,
+          "marker_m": 3.0,
+          "rc_config": {},
+          "slam": true,
+          "hardware_reviewed": false,
+          "delivery_calibration": "",
+          "vehicle": "simulation",
+          "gcs_host": "",
+          "winch_backend": "mavlink",
+          "venue_file": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/slam_ui_20261018/local_sitl_venue.yaml",
+          "autoconnect": false,
+          "slam_odometry": "fcu"
+        }
+      ],
+      "profile_id": "sitl",
+      "runtime": "Running",
+      "fresh": true,
+      "can_disconnect": true,
+      "can_edit_profiles": false,
+      "execution": {
+        "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+        "task": "delivery_here",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C"
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "autoconnect_suspended": false,
+      "connection_error": "",
+      "streams": [
+        {
+          "compressed": true,
+          "telemetry": 428,
+          "map": 44
+        }
+      ],
+      "tasks": [
+        {
+          "id": "mission",
+          "label": "Full mission",
+          "movement": true
+        },
+        {
+          "id": "slam",
+          "label": "SLAM mapping",
+          "movement": false
+        },
+        {
+          "id": "qr",
+          "label": "QR detection",
+          "movement": false
+        },
+        {
+          "id": "banner",
+          "label": "Banner alignment",
+          "movement": true
+        },
+        {
+          "id": "avoidance_manual",
+          "label": "Avoidance with transmitter",
+          "movement": true
+        },
+        {
+          "id": "avoidance_route",
+          "label": "Avoidance with waypoint route",
+          "movement": true
+        },
+        {
+          "id": "mechanism",
+          "label": "Mechanism only",
+          "movement": false
+        },
+        {
+          "id": "delivery_here",
+          "label": "Payload delivery here",
+          "movement": true
+        },
+        {
+          "id": "delivery_gps",
+          "label": "Payload delivery at GPS location",
+          "movement": true
+        }
+      ]
+    },
+    "disconnect_result": {
+      "profiles": [
+        {
+          "id": "sitl",
+          "name": "Laptop SITL",
+          "transport": "tcp",
+          "host": "127.0.0.1",
+          "port": 5762,
+          "bind_port": 14555,
+          "system_id": 1,
+          "component_id": 1,
+          "gateway": "http://127.0.0.1:8090",
+          "device": "/dev/ttyAMA0",
+          "baud": 115200,
+          "camera_device": "/dev/video0",
+          "lidar_port": "/dev/ttyUSB0",
+          "lidar_yaw_deg": 0.0,
+          "lidar_mirrored": false,
+          "camera_hfov": 0.851919,
+          "marker_m": 3.0,
+          "rc_config": {},
+          "slam": true,
+          "hardware_reviewed": false,
+          "delivery_calibration": "",
+          "vehicle": "simulation",
+          "gcs_host": "",
+          "winch_backend": "mavlink",
+          "venue_file": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/slam_ui_20261018/local_sitl_venue.yaml",
+          "autoconnect": false,
+          "slam_odometry": "fcu"
+        }
+      ],
+      "profile_id": null,
+      "runtime": "Stopped",
+      "fresh": false,
+      "can_disconnect": true,
+      "can_edit_profiles": true,
+      "execution": {
+        "command_id": "local_72ef3a5ec0bd44b28ecd21790c8e9694",
+        "task": "delivery_here",
+        "params": {
+          "height": 5.0,
+          "target": "AEROTHON2026:M2:TARGET_C"
+        },
+        "state": "Completed",
+        "reason": "operator stopped test",
+        "control_owner": "Flight controller",
+        "stage": "Return and land",
+        "disarmed": true
+      },
+      "autoconnect_suspended": true,
+      "connection_error": "",
+      "streams": [
+        {
+          "compressed": true,
+          "telemetry": 428,
+          "map": 44
+        }
+      ],
+      "tasks": [
+        {
+          "id": "mission",
+          "label": "Full mission",
+          "movement": true
+        },
+        {
+          "id": "slam",
+          "label": "SLAM mapping",
+          "movement": false
+        },
+        {
+          "id": "qr",
+          "label": "QR detection",
+          "movement": false
+        },
+        {
+          "id": "banner",
+          "label": "Banner alignment",
+          "movement": true
+        },
+        {
+          "id": "avoidance_manual",
+          "label": "Avoidance with transmitter",
+          "movement": true
+        },
+        {
+          "id": "avoidance_route",
+          "label": "Avoidance with waypoint route",
+          "movement": true
+        },
+        {
+          "id": "mechanism",
+          "label": "Mechanism only",
+          "movement": false
+        },
+        {
+          "id": "delivery_here",
+          "label": "Payload delivery here",
+          "movement": true
+        },
+        {
+          "id": "delivery_gps",
+          "label": "Payload delivery at GPS location",
+          "movement": true
+        }
+      ]
+    },
+    "owned_simulator_pgid": 13254,
+    "owned_web_pid": 13307,
+    "owned_runtime_pgid": 14937,
+    "process_shutdown_verification": {
+      "wall_time": 1792358464.1218972,
+      "owned_processes_remaining": [],
+      "verified_groups": [
+        13254,
+        14937
+      ],
+      "verified_web_pid": 13307,
+      "physical_hardware_accessed": false
+    }
+  }
+}

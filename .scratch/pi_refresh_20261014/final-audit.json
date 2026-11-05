@@ -1,0 +1,97 @@
+{
+  "verified_runtime_files": 240,
+  "maintained_markdown": [
+    "MASTER_DOCUMENTATION.md",
+    "AGENTS.md"
+  ],
+  "runtime_env_sha256": "5827a835277ab75c83776dbb8a5e13d5f5eaf457e0b3379322aedafd1ce5f978",
+  "services": {
+    "aerothon-gcs": {
+      "exit_code": 0,
+      "stdout": "Result=success\nActiveState=active\nSubState=running\nUnitFileState=enabled\nConditionResult=yes",
+      "stderr": ""
+    },
+    "aerothon-router": {
+      "exit_code": 0,
+      "stdout": "Result=exec-condition\nActiveState=inactive\nSubState=dead\nUnitFileState=enabled\nConditionResult=no",
+      "stderr": ""
+    },
+    "aerothon-console": {
+      "exit_code": 0,
+      "stdout": "Result=success\nActiveState=active\nSubState=running\nUnitFileState=enabled\nConditionResult=yes",
+      "stderr": ""
+    },
+    "aerothon-stack": {
+      "exit_code": 0,
+      "stdout": "Result=success\nActiveState=inactive\nSubState=dead\nUnitFileState=static\nConditionResult=no",
+      "stderr": ""
+    }
+  },
+  "configured_fcu_uart_exists": false,
+  "available_uart_devices": [
+    "/dev/ttyAMA10"
+  ],
+  "active_ros_nodes": {
+    "exit_code": 0,
+    "stdout": "/gcs_aggregator\n/gcs_readiness\n/mavros\n/mavros/actuator_control\n/mavros/adsb\n/mavros/altitude\n/mavros/cam_imu_sync\n/mavros/camera\n/mavros/cellular_status\n/mavros/cmd\n/mavros/companion_process\n/mavros/debug_value\n/mavros/distance_sensor\n/mavros/esc_status\n/mavros/esc_telemetry\n/mavros/fake_gps\n/mavros/ftp\n/mavros/geofence\n/mavros/gimbal_control\n/mavros/global_position\n/mavros/gps_input\n/mavros/gps_rtk\n/mavros/gpsstatus\n/mavros/guided_target\n/mavros/hil\n/mavros/home_position\n/mavros/imu\n/mavros/landing_target\n/mavros/local_position\n/mavros/log_transfer\n/mavros/mag_calibration\n/mavros/manual_control\n/mavros/mission\n/mavros/mocap\n/mavros/mount_control\n/mavros/nav_controller_output\n/mavros/obstacle\n/mavros/obstacle_distance_3d\n/mavros/odometry\n/mavros/onboard_computer\n/mavros/open_drone_id\n/mavros/optical_flow\n/mavros/param\n/mavros/play_tune\n/mavros/px4flow\n/mavros/rallypoint\n/mavros/rangefinder\n/mavros/rc\n/mavros/setpoint_accel\n/mavros/setpoint_attitude\n/mavros/setpoint_position\n/mavros/setpoint_raw\n/mavros/setpoint_trajectory\n/mavros/setpoint_velocity\n/mavros/sim_state\n/mavros/sys\n/mavros/tdr_radio\n/mavros/terrain\n/mavros/time\n/mavros/trajectory\n/mavros/tunnel\n/mavros/vfr_hud\n/mavros/vibration\n/mavros/vision_pose\n/mavros/vision_speed\n/mavros/wheel_odometry\n/mavros/wind\n/mavros_node\n/mavros_router\n/stream_rate_keeper\n/transform_listener_impl_555621c459e0",
+    "stderr": "[WARN] [1791936829.441775381] [rcl]: ROS_LOCALHOST_ONLY is deprecated but still honored if it is enabled. Use ROS_AUTOMATIC_DISCOVERY_RANGE and ROS_STATIC_PEERS instead.\n[WARN] [1791936829.441796325] [rcl]: 'localhost_only' is enabled, 'automatic_discovery_range' and 'static_peers' will be ignored."
+  },
+  "home_entries": [
+    ".Xauthority",
+    ".aerothon",
+    ".bash_history",
+    ".bash_logout",
+    ".bashrc",
+    ".cache",
+    ".config",
+    ".local",
+    ".profile",
+    ".ssh",
+    ".sudo_as_admin_successful",
+    ".xsession-errors",
+    ".xsession-errors.old",
+    "Desktop",
+    "Documents",
+    "Downloads",
+    "Music",
+    "Pictures",
+    "Public",
+    "Templates",
+    "Videos",
+    "aerothon-deploy",
+    "aerothon_ws"
+  ],
+  "deployment_entries": [
+    "Dockerfile",
+    "Dockerfile.dependencies",
+    "cleanup_refresh.json",
+    "console.launch.py",
+    "external_driver.json",
+    "run_container.sh",
+    "run_router.sh",
+    "runtime.env"
+  ],
+  "docker_containers": {
+    "exit_code": 0,
+    "stdout": "b258f6a1697b aerothon-console Up 23 minutes",
+    "stderr": ""
+  },
+  "docker_images": {
+    "exit_code": 0,
+    "stdout": "aerothon-runtime:20261014 80920de57d2d 2.45GB\naerothon-dependencies:20261014 a8d7bdd83be3 2.45GB\nros:jazzy-ros-base-noble c3c5545ce255 902MB",
+    "stderr": ""
+  },
+  "disk": {
+    "total": 30800916480,
+    "used": 11489746944,
+    "free": 17982005248
+  },
+  "obsolete_programs": {
+    "mavproxy.py": null,
+    "mavlink-routerd": null,
+    "sim_vehicle.py": null,
+    "gazebo": null,
+    "gz": null
+  },
+  "unresolved": "Configured FC UART absent; no FCU connection, actual sensor measurements, actuator or flight qualification in this deployment."
+}

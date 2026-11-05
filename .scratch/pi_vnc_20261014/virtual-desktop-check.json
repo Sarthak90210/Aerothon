@@ -1,0 +1,21 @@
+{
+  "pidfiles": {
+    "pi5:1.pid": "22305"
+  },
+  "display_info": {
+    "code": 127,
+    "stdout": "",
+    "stderr": "env: \u2018xdpyinfo\u2019: No such file or directory\n"
+  },
+  "desktop_windows": {
+    "code": 127,
+    "stdout": "",
+    "stderr": "env: \u2018xwininfo\u2019: No such file or directory\n"
+  },
+  "desktop_log": "(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:53.989: Choosing gtk.portal for org.freedesktop.impl.portal.Settings as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:53.990: Choosing gtk.portal for org.freedesktop.impl.portal.FileChooser as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:53.991: Choosing gtk.portal for org.freedesktop.impl.portal.AppChooser as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:53.992: Choosing gtk.portal for org.freedesktop.impl.portal.Print as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:53.993: Choosing gtk.portal for org.freedesktop.impl.portal.Notification as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:53.994: Choosing gtk.portal for org.freedesktop.impl.portal.Inhibit as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:53.995: Choosing gtk.portal for org.freedesktop.impl.portal.Access as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:54.006: Choosing gtk.portal for org.freedesktop.impl.portal.Account as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:54.008: Choosing gtk.portal for org.freedesktop.impl.portal.Email as a last-resort fallback\n\n(/usr/libexec/xdg-desktop-portal:22898): xdg-desktop-portal-WARNING **: 17:58:54.009: Choosing gtk.portal for org.freedesktop.impl.portal.DynamicLauncher as a last-resort fallback\ndbus-daemon[22315]: [session uid=1000 pid=22315 pidfd=4] Successfully activated service 'org.freedesktop.portal.Desktop'\n\n(xdg-desktop-portal-gtk:22952): xdg-desktop-portal-gtk-WARNING **: 18:00:05.264: Unhandled parent window type \n\n\n(xdg-desktop-portal-gtk:22952): xdg-desktop-portal-gtk-WARNING **: 18:00:05.264: Failed to associate portal window with parent window ",
+  "screen_capture": {
+    "code": 0,
+    "stdout": "/usr/bin/scrot\n",
+    "stderr": ""
+  }
+}

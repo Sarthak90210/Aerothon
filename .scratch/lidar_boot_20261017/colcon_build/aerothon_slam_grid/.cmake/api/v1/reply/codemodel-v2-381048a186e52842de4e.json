@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-f563f118288d5bfdf6e8.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "aerothon_slam_grid",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "aerothon_slam_grid::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-aerothon_slam_grid-14ff452b640a7950d744.json",
+					"name" : "aerothon_slam_grid",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "aerothon_slam_grid_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-aerothon_slam_grid_uninstall-b850bf99e37144abe0c5.json",
+					"name" : "aerothon_slam_grid_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-a8a21cb655295a4eb28b.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/lidar_boot_20261017/colcon_build/aerothon_slam_grid",
+		"source" : "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/src/aerothon_slam_grid"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

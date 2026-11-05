@@ -1,0 +1,29 @@
+{
+  "boot_id": "ff067fca-52ce-482f-86f8-7432a6c60d6d",
+  "previous_boot_id": "950bc834-9cfe-42b7-affd-35adea4d2184",
+  "uptime_s": 81.88,
+  "services": {
+    "aerothon-router.service": {
+      "ExecMainStartTimestampMonotonic": "4465326",
+      "ActiveState": "active",
+      "ActiveEnterTimestampMonotonic": "4465553"
+    },
+    "docker.service": {
+      "ExecMainStartTimestampMonotonic": "14597962",
+      "ActiveState": "active",
+      "ActiveEnterTimestampMonotonic": "15856138"
+    },
+    "aerothon-gcs.service": {
+      "ExecMainStartTimestampMonotonic": "15857266",
+      "ActiveState": "active",
+      "ActiveEnterTimestampMonotonic": "15857615"
+    }
+  },
+  "source_verified_files": 265,
+  "power_flags": "throttled=0x50000",
+  "voltage": [
+    "EXT5V_V volt(24)=5.05314000V"
+  ],
+  "utc": "2026-10-17T14:25:11+00:00",
+  "ntp": "NTPSynchronized=no"
+}

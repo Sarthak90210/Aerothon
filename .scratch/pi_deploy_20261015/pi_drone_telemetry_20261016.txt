@@ -1,0 +1,20 @@
+ready False
+  OK  FCU link | True | 
+  OK  GPS satellites | 14 | 
+  OK  GPS HDOP | 0.74 | 
+  NO  Battery voltage | 14.69 | 14.69 V, need above 15.0 V
+  OK  EKF health | True | 
+  NO  Lidar rate | 0.0 | 0.0 Hz, need 8.0 Hz
+  OK  MAVLink latency | 0.0 | 
+  NO  Camera pose | False | camera joint feedback stale
+  NO  Detector health | {'qr': None, 'banner': None, 'redzone': None} | stale: banner, qr, redzone
+  OK  Winch health | healthy | 
+  NO  RC failsafe | True | RC failsafe active
+  NO  Search area | invalid | delivery-zone boundary is missing
+  NO  Arena geofence | invalid | arena geofence boundary is missing
+  NO  Banner colours | None | no data received
+  NO  Arena dimensions | None | no data received
+mission {"selected": null, "part": "mission", "state": "idle", "armed": false, "mode": "STABILIZE", "elapsed": 0.0, "delivery_offset_m": null, "landing_precision": null, "result": null, "result_reason": null}
+gps {"lat": 12.9697979, "lon": 79.1547205, "sats": 14, "fix": "3D"}
+power {"volt": 14.69, "pct": 99, "current_a": -0.2800000011920929}
+ages {"winch": 0.046, "gps": 0.041, "magnetic": 0.036, "sats": 0.027, "pose": 0.264, "velocity": 0.262, "vibration": 0.264, "power": 0.26, "state": 0.727, "readiness": 0.223, "fence": 195.717, "devices": 0.0}

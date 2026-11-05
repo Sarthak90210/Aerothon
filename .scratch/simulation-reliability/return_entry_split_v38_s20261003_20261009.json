@@ -1,0 +1,15 @@
+{
+  "x": 27.927473068237305,
+  "y": -17.479768753051758,
+  "alt": 1.6421875953674316,
+  "yaw": -1.5640463074061532,
+  "source": "logs\\reliability_reduced_v38_render_split_corridors_s20261003_20261008\\onboard.jsonl",
+  "source_sha256": "3f404347a5048143f816bab5df463b62779cfa9cd51719ea2c34f4bed4dd3245",
+  "captured_stamp": 394.18,
+  "purpose": "Operator-only focused return start from failed native FCU entry; no world/truth input to avoidance",
+  "approach": {
+    "x": 27.93535804748535,
+    "y": -12.387951850891113,
+    "captured_stamp": 373.5
+  }
+}

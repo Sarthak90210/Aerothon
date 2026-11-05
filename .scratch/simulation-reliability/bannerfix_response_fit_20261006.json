@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "frame": "yaw_when_sent",
+      "tau": 0.8500000000000004,
+      "delay": 0.5999999999999999,
+      "rmse": 0.14342533712661093,
+      "residual_bias": [
+        -0.12174245450251406,
+        0.028948425127540547
+      ]
+    },
+    {
+      "frame": "yaw_when_arrived",
+      "tau": 0.8500000000000004,
+      "delay": 0.5999999999999999,
+      "rmse": 0.14386331240917452,
+      "residual_bias": [
+        -0.11714885608776526,
+        0.03934506999463039
+      ]
+    }
+  ],
+  "limitation": "Approximate response fits only; no safety bound or hardware qualification",
+  "source": "recorded onboard FCU velocity, pose and commanded body velocity"
+}

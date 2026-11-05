@@ -1,0 +1,58 @@
+{
+  "problem": "Upload the latest code base (HEAD) to the Pi at 192.168.137.187 before the competition",
+  "scope": "17 changed + 2 new runtime sources from git HEAD and the GCS dist built from it; no rebuild (symlink install, setup.py unchanged)",
+  "source_commit": "11236469a111522abb1582b1ae52827259bde9ac",
+  "bundle": "deploy_20261031_venue.tgz",
+  "bundle_sha256": "74a7849f41475352bba06760008a99f9c7ab4f2fd1abcd276ad9454b5e105d1e",
+  "destination": "pi5@192.168.137.187:/home/pi5/aerothon_ws (task dir ~/.local/state/aerothon/deploy_20261031_venue, backup tarball there)",
+  "pre_checks": "Pi files that differed only in CRLF line endings (6) left alone; every replaced file matched the Pi manifest and a committed version, so no Pi-only edits were overwritten",
+  "status": "installed",
+  "evidence": {
+    "manifest": "270 files, all verified",
+    "links": "install/build links resolve to /workspace/src for launch, venue.yaml (search_brake_mps2 1.0), web.py, aggregator.py, mission_tree.py",
+    "apriltag": "AprilTag 36h11 ID 300 rendered and decoded by tag_decode on the container's OpenCV 4.6.0",
+    "gcs": "served bundle assets/index-DVeBzwGS.js contains 'Apply organiser points' and 'Record here'",
+    "check_pi_runtime_in_container": "all PASS except ldlidar_stl_ros2 (not the aircraft's lidar; RPLIDAR C1 uses sllidar_ros2, PASS)",
+    "runtime_after": "container restarted with the web host; autoconnected profile vehicle_manual, MAVROS connected, disarmed, STABILIZE; aggregator publishes /mission/course_points"
+  },
+  "blockers": [
+    "/dev/video0 (USB camera) and /dev/ttyUSB0 (lidar) were not present on the Pi at deploy time",
+    "Hardware not re-qualified; field flight is the first evidence on this source"
+  ],
+  "completion": "software deployed and checked; flight evidence pending",
+  "followup_skip_corridor": {
+    "source_commit": "9c759938a12cbdfae5d04fa452f63338082f46ef",
+    "bundle": "deploy_20261031_skip.tgz",
+    "bundle_sha256": "b3e94c7e3951b4b056e85dcd8ca6e11c69f584cc7567dd2827c5a673abc49bee",
+    "destination": "pi5@192.168.137.151 (same ED25519 host key as .187; DHCP moved it)",
+    "status": "installed 2026-10-31T10:09:28+05:30",
+    "evidence": "manifest 270 files verified; links reach src; web host back on profile vehicle (mission); task list includes mission_skip_corridor; served GCS index-BSezHc-E.js has 'Mission, skip corridor'; camera_actuator/winch_actuator waived_for both mission tasks; lidar /scan 10.1 Hz",
+    "blockers": [
+      "camera /image_raw ~0.4-0.5 Hz (execution receipt age 6.7 s): Pi CPU saturated, load average ~21 on 4 cores (usb_cam mjpeg2rgb 64 %, detectors ~35-45 % each); Start refused until the camera is fresh",
+      "readiness interlock not ready (organiser inputs/GPS to be applied on the field)",
+      "Pi rebooted again; throttled=0x50000 (under-voltage occurred)"
+    ]
+  },
+  "followup_cam15_and_inputs": {
+    "source_commit": "e2fabab (camera framerate 15.0)",
+    "bundle_sha256": "54b111e1a366d694bb187aa2e55bfc5229023f494b9b4b7bf0adf3200ad08348",
+    "destination": "pi5@192.168.0.100 (same ED25519 key; Pi moved networks)",
+    "install": "files and manifest installed; script stopped at its link check (quoting error in an added grep); link verified by hand (install -> /workspace/src, framerate 15.0); runtime reconnected through /api/connect",
+    "operator_inputs_applied_via_api": [
+      "apply_organiser_points (11 recorded points; fence 4-vertex hull, zone corners, home, entry, exit)",
+      "set_banner_colours green #00B140, exit #0000FF, red #FF0000 (operator-supplied)",
+      "set_arena_dimensions: the operator's applied dimensions re-sent after each runtime restart"
+    ],
+    "profile_change": "vehicle.lidar_port /dev/ttyUSB0 -> /dev/serial/by-id/usb-Silicon_Labs_CP2102N_..._9876400e411ef1118b24c0e40f0f12f8-if00-port0 (adapter re-enumerated as ttyUSB1)",
+    "results": {
+      "camera": "ok after 15 Hz (receipt age 0.3-0.6 s); load 18 -> 8-13",
+      "lidar": "0 Hz: every driver start logs 'usb usb1-port2: over-current' and the CP2102N disconnects/re-enumerates"
+    },
+    "diagnosis": "Pi 5 negotiated a 3 A supply (max_current 3000 mA) with usb_max_current_enable=0, so USB peripherals are limited to 600 mA total; EXT5V 4.84 V; throttled=0x50000. Camera + C1 motor start exceed it.",
+    "blockers": [
+      "lidar power (operator hardware fix)",
+      "RC failsafe (transmitter off)",
+      "camera pose never commanded since boot"
+    ]
+  }
+}

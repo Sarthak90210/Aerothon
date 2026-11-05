@@ -1,0 +1,282 @@
+{
+  "status": "deployed_running_access_restored",
+  "verified_at_utc": "2026-10-18T22:02:24.107168+00:00",
+  "bundle": {
+    "path": ".scratch/slam_ui_20261018/aerothon-pi-20261019-slam-ui.zip",
+    "sha256": "018ae196716af83dc3624aad8adf417655b6e373ceb3749d87bb446a2f139156",
+    "manifest_files_verified": 265,
+    "mismatches": []
+  },
+  "native_build": {
+    "architecture": "aarch64",
+    "packages": 15,
+    "exit_code": 0,
+    "install": "/home/pi5/aerothon_ws/install_20261019",
+    "previous_install": "/home/pi5/aerothon_ws/install_before_20261019",
+    "software_checks_passed": 34,
+    "software_failures": 0
+  },
+  "network": {
+    "hostname": "pi5",
+    "ethernet_gcs": "http://192.168.0.104:8899/",
+    "wifi_gcs": "http://192.168.0.103:8899/",
+    "wifi_ssid": "iphone",
+    "wifi_profile_persistent": true,
+    "wifi_autoconnect_enabled": true,
+    "wifi_gateway_probe": "3/3 packets received",
+    "upstream_public_ip_access": false,
+    "upstream_dns_access": false,
+    "reboot_persistence_verified": false
+  },
+  "service_state": {
+    "gcs": "active/enabled",
+    "router": "active/enabled",
+    "gcs_restart": "on-failure",
+    "boot_id": "593c798c-80a0-4482-b8c1-9a7b150fe41d",
+    "reboot_performed": false,
+    "runtime": "Running",
+    "execution": "idle",
+    "armed": false
+  },
+  "recovery": {
+    "cause": "Final verification stopped GCS then failed because optional hwclock utility was absent. Reboot was never scheduled.",
+    "action": "Reenabled NTP, restarted GCS, verified both HTTP/WebSocket endpoints and rendered browser. Added hwclock availability guard to task-local script.",
+    "restored": true,
+    "browser_title": "AeroTHON GCS",
+    "browser_url": "http://192.168.0.104:8899/"
+  },
+  "telemetry": {
+    "ethernet": {
+      "endpoint": "http://192.168.0.104:8899",
+      "asset": "/assets/index-BvJeOAWo.js",
+      "profile_id": "drone",
+      "runtime": "Running",
+      "host_fresh": false,
+      "execution": null,
+      "telemetry_messages": 92,
+      "map_messages": 0,
+      "closes": 0,
+      "first": {
+        "mission": {
+          "selected": null,
+          "part": "mission",
+          "state": "idle",
+          "armed": false,
+          "mode": "LAND",
+          "elapsed": 0,
+          "delivery_offset_m": null,
+          "landing_precision": null,
+          "result": null,
+          "result_reason": null
+        },
+        "sample_age_s": {
+          "vibration": 0.101,
+          "magnetic": 0.134,
+          "power": 0.101,
+          "pose": 0.1,
+          "velocity": 0.1,
+          "gps": 0.163,
+          "sats": 0.118,
+          "state": 0.073,
+          "readiness": 0.404,
+          "devices": 0
+        },
+        "scan_returns": 0,
+        "scan_total": 0,
+        "devices": {
+          "camera": {
+            "ok": false,
+            "hz": null,
+            "receipt_age_s": null,
+            "capture_age_s": null
+          },
+          "lidar": {
+            "ok": false,
+            "hz": null,
+            "receipt_age_s": null,
+            "capture_age_s": null
+          }
+        }
+      },
+      "last": {
+        "mission": {
+          "selected": null,
+          "part": "mission",
+          "state": "idle",
+          "armed": false,
+          "mode": "LAND",
+          "elapsed": 0,
+          "delivery_offset_m": null,
+          "landing_precision": null,
+          "result": null,
+          "result_reason": null
+        },
+        "sample_age_s": {
+          "vibration": 0.208,
+          "magnetic": 0.238,
+          "power": 0.202,
+          "pose": 0.21,
+          "velocity": 0.209,
+          "gps": 0.247,
+          "sats": 0.223,
+          "state": 0.173,
+          "readiness": 0.003,
+          "winch": 0.12,
+          "devices": 0
+        },
+        "scan_returns": 0,
+        "scan_total": 0,
+        "devices": {
+          "camera": {
+            "ok": false,
+            "receipt_age_s": null
+          },
+          "lidar": {
+            "ok": false,
+            "receipt_age_s": null
+          },
+          "identity": {
+            "ok": true,
+            "value": 1,
+            "basis": "configured MAVROS target; live FCU link"
+          },
+          "clock": {
+            "ok": true,
+            "reason": "system ROS clock"
+          },
+          "camera_actuator": {
+            "ok": false,
+            "reason": "hardware camera motion feedback has not been qualified"
+          },
+          "winch_actuator": {
+            "ok": true,
+            "reason": ""
+          }
+        }
+      },
+      "closed_while_sampling": 0
+    },
+    "wifi": {
+      "endpoint": "http://192.168.0.103:8899",
+      "asset": "/assets/index-BvJeOAWo.js",
+      "profile_id": "drone",
+      "runtime": "Running",
+      "host_fresh": false,
+      "execution": null,
+      "telemetry_messages": 92,
+      "map_messages": 0,
+      "closes": 0,
+      "first": {
+        "mission": {
+          "selected": null,
+          "part": "mission",
+          "state": "idle",
+          "armed": false,
+          "mode": "LAND",
+          "elapsed": 0,
+          "delivery_offset_m": null,
+          "landing_precision": null,
+          "result": null,
+          "result_reason": null
+        },
+        "sample_age_s": {
+          "vibration": 0.101,
+          "magnetic": 0.134,
+          "power": 0.101,
+          "pose": 0.1,
+          "velocity": 0.1,
+          "gps": 0.163,
+          "sats": 0.118,
+          "state": 0.073,
+          "readiness": 0.404,
+          "devices": 0
+        },
+        "scan_returns": 0,
+        "scan_total": 0,
+        "devices": {
+          "camera": {
+            "ok": false,
+            "hz": null,
+            "receipt_age_s": null,
+            "capture_age_s": null
+          },
+          "lidar": {
+            "ok": false,
+            "hz": null,
+            "receipt_age_s": null,
+            "capture_age_s": null
+          }
+        }
+      },
+      "last": {
+        "mission": {
+          "selected": null,
+          "part": "mission",
+          "state": "idle",
+          "armed": false,
+          "mode": "LAND",
+          "elapsed": 0,
+          "delivery_offset_m": null,
+          "landing_precision": null,
+          "result": null,
+          "result_reason": null
+        },
+        "sample_age_s": {
+          "vibration": 0.208,
+          "magnetic": 0.238,
+          "power": 0.202,
+          "pose": 0.21,
+          "velocity": 0.209,
+          "gps": 0.247,
+          "sats": 0.223,
+          "state": 0.173,
+          "readiness": 0.003,
+          "winch": 0.12,
+          "devices": 0
+        },
+        "scan_returns": 0,
+        "scan_total": 0,
+        "devices": {
+          "camera": {
+            "ok": false,
+            "receipt_age_s": null
+          },
+          "lidar": {
+            "ok": false,
+            "receipt_age_s": null
+          },
+          "identity": {
+            "ok": true,
+            "value": 1,
+            "basis": "configured MAVROS target; live FCU link"
+          },
+          "clock": {
+            "ok": true,
+            "reason": "system ROS clock"
+          },
+          "camera_actuator": {
+            "ok": false,
+            "reason": "hardware camera motion feedback has not been qualified"
+          },
+          "winch_actuator": {
+            "ok": true,
+            "reason": ""
+          }
+        }
+      },
+      "closed_while_sampling": 0
+    }
+  },
+  "power_snapshot": {
+    "throttled": "0x0",
+    "ext5v_v": 5.1121
+  },
+  "backup_root": "/home/pi5/aerothon-backups/20261019-slam-ui",
+  "limits": [
+    "No current lidar scans or camera device; live SLAM/camera unverified.",
+    "Wi-Fi autoconnect persisted to disk but reboot persistence not verified.",
+    "Upstream Internet/DNS unavailable; NTP enabled but unsynchronized.",
+    "Software and disarmed telemetry checks do not qualify flight, mechanisms or loaded power."
+  ],
+  "documentation": "Local master guide updated after immutable bundle deployment; deployed manifest remains unchanged."
+}

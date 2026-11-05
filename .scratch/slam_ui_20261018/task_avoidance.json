@@ -1,0 +1,1 @@
+{"cmd": "start", "args": {"task": "avoidance_route", "params": {"height": 3.0, "waypoints": [{"lat": -35.3632439, "lon": 149.16537051735884}, {"lat": -35.3632439, "lon": 149.16543661051261}]}}}

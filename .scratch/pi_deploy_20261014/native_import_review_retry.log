@@ -1,0 +1,27 @@
+{
+  "platform": "aarch64",
+  "verified_files": 238,
+  "imports": {
+    "mission_bt.mission_tree": "/workspace/src/aerothon_mission/mission_bt/mission_bt/mission_tree.py",
+    "mission_bt.mav_commander": "/workspace/src/aerothon_mission/mission_bt/mission_bt/mav_commander.py",
+    "avoidance.velocity_controller": "/workspace/src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py",
+    "camera_ctrl.camera_ctrl_node": "/workspace/src/aerothon_perception/camera_ctrl/camera_ctrl/camera_ctrl_node.py",
+    "winch_ctrl.winch_node": "/workspace/src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py",
+    "perception_qr.qr_node": "/workspace/src/aerothon_perception/perception_qr/perception_qr/qr_node.py",
+    "perception_banner.banner_node": "/workspace/src/aerothon_perception/perception_banner/perception_banner/banner_node.py",
+    "perception_redzone.redzone_node": "/workspace/src/aerothon_perception/perception_redzone/perception_redzone/redzone_node.py",
+    "perception_redzone.payload_node": "/workspace/src/aerothon_perception/perception_redzone/perception_redzone/payload_node.py",
+    "perception_overlay.overlay_node": "/workspace/src/aerothon_perception/perception_overlay/perception_overlay/overlay_node.py",
+    "gcs_aggregator.aggregator": "/workspace/src/aerothon_gcs/gcs_aggregator/gcs_aggregator/aggregator.py",
+    "gcs_aggregator.readiness_node": "/workspace/src/aerothon_gcs/gcs_aggregator/gcs_aggregator/readiness_node.py",
+    "mission_bringup.stream_rate_keeper": "/workspace/src/aerothon_mission/mission_bringup/mission_bringup/stream_rate_keeper.py"
+  },
+  "urdf_bytes": 4634,
+  "dependencies": {
+    "cv2": "4.6.0",
+    "numpy": "1.26.4",
+    "websockets": "10.4",
+    "py_trees": "ROS package"
+  },
+  "hardware_qualified": false
+}

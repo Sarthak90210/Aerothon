@@ -1,0 +1,5 @@
+1d3f133612b4 Exited (100) About a minute ago elated_edison
+["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","LANG=C.UTF-8","LC_ALL=C.UTF-8","ROS_DISTRO=jazzy","DEBIAN_FRONTEND=noninteractive","https_proxy=http://127.0.0.1:3128","no_proxy=127.0.0.1,localhost","http_proxy=http://127.0.0.1:3128"]
+1.4G	/var/lib/docker
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root        29G  9.6G   18G  35% /

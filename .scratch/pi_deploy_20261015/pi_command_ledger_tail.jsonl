@@ -1,0 +1,8 @@
+{"id": "d5469dc9-1f8e-4fb2-86c3-38baa88c130a", "cmd": "set_geofence", "result": {"command_id": "d5469dc9-1f8e-4fb2-86c3-38baa88c130a", "state": "Accepted", "reason": ""}}
+{"id": "a03aa0b2-a007-4e30-8816-2b2e9fb61ea4", "cmd": "set_delivery_zone", "result": {"command_id": "a03aa0b2-a007-4e30-8816-2b2e9fb61ea4", "state": "Accepted", "reason": ""}}
+{"id": "2a084bb6-56f3-414c-9438-8d7bda97219c", "cmd": "set_banner_colours", "result": {"command_id": "2a084bb6-56f3-414c-9438-8d7bda97219c", "state": "Accepted", "reason": ""}}
+{"id": "ab4673ec-7036-4871-ac55-93e65cecd644", "cmd": "set_arena_dimensions", "result": {"command_id": "ab4673ec-7036-4871-ac55-93e65cecd644", "state": "Accepted", "reason": ""}}
+{"id": "813584ad-9ca8-41c5-b883-9e26e202c9a3", "cmd": "set_arena_dimensions", "result": {"command_id": "813584ad-9ca8-41c5-b883-9e26e202c9a3", "state": "Accepted", "reason": ""}}
+{"id": "operator_arena_source7", "cmd": "set_arena_dimensions", "result": {"state": "Outcome unknown", "reason": "web service restarted; inspect aircraft before starting again"}}
+
+{"exit_code": 0}

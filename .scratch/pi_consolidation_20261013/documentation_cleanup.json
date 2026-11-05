@@ -1,0 +1,633 @@
+{
+  "removed": [
+    {
+      "original_path": ".scratch/claw-bench/spec.md",
+      "sha256": "57d57a15ada0cfe742811ae38e443ded4c46371edd58fd70f26c1d667d424298",
+      "archive_member": ".scratch/claw-bench/spec.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/drone-delivery/issues/01-seed1001-camera-ground-confirmation.md",
+      "sha256": "32f3b69cf4bbac7064726b1e5660078ff64ad47c38311d0afc1ac00ed0891133",
+      "archive_member": ".scratch/drone-delivery/issues/01-seed1001-camera-ground-confirmation.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/drone-delivery/issues/02-failure-return-with-extended-winch.md",
+      "sha256": "d72ad0b3a48d6ec443663838383e656733ccb747e5d5753ea966d26b7dcdb955",
+      "archive_member": ".scratch/drone-delivery/issues/02-failure-return-with-extended-winch.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/drone-delivery/spec.md",
+      "sha256": "b0a440896274b9a9b01c701914a52a480e602a8c9a6657e6f5c86d436258e9a4",
+      "archive_member": ".scratch/drone-delivery/spec.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/drone-delivery/status.md",
+      "sha256": "07c39451122d03f67490e43c0c39120801de286bc33a4f210e336367ab2645a6",
+      "archive_member": ".scratch/drone-delivery/status.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/gazebo-gcs-debug-2026-09-11.md",
+      "sha256": "9c69d9115cf81f676674bb28b9b59c13b42e982943803c2fbda58cfe8d899ce7",
+      "archive_member": ".scratch/gazebo-gcs-debug-2026-09-11.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/gazebo-window-debug.md",
+      "sha256": "af8c50951941fbbe8bcf8b9685ff8dae02b25b92db5e9360f7ad3feffde1cb2b",
+      "archive_member": ".scratch/gazebo-window-debug.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/gps-hdop-and-native-linux-2026-09-11.md",
+      "sha256": "3de8a22d4194f2d063ffbda938767a44fe50eea8a5e850d9aff73ea4f15cf974",
+      "archive_member": ".scratch/gps-hdop-and-native-linux-2026-09-11.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/lidar-square-on/codebase-status.md",
+      "sha256": "4b4e2caa61a38e7b3d6b44df56151cb72611ac1456da7c8ce04c3ab6c1af1a86",
+      "archive_member": ".scratch/lidar-square-on/codebase-status.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/lidar-square-on/issues/01-recover-the-banner-by-moving.md",
+      "sha256": "4ad2352daa532cb1145497b0d38b626cadcdbc35d604107ec74d6a09c9e05cb2",
+      "archive_member": ".scratch/lidar-square-on/issues/01-recover-the-banner-by-moving.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/lidar-square-on/issues/02-align-off-the-box-immediately.md",
+      "sha256": "5415261f49eed519b9512577e48fbeb64aaa35ad1a1f228aca8f222d68057fe1",
+      "archive_member": ".scratch/lidar-square-on/issues/02-align-off-the-box-immediately.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/lidar-square-on/issues/03-duck-under-the-board-before-advancing.md",
+      "sha256": "8cc3c3965b1730e9711482fbed5364441550c94abec2078b1335e8dd3714803e",
+      "archive_member": ".scratch/lidar-square-on/issues/03-duck-under-the-board-before-advancing.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/lidar-square-on/spec.md",
+      "sha256": "9f1d7409aa1ad462228f5760c40f6d50491d33497bb1ff7df9897c2ff6a06e80",
+      "archive_member": ".scratch/lidar-square-on/spec.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/mission2-final-gaps/spec.md",
+      "sha256": "3d6e757b9be8cf619ce22e756cef6c784e1f98cbce2179eccaa168b5ca88e167",
+      "archive_member": ".scratch/mission2-final-gaps/spec.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/rulebook-compliance/status.md",
+      "sha256": "af38e6cef3d426206905cab69ab06eafe420ae4abb7007ca914788f6db0ab54a",
+      "archive_member": ".scratch/rulebook-compliance/status.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/campaign_acceleration_20261006.md",
+      "sha256": "5f97c61c77a1e9f27150aa1fdf7020f8454ffdd52e7e6fe9577ff59580ff535e",
+      "archive_member": ".scratch/simulation-reliability/campaign_acceleration_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/corrected_headless_return_handover_review_20261007.md",
+      "sha256": "6f156297f131768a1f6109bc6c6381b38a5e1fd93a4d64eeae4c4d05e8fea7e2",
+      "archive_member": ".scratch/simulation-reliability/corrected_headless_return_handover_review_20261007.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/coupled_envelope_and_baseline_review_20261006.md",
+      "sha256": "cb541caa26cf1248f4f160947f1197707bfbe92d24ed2f2ea79a1c641938fc49",
+      "archive_member": ".scratch/simulation-reliability/coupled_envelope_and_baseline_review_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/coupled_hold_diagnosis_20261006.md",
+      "sha256": "7ca2f44715ada389fd9ffb2bd1a00c2f2c919e4327b947d6427df10a2c0cf826",
+      "archive_member": ".scratch/simulation-reliability/coupled_hold_diagnosis_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/detached_launcher_evidence_20261006.md",
+      "sha256": "002625154dbfa3ccc810f3f60f2417d65b84e1b0829ed8ebbff4176ecd742750",
+      "archive_member": ".scratch/simulation-reliability/detached_launcher_evidence_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/evidence_report_20261007.md",
+      "sha256": "f03b7c78377cec487eaaee9f1e80008681d22a45e74aa7f438cb915c14c06d7c",
+      "archive_member": ".scratch/simulation-reliability/evidence_report_20261007.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/evidence_report_20261007_prior_20261008.md",
+      "sha256": "0528157f65e6a869b86220c7cdb8112a8f24034556e4952dfef1ce9c67f9b477",
+      "archive_member": ".scratch/simulation-reliability/evidence_report_20261007_prior_20261008.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/evidence_review_pending_20261006.md",
+      "sha256": "23baf692288686964fbfa3387e353a44eb6b61d6aa3116fab4a5e25caefa09ed",
+      "archive_member": ".scratch/simulation-reliability/evidence_review_pending_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/EXECUTIVE_HANDOFF_20261010.md",
+      "sha256": "cc06243f165b92b030d32f143230e9bae6f3cdc384e260b17ce5d812306d3ecd",
+      "archive_member": ".scratch/simulation-reliability/EXECUTIVE_HANDOFF_20261010.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/EXECUTIVE_HANDOFF_20261010.template.md",
+      "sha256": "098ee3dce1babac4e1d44719ff633533bb4eba80c64c5046aef2669c525ec152",
+      "archive_member": ".scratch/simulation-reliability/EXECUTIVE_HANDOFF_20261010.template.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/focused_handover_recommendations_20261006.md",
+      "sha256": "4d96c14d7cdcdc91ef7ece790741bbe63263378747167cc7f2500bb57961fc14",
+      "archive_member": ".scratch/simulation-reliability/focused_handover_recommendations_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/gust_delay_current_source_diagnosis_20261006.md",
+      "sha256": "b1c9dbc968bfaee311b6dfbab4e06a0710991c176be9265aa68223b16d4caf8c",
+      "archive_member": ".scratch/simulation-reliability/gust_delay_current_source_diagnosis_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/HANDOFF_20261012.md",
+      "sha256": "754bb3da32acd2c9e85d882ba371a5e67186ea20fae0d36de5fcca70207abcda",
+      "archive_member": ".scratch/simulation-reliability/HANDOFF_20261012.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/headless_observation_fix_review_20261007.md",
+      "sha256": "b37a1a1bda92541d708cc2f918d39b0d612ce46ed019401a804ce0dc74b52918",
+      "archive_member": ".scratch/simulation-reliability/headless_observation_fix_review_20261007.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/01-reject-clipped-return-sightings.md",
+      "sha256": "ed7b0d800550019ae9ff0a3e71633ab1c7f04ae4d4202be5052140d45c50b33b",
+      "archive_member": ".scratch/simulation-reliability/issues/01-reject-clipped-return-sightings.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/02-preserve-stall-until-progress.md",
+      "sha256": "fab66180ea49b749a076173a6d06680af2a6ebb6863fcbcbd0baa22803021c01",
+      "archive_member": ".scratch/simulation-reliability/issues/02-preserve-stall-until-progress.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/03-offaxis-corridor-envelope.md",
+      "sha256": "fb8d1ca5d52c889de356f3dc3367ee944ddf7622f9a5bd09701f91adc3eede4f",
+      "archive_member": ".scratch/simulation-reliability/issues/03-offaxis-corridor-envelope.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/04-rendered-camera-rate-validation.md",
+      "sha256": "b3f0094106dc65e7da73d76b33beec4add73078985c4850f1b2ef8e09a0b71a4",
+      "archive_member": ".scratch/simulation-reliability/issues/04-rendered-camera-rate-validation.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/05-navigation-campaign-evidence.md",
+      "sha256": "346f961ac29c8152534f1ad9f280f36e6c139777d3ca6d5dd0eb543d8453c9f7",
+      "archive_member": ".scratch/simulation-reliability/issues/05-navigation-campaign-evidence.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/06-deferred-hardware-and-flights.md",
+      "sha256": "d7f5d0133da0d6503040b36c5105356da7bcae97f2e0994656bfd1871a4e5a1f",
+      "archive_member": ".scratch/simulation-reliability/issues/06-deferred-hardware-and-flights.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/07-motor-confirmation-camera-report.md",
+      "sha256": "1671332acadaa0b7ab0d30f38c144a40a891b5f04a620cf8c612b4e4b40300a8",
+      "archive_member": ".scratch/simulation-reliability/issues/07-motor-confirmation-camera-report.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/08-rendered-return-clearance.md",
+      "sha256": "265744ee4778d5eab0c04d75ceb0e8676f7df667e7ab8a0cf7110e82d0077473",
+      "archive_member": ".scratch/simulation-reliability/issues/08-rendered-return-clearance.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/09-provisional-delivery-probe.md",
+      "sha256": "af0ff34ebba1f353368beb431d4c08070c5bcada9f897502818b99cbbf307d05",
+      "archive_member": ".scratch/simulation-reliability/issues/09-provisional-delivery-probe.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/10-gust-braking-margin.md",
+      "sha256": "7f2d589fba61fc380e263852c0d779041b74586bcf1440cd8dd9e1545e175ed2",
+      "archive_member": ".scratch/simulation-reliability/issues/10-gust-braking-margin.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/11-static-mount-input-isolation.md",
+      "sha256": "07df89edbb498e074fa4fde21fb30d20f183e481a1e93b360d9ac5110fc55882",
+      "archive_member": ".scratch/simulation-reliability/issues/11-static-mount-input-isolation.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/12-unconfirmed-touchdown-candidate.md",
+      "sha256": "4f35f6d275e202e6ace40c2527f55cd14d4f4e77380ecb55fe029ce442076170",
+      "archive_member": ".scratch/simulation-reliability/issues/12-unconfirmed-touchdown-candidate.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/13-return-search-repeated-turns.md",
+      "sha256": "5149a51aeab5db98cae75a043aa20c614995c2a22aa5803e581b7785b326b386",
+      "archive_member": ".scratch/simulation-reliability/issues/13-return-search-repeated-turns.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/14-headless-command-transport.md",
+      "sha256": "9a79a078ea55867850ce3965e613198064568a5588d2cb97a6152cf861090ba2",
+      "archive_member": ".scratch/simulation-reliability/issues/14-headless-command-transport.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/15-delayed-gust-control-margin.md",
+      "sha256": "3612c42420df7f1ebeb8dc2748e3f7d20721e5134005ab7b315262d2f7caf866",
+      "archive_member": ".scratch/simulation-reliability/issues/15-delayed-gust-control-margin.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/16-fresh-rendered-return-stuck.md",
+      "sha256": "4b5c22f09c89d4e39e613077190010e67f7ca9cdb26a174f4ba77f648842609d",
+      "archive_member": ".scratch/simulation-reliability/issues/16-fresh-rendered-return-stuck.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/17-yaw-aware-motion-certificate.md",
+      "sha256": "a697d4908d7c500e4ec4b0853b3363b45b1d8e068a5020ccbc0d71e1d41d4142",
+      "archive_member": ".scratch/simulation-reliability/issues/17-yaw-aware-motion-certificate.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/18-fcu-velocity-for-navigation-braking.md",
+      "sha256": "f9f27c70aac5a8fa34d7870f256321db0b337597b7f9c71380ce6edaab27bc54",
+      "archive_member": ".scratch/simulation-reliability/issues/18-fcu-velocity-for-navigation-braking.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/19-rendered-return-banner-search-delay.md",
+      "sha256": "8a43e9fb423cfb51b5a48c6d9006841b0b87ad07abaf6c497a8be43a3893f8cd",
+      "archive_member": ".scratch/simulation-reliability/issues/19-rendered-return-banner-search-delay.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/20-fcu-response-sample-time.md",
+      "sha256": "87fa0557823faed9e0b09215080b4cd7afb533e4c23bb1da20cd600200343ada",
+      "archive_member": ".scratch/simulation-reliability/issues/20-fcu-response-sample-time.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/21-focused-disarm-recording-evidence.md",
+      "sha256": "0240c38805421882fa3ef34f977099355c6caf0dbdb821a17e2011d4eb0489a6",
+      "archive_member": ".scratch/simulation-reliability/issues/21-focused-disarm-recording-evidence.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/22-unknown-prior-control-response.md",
+      "sha256": "b78ca666c06263805c9e85eb4006d54289d50432764edcbc22aaabee94e12823",
+      "archive_member": ".scratch/simulation-reliability/issues/22-unknown-prior-control-response.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/23-complete-current-simulation-qualification.md",
+      "sha256": "3b6bb3b605569ed988b6909ca339058126d02cf990266169f2636a3e5500738a",
+      "archive_member": ".scratch/simulation-reliability/issues/23-complete-current-simulation-qualification.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/24-rendered-runtime-capture-scope.md",
+      "sha256": "4aa8956633e5c3e24fccd75515ebe037e3398f387aa5263cf79de8da352001fc",
+      "archive_member": ".scratch/simulation-reliability/issues/24-rendered-runtime-capture-scope.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/25-corrected-headless-return-failure.md",
+      "sha256": "0db1a8617106a1f7491da70db42411726e9cf5ece01f617d0c2bceb97460e1b0",
+      "archive_member": ".scratch/simulation-reliability/issues/25-corrected-headless-return-failure.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/26-rotated-rendered-clearance-and-time.md",
+      "sha256": "91ed79c29854bc9eeb4a2ceeda909ebec6b00febf6f847c313cd486258bfa179",
+      "archive_member": ".scratch/simulation-reliability/issues/26-rotated-rendered-clearance-and-time.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/27-banner-capture-and-word-continuity.md",
+      "sha256": "639250c06381a0df09c8f7bd3b8ade37c039afc299704dcd95c650f457a4f28b",
+      "archive_member": ".scratch/simulation-reliability/issues/27-banner-capture-and-word-continuity.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/28-scan-pose-interpolation-qualification.md",
+      "sha256": "2072a30954059d009ec9a5226fa7d11961e3b8aa5651f3bc57906d6dc3110367",
+      "archive_member": ".scratch/simulation-reliability/issues/28-scan-pose-interpolation-qualification.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/29-gate-observation-pause.md",
+      "sha256": "397e6eaa01ec9f84606782321bce21cf1fe935d324abde832d44e474edd9b425",
+      "archive_member": ".scratch/simulation-reliability/issues/29-gate-observation-pause.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/30-pristine-banner-analysis-pixels.md",
+      "sha256": "784d592a57e0d354753370c4fa3bf3af8121dc9df5bba6f6b53aa90b23f8d1f7",
+      "archive_member": ".scratch/simulation-reliability/issues/30-pristine-banner-analysis-pixels.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/31-lidar-fault-observer-continuity.md",
+      "sha256": "55dd5813ff0114894113d1fd1591602b589d6dd10fd12711d2d64ed0e85913d1",
+      "archive_member": ".scratch/simulation-reliability/issues/31-lidar-fault-observer-continuity.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/32-stop-search-before-exclusion-replan.md",
+      "sha256": "1d5db06fd155713075631c30c6e031146ca1584c09bf831677b9990c4f23c165",
+      "archive_member": ".scratch/simulation-reliability/issues/32-stop-search-before-exclusion-replan.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/33-command-certificate-computation-age.md",
+      "sha256": "e90a1a4adbb8587fc871abd834faaf94a22d4da0394c547f3c2fb99e176749a0",
+      "archive_member": ".scratch/simulation-reliability/issues/33-command-certificate-computation-age.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/34-clipped-banner-bearing-before-range.md",
+      "sha256": "4ae121b4027e87fd3cdcf55dbaed0b6b53d9ea8c1e5dbaacba36604575456a14",
+      "archive_member": ".scratch/simulation-reliability/issues/34-clipped-banner-bearing-before-range.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/35-search-fixture-motion-captures.md",
+      "sha256": "107a353f89fa76f6aaee8452088c40d5de51b44bc733d4ea3777cae781f450ad",
+      "archive_member": ".scratch/simulation-reliability/issues/35-search-fixture-motion-captures.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/36-capture-delivery-during-navigation-computation.md",
+      "sha256": "caf0dc40dbd1fc79db6989e8d531190609ac92cf0be4b7e195d82a7a8d89a6bd",
+      "archive_member": ".scratch/simulation-reliability/issues/36-capture-delivery-during-navigation-computation.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/37-search-overlapping-exclusion-escape.md",
+      "sha256": "9d791f52a2157f7d6e6a338a210c6ec25912d2e4b7809e729939771620cffd9e",
+      "archive_member": ".scratch/simulation-reliability/issues/37-search-overlapping-exclusion-escape.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/38-rendered-velocity-response-model.md",
+      "sha256": "4fa2ca0bc87526e5201ed0fc496652bf70225a30f91f1b1aad89a6d1c87917dc",
+      "archive_member": ".scratch/simulation-reliability/issues/38-rendered-velocity-response-model.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/39-independent-vehicle-contact-qualification.md",
+      "sha256": "85b78f6f1eb41e45d1eaa5cf2fdc2eff3064abd3da1d77dbb68e26c9a964fd3a",
+      "archive_member": ".scratch/simulation-reliability/issues/39-independent-vehicle-contact-qualification.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/40-gate-and-corridor-motion-holds.md",
+      "sha256": "2180c1a7d2907bf3a3456b0e1db7dcf48acaa246205313ff8af7194b8c52a018",
+      "archive_member": ".scratch/simulation-reliability/issues/40-gate-and-corridor-motion-holds.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/41-native-safe-origin-continuous-certificate.md",
+      "sha256": "ee5c74655d07920d7e93ffa0ecdd45b03b40571762a103307359f5982a82a6ba",
+      "archive_member": ".scratch/simulation-reliability/issues/41-native-safe-origin-continuous-certificate.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/42-focused-return-contact-evidence.md",
+      "sha256": "58818439050cad6a9535b558113ebe77e7a6f0021ed0c1ddc44a5ba40b5d206d",
+      "archive_member": ".scratch/simulation-reliability/issues/42-focused-return-contact-evidence.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/43-ground-only-gate-oblique-wall-square-up.md",
+      "sha256": "590e80ec19d866f51dcbba7fcc5a75c966a23fe1356b836957d6d2c4a76f490b",
+      "archive_member": ".scratch/simulation-reliability/issues/43-ground-only-gate-oblique-wall-square-up.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/issues/44-laid-sheet-merges-with-grass-at-return-gate.md",
+      "sha256": "35cb147717110ae1fba5b39757bab7fa8ee89e2ab7190fb5f91e98e7eaad86da",
+      "archive_member": ".scratch/simulation-reliability/issues/44-laid-sheet-merges-with-grass-at-return-gate.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/median_filter_review_20261007.md",
+      "sha256": "1459392ff1dd9b6b27eeb4c3aab5fb1aea0120dbec700847a5b7473d47871b19",
+      "archive_member": ".scratch/simulation-reliability/median_filter_review_20261007.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/proposed_moving_handover_notes_20261006.md",
+      "sha256": "b0a13ba6e7e4cd22bb669546e28996cd5e21dd74594c714a758b218dbfaaa224",
+      "archive_member": ".scratch/simulation-reliability/proposed_moving_handover_notes_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/return_observer_diagnosis_20261006.md",
+      "sha256": "54547e1939c9b478434176cc9a46f913ec6cfb2873179e93fffa6c9df722a72d",
+      "archive_member": ".scratch/simulation-reliability/return_observer_diagnosis_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/spec.md",
+      "sha256": "dc82fd0051737eb71f881d841d119914fa7975e139bf2f1a557431cf3987869c",
+      "archive_member": ".scratch/simulation-reliability/spec.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/status.md",
+      "sha256": "312134c4428245badecf5d6991b19a787388a3ad5756cd21b37423ccb18c3c51",
+      "archive_member": ".scratch/simulation-reliability/status.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/simulation-reliability/unknown_handover_response_20261006.md",
+      "sha256": "0cc940deba3b561bdef53be9569ff55dc6442a82cd8aaf6193d0639623ef41bf",
+      "archive_member": ".scratch/simulation-reliability/unknown_handover_response_20261006.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": ".scratch/sitl-interlock-and-rtf-2026-09-11.md",
+      "sha256": "902ccd761a5549f590d2cb581a40336a78ed0f6bc00aa026aeac6e0319de25cb",
+      "archive_member": ".scratch/sitl-interlock-and-rtf-2026-09-11.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "CLAUDE.md",
+      "sha256": "bbf6d21e14e65b0ea6e8f6f9e5449331be7edeedc2ded43046df05fadf586201",
+      "archive_member": "CLAUDE.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "CONTEXT.md",
+      "sha256": "6ddf227692da982d9f6da3f9e829b3a373b116452f8ae423e1c570acfd5caec4",
+      "archive_member": "CONTEXT.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "CURRENT_PROGRESS_HANDOFF.md",
+      "sha256": "7ed17513aba176058d4b395b3cf1e95a9609b14ec58eb1afa8ba3e764b6d7d20",
+      "archive_member": "CURRENT_PROGRESS_HANDOFF.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/agents/domain.md",
+      "sha256": "57d6cb77d1e3811330b487a0d817069bd7975de043997913f582967845fdb558",
+      "archive_member": "docs/agents/domain.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/agents/issue-tracker.md",
+      "sha256": "6f38f66f9ffce2fdc26c43608d06b527f60e45c6f43003d0ea77d4e2641c9de3",
+      "archive_member": "docs/agents/issue-tracker.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/agents/triage-labels.md",
+      "sha256": "59c908b3f98c075677ec188a1737a8a7f49a1375958144346a095d4d8f9c3bc2",
+      "archive_member": "docs/agents/triage-labels.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/ARCHITECTURE.md",
+      "sha256": "fe0c884f17cc37c50a7742e64a69bd1e344e9ddef5dd9cb018f8e432023cc513",
+      "archive_member": "docs/ARCHITECTURE.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/BANNER_IDENTITY_ENVELOPE.md",
+      "sha256": "2c9814bb8f889e35e0884fb7f7d95837940cc72afb407e2a6b787e7ac35ac941",
+      "archive_member": "docs/BANNER_IDENTITY_ENVELOPE.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/CLAW_BENCH.md",
+      "sha256": "647f18a18c62808021c5956077ef8f8bff57e84c1910eda01b41adf3c8b07b9e",
+      "archive_member": "docs/CLAW_BENCH.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/CORPUS_SHOT_LIST.md",
+      "sha256": "152702dbbe01aa4310ae8a49e2a97d2bc76a44fd408bbb7bdf0dd0ca9e8e28ec",
+      "archive_member": "docs/CORPUS_SHOT_LIST.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/DELIVERY_CONFIRMATION.md",
+      "sha256": "122d8b5e551b62f9d765df2f4c6c6b971eb9dc6bb16f32580f1a908d668bdeeb",
+      "archive_member": "docs/DELIVERY_CONFIRMATION.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/FIELD_READINESS.md",
+      "sha256": "f5ae17534c25dd706481f2eac217a8ad69a6aa2268948ca96ceb12a62639147e",
+      "archive_member": "docs/FIELD_READINESS.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/GCS_WATCH_CHECKLIST.md",
+      "sha256": "bd5a5ef4f89edcaf0862c9d805a4b1f452790084505b500affa0fc0639d4c318",
+      "archive_member": "docs/GCS_WATCH_CHECKLIST.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/GEOMETRY_AUDIT.md",
+      "sha256": "c3446c34091c9c3de0a3cb9c2daeb6355ac8b0bb8dde74eb3a233bcf5d3e1efd",
+      "archive_member": "docs/GEOMETRY_AUDIT.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/HARDWARE_QUALIFICATION_RECORD.md",
+      "sha256": "b3616bc61b0c9ae5db6efe108045dd6de1d228b807960f994b2202ea606dc7b5",
+      "archive_member": "docs/HARDWARE_QUALIFICATION_RECORD.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/hook_physics.md",
+      "sha256": "5e0c1f1020ba543d3e0d187adb7586e90352bfbe321e8815e113549e8d1b6e2f",
+      "archive_member": "docs/hook_physics.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/QR_DECODE_ENVELOPE.md",
+      "sha256": "1a8164364184a8d0ac51ed45fee70dc40769fe668ceea9efcf6ff86960d3ea32",
+      "archive_member": "docs/QR_DECODE_ENVELOPE.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/RUN_AND_CHECK.md",
+      "sha256": "0cba4a082c50f69e2611182b94a0aec341a0c2087a0c0e4eb6e9cc16765bf104",
+      "archive_member": "docs/RUN_AND_CHECK.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/SETUP.md",
+      "sha256": "fe64bdde65ce0bf63eadf64a0ba504742caa9ee1764ad94e5f503626b03f5eb3",
+      "archive_member": "docs/SETUP.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "docs/STACK_AND_DEPLOYMENT.md",
+      "sha256": "a619c5294c05194dc2fbf62b7540fed2f8f251c2b97cca7e133b130dea405160",
+      "archive_member": "docs/STACK_AND_DEPLOYMENT.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "goal.md",
+      "sha256": "1565fdca0dbcb993be001c890afc7fa452cf0b4d7006ab58deda05568a91831f",
+      "archive_member": "goal.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "PHASE_PLAN.md",
+      "sha256": "dc5046495f3720f76f3c43b21fa5c2d157858fcf09a469a32f7c6bfef46e258f",
+      "archive_member": "PHASE_PLAN.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "README.md",
+      "sha256": "3673891edcfc79c3636d6f61cb407d2974887f1ade5c552f9cc257b178c04d17",
+      "archive_member": "README.md",
+      "reason": "Superseded by two maintained guides"
+    },
+    {
+      "original_path": "VERIFICATION.md",
+      "sha256": "2837464f4bdb7c1411f8f5161f75f983ebd1b93e72abd4bdc411c5735d697f3f",
+      "archive_member": "VERIFICATION.md",
+      "reason": "Superseded by two maintained guides"
+    }
+  ],
+  "retained_project_guides": [
+    "AGENTS.md",
+    "MASTER_DOCUMENTATION.md"
+  ],
+  "retained_developer_skills": true
+}

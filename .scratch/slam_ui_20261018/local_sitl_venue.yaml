@@ -1,0 +1,20 @@
+mission_bt:
+  ros__parameters:
+    banner_w_m: 3.7
+    banner_h_m: 1.15
+    return_lane_offset_m: -4.0
+    payload_size_m: 0.1
+    winch_reach_m: 5.5
+    image_width_px: 640
+    image_height_px: 360
+winch_ctrl:
+  ros__parameters:
+    payout_rate_mps: 0.3
+    stow_rate_mps: 0.45
+    max_payout_m: 6.0
+    fc_rate_max_mps: 1.0
+    hook: gravity
+perception_payload:
+  ros__parameters:
+    hsv_lo: [18, 120, 120]
+    hsv_hi: [38, 255, 255]

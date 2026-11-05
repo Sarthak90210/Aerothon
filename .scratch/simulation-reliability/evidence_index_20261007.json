@@ -1,0 +1,2650 @@
+{
+  "accepted_source": null,
+  "qualification_complete": false,
+  "campaign_200_qualified": false,
+  "runs": {
+    "split rendered failure": {
+      "path": "logs/reliability_render_split_corridors_s20261003_early_red_clipped_bearing_fixture_clock_20261007",
+      "scope": "full rendered",
+      "result": {
+        "target": "d",
+        "mission_result": {
+          "state": "FAILED",
+          "reason": "ReturnCorridor: corridor navigator reported STUCK at x=28.63",
+          "delivery_offset_m": 0.10063425933431179,
+          "delivery_confirmed": true,
+          "delivery_confirmation_basis": "calibrated_motor_output_after_retraction",
+          "landing_precision": "UNKNOWN",
+          "t": 464.4
+        },
+        "grade": "GRADE_FAIL",
+        "failures": [
+          "return lane flown THROUGH the corridor",
+          "never above the corridor",
+          "no failsafe / unexpected flight mode",
+          "ceiling over zone",
+          "corridor clearance at least 0.70 m"
+        ],
+        "payload_error_m": 0.1,
+        "final_armed": false,
+        "flight_time_s": 456.1,
+        "landed_from_home_m": 0.12,
+        "acceptance_pass": false,
+        "detector_rates": {
+          "camera": {
+            "distinct_captures": 2216,
+            "invalid_capture_events": 0,
+            "capture_hz": 4.375740813907546,
+            "delivered_hz": 4.3757926802767315,
+            "delivered_wall_hz": 0.9867239779497823,
+            "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+            "maximum_capture_gap_s": 3.6499999999999773,
+            "latency_sim_p95_s": 0.21999999999999886,
+            "processing_wall_p95_s": null
+          },
+          "search": {
+            "qr_timing": {
+              "distinct_captures": 1100,
+              "invalid_capture_events": 0,
+              "capture_hz": 18.0608052588332,
+              "delivered_hz": 18.118869013271784,
+              "delivered_wall_hz": 4.68544221791497,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.30000000000001137,
+              "latency_sim_p95_s": 0.23905000000003152,
+              "processing_wall_p95_s": 0.02675451180011805
+            },
+            "red_timing": {
+              "distinct_captures": 1095,
+              "invalid_capture_events": 0,
+              "capture_hz": 17.97863599013969,
+              "delivered_hz": 18.036138222104984,
+              "delivered_wall_hz": 4.6639749139578965,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.30000000000001137,
+              "latency_sim_p95_s": 0.2370000000000232,
+              "processing_wall_p95_s": 0.024561477099450713
+            },
+            "usable_red_ground": {
+              "distinct_captures": 1095,
+              "invalid_capture_events": 0,
+              "capture_hz": 17.97863599013969,
+              "delivered_hz": 18.036138222104984,
+              "delivered_wall_hz": 4.6639749139578965,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.30000000000001137,
+              "latency_sim_p95_s": 0.2370000000000232,
+              "processing_wall_p95_s": 0.024561477099450713
+            }
+          }
+        },
+        "configuration": {
+          "seed": 20261003,
+          "conditions": "calm",
+          "airframe": "cad",
+          "payload_fixture": "loaded",
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/sim/worlds/split_corridors.json",
+          "ros_domain": 218
+        },
+        "motor_delivery_qualified": true
+      },
+      "source_manifest_sha256": "66c391f973c9210541c851a8786305be666a2eeaf9908d9208ab11790e036597"
+    },
+    "rotated rendered failure": {
+      "path": "logs/reliability_render_rb_rotated_s20261003_early_red_clipped_bearing_fixture_clock_20261007",
+      "scope": "full rendered",
+      "result": {
+        "target": "a",
+        "mission_result": {
+          "state": "ABORTED_RTL",
+          "reason": "Abort requested",
+          "delivery_offset_m": 0.17942304953646734,
+          "delivery_confirmed": true,
+          "delivery_confirmation_basis": "calibrated_motor_output_after_retraction",
+          "landing_precision": "UNKNOWN",
+          "t": 1081.4
+        },
+        "grade": "GRADE_FAIL",
+        "failures": [
+          "return lane flown THROUGH the corridor",
+          "no failsafe / unexpected flight mode",
+          "flight within 900 s",
+          "restricted-zone clearance at least 1.50 m"
+        ],
+        "payload_error_m": 0.2,
+        "final_armed": false,
+        "flight_time_s": 1070.1,
+        "landed_from_home_m": 0.06,
+        "acceptance_pass": false,
+        "detector_rates": {
+          "camera": {
+            "distinct_captures": 5857,
+            "invalid_capture_events": 0,
+            "capture_hz": 5.225538749832686,
+            "delivered_hz": 5.225524761009876,
+            "delivered_wall_hz": 1.2615782765865113,
+            "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+            "maximum_capture_gap_s": 2.9500000000000455,
+            "latency_sim_p95_s": 0.21699999999998454,
+            "processing_wall_p95_s": null
+          },
+          "search": {
+            "qr_timing": {
+              "distinct_captures": 5159,
+              "invalid_capture_events": 0,
+              "capture_hz": 18.098245614035086,
+              "delivered_hz": 18.0971661339499,
+              "delivered_wall_hz": 4.739013864310776,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.35000000000002274,
+              "latency_sim_p95_s": 0.2370000000000232,
+              "processing_wall_p95_s": 0.026300061698202617
+            },
+            "red_timing": {
+              "distinct_captures": 5162,
+              "invalid_capture_events": 0,
+              "capture_hz": 18.108771929824563,
+              "delivered_hz": 18.106802417982603,
+              "delivered_wall_hz": 4.741537400612224,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.30000000000001137,
+              "latency_sim_p95_s": 0.2369499999999972,
+              "processing_wall_p95_s": 0.026987802997973633
+            },
+            "usable_red_ground": {
+              "distinct_captures": 5162,
+              "invalid_capture_events": 0,
+              "capture_hz": 18.108771929824563,
+              "delivered_hz": 18.106802417982603,
+              "delivered_wall_hz": 4.741537400612224,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.30000000000001137,
+              "latency_sim_p95_s": 0.2369499999999972,
+              "processing_wall_p95_s": 0.026987802997973633
+            }
+          }
+        },
+        "configuration": {
+          "seed": 20261003,
+          "conditions": "calm",
+          "airframe": "cad",
+          "payload_fixture": "loaded",
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/sim/worlds/rb_rotated.json",
+          "ros_domain": 218
+        },
+        "motor_delivery_qualified": true
+      },
+      "source_manifest_sha256": "73e2b165fabb00a8a6201e93410fefce50ed6f28cc0794162bf773c4f9a1c897"
+    },
+    "field-2 search repair": {
+      "path": "logs/reliability_search_escape_field2_navigation_20261007/my_world_field_s2",
+      "scope": "navigation only",
+      "result": null,
+      "source_manifest_sha256": "a533ee4c81679d250630827048149df5c989bb64b06c07eec2700fecd4370e91"
+    },
+    "new split focused return": {
+      "path": "logs/reliability_render_split_return_integrated_stationary_20261007",
+      "scope": "focused only",
+      "result": {
+        "focused_pass": false,
+        "checks": {
+          "rendered return trial completed": false,
+          "disarmed at trial end": true,
+          "complete camera timeline verified through disarm": true,
+          "independent return samples recorded": true,
+          "navigation-time input isolation audit passed": true,
+          "corridor clearance at least 0.70 m": false,
+          "full return lane traversed below walls": false
+        },
+        "recorded_disarm": {
+          "capture_stamp": 158.679,
+          "received_stamp": 158.679,
+          "recorded_stamp": 158.76000000000002,
+          "connected": true,
+          "armed": false
+        },
+        "handover_mode": "stationary",
+        "clearance_phase_source": "all recorded native aircraft samples, including operator approach",
+        "measured_corridor_clearance_m": 0.6780489706703519,
+        "full_mission_qualified": false,
+        "rendered_search_qualified": false,
+        "motor_delivery_qualified": false,
+        "phase_source": "timestamped operator trial commands aligned to native aircraft samples",
+        "note": "Starting fixture comes from a recorded FCU pose. This trial omits perception gate finding, search and delivery."
+      },
+      "source_manifest_sha256": "cc838dec7385ce46cff2f43d75a01ecc2b836eeaae31eb1c36344800dad814d6"
+    },
+    "FCU target-echo focused return": {
+      "path": "logs/reliability_render_split_return_fcu_echo_20261007",
+      "scope": "focused native stationary-entry return; search and delivery omitted",
+      "result": {
+        "focused_pass": false,
+        "checks": {
+          "rendered return trial completed": false,
+          "disarmed at trial end": true,
+          "complete camera timeline verified through disarm": true,
+          "independent return samples recorded": true,
+          "navigation-time input isolation audit passed": true,
+          "corridor clearance at least 0.70 m": false,
+          "full return lane traversed below walls": false
+        },
+        "recorded_disarm": {
+          "capture_stamp": 161.059,
+          "received_stamp": 161.059,
+          "recorded_stamp": 161.174,
+          "connected": true,
+          "armed": false
+        },
+        "handover_mode": "stationary",
+        "clearance_phase_source": "all recorded native aircraft samples, including operator approach",
+        "measured_corridor_clearance_m": 0.6918155791002896,
+        "full_mission_qualified": false,
+        "rendered_search_qualified": false,
+        "motor_delivery_qualified": false,
+        "phase_source": "timestamped operator trial commands aligned to native aircraft samples",
+        "note": "Starting fixture comes from a recorded FCU pose. This trial omits perception gate finding, search and delivery."
+      },
+      "source_manifest_sha256": "1bb047afba474bf7b1e5c0724a891ed553667d282050b3913ce26945507cfbb3",
+      "echo_timing_review": "logs/reliability_render_split_return_fcu_echo_20261007/fcu_target_echo_timing_review_20261007.json",
+      "audit_coverage": [
+        "mission_bt",
+        "winch_ctrl",
+        "velocity_controller",
+        "rendered_corridor_trial"
+      ],
+      "audit_limitation": "Original live navigation audit covers the three decision nodes; new helper-node defaults apply only to future recordings."
+    },
+    "isolated native disturbance guard": {
+      "path": "logs/reliability_render_split_return_disturbance_guard_20261007",
+      "scope": "focused stationary-entry return only",
+      "result": {
+        "focused_pass": true,
+        "checks": {
+          "rendered return trial completed": true,
+          "disarmed at trial end": true,
+          "complete camera timeline verified through disarm": true,
+          "independent return samples recorded": true,
+          "navigation-time input isolation audit passed": true,
+          "corridor clearance at least 0.70 m": true,
+          "full return lane traversed below walls": true
+        },
+        "recorded_disarm": {
+          "capture_stamp": 175.93,
+          "received_stamp": 175.93,
+          "recorded_stamp": 176.054,
+          "connected": true,
+          "armed": false
+        },
+        "handover_mode": "stationary",
+        "clearance_phase_source": "all recorded native aircraft samples, including operator approach",
+        "measured_corridor_clearance_m": 0.7021535819605239,
+        "full_mission_qualified": false,
+        "rendered_search_qualified": false,
+        "motor_delivery_qualified": false,
+        "phase_source": "timestamped operator trial commands aligned to native aircraft samples",
+        "note": "Starting fixture comes from a recorded FCU pose. This trial omits perception gate finding, search and delivery."
+      },
+      "closed_review": "logs/reliability_render_split_return_disturbance_guard_20261007/closed_diagnostic_review_20261007.json",
+      "accepted_for_production": false,
+      "remaining_failure": "Physical dirty0 and late1 gust/delay contacts"
+    },
+    "integrated field 2 before braking repair": {
+      "path": "logs/reliability_integrated_field2_navigation_assets_retry_20261007",
+      "scope": "object-level navigation; no rendered or motor-delivery qualification",
+      "result": {
+        "scope": "Current integrated normal navigation startup, object-level field seed 2; rendered/motor delivery qualification omitted",
+        "archive_sha256": "adeb98ac7db5a3ef6fa3ab7d38004e81e09da0213a71fce4c2434acbb138f5a1",
+        "source_files": 769,
+        "physical_command_delay_s": 0.4,
+        "physical_response_s": 0.6,
+        "ros_domain": 189,
+        "conditions": "field",
+        "seed": 2,
+        "rtf": 2.0,
+        "accepted_source": false,
+        "asset_sha256": {
+          "src/aerothon_sim/sim_gazebo/materials/qr_payloads.txt": "721948d1a84d64a738f256dce148498db75d4bce71d2631c936e6289609ab385"
+        },
+        "started_wall": 1791378206.89752,
+        "result": {
+          "run": "my_world_field_s2",
+          "result": "DELIVERY_UNCONFIRMED",
+          "grade": "FAIL",
+          "navigation_pass": false,
+          "delivery_exercised": false,
+          "navigation_failures": [
+            "flight within 900 s"
+          ],
+          "rendered_perception_qualified": false,
+          "motor_delivery_qualified": false,
+          "fails": [
+            "flight within 900 s",
+            "payload released (on the ground, off the aircraft)",
+            "payload on the target pad (within 1 m)"
+          ],
+          "contacts": 0,
+          "fence": 0,
+          "sim_s": 974.3,
+          "wall_s": 492,
+          "reason": "landed and disarmed; payload NOT confirmed on the ground by the camera; delivery UNMEASURED; landing PRECISE (committed "
+        },
+        "finished_wall": 1791378732.9175496,
+        "source_unchanged": true,
+        "run_manifest_matches_frozen": true,
+        "asset_unchanged": true,
+        "rendered_qualified": false,
+        "motor_delivery_qualified": false
+      },
+      "navigation_grade": {
+        "checks": {
+          "no red-zone entry": true,
+          "inside geofence": true,
+          "outbound lane flown THROUGH the corridor": true,
+          "return lane flown THROUGH the corridor": true,
+          "never above the corridor": true,
+          "no tilt beyond 30 deg": true,
+          "no failsafe / unexpected flight mode": true,
+          "ceiling over zone": true,
+          "flight within 900 s": false,
+          "no obstacle contact": true,
+          "landed at take-off point": true,
+          "restricted-zone clearance at least 1.50 m": true,
+          "corridor clearance at least 0.70 m": true
+        },
+        "pass_navigation": false,
+        "measured_red_clearance_m": 2.267071263555252,
+        "measured_corridor_clearance_m": 0.7538710893836847,
+        "full_grade": {
+          "samples": 9744,
+          "airborne_samples": 9491,
+          "red_zone_entries": [],
+          "closest_red_m": 2.27,
+          "geofence_exits": [],
+          "max_alt_in_zone_m": 10.3,
+          "max_alt_m": 10.3,
+          "flight_time_s": 951.7,
+          "landed_from_home_m": 0.41,
+          "final_armed": false,
+          "corridor_outbound": {
+            "found": true,
+            "t": [
+              89.9,
+              101.2
+            ],
+            "violations": [],
+            "n_bad": 0
+          },
+          "corridor_return": {
+            "found": true,
+            "t": [
+              910.8,
+              933.1
+            ],
+            "violations": [],
+            "n_bad": 0
+          },
+          "over_corridor_samples": 0,
+          "closest_obstacle_m": 0.75,
+          "max_tilt_deg": 14.3,
+          "tilt_events": [],
+          "unexpected_modes": [],
+          "early_land": false,
+          "payload_final": [
+            -0.17,
+            -0.38,
+            0.04
+          ],
+          "payload_from_aircraft_m": 0.0,
+          "payload_error_m": 51.55,
+          "checks": {
+            "no red-zone entry": true,
+            "inside geofence": true,
+            "outbound lane flown THROUGH the corridor": true,
+            "return lane flown THROUGH the corridor": true,
+            "never above the corridor": true,
+            "no tilt beyond 30 deg": true,
+            "no failsafe / unexpected flight mode": true,
+            "ceiling over zone": true,
+            "flight within 900 s": false,
+            "no obstacle contact": true,
+            "landed at take-off point": true,
+            "payload released (on the ground, off the aircraft)": false,
+            "payload on the target pad (within 1 m)": false
+          },
+          "pass": false
+        },
+        "rendered_perception_qualified": false,
+        "motor_delivery_qualified": false
+      }
+    },
+    "integrated field 2 startup infrastructure failure": {
+      "path": "logs/reliability_integrated_field2_navigation_20261007",
+      "result": {
+        "harness_valid": false,
+        "qualification_result": false,
+        "flight_outcome": false,
+        "cause": "Freeze omitted qr_payloads.txt; headless world failed during construction before mission startup.",
+        "original_logs_preserved": true,
+        "corrected_asset_sha256": {
+          "src/aerothon_sim/sim_gazebo/materials/qr_payloads.txt": "721948d1a84d64a738f256dce148498db75d4bce71d2631c936e6289609ab385"
+        }
+      }
+    },
+    "certified search escape field 2": {
+      "path": "logs/reliability_certified_search_escape_field_s2_navigation_20261007",
+      "scope": "object-level navigation only",
+      "result": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": false,
+        "flight_time_s": 1028.9,
+        "corridor_clearance_m": 0.7536130723244079,
+        "red_clearance_m": 2.22207126355525,
+        "navigation_failures": [
+          "flight within 900 s"
+        ],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 140882,
+            "sha256": "e0f3583b81dfe8761efd90d2a37194f4c91b7e1fc94be8132d0631a2d35a1334"
+          },
+          "configuration.json": {
+            "bytes": 430,
+            "sha256": "e8f7545fc2933af7985fc03dad6c8a1dbd2a95c91bda5ed4fd98f8c492b71a57"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 27209302,
+            "sha256": "c5ec616586395aea3bb9bf30823c8af84e5c96bb3d503ac49d40950183e13f03"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 41184213,
+            "sha256": "7a83e30d6f89e3133b56e2c3750efa1da1559f3dbe6656be040363ce1c686207"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 3566183,
+            "sha256": "c66ed8547e913b089af0dfbeba3a4dc1fe16c416b942a88db7fb2f8d0138e45b"
+          },
+          "detector_events.jsonl": {
+            "bytes": 29567936,
+            "sha256": "ca400be8f225262b1443396ab14012ff6253cae4c98ecd0721beae6c97211234"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 862629,
+            "sha256": "5d9d5cb58de54939435feb2ee9fcee3f448af22deea74b9564a8f4e023365432"
+          },
+          "navigation_grade.json": {
+            "bytes": 2257,
+            "sha256": "a77468d5988c044c13919c4c32106fc1a612dcc0394ce326411de86359904ad7"
+          },
+          "recorded_result.json": {
+            "bytes": 261,
+            "sha256": "33284c61041c960469aa8da71610d2c3353de05c515c47232bfaaa9cfb0f5833"
+          }
+        }
+      },
+      "run_report": {
+        "scope": "Certified nearest-edge search escapes share the router/braking predicate; current normal startup; object-level navigation only",
+        "archive_sha256": "e7c9bcc2e7199c6670667b1718a8426513a64de4b5fe4bf3b7c29261a0808c91",
+        "source_files": 900,
+        "physical_command_delay_s": 0.4,
+        "physical_response_s": 0.6,
+        "ros_domain": 191,
+        "conditions": "field",
+        "seed": 2,
+        "rtf": 2.0,
+        "accepted_source": false,
+        "asset_sha256": {
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14979/9913.jpg": "e8afbe5a500e40ec05f53aea96fc8de19b9a2f7efffd41c26bb67c0839e36643",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14979/9914.jpg": "39130350daf3551ae7e0dfef05e274e59a7ea3a3cdd06aa69531832a372144bf",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14979/9915.jpg": "4f73e8b55110f9e58f58dfb4ee08dc5c3fd904e271bb3f64a13875e56649ec23",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14980/9913.jpg": "47f449c00bb079849f4da783d4e39bec04890558f5e0dfdcf1632983e080b6a4",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14980/9914.jpg": "cdeb1070e6d0f3611d1b61655845c4721826a15889d26ca1a5907f7267d86433",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14980/9915.jpg": "e5a9211c66d265b1bb37454eab68c5bd09e7c628cc1395f278522607c0cf5447",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14981/9913.jpg": "b6439f9a521bce306887e8c6a6618ba1acd10508d5da421c5cffa8580fce2b16",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14981/9914.jpg": "2860fe511c733018ceb270e1c6cc4187c8e53881eda7536d52e79d69530eda7a",
+          "src/aerothon_gcs/tauri_app/public/satellite/14/14981/9915.jpg": "d61622e9acca3ef7312541f172bdeef77580a9603f8d35e622391675b3761710",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29960/19828.jpg": "b13251e1880433013e75403ee45640b7d9f987217a693be58961b4460725420e",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29960/19829.jpg": "930bf4d4a487f9c17b967244cfba402010bc01d32fb2378c1f2671562a4e8902",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29960/19830.jpg": "33e5bbb3b3d9b5fc6699b1923c0844f467e6f44f38d08f540a77af14a329a60f",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29961/19828.jpg": "202dbcb33949e59acc1817e1cdf443d8d8180b0ca0c2bfb0eaae9da16d034b17",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29961/19829.jpg": "010fe97a79b5d2bcbaf92199f6bc6ee07aa8ccfcc2b93df86c713bf9c2c7914c",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29961/19830.jpg": "98290973882e24862fcc5cd371e2677bb6b98b4c4431bcdd411f3c01fcd96fae",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29962/19828.jpg": "452e568a6fba3ebde1eed67f04c9b3b144c7709ecb6721bcf85ed7a042d9a028",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29962/19829.jpg": "13ca5ab6c5dd93aa8d55449f2e31e3a099621386504e85c05f8d0d1f3455648d",
+          "src/aerothon_gcs/tauri_app/public/satellite/15/29962/19830.jpg": "96387a66e703a3396458ba40476010a7b8134198f0c6c7968ddef21f76158be2",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59921/39657.jpg": "fefc97a7333a0fe4ee23d1e2d4226bc358008d7b38de2036e1ab2782f7f91db5",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59921/39658.jpg": "d9cd40cf876c87cf357e2ddd92baa0bebfcd0123c2463852d01a6147f5784b19",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59921/39659.jpg": "26b72ba77f2cad2aa04458769cc54a741af748621f3cc4c8b9bd591db66a8084",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59922/39657.jpg": "a43241230c5211dc8f5f83cd6e9580c522f7d3fadeac32da2fb937018f1585f2",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59922/39658.jpg": "29e9540905c11283e1e4a8692838fc8f014427d7848a933d39bc428781638bbb",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59922/39659.jpg": "c2efac59e8d9b8ce59a432850fd21ab9279cfece7508470bd4ed5d3f37c01af6",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59923/39657.jpg": "872c907bce5814b99a9c2e1b40d3b548b22c86f20106d149c45c6d07594b737f",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59923/39658.jpg": "94ed05d5c513c44fd8d445574fcdfdcb0e939e490582c26d2807a7d33f2cf098",
+          "src/aerothon_gcs/tauri_app/public/satellite/16/59923/39659.jpg": "10d2178c13e02da98e96b0be07602a4abb59efbc24ab3d762f47109693f49335",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119844/79315.jpg": "f6136f2d5c28b52ae20b78051874991ee75abdec8cc19f7ab2764543f7df5ea3",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119844/79316.jpg": "2bb79978a554612feb09078ef8ca6c5e72fe7098fabd79c664672eab5d10b4b1",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119844/79317.jpg": "ec2971c80d0235b0ddac5f723567ae08aa3edf6abcbfc68c372854b8cd60032c",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119845/79315.jpg": "0368a9703517fa3352a7a837fdb22c768d39842950d995531d7ec38fbef71ad4",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119845/79316.jpg": "7e6d089c422b6703d6b9d62caac10f8beb8d6522bd00d3fde5292de6fe119daf",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119845/79317.jpg": "c8066984b19f44b4445a80761d58635b25c5a21e52b03b92241876d8fed2726b",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119846/79315.jpg": "54426a87e907d0d6f2d6416eaa497f765fbcd894437046318b7607f70ec837c8",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119846/79316.jpg": "91e25d49b39fe2873b1a467c83d2d515560aac12d60a636928cc8760ad4f89ba",
+          "src/aerothon_gcs/tauri_app/public/satellite/17/119846/79317.jpg": "44c4014ca43ed4e053726e4ef25e15069b71e09a9dce9c6c7cac53be79e938f9",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239689/158631.jpg": "cdaeb9ff5d6129b8fe0c5f9ca5ec2b97a912d9839187e329eb211f10e7ef44cd",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239689/158632.jpg": "59c6379fe03b02cec308532c2c2abc200d67bd9c54cee6477ab51f144dd79742",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239689/158633.jpg": "f275567f6fb77c4b322d1ee21ee14da3841a35dd77c7a35328747c2f68a84b50",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239690/158631.jpg": "ca11f11b0f16cb65ee502614c8e14be141dd605237259fd3dca20c98ffa2fc4b",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239690/158632.jpg": "097dac1669deab4242dccf6abe7c92a1a609482985d9378d23d2715f7da2834e",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239690/158633.jpg": "8a8b721afb77305c86b87529d1a3789b5b9d2c3d6e39d48739f99757a9555002",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239691/158631.jpg": "3bf0fc4bbb2d344e37499582319a42d39bf2c19acc16dd878e9e6969b16df5c9",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239691/158632.jpg": "275513c1cdf4d6d90f6cc5ce242f5321604e0771b114bf862cbf6a41c476cc6c",
+          "src/aerothon_gcs/tauri_app/public/satellite/18/239691/158633.jpg": "b749dbaa8d5d48b9617de1c46c86d397617945db00bd295a042287cca130240d",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479380/317264.jpg": "f28ad4c23092dbd84c192261f0de89df3e3f1d9dbea1863471d12925f2ccd5a3",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479380/317265.jpg": "f1bbf663f952632d5407b01b80de41c23e0cfe1f5dfbf88e87c142b1a7debead",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479380/317266.jpg": "673685725766085c66bb4f6db07ba16a0f17e1bde8d853a0e765ef50c033246d",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479381/317264.jpg": "573524235902bd8fbc61a5966dd3a820d6b4e0c583b510a074c4fd4eeb1f7add",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479381/317265.jpg": "79ce00ea9777454404dd80658a6274854238281e03b7942d0083d999a58d8469",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479381/317266.jpg": "62e3cfdb0dcc1b72ed5d6b09215649bb9959be367e2d71b5cb67d20b6b497b3e",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479382/317264.jpg": "f30d789bed093fc4d4a6fea38612226ee3a2f69c3c62208169971d478834a637",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479382/317265.jpg": "3964062ed255ccd025d1223fa63969b45173abacbc80d3c9f0dba7a6e4cd1459",
+          "src/aerothon_gcs/tauri_app/public/satellite/19/479382/317266.jpg": "8c34cecf153144d05428249f5a1bdff0e597cb4e6b245df066f1360adee3ef32",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14979/9913.png": "70855f167ea77c4da5735e7f5b8f310e54d38d0bcfb42edb86a072ba1ab325dc",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14979/9914.png": "6a0151a30ff1fe08106949d5b3e844fa076ac3fddda0dc69dfc2fa1fa7d96b83",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14979/9915.png": "4a43a0d1c9a0f5c9bd045f9254aa70d87b56e55f2c5f20b7bff58fa19ff5c438",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14980/9913.png": "b21caf32be418cfe9bfffbc9db0f69a46983d59bab3c5869b06e0d6b3043e0ac",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14980/9914.png": "ccbac66740be15aae7808f4060b13f10f3c15e1a0508e80e514554b9c83f066e",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14980/9915.png": "304ee9b701ee113cf3f76ff0da183633e30ecb0c70ae33639000de80d433c0c0",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14981/9913.png": "736939a659b1dba3405d065fea017cd5f9bc6dad1f27d921d79c0322313a0558",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14981/9914.png": "0513c0cb94b4549981d6cee676cf2bd9b2e4d17d476b5d7d34f4baa7d9439748",
+          "src/aerothon_gcs/tauri_app/public/tiles/14/14981/9915.png": "9bb6450a4d269f19557f7118e6fcb883a97b70a5eca894c9ef3989491e94a320",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29960/19828.png": "dbb07a690715c6b89633c4136304918db434315bc9e397739f2e21a5d1a7b84d",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29960/19829.png": "289d679d51bb891913aac1709ebe5deb5209bb8af842a59c30e502bade9ee41a",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29960/19830.png": "e1b0ac1bc21a829fb2b2d4f5c3bce91d502974d63cc0763cc037487ff3856b19",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29961/19828.png": "07dc39c957eb930a6b512bec9a8c924bc12b416162a989995d5052b0d4afbd4f",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29961/19829.png": "53cea6396a3c475f8b4d12da6315164df63a49747d1e03ca77bb8c166d16b849",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29961/19830.png": "5d5045d10231618c962c1c276fd4577bc5d13bb6a2dee41d3b8f8b0046e5a29b",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29962/19828.png": "6f1b860487c02e593452c0bd10e8956fdd3c645d969e827cd3816e222e01fa88",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29962/19829.png": "3df89ae468d6c082f521a7a2bfda4cfb86993e61b6c3523c957681a31b8b8887",
+          "src/aerothon_gcs/tauri_app/public/tiles/15/29962/19830.png": "53c7d5fe3bac10889c17968d2664d1999c0643ea5e637e0f41c251ff0fb9fc29",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59921/39657.png": "1e9a95065d1a9b5578e0f4cd700a92ed58bc4fbca3ecd669ac775d303205bc6e",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59921/39658.png": "e0dbb992a893d21f14188f596ff8ebbb24b17a3d4e90c8b4b55d5f5a3d5517f2",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59921/39659.png": "92a2496b03410b72caa42d6fa8daca562ae4dd9dad4d1b5fa003b539e414e071",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59922/39657.png": "20b07ad5444b9d1c4c4e41af5fbcb641702345b0943cf3c05d2a3295800a8718",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59922/39658.png": "d4d3f633e6858f3deb10e3c1ac6b60690c7ccfd937ee1ea19575a2e9660852e2",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59922/39659.png": "6ab39c1b6f1be43f2c94c2aba3df48f2690185a5208d70aa982d205f466acbd4",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59923/39657.png": "5a98b6ef8fc0ecca051e8ffed8301101ed84e29443bf29453f1429a0047900f9",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59923/39658.png": "542a693ab6086aea4417973581d5bbac52580a41a4ab5c5c8d157e77a0410b17",
+          "src/aerothon_gcs/tauri_app/public/tiles/16/59923/39659.png": "4dc9cc8ba3dfb6abc49b3e7dce685d3e544fdf09cc85bc49a0d8761016032b25",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119844/79315.png": "d7434c10ed25182ab736cc6a300b134cb2301c1100f4b7e1adffaf96fefa1ba2",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119844/79316.png": "cef25839f200acdf6c1212d3a952208dda2a1c772c788fb1f52fc7f6b5125ea5",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119844/79317.png": "a77a1182a94ea7a93be549c2dbba11ac5ae377e47c91b19a8a7a89d9b94c6a0e",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119845/79315.png": "e7b4c58d13113508f80d9a70454b77991d0db46d15fb5032950e84783d356345",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119845/79316.png": "9b7095b6a596a1ba8b80409d07d81e307ad76540887cdf9a90a2ea360385b3f0",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119845/79317.png": "c6e20c91273e7e7c7e981563b1a84858efd339a492982bd432f2062a0235e623",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119846/79315.png": "a12f529ea63025aed6310534dc4f0961f24401ff3681cff3ff8711c04914b0f1",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119846/79316.png": "b461165b2e6c16415124ede5c72d95fbbc983c85611cbccbf4573006c130a7bd",
+          "src/aerothon_gcs/tauri_app/public/tiles/17/119846/79317.png": "c5f6879a2dd2d2cf4db033741b85f4a50440ed1d659540efd26d4f4d7fba44ae",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239689/158631.png": "cb446c96fe2d669f159b8a60d49e2ab62b3a5a8c80d2d19e9a5ba3999d1cc2a2",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239689/158632.png": "cb446c96fe2d669f159b8a60d49e2ab62b3a5a8c80d2d19e9a5ba3999d1cc2a2",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239689/158633.png": "f33752446ee6843a1ad9dfe685c8ff1b65c9f8711125aa771b50b82b8c0e0fbf",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239690/158631.png": "c3921377a0b6838472f36c08ee93e3330a8e5e0e0a8dd804ecc23d3e9669f260",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239690/158632.png": "eca89889caa43365cbbcbaff9c6e51d036690270a26c5539db4c10c83dc4ade1",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239690/158633.png": "ecac0f6dbf39ba784399de3d23f7838baa65e5bf6a61d63309a14e9011353ff4",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239691/158631.png": "4fc77e9fc42ce57e65956c8366996d8b16a3988a64b20e2ae335d87268181edc",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239691/158632.png": "31da345cf945acd74c5f9c2cea4c1b20591611388e0aa967d7b8199e70b32233",
+          "src/aerothon_gcs/tauri_app/public/tiles/18/239691/158633.png": "a122ced4fef7f1cd2db4d10b93cd94b2b5edb350ea96a47830c9e381e86df831",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479380/317264.png": "7fb9677645c1120441c941b910ed91405153feee11356ade9f14fb28049c3e48",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479380/317265.png": "adef69471e8d9a78e74f95957df7248cb7e69ceeb53e55dd1b6445804fac90ff",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479380/317266.png": "2b7827f9c78e3b7a9053ca8c0e832d4edf212ce7f6bb7ba086c344afb3246684",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479381/317264.png": "1cddcd81e301878af15cf26f0a66b34c73848cf6913732b0ad6e89b1396b9d39",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479381/317265.png": "e6ee1b2434cb3ba0264ac2ad23f19aa033915fac59b78bee8631ea0e375f4f29",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479381/317266.png": "308647a90e1597f10d1a8e8a8ca2dbeb3b0471922c99911860e4a27fdb3054ee",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479382/317264.png": "fbede73e124ea77495d48eededc7cf2ade669308a27db92b6c9ed4178d20cd1c",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479382/317265.png": "1e4856087b3dbe11100376c6834b79637c254d4592262dac3d55172e14a20866",
+          "src/aerothon_gcs/tauri_app/public/tiles/19/479382/317266.png": "3ad0e9f8f0981ba890f597e9bafab8a1690a7ce326568f3523529cc16f34d106",
+          "src/aerothon_sim/sim_gazebo/materials/banner.png": "8125871a6298fde2764a4842b452f11fb17a616f5b5f1483f333647f2b6aa9fe",
+          "src/aerothon_sim/sim_gazebo/materials/qr_payloads.txt": "721948d1a84d64a738f256dce148498db75d4bce71d2631c936e6289609ab385",
+          "src/aerothon_sim/sim_gazebo/materials/qr_start.png": "44d1a04c5e859f7c3d7165227627c43208c727b8c04fad544f315b9538a1b7a9",
+          "src/aerothon_sim/sim_gazebo/materials/qr_target_a.png": "44d1a04c5e859f7c3d7165227627c43208c727b8c04fad544f315b9538a1b7a9",
+          "src/aerothon_sim/sim_gazebo/materials/qr_target_b.png": "5784d7c04116a6d53ab59ca6bda6c100214412fc3b8a66d1d3d97f4311ff7507",
+          "src/aerothon_sim/sim_gazebo/materials/qr_target_c.png": "2f92d67300a16d3df48f13410b8f7b13586553780a64bd96d0b2f8cf524bb75b",
+          "src/aerothon_sim/sim_gazebo/materials/qr_target_d.png": "82662cc11a17c36aaf4f18ad44415ebb2d64a43bfb1ebccaec97901f98990df7",
+          "src/aerothon_sim/sim_gazebo/materials/qr_target_e.png": "ef644d6e41df372e11fb3c72ae9ce293d631ec6220b6428aeb70a855d352d470",
+          "src/aerothon_sim/sim_gazebo/materials/red_zone.png": "537b5f8375f3bb352231a6efaa2b0f943577ab9bc30620c406b4d867e5fe0bbc",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/body.glb": "75631bca3ed016f1349a0aceb2396fe5c2defa45980c02f320b47954db1f74e2",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/camera.glb": "fa1aba73f0c6f93280cf3d131ce5e8b84c316a190a81b5ba82f8344416543e0e",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/claw_hanger.glb": "f22c8d27f9809a3ada4ced0251780ad3972d8b32c8eee4937fda24bff4cc339b",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/claw_jaw_a.glb": "840db9c004d90d48f2dfd27424a6abc35ad33d2250bdbada23c09c790f3ac14d",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/claw_jaw_b.glb": "c07ecec5cf768fd7796f734c121dd5019810370f94edc7a7fb3c1c7ff2a61cec",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/claw_link_a.glb": "ebffb30bf409bc5ad1d0ce4cca36841d28a83b406979c0fa62aa7f627cce0796",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/claw_link_b.glb": "1ec002237c3206bee4f0ad735ce22fee83e31001beb1daabec665c27df5e4a91",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/prop_back_left.glb": "f8a2214037bbc057c363bf375043f9a020551ff822e59e4deeba5d816ba24334",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/prop_back_right.glb": "dedc49762e71e3c92af3d98d9f3a2bef5156448a04d02621747ebb35335ee1c5",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/prop_front_left.glb": "98217d1ef4906c86c1c426c32cd7df0f6970def048cbb152bc15a59bcb4ca861",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/prop_front_right.glb": "81d3966d6c560da30303f6c2aa8b718bb4ffb19af4e05a98e2696864b186eb27",
+          "src/aerothon_sim/sim_gazebo/models/aerothon_quad/meshes/spool.glb": "45417328416850fb363d5acbbc58b6482a50e3a845a94e2c30baea783ccd2bd3",
+          "sim/gcs_shot.jpg": "1ae11799984171cdf625d848024651eeaf1f73320586279c5650423120c84c4c",
+          "sim/mission_sim.png": "d30a78e94b84e9932a2885871f6de8d9287b045641841484f2e5755151d61f94"
+        },
+        "started_wall": 1791379376.3617003,
+        "result": {
+          "run": "my_world_field_s2",
+          "result": "ABORTED_LAND",
+          "grade": "FAIL",
+          "navigation_pass": false,
+          "delivery_exercised": false,
+          "navigation_failures": [
+            "flight within 900 s"
+          ],
+          "rendered_perception_qualified": false,
+          "motor_delivery_qualified": false,
+          "fails": [
+            "flight within 900 s",
+            "payload released (on the ground, off the aircraft)",
+            "payload on the target pad (within 1 m)"
+          ],
+          "contacts": 0,
+          "fence": 0,
+          "sim_s": 1051.3,
+          "wall_s": 531,
+          "reason": "Battery critical"
+        },
+        "finished_wall": 1791379943.865917,
+        "source_unchanged": true,
+        "run_manifest_matches_frozen": true,
+        "asset_unchanged": true,
+        "rendered_qualified": false,
+        "motor_delivery_qualified": false
+      }
+    },
+    "rejected queue preview": {
+      "path": "logs/reliability_queue_preview_coupled_20261007",
+      "scope": "physical coupled offline fixture; unchanged 0.4 s delay / 0.6 s response",
+      "result": {
+        "cases": [
+          {
+            "kind": "dirty",
+            "seed": 0,
+            "passed": false,
+            "records": 139,
+            "minimum_logged_preintegration_clearance_m": 0.4058499073378298,
+            "failure": "airframe touched something at (6.92, 0.14) t=6.9s; detail {'state': 'BACKOFF', 'front_m': 2.04, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 0.37, 'side_right_m': 1.41, 'open_depth_m': 2.04, 'open_width_m': 1.79, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.0, 'cmd_vy_left': 0.0, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 1, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [-0.01675490402426335, -0.28518356538747913], 'disturbance_rate_world_mps2': [-0.007133214103644153, 0.12620073641288737], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [-0.04632457542723508, -0.2616558498467861], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.28, 'planner_state': 'aircraft lacks required surface clearance', 'required_clearance_m': 0.7, 'observed_clearance_m': 0.35871908456334095, 'scan_age_s': 0.05, 'pose_age_s': 0.0, 'planner_path_body_m': [], 'axis_progress_m': 1.383, 'recovery_reason': 'travel limited by observed braking clearance', 'braking_clearance_available': False, 'motion_computation_elapsed_s': 0.0, 'motion_computation_budget_s': 0.0}; track tail [(6.7, 6.93, 0.21), (6.75, 6.92, 0.2), (6.8, 6.92, 0.18), (6.85, 6.92, 0.17), (6.9, 6.92, 0.16), (6.95, 6.92, 0.14)]"
+          },
+          {
+            "kind": "late",
+            "seed": 1,
+            "passed": false,
+            "records": 156,
+            "minimum_logged_preintegration_clearance_m": 0.40070657422479117,
+            "failure": "airframe touched something at (6.48, -0.02) t=7.8s; detail {'state': 'BACKOFF', 'front_m': 1.61, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 0.55, 'side_right_m': 1.55, 'open_depth_m': 1.61, 'open_width_m': 2.1, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.0, 'cmd_vy_left': 0.0, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 1, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [0.014230365604120871, -0.23914231284136536], 'disturbance_rate_world_mps2': [0.020729399869854073, 0.18576535951107934], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [-0.008128069875630336, -0.2364433214871358], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.24, 'planner_state': 'aircraft lacks required surface clearance', 'required_clearance_m': 0.7, 'observed_clearance_m': 0.40439922015716756, 'scan_age_s': 0.2, 'pose_age_s': 0.0, 'planner_path_body_m': [], 'axis_progress_m': 1.817, 'recovery_reason': 'travel limited by observed braking clearance', 'braking_clearance_available': False, 'motion_computation_elapsed_s': 0.0, 'motion_computation_budget_s': 0.0}; track tail [(7.55, 6.49, 0.05), (7.6, 6.48, 0.03), (7.65, 6.48, 0.02), (7.7, 6.48, 0.01), (7.75, 6.48, -0.0), (7.8, 6.48, -0.02)]"
+          }
+        ],
+        "all_pass": false,
+        "production_adopted": false
+      },
+      "accepted_for_production": false
+    },
+    "rejected separate actuator plus queue preview": {
+      "path": "logs/reliability_separate_actuator_queue_preview_coupled_20261007",
+      "scope": "physical coupled offline fixture; unchanged 0.4 s delay / 0.6 s response",
+      "result": {
+        "cases": [
+          {
+            "kind": "dirty",
+            "seed": 0,
+            "passed": false,
+            "records": 120,
+            "minimum_logged_preintegration_clearance_m": 0.4104928294124304,
+            "failure": "airframe touched something at (7.42, 0.08) t=6.0s; detail {'state': 'BLOCKED', 'front_m': 2.53, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 0.39, 'side_right_m': 1.46, 'open_depth_m': 2.53, 'open_width_m': 1.85, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.0, 'cmd_vy_left': 0.0, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 0, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [-0.003900750125473516, -0.35683151890503595], 'disturbance_rate_world_mps2': [-0.07396321632890622, -0.21425745582268346], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [-0.021033833233714265, -0.3884263252756951], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.34, 'planner_state': 'aircraft lacks required surface clearance', 'required_clearance_m': 0.7, 'observed_clearance_m': 0.3888380229473114, 'scan_age_s': 0.0, 'pose_age_s': 0.0, 'planner_path_body_m': [], 'axis_progress_m': 0.884, 'note': 'no navigable gap', 'blocked_ticks': 21, 'braking_clearance_available': False, 'recovery_reason': 'travel limited by observed braking clearance', 'motion_computation_elapsed_s': 0.0, 'motion_computation_budget_s': 0.0}; track tail [(5.75, 7.42, 0.17), (5.8, 7.42, 0.16), (5.85, 7.42, 0.14), (5.9, 7.42, 0.12), (5.95, 7.42, 0.1), (6.0, 7.42, 0.08)]"
+          },
+          {
+            "kind": "late",
+            "seed": 1,
+            "passed": false,
+            "records": 137,
+            "minimum_logged_preintegration_clearance_m": 0.405572961988028,
+            "failure": "airframe touched something at (6.79, 0.14) t=6.8s; detail {'state': 'BLOCKED', 'front_m': 1.94, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 0.49, 'side_right_m': 1.36, 'open_depth_m': 1.94, 'open_width_m': 1.85, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.0, 'cmd_vy_left': 0.0, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 0, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [-0.027894260089658774, -0.29463795002098536], 'disturbance_rate_world_mps2': [0.02021124065877379, -0.10890791398149204], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [-0.07176131307753478, -0.32559305985155895], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.3, 'planner_state': 'aircraft lacks required surface clearance', 'required_clearance_m': 0.7, 'observed_clearance_m': 0.4056873680489318, 'scan_age_s': 0.25, 'pose_age_s': 0.0, 'planner_path_body_m': [], 'axis_progress_m': 1.51, 'note': 'no navigable gap', 'blocked_ticks': 22, 'braking_clearance_available': False, 'recovery_reason': 'travel limited by observed braking clearance', 'motion_computation_elapsed_s': 0.0, 'motion_computation_budget_s': 0.0}; track tail [(6.6, 6.81, 0.22), (6.65, 6.8, 0.2), (6.7, 6.8, 0.19), (6.75, 6.79, 0.17), (6.8, 6.79, 0.16), (6.85, 6.79, 0.14)]"
+          }
+        ],
+        "all_pass": false,
+        "production_adopted": false
+      },
+      "accepted_for_production": false
+    },
+    "rejected oblique observer field 2": {
+      "path": "logs/reliability_oblique_observer_field_s2_navigation_20261007",
+      "scope": "object-level navigation only",
+      "result": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": false,
+        "flight_time_s": 1084.4,
+        "corridor_clearance_m": 1.0465599309782148,
+        "red_clearance_m": 2.230071263555253,
+        "navigation_failures": [
+          "return lane flown THROUGH the corridor",
+          "never above the corridor",
+          "no failsafe / unexpected flight mode",
+          "ceiling over zone",
+          "flight within 900 s"
+        ],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 140989,
+            "sha256": "34c608e3701a255390863936e3dc123d845df16c9997667698db8bd94311487f"
+          },
+          "configuration.json": {
+            "bytes": 423,
+            "sha256": "80ebc5648439a7d87e0ddaccd3757e43945c50a6e00cf934cd9dd464278d1470"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 28721401,
+            "sha256": "443e5d83cf274a58adfb8d4c50716db32f67e19f6a4948de1ba0f7856f9384e4"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 41411903,
+            "sha256": "93e1962aa0cafc262fb87aca83f8b860071d1c3e687eebfc39bafd266551b796"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 3553606,
+            "sha256": "a4469d9edc747a81d20a165c020ccd4b32d0f473b8fbaf00b48af435d1e32dc5"
+          },
+          "detector_events.jsonl": {
+            "bytes": 31303200,
+            "sha256": "5c33b635169b07ae8eecffcf8acafd69b729fb198e47f5f4a7ac3a142acdbc85"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 894306,
+            "sha256": "8a787e05b8747978a19cc54ef4d41100cea975ef15384e87cbd71a1b07a0705c"
+          },
+          "navigation_grade.json": {
+            "bytes": 2229,
+            "sha256": "9d808ffc4fec90ecb19915d7f6560bd954acfb25e9fa46c9b3eb4fca407a18db"
+          },
+          "recorded_result.json": {
+            "bytes": 217,
+            "sha256": "4284ccacf4d4d2773dc47354d9b7cc4a63feef0f75b6afbef866d830dbe13517"
+          }
+        }
+      },
+      "accepted_for_production": false
+    },
+    "isolated guard full rendered split": {
+      "path": "logs/reliability_render_split_guard_full_s20261003_20261007",
+      "scope": "Full rendered normal startup",
+      "result": {
+        "target": "d",
+        "mission_result": {
+          "state": "COMPLETED",
+          "reason": "landed and disarmed; delivery 0.10 m from pad centre (delivery inferred from unloaded motor effort after full hook retraction); landing PRECISE (committed at 4.97 m, 0 re-acquisition(s))",
+          "delivery_offset_m": 0.0988451423271286,
+          "delivery_confirmed": true,
+          "delivery_confirmation_basis": "calibrated_motor_output_after_retraction",
+          "landing_precision": "PRECISE (committed at 4.97 m, 0 re-acquisition(s))",
+          "t": 513.6
+        },
+        "grade": "GRADE_PASS",
+        "failures": [],
+        "payload_error_m": 0.1,
+        "final_armed": false,
+        "flight_time_s": 455.0,
+        "landed_from_home_m": 0.31,
+        "acceptance_pass": true,
+        "detector_rates": {
+          "camera": {
+            "distinct_captures": 2616,
+            "invalid_capture_events": 0,
+            "capture_hz": 5.175143479121314,
+            "delivered_hz": 5.173075477446181,
+            "delivered_wall_hz": 1.2801588166205156,
+            "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+            "maximum_capture_gap_s": 1.599999999999966,
+            "latency_sim_p95_s": 0.21900000000005093,
+            "processing_wall_p95_s": null
+          },
+          "search": {
+            "qr_timing": {
+              "distinct_captures": 1120,
+              "invalid_capture_events": 0,
+              "capture_hz": 19.999999999999993,
+              "delivered_hz": 19.997498078882,
+              "delivered_wall_hz": 5.16095877286495,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.05000000000001137,
+              "latency_sim_p95_s": 0.23300000000003251,
+              "processing_wall_p95_s": 0.025441721950039662
+            },
+            "red_timing": {
+              "distinct_captures": 1120,
+              "invalid_capture_events": 0,
+              "capture_hz": 19.999999999999993,
+              "delivered_hz": 19.9964260185847,
+              "delivered_wall_hz": 5.160491924474325,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.05000000000001137,
+              "latency_sim_p95_s": 0.23100000000002296,
+              "processing_wall_p95_s": 0.023912560500082235
+            },
+            "usable_red_ground": {
+              "distinct_captures": 1120,
+              "invalid_capture_events": 0,
+              "capture_hz": 19.999999999999993,
+              "delivered_hz": 19.9964260185847,
+              "delivered_wall_hz": 5.160491924474325,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.05000000000001137,
+              "latency_sim_p95_s": 0.23100000000002296,
+              "processing_wall_p95_s": 0.023912560500082235
+            }
+          }
+        },
+        "configuration": {
+          "seed": 20261003,
+          "conditions": "calm",
+          "airframe": "cad",
+          "payload_fixture": "loaded",
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/native_disturbance_guard_candidate_20261007/sim/worlds/split_corridors.json",
+          "ros_domain": 218
+        },
+        "motor_delivery_qualified": true
+      },
+      "measured_corridor_clearance_m": 0.7380697530958419,
+      "closure": "logs/reliability_render_split_guard_full_s20261003_20261007/closed_full_review_20261007.json",
+      "accepted_source": false
+    },
+    "monotonic escape field2": {
+      "path": "logs/reliability_monotonic_search_escape_field_s2_navigation_20261007",
+      "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+      "result": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": false,
+        "flight_time_s": 998.5,
+        "corridor_clearance_m": 1.1691912745421638,
+        "red_clearance_m": 2.2140712635552546,
+        "navigation_failures": [
+          "return lane flown THROUGH the corridor",
+          "never above the corridor",
+          "no failsafe / unexpected flight mode",
+          "ceiling over zone",
+          "flight within 900 s"
+        ],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 140882,
+            "sha256": "ec26a9c6de43b7160cd2bef0a804af4c8467242b73609df07e231a53109835ae"
+          },
+          "configuration.json": {
+            "bytes": 430,
+            "sha256": "d9cb971f146ab646827be185e010c956a700742b42e5c5ef4519311933d5807b"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 27117491,
+            "sha256": "e487ff98cf7b630582bf9156e75aef3527de0cae0fa5df6098d2cc2d8430305f"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 38434454,
+            "sha256": "64d3b602c6ad5e09d1caa5bae146ba91f142e1a3d6fbbc453b68fad006e2d6f8"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 3321882,
+            "sha256": "1015245e7e69381b3467518deba70195620ac58a74d12a4b17bc873797f688f2"
+          },
+          "detector_events.jsonl": {
+            "bytes": 30004508,
+            "sha256": "f307c4baf8227d64056837b09f9d9fa2fb965101df0f8e8a1a7943364bffc25e"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 837441,
+            "sha256": "3d569e6a75e6c7642b143a8d8d9249fdc8383121c9b06b782ef18049bb5ed1e6"
+          },
+          "navigation_grade.json": {
+            "bytes": 2761,
+            "sha256": "41cfd8b6d1d1a9e96007c26379a3027612a29d89664733ea420f120dc21c7bc3"
+          },
+          "recorded_result.json": {
+            "bytes": 1040,
+            "sha256": "a7ae80442d089b373e5b2c12ad6cf145e1593199eb2f271ab4566475fdb2a4e8"
+          }
+        }
+      }
+    },
+    "derivative cap 1.6 rejected": {
+      "path": "logs/reliability_derivative_cap_1_6_coupled_20261007",
+      "result": "Both physical cases contact; not installed"
+    },
+    "scoped_fine_framing field 1": {
+      "path": "logs/reliability_scoped_fine_framing_field_s1_navigation_20261007",
+      "scope": "object-level navigation; no rendered or motor qualification",
+      "result": {
+        "run": "my_world_field_s1",
+        "result": "DELIVERY_UNCONFIRMED",
+        "grade": "FAIL",
+        "navigation_pass": false,
+        "delivery_exercised": false,
+        "navigation_failures": [
+          "flight within 900 s"
+        ],
+        "rendered_perception_qualified": false,
+        "motor_delivery_qualified": false,
+        "fails": [
+          "flight within 900 s",
+          "payload released (on the ground, off the aircraft)",
+          "payload on the target pad (within 1 m)"
+        ],
+        "contacts": 0,
+        "fence": 0,
+        "sim_s": 937.8,
+        "wall_s": 474,
+        "reason": "landed and disarmed; payload NOT confirmed on the ground by the camera; delivery UNMEASURED; landing PRECISE (committed "
+      },
+      "closed_review": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": false,
+        "flight_time_s": 915.3,
+        "corridor_clearance_m": 0.7558666665596526,
+        "red_clearance_m": 2.1800712635552486,
+        "navigation_failures": [
+          "flight within 900 s"
+        ],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 140992,
+            "sha256": "837fd778e5f99e8e4a3370a1eade841936226fbe1b89e30242b75c875f5af917"
+          },
+          "configuration.json": {
+            "bytes": 426,
+            "sha256": "08896b8589bb590f9a1e25602518733baee65cfda03a9b1f783e9110ab3343b1"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 23942760,
+            "sha256": "7231ee95408d1ac4fbb81a0ffa8305865b762a991a42c402ea93036250de0e38"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 36817579,
+            "sha256": "8e7c7f9f293308ef10f40f70092efc543818e65790cc6090440414b69fed97c6"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 3133745,
+            "sha256": "6e52403a3bbc16a82f094626e6ad119ad62e1b23975157fae516f3284a987b3d"
+          },
+          "detector_events.jsonl": {
+            "bytes": 25577618,
+            "sha256": "9a7443a9f28cf2d7b7d5cf069be40ebdb51c6176b436858c0ff39aab89f07e90"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 770854,
+            "sha256": "15c22d7b8522e2e90cdca2461bb5f3e67c8831a9b3e023dfaff2f1575052a975"
+          },
+          "navigation_grade.json": {
+            "bytes": 2254,
+            "sha256": "42ed43bdaeb2a9f873d85abf7416d6dc100ec0b6d69e4f3b6ff4235f0e6330c0"
+          },
+          "recorded_result.json": {
+            "bytes": 403,
+            "sha256": "927877faf008081daeb20475849c721fb8f130c44c028db5fd2bebb33e2e2a08"
+          }
+        }
+      }
+    },
+    "scoped_fine_framing field 2": {
+      "path": "logs/reliability_scoped_fine_framing_field_s2_navigation_20261007",
+      "scope": "object-level navigation; no rendered or motor qualification",
+      "result": {
+        "run": "my_world_field_s2",
+        "result": "DELIVERY_UNCONFIRMED",
+        "grade": "FAIL",
+        "navigation_pass": true,
+        "delivery_exercised": false,
+        "navigation_failures": [],
+        "rendered_perception_qualified": false,
+        "motor_delivery_qualified": false,
+        "fails": [
+          "payload released (on the ground, off the aircraft)",
+          "payload on the target pad (within 1 m)"
+        ],
+        "contacts": 0,
+        "fence": 0,
+        "sim_s": 823.3,
+        "wall_s": 417,
+        "reason": "landed and disarmed; payload NOT confirmed on the ground by the camera; delivery UNMEASURED; landing PRECISE (committed "
+      },
+      "closed_review": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": true,
+        "flight_time_s": 800.8,
+        "corridor_clearance_m": 0.7454449735722716,
+        "red_clearance_m": 2.1260712635552537,
+        "navigation_failures": [],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 140992,
+            "sha256": "837fd778e5f99e8e4a3370a1eade841936226fbe1b89e30242b75c875f5af917"
+          },
+          "configuration.json": {
+            "bytes": 426,
+            "sha256": "43c4bb481707c186ed327059b3b3bcf9dc17b592f70fdeb21fe08f393e1b0f52"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 20873278,
+            "sha256": "c36b656a2f9410800e3d670e08d936bc26c4af82312c299a02bb9b1828712e2b"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 32524724,
+            "sha256": "cb90a421387e3567d3577d73ce6e0eaf58628140e8faf13195fdf14594870c33"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 2778889,
+            "sha256": "c6315f0b9c3a8f696a6121d9a520e045a2c797b0e6431e6d8110caddbb98752c"
+          },
+          "detector_events.jsonl": {
+            "bytes": 22234227,
+            "sha256": "2073e9c3067a1b3402d5fb55e31c6116004f05cbf281d7ed1d92edd747fa2569"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 672657,
+            "sha256": "284103cc5f9d3fcdba6d05b0baed45315b7dc65c808ab633a40fe7bf1b7bb549"
+          },
+          "navigation_grade.json": {
+            "bytes": 2252,
+            "sha256": "e254345616c321839282646665f2b87a82c56e771f848f02cc5a86bffbc56572"
+          },
+          "recorded_result.json": {
+            "bytes": 403,
+            "sha256": "49e460f9d928ed34cfbaed59825b0a0e34f26e658704682950e0e63ae92164ce"
+          }
+        }
+      }
+    },
+    "scoped_fine_framing field 3": {
+      "path": "logs/reliability_scoped_fine_framing_field_s3_navigation_20261007",
+      "scope": "object-level navigation; no rendered or motor qualification",
+      "result": {
+        "run": "my_world_field_s3",
+        "result": "DELIVERY_UNCONFIRMED",
+        "grade": "FAIL",
+        "navigation_pass": true,
+        "delivery_exercised": false,
+        "navigation_failures": [],
+        "rendered_perception_qualified": false,
+        "motor_delivery_qualified": false,
+        "fails": [
+          "payload released (on the ground, off the aircraft)",
+          "payload on the target pad (within 1 m)"
+        ],
+        "contacts": 0,
+        "fence": 0,
+        "sim_s": 903.8,
+        "wall_s": 457,
+        "reason": "landed and disarmed; payload NOT confirmed on the ground by the camera; delivery UNMEASURED; landing PRECISE (committed "
+      },
+      "closed_review": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": true,
+        "flight_time_s": 881.4,
+        "corridor_clearance_m": 0.7538755814315071,
+        "red_clearance_m": 2.169071263555253,
+        "navigation_failures": [],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 140992,
+            "sha256": "837fd778e5f99e8e4a3370a1eade841936226fbe1b89e30242b75c875f5af917"
+          },
+          "configuration.json": {
+            "bytes": 426,
+            "sha256": "b04f7cb626d9c0d82ceaae9d47715238972543cb46643129d9af74f5bbd99e09"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 22053181,
+            "sha256": "0e0c3c08e454cc2d85bc14643fc5c12892634b3245076a96de5328b6d5d15df4"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 35629154,
+            "sha256": "b98117eabc1f03103cf3de0544b33d9139a1ef69c671b6d520a074ca5f884b8f"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 3051932,
+            "sha256": "2ae583b01639a6212cd43f8f72f78b610726c908f2c943ae7acf4aef3e0088c0"
+          },
+          "detector_events.jsonl": {
+            "bytes": 22644437,
+            "sha256": "6d98f96afb67d1fbb757217a7e7bafd97d4e48fe54195da5643d060cbd4d2f02"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 738575,
+            "sha256": "1390e08dabd42ae2894c3c5cc3ab79cf92f3b1c1a1cddcf7b2bb113324ccfb8a"
+          },
+          "navigation_grade.json": {
+            "bytes": 2250,
+            "sha256": "4a2bd2e7d1156176e056e75066470478331929e12b190045a3b7b04a81b9970d"
+          },
+          "recorded_result.json": {
+            "bytes": 403,
+            "sha256": "d23c1d43b9d904328dff127dca4a58762401ac024d8f02e9b212488c19bc231e"
+          }
+        }
+      }
+    },
+    "clipped_bearing_framing field 1": {
+      "path": "logs/reliability_clipped_bearing_framing_field_s1_navigation_20261007",
+      "scope": "object-level navigation; no rendered or motor qualification",
+      "result": {
+        "run": "my_world_field_s1",
+        "result": "FAILED",
+        "grade": "FAIL",
+        "navigation_pass": false,
+        "delivery_exercised": false,
+        "navigation_failures": [
+          "return lane flown THROUGH the corridor",
+          "never above the corridor",
+          "no tilt beyond 30 deg",
+          "no failsafe / unexpected flight mode"
+        ],
+        "rendered_perception_qualified": false,
+        "motor_delivery_qualified": false,
+        "fails": [
+          "return lane flown THROUGH the corridor",
+          "never above the corridor",
+          "no tilt beyond 30 deg",
+          "no failsafe / unexpected flight mode",
+          "payload released (on the ground, off the aircraft)",
+          "payload on the target pad (within 1 m)"
+        ],
+        "contacts": 1,
+        "fence": 0,
+        "sim_s": 906.6,
+        "wall_s": 458,
+        "reason": "GateAdvance: gate crossing or braking did not settle in 60 seconds"
+      },
+      "closed_review": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": false,
+        "flight_time_s": 884.3,
+        "corridor_clearance_m": 0.8233096663514478,
+        "red_clearance_m": 2.21307126355525,
+        "navigation_failures": [
+          "return lane flown THROUGH the corridor",
+          "never above the corridor",
+          "no tilt beyond 30 deg",
+          "no failsafe / unexpected flight mode"
+        ],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 141105,
+            "sha256": "098b527fa1f537f055cb638913fd3477c84d49ec71cac28b3945b1a35b12f61d"
+          },
+          "configuration.json": {
+            "bytes": 430,
+            "sha256": "0b2ff089c4c9da5120a741088c6b8dfd67a862db7f51c72377c6951e0e07e188"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 22976821,
+            "sha256": "0729161df561c46be1e2b157acacb55f309c8e5e750bca4d9e5d495923e6fd8a"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 36017634,
+            "sha256": "9a95b3341140fa2ef99798391d3fc7a2a97a4dc8c1a6b1b3f40fdbbb79471f3d"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 2940749,
+            "sha256": "d495526c004773eb3407d59f3e374a4dc7312550e959065957215177c618734a"
+          },
+          "detector_events.jsonl": {
+            "bytes": 24767628,
+            "sha256": "8770f863e4b7cec92f9a39edcea064b11cd836a820d4aa002cb2738571853884"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 734010,
+            "sha256": "4ce6ec7ac672c13353a22ff2dc5ff556a44dc3f984460eb00e5d0964bc0a9b6a"
+          },
+          "navigation_grade.json": {
+            "bytes": 3293,
+            "sha256": "a4ba64a5bbfe9c3a204d910b6be8715b6c1b0434f266a2b396fc0d5ef6baab74"
+          },
+          "recorded_result.json": {
+            "bytes": 261,
+            "sha256": "aa155fc850d24e3eb3933edaa283688beee207e6224636bdd9be489cf710160a"
+          },
+          "run.json": {
+            "bytes": 1671,
+            "sha256": "45d6c89cefef4284304091ca079e3d8843784840af9de201e32c584f45852eda"
+          }
+        },
+        "independent_fixture_contacts": [
+          [
+            825.24,
+            "board",
+            15.93,
+            -15.21,
+            2.65
+          ]
+        ],
+        "independent_fixture_contact_free": false,
+        "legacy_or_current_grade_contact_verdict": true
+      }
+    },
+    "arrival_anchor_framing field 1": {
+      "path": "logs/reliability_arrival_anchor_framing_field_s1_navigation_20261007",
+      "scope": "object-level navigation; no rendered or motor qualification",
+      "result": {
+        "run": "my_world_field_s1",
+        "result": "DELIVERY_UNCONFIRMED",
+        "grade": "FAIL",
+        "navigation_pass": true,
+        "delivery_exercised": false,
+        "navigation_failures": [],
+        "rendered_perception_qualified": false,
+        "motor_delivery_qualified": false,
+        "fails": [
+          "payload released (on the ground, off the aircraft)",
+          "payload on the target pad (within 1 m)"
+        ],
+        "contacts": 0,
+        "fence": 0,
+        "sim_s": 838.8,
+        "wall_s": 424,
+        "reason": "landed and disarmed; payload NOT confirmed on the ground by the camera; delivery UNMEASURED; landing PRECISE (committed "
+      },
+      "closed_review": {
+        "scope": "Object-level navigation and telemetry only; no rendered or motor delivery qualification",
+        "source_archive_verified": true,
+        "source_unchanged": true,
+        "assets_verified": true,
+        "connected_disarm_recorded": true,
+        "independent_command_receipt_recording_present": false,
+        "camera_captures_through_last_armed_sample": false,
+        "rendered_camera_qualified": false,
+        "navigation_pass": true,
+        "flight_time_s": 816.3,
+        "corridor_clearance_m": 0.7582502766728412,
+        "red_clearance_m": 2.2980712635552507,
+        "navigation_failures": [],
+        "production_adopted": false,
+        "files": {
+          "source_manifest.json": {
+            "bytes": 141216,
+            "sha256": "5f663c3b91799bdb870334981f40124b7e6076b11c755039e3159c1e7b4ae8f5"
+          },
+          "configuration.json": {
+            "bytes": 429,
+            "sha256": "b23af03c91d5c88c0296e600eab599e9496e4a2ce59409e22f7b93eaa8d2551b"
+          },
+          "layout.json": {
+            "bytes": 1367,
+            "sha256": "43b9d54d23657b05ec9fa475007b1356f7135966508cb2febecdc3b1491316ae"
+          },
+          "world_spec.json": {
+            "bytes": 2078,
+            "sha256": "2789929a82aaea474dfa3ab92e3616f9eb74da67f16660e5cb8301084546289b"
+          },
+          "onboard.jsonl": {
+            "bytes": 20689790,
+            "sha256": "53a941a8646576f026d18dc7aad8606a0307e40642750c3179d82a07b990949c"
+          },
+          "onboard_lidar.jsonl": {
+            "bytes": 33167295,
+            "sha256": "e9b6f5fda10653def3512dbb452f36dae8e0f124fc354bc9bcf18a33b5977851"
+          },
+          "camera_capture_events.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "flight_commands.jsonl": {
+            "bytes": 2816079,
+            "sha256": "89980b9e609969e5c1c58de2123a52763a3b77cc5b5c8f51b74dad95cc3f2753"
+          },
+          "detector_events.jsonl": {
+            "bytes": 21420442,
+            "sha256": "75e1bde950c24f1cc3d9e875e5fc288212440854f4b0477adfae4a101914deb8"
+          },
+          "evaluation_truth_track.csv": {
+            "bytes": 682015,
+            "sha256": "ea61272e7f933d7b48aaa4217682cf07719978e44e07dc0b6be164c8e6cda375"
+          },
+          "navigation_grade.json": {
+            "bytes": 2327,
+            "sha256": "80225a65c1aab13a151b4e5ed1711387562f6297cc24b1054c34b46cda13a2e5"
+          },
+          "recorded_result.json": {
+            "bytes": 403,
+            "sha256": "188db801ad7544bc0744a293ea03f257154e34c87b5d727118332a0f7157f3f2"
+          },
+          "run.json": {
+            "bytes": 3955,
+            "sha256": "a6ed8067a3d2e79b654bd19a40947eb4acfec8e54d1a3d840b25253a9fee019e"
+          }
+        },
+        "independent_fixture_contacts": [],
+        "independent_fixture_contact_free": true,
+        "legacy_or_current_grade_contact_verdict": true
+      }
+    },
+    "reduced first seed setup failures": {
+      "path": "logs/reliability_reduced_seed_trials_20261008",
+      "result": {
+        "scope": "Moderate field weather only; no artificial transport delay; physical velocity response .6 s and normal controller computation budget",
+        "source_unchanged": true,
+        "results": [
+          {
+            "run": "my_world_field_s1",
+            "result": "ABORTED_RTL",
+            "grade": "FAIL",
+            "navigation_pass": false,
+            "delivery_exercised": false,
+            "navigation_failures": [
+              "return lane flown THROUGH the corridor",
+              "never above the corridor",
+              "no tilt beyond 30 deg",
+              "no failsafe / unexpected flight mode",
+              "flight within 900 s",
+              "no obstacle contact"
+            ],
+            "rendered_perception_qualified": false,
+            "motor_delivery_qualified": false,
+            "fails": [
+              "return lane flown THROUGH the corridor",
+              "never above the corridor",
+              "no tilt beyond 30 deg",
+              "no failsafe / unexpected flight mode",
+              "flight within 900 s",
+              "payload released (on the ground, off the aircraft)",
+              "payload on the target pad (within 1 m)"
+            ],
+            "contacts": 2,
+            "fence": 0,
+            "sim_s": 1049.4,
+            "wall_s": 269,
+            "reason": "Excessive attitude (roll=0.2 pitch=50.0)"
+          },
+          {
+            "run": "my_world_field_s3",
+            "result": "ABORTED_LAND",
+            "grade": "FAIL",
+            "navigation_pass": false,
+            "delivery_exercised": false,
+            "navigation_failures": [
+              "return lane flown THROUGH the corridor",
+              "flight within 900 s",
+              "landed at take-off point"
+            ],
+            "rendered_perception_qualified": false,
+            "motor_delivery_qualified": false,
+            "fails": [
+              "return lane flown THROUGH the corridor",
+              "flight within 900 s",
+              "landed at take-off point",
+              "payload released (on the ground, off the aircraft)",
+              "payload on the target pad (within 1 m)"
+            ],
+            "contacts": 0,
+            "fence": 0,
+            "sim_s": 1052.6,
+            "wall_s": 269,
+            "reason": "Battery critical"
+          },
+          {
+            "run": "my_world_field_s2",
+            "result": "FAILED",
+            "grade": "FAIL",
+            "navigation_pass": false,
+            "delivery_exercised": false,
+            "navigation_failures": [
+              "return lane flown THROUGH the corridor",
+              "never above the corridor",
+              "no tilt beyond 30 deg",
+              "no failsafe / unexpected flight mode",
+              "flight within 900 s",
+              "no obstacle contact"
+            ],
+            "rendered_perception_qualified": false,
+            "motor_delivery_qualified": false,
+            "fails": [
+              "return lane flown THROUGH the corridor",
+              "never above the corridor",
+              "no tilt beyond 30 deg",
+              "no failsafe / unexpected flight mode",
+              "flight within 900 s",
+              "payload released (on the ground, off the aircraft)",
+              "payload on the target pad (within 1 m)"
+            ],
+            "contacts": 1,
+            "fence": 0,
+            "sim_s": 1110.7,
+            "wall_s": 283,
+            "reason": "ReturnCorridor: corridor navigator reported STUCK at x=16.21"
+          }
+        ],
+        "pass_navigation": false,
+        "rendered_qualified": false,
+        "delivery_qualified": false
+      },
+      "qualification_pass": false
+    },
+    "native vehicle contact clean shutdown smoke": {
+      "path": "logs/reliability_native_vehicle_contact_shutdown_20261007",
+      "scope": "unarmed recording liveness only",
+      "result": {
+        "scope": "Unarmed normal-startup native contact liveness only; no mission acceptance",
+        "source_unchanged": true,
+        "ready": true,
+        "heartbeats": 25,
+        "all_channels_advertised": true,
+        "contact_rows": 258,
+        "contact_pairs": [
+          {
+            "collision1": "aerothon_iris::base_link::skid_0",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.522794180839007e-09,
+              4.523734664640955e-09,
+              4.497849842577395e-09,
+              4.496909358775447e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_1",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.517216586896744e-09,
+              4.518157070698692e-09,
+              4.492272248635132e-09,
+              4.491331764833184e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_0",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.522788706051717e-09,
+              4.52373010578766e-09,
+              4.497863144437009e-09,
+              4.496921744701066e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_1",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.5172056442610575e-09,
+              4.518147043997001e-09,
+              4.492280082646349e-09,
+              4.491338682910406e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_0",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.518160852395869e-09,
+              4.5155999009449665e-09,
+              4.48663662472315e-09,
+              4.489197576174053e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_1",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.533381399440817e-09,
+              4.530820447989914e-09,
+              4.501857171768098e-09,
+              4.504418123219001e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_0",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.518172197487402e-09,
+              4.515610427247019e-09,
+              4.4866260012765835e-09,
+              4.489187771516967e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_1",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.533397601758082e-09,
+              4.530835831517699e-09,
+              4.501851405547264e-09,
+              4.504413175787647e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_0",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.52277159473935e-09,
+              4.523715659010552e-09,
+              4.497903070832532e-09,
+              4.49695900656133e-09
+            ]
+          },
+          {
+            "collision1": "aerothon_iris::base_link::skid_1",
+            "collision2": "takeoff_landing_zone::pad::collision",
+            "depth": [
+              4.517172684515014e-09,
+              4.518116748786216e-09,
+              4.492304160608196e-09,
+              4.491360096336994e-09
+            ]
+          }
+        ]
+      },
+      "mission_qualification": false
+    },
+    "v3 split native vehicle contacts": {
+      "path": "logs/reliability_reduced_v3_render_split_corridors_s20261003_20261008",
+      "result": "FAIL 21/22; completed/disarmed; 0.717814637943243 m corridor; 215 deployed-hook delivery-floor pairs; lacks new point and status receipt measurements"
+    },
+    "v3 retained random weather": {
+      "path": "logs/reliability_reduced_v3_random_targeted_20261008",
+      "result": "FAIL",
+      "qualification": false
+    },
+    "v4 retained random weather": {
+      "path": "logs/reliability_reduced_v4_random_targeted_20261008",
+      "result": "FAIL",
+      "qualification": false
+    },
+    "v5 retained random weather": {
+      "path": "logs/reliability_reduced_v5_random_targeted_20261008",
+      "result": "not fully qualified; failures preserved",
+      "qualification": false
+    },
+    "v6 retained random weather": {
+      "path": "logs/reliability_reduced_v6_random_targeted_20261008",
+      "result": "not fully qualified; failures preserved",
+      "qualification": false
+    },
+    "v7 retained random weather": {
+      "path": "logs/reliability_reduced_v7_random_targeted_20261008",
+      "result": "not fully qualified; failures preserved",
+      "qualification": false
+    },
+    "v5 exact field3 normal timing retry": {
+      "path": "logs/reliability_reduced_v5_seed3_normal_timing_retry_20261008",
+      "result": "13 navigation checks PASS; actual disarm; zero contacts/fence; RTF2 only change",
+      "rendered_qualified": false
+    },
+    "V9 targeted turn hold diagnostic": {
+      "path": "logs/reliability_reduced_v9_targeted_20261008",
+      "scope": "object navigation; no motor delivery or rendered qualification",
+      "result": {
+        "scope": "Five targeted object-navigation regressions; normal actuator response .6s, budget .20s, extra queue zero, RTF2",
+        "results": [
+          {
+            "run": "my_world_field_s1",
+            "result": "DELIVERY_UNCONFIRMED",
+            "grade": "FAIL",
+            "navigation_pass": true,
+            "delivery_exercised": false,
+            "navigation_failures": [],
+            "rendered_perception_qualified": false,
+            "motor_delivery_qualified": false,
+            "fails": [
+              "payload released (on the ground, off the aircraft)",
+              "payload on the target pad (within 1 m)"
+            ],
+            "contacts": 0,
+            "fence": 0,
+            "sim_s": 845.1,
+            "wall_s": 442,
+            "reason": "landed and disarmed; payload NOT confirmed on the ground by the camera; delivery UNMEASURED; landing PRECISE (committed "
+          },
+          {
+            "run": "my_world_random_s3",
+            "result": "INTERRUPTED",
+            "grade": "FAIL",
+            "navigation_pass": false,
+            "delivery_exercised": false,
+            "navigation_failures": [
+              "return lane flown THROUGH the corridor",
+              "no failsafe / unexpected flight mode",
+              "ceiling over zone",
+              "flight within 900 s",
+              "restricted-zone clearance at least 1.50 m"
+            ],
+            "rendered_perception_qualified": false,
+            "motor_delivery_qualified": false,
+            "fails": [
+              "return lane flown THROUGH the corridor",
+              "no failsafe / unexpected flight mode",
+              "ceiling over zone",
+              "flight within 900 s",
+              "payload released (on the ground, off the aircraft)",
+              "payload on the target pad (within 1 m)"
+            ],
+            "contacts": 0,
+            "fence": 0,
+            "sim_s": 1051.9,
+            "wall_s": 543,
+            "reason": "external mode change to RTL"
+          }
+        ],
+        "source_unchanged": true,
+        "pass_navigation": false
+      }
+    },
+    "V16 split recorder aliasing failure": {
+      "path": "logs\\reliability_reduced_v16_render_split_corridors_s20261003_20261008",
+      "scope": "full rendered; safely interrupted after lost contact qualification",
+      "result": {
+        "target": "d",
+        "mission_result": {
+          "state": "INTERRUPTED",
+          "reason": "external mode change to RTL",
+          "delivery_offset_m": 0.14184597082375647,
+          "delivery_confirmed": true,
+          "delivery_confirmation_basis": "calibrated_motor_output_after_retraction",
+          "landing_precision": "UNKNOWN",
+          "t": 370.4
+        },
+        "grade": "GRADE_FAIL",
+        "failures": [
+          "return lane flown THROUGH the corridor",
+          "never above the corridor",
+          "no failsafe / unexpected flight mode",
+          "ceiling over zone",
+          "no obstacle contact"
+        ],
+        "payload_error_m": 0.14,
+        "final_armed": false,
+        "flight_time_s": 360.2,
+        "landed_from_home_m": 0.07,
+        "acceptance_pass": false,
+        "detector_rates": {
+          "camera": {
+            "distinct_captures": 2022,
+            "invalid_capture_events": 0,
+            "capture_hz": 4.927465561379982,
+            "delivered_hz": 4.927369452747477,
+            "delivered_wall_hz": 1.0394541957043693,
+            "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+            "maximum_capture_gap_s": 1.6000000000000227,
+            "latency_sim_p95_s": 0.22000000000002728,
+            "processing_wall_p95_s": null
+          },
+          "search": {
+            "qr_timing": {
+              "distinct_captures": 1138,
+              "invalid_capture_events": 0,
+              "capture_hz": 19.671280276816614,
+              "delivered_hz": 19.61799264972307,
+              "delivered_wall_hz": 3.9269054932950773,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.25,
+              "latency_sim_p95_s": 0.23200000000002774,
+              "processing_wall_p95_s": 0.03374705489987946
+            },
+            "red_timing": {
+              "distinct_captures": 1138,
+              "invalid_capture_events": 0,
+              "capture_hz": 19.671280276816614,
+              "delivered_hz": 19.61799264972307,
+              "delivered_wall_hz": 3.926963134083732,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.25,
+              "latency_sim_p95_s": 0.23199999999999932,
+              "processing_wall_p95_s": 0.030279901450023766
+            },
+            "usable_red_ground": {
+              "distinct_captures": 1138,
+              "invalid_capture_events": 0,
+              "capture_hz": 19.671280276816614,
+              "delivered_hz": 19.61799264972307,
+              "delivered_wall_hz": 3.926963134083732,
+              "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+              "maximum_capture_gap_s": 0.25,
+              "latency_sim_p95_s": 0.23199999999999932,
+              "processing_wall_p95_s": 0.030279901450023766
+            }
+          }
+        },
+        "configuration": {
+          "seed": 20261003,
+          "conditions": "calm",
+          "airframe": "cad",
+          "payload_fixture": "loaded",
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/sim/worlds/split_corridors.json",
+          "ros_domain": 30
+        },
+        "motor_delivery_qualified": true
+      },
+      "closed_review": "logs\\reliability_reduced_scope_v16_source_20261008\\rendered_split_failure_closed_review.json"
+    },
+    "v39 focused return contact failure": {
+      "path": "logs/reliability_reduced_v39_focused_split_s20261003_20261009",
+      "scope": "focused native return corridor",
+      "result": "seven focused checks passed at 0.758286655 m clearance and connected disarm; independent contact closure FAILED with 6805 unexpected records",
+      "preserved": true,
+      "accepted": false,
+      "cause": "logs/focused_contact_diagnosis_20261010.json: 6566 records from an unloaded scene that still spawned the cargo under the airframe, 239 from a landing rule that only knew home",
+      "superseded_by": "logs/reliability_reduced_v40_focused_split_s20261003_20261010"
+    },
+    "v40 focused return": {
+      "path": "logs/reliability_reduced_v40_focused_split_s20261003_20261010",
+      "scope": "focused native return corridor",
+      "result": "seven focused checks passed at 0.730937744 m clearance, connected disarm at 130.785, independent contacts valid with 0 unexpected records and 141 declared-landing pairs",
+      "full_mission_qualified": false,
+      "accepted": false
+    }
+  },
+  "pending": [
+    "split return full rendered acceptance",
+    "field-2 900-second requirement",
+    "strong gust plus delayed-control contact",
+    "standard seeds 20261003 and 1001 plus shipped/rotated/split all 22 checks",
+    "corrected 200-case campaign",
+    "accepted source and final evidence report"
+  ],
+  "provisional_source_sha256": {
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "028d5bd40116c13c5a9d92f3cef26ea38d856818d234acb08b75fcf1f654fbd9",
+    "src/aerothon_mission/mission_bt/mission_bt/leg_router.py": "e237239f14310d73efea39e89980e6da3c91570369d66071dc7bc9d41ed863e8",
+    "src/aerothon_mission/mission_bt/mission_bt/gate_braking.py": "22a585b13a275be53df55afbff7baeacdce0c07e64815a260ffe4a7d2017263a",
+    "src/aerothon_mission/mission_bt/mission_bt/mission_tree.py": "7fdd5d40c778f15bf697c27f89961a69dbfe8f998e461e30a7b1700f2a58a3a0",
+    "src/aerothon_mission/mission_bt/mission_bt/search_braking.py": "495789d63520baab74707d002dd975ab8b6fea34861d30b6af3b221c9a6164a8",
+    "sim/campaign_record.py": "13cece0f17c3f11e9fc4f886f0d79cf29ff4401c6250b1e1ca9d375315aa0324",
+    "sim/run_navigation_campaign.py": "b3d98a8c4efacbcaf25ea40ef936c9f3320b9c4c99ea54b2a09102392bfc0af0",
+    "scripts/run_recorded_acceptance.sh": "2e043eb53442218b41157a08446e7f4d5a98507e8d87a1b1ab1e89f042a8ffb4"
+  },
+  "verification": {
+    "native_build": "logs/reliability_integrated_native_build_20261007.log",
+    "controller_router": "logs/reliability_integrated_current_focus_20261007.log",
+    "startup_gate_mission": "logs/reliability_integrated_startup_gate_mission_regressions_after_20261007.log",
+    "production_gate_faults": "logs/reliability_production_gate_braking_20261007.json",
+    "full_offline": "logs/reliability_integrated_full_offline_20261007.log",
+    "rejected_forecast": "logs/reliability_deadline_actuator_forecast_coupled_20261007/summary.json",
+    "full_offline_corrected": "logs/reliability_integrated_full_offline_fixtures_corrected_20261007.log",
+    "affected_instantaneous_fixtures": "logs/reliability_integrated_frozen_navigation_fixtures_20261007.log",
+    "corrected_full_offline_result": {
+      "passed": 1427,
+      "skipped": 3,
+      "all_offline_checks_passed": true
+    },
+    "causal_exact_delay_diagnosis": "logs/reliability_causal_delay_mismatch_closed_review_20261007/review.json",
+    "rejected_zero_disturbance_guard": "logs/reliability_no_favorable_disturbance_coupled_retry_20261007/summary.json",
+    "all_course_campaign_gate": "logs/reliability_asset_complete_campaign_gate_after_20261007.log",
+    "certified_search_escape_braking": "logs/reliability_certified_search_escape_braking_after_20261007.log",
+    "nominal_queue_preview_algebra": "logs/reliability_queue_preview_compensation_algebra_20261007.log",
+    "integrated_field2_closed": "logs/reliability_integrated_field2_navigation_assets_retry_20261007/closed_trial_review_20261007.json",
+    "oblique_observer_handoff": "logs/reliability_oblique_observer_handoff_20261007.json",
+    "latest_full_offline": "logs/reliability_search_braking_campaign_full_offline_closed_review_20261007.json",
+    "latest_full_offline_result": {
+      "scope": "Full offline unit/syntax/configuration/frontend suite only; no rendered or coupled gust qualification",
+      "all_offline_checks_passed": true,
+      "passed": 1440,
+      "skipped": 3,
+      "python_tests_elapsed_s": 875.89,
+      "log_sha256": "2904664de5b672bd9540e6e440d39526aef763b9cf669e41e4fb9d27164c1cc7",
+      "source_archive_sha256": "e7c9bcc2e7199c6670667b1718a8426513a64de4b5fe4bf3b7c29261a0808c91",
+      "source_files_verified": 900,
+      "source_unchanged_since_pre_run_freeze": true,
+      "accepted_source": false
+    },
+    "causal_delay_figure": "logs/reliability_causal_delay_mismatch_closed_review_20261007/zero_wind_predicted_actual_clearance_20261007.png",
+    "monotonic_escape_full_offline": {
+      "scope": "Full offline unit/syntax/configuration/frontend suite only; no rendered or coupled gust qualification",
+      "all_offline_checks_passed": true,
+      "passed": 1442,
+      "skipped": 3,
+      "python_tests_elapsed_s": 673.05,
+      "log_sha256": "76bd3faa4f7a65c923df12bced741dbc3f382811c6b0cf698e37bac79b01ea1f",
+      "source_archive_sha256": "23eb0534d929bf23920bc7aafe96647ca1fee2a01c116458dd16211d3c55a5d9",
+      "source_files_verified": 900,
+      "source_unchanged_since_pre_run_freeze": true,
+      "accepted_source": false
+    },
+    "return_framing_projection": {
+      "scope": "Recorded-pose geometric preconditions only; actual lettering and lidar still required",
+      "runtime_hfov_verified": 0.851919,
+      "coarse_headings_admissible": false,
+      "fine_headings_admissible": true,
+      "replay_sha256": "5e7ba0c7ac7536d0e8358abc9d75e63f136d2b710bb7c95d6b5a049ddd02650f",
+      "replay_source_sha256": "d221de67c469a8beb503ddc2d14e42543df5028c1fe3d75a110bfe6930819ce7",
+      "prior_60_degree_projection_invalid": true,
+      "production_adopted": false
+    },
+    "v3_closed_field_seeds": "logs/reliability_reduced_scope_v3_source_20261008/three_seed_closed_review.json",
+    "v3_closed_full_offline": "logs/reliability_reduced_scope_v3_source_20261008/full_offline_closed_review.json",
+    "v8_targeted_failed_closed_review": "logs/reliability_reduced_scope_v8_source_20261008/targeted_failed_closed_review.json",
+    "v9_targeted_closed_review": "logs/reliability_reduced_scope_v9_source_20261008/targeted_diagnostic_closed_review.json",
+    "v10_targeted_closed_review": "logs/reliability_reduced_scope_v10_source_20261008/targeted_diagnostic_closed_review.json",
+    "v11_targeted_closed_review": "logs/reliability_reduced_scope_v11_source_20261008/targeted_diagnostic_closed_review.json",
+    "v12_targeted_closed_review": "logs/reliability_reduced_scope_v12_source_20261008/targeted_diagnostic_closed_review.json",
+    "v13_targeted_closed_review": "logs/reliability_reduced_scope_v13_source_20261008/targeted_diagnostic_closed_review.json",
+    "v14_installed_startup_imports": "logs/reliability_reduced_scope_v14_source_20261008/installed_startup_imports.json",
+    "v14_return_components": "logs/reliability_v14_return_components_20261008.log",
+    "v14_targeted_closed_review": "logs/reliability_reduced_scope_v14_source_20261008/targeted_diagnostic_closed_review.json",
+    "v14_return_framing_diagnosis": "logs/reliability_reduced_scope_v14_source_20261008/return_framing_diagnosis.json",
+    "v15_return_components": "logs/reliability_v15_return_components_final_20261008.log",
+    "v15_installed_startup_imports": "logs/reliability_reduced_scope_v15_source_20261008/installed_startup_imports.json",
+    "v15_targeted_closed_review": "logs/reliability_reduced_scope_v15_source_20261008/targeted_diagnostic_closed_review.json",
+    "v16_route_return_components": "logs/reliability_v16_route_return_components_20261008.log",
+    "v16_search_components": "logs/reliability_v16_exact_exclusion_green_20261008.log",
+    "v16_red_control": "logs/reliability_v16_exact_exclusion_red_20261008.log",
+    "v16_primary_navigation_closed": "logs/reliability_reduced_scope_v16_source_20261008/primary_navigation_closed_review.json",
+    "v16_installed_startup_imports": "logs/reliability_reduced_scope_v16_source_20261008/installed_startup_imports.json",
+    "v16_field_1_navigation": "logs/reliability_reduced_v16_remaining_targeted_20261008/my_world_field_s1/navigation_grade.json",
+    "v16_field_2_navigation": "logs/reliability_reduced_v16_remaining_targeted_20261008/my_world_field_s2/navigation_grade.json",
+    "v16_targeted_closed_review": "logs/reliability_reduced_scope_v16_source_20261008/targeted_closed_review.json",
+    "v16_final_full_offline": "logs/reliability_reduced_scope_v16_source_20261008/full_offline_closed_review.json",
+    "v16_native_failure_closed_review": "logs\\reliability_reduced_scope_v16_source_20261008\\rendered_split_failure_closed_review.json",
+    "v17_native_evidence_components": "logs/reliability_v17_native_evidence_components_20261008.log",
+    "v17_recorder_red_control": "logs/reliability_v17_winch_arrival_red_20261008.log",
+    "v17_installed_startup_imports": "logs\\reliability_reduced_scope_v17_source_20261008\\installed_startup_imports.json",
+    "v17_parallel_targeted_closed_review": "logs\\reliability_reduced_scope_v17_source_20261008\\parallel_targeted_closed_review.json",
+    "v17_final_full_offline": "logs/reliability_reduced_scope_v17_source_20261008/full_offline_closed_review.json",
+    "v17_field_1_clearance_diagnosis": "logs/reliability_reduced_v17_targeted_20261008/my_world_field_s1/return_clearance_diagnosis.json",
+    "v17_normal_timing_retry_closed_review": "logs/reliability_reduced_scope_v17_source_20261008/normal_timing_retry_closed_review.json",
+    "v17_return_width_diagnosis": "logs/reliability_reduced_v17_normal_timing_retry_20261008/my_world_random_s3/return_width_framing_diagnosis.json",
+    "v18_targeted_failure_closed_review": "logs/reliability_reduced_scope_v18_source_20261008/targeted_failure_closed_review.json",
+    "v18_land_model_primary_source": "logs/reliability_land_model_primary_source_20261008/primary_source_review.json",
+    "v19_installed_startup": "logs/reliability_reduced_scope_v19_source_20261008/installed_startup_imports.json",
+    "v19_return_focused": "logs/reliability_v19_return_focused_20261008.log",
+    "v19_integrated_focused": "logs/reliability_v19_integrated_focused_20261008.log",
+    "v19_targeted_failure_closed_review": "logs/reliability_reduced_scope_v19_source_20261008/targeted_failure_closed_review.json",
+    "v19_landing_startup_diagnosis": "logs/reliability_reduced_v19_targeted_20261008/my_world_field_s2/landing_startup_height_diagnosis.json",
+    "v20_installed_startup": "logs/reliability_reduced_scope_v20_source_20261008/installed_startup_imports.json",
+    "v20_landing_focused": "logs/reliability_v20_landing_startup_height_green_20261008.log",
+    "v20_closed_targeted": {
+      "path": "logs/reliability_reduced_scope_v20_source_20261008/targeted_failure_closed_review.json",
+      "results": [
+        {
+          "run": "my_world_field_s2",
+          "pass_navigation": true,
+          "failures": [],
+          "corridor_clearance_m": 0.7474492079911099,
+          "airborne_s": 842.2,
+          "home_m": 0.42,
+          "actual_disarm": true
+        },
+        {
+          "run": "my_world_field_s3",
+          "pass_navigation": true,
+          "failures": [],
+          "corridor_clearance_m": 0.7290759974905745,
+          "airborne_s": 758.3,
+          "home_m": 0.31,
+          "actual_disarm": true
+        },
+        {
+          "run": "my_world_random_s3",
+          "pass_navigation": false,
+          "failures": [
+            "no failsafe / unexpected flight mode",
+            "flight within 900 s"
+          ],
+          "corridor_clearance_m": 0.731865538579467,
+          "airborne_s": 1010.2,
+          "home_m": 0.53,
+          "actual_disarm": true
+        },
+        {
+          "run": "my_world_field_s1",
+          "pass_navigation": true,
+          "failures": [],
+          "corridor_clearance_m": 0.7246831342974919,
+          "airborne_s": 765.6,
+          "home_m": 0.49,
+          "actual_disarm": true
+        },
+        {
+          "run": "my_world_random_s4",
+          "pass_navigation": true,
+          "failures": [],
+          "corridor_clearance_m": 0.7273894541114646,
+          "airborne_s": 858.9,
+          "home_m": 0.72,
+          "actual_disarm": true
+        }
+      ],
+      "accepted": false
+    },
+    "v21_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v21_source_20261008/installed_startup_imports.json",
+      "red": "logs/reliability_v21_green_lead_red_20261008.log",
+      "focused": "logs/reliability_v21_green_lead_focused_20261008.log",
+      "checks": 124,
+      "accepted": false
+    },
+    "v21_interrupted_batch": {
+      "path": "logs\\reliability_reduced_scope_v21_source_20261008\\interrupted_batch_closed_review.json",
+      "source_verified": true,
+      "accepted": false,
+      "final_case_disarm_verified": false
+    },
+    "v22_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v22_source_20261008/installed_startup_imports.json",
+      "gate_red": "logs/reliability_gate_capture_pause_red_20261008.log",
+      "search_red": "logs/reliability_v22_first_sweep_lead_red_20261008.log",
+      "focused": "logs/reliability_v22_final_focused_20261008.log",
+      "checks": 287,
+      "accepted": false
+    },
+    "v23_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v23_source_20261008/installed_startup_imports.json",
+      "red": "logs/reliability_return_speed_lease_red_20261008.log",
+      "focused": "logs/reliability_v23_navigation_speed_focused_20261008.log",
+      "checks": 272,
+      "accepted": false
+    },
+    "v22_mild_3_speed_lease_diagnosis": "logs/reliability_reduced_v22_targeted_20261008/my_world_random_s3/return_speed_lease_diagnosis.json",
+    "v22_closed_targeted": {
+      "path": "logs\\reliability_reduced_scope_v22_source_20261008\\targeted_failure_closed_review.json",
+      "results": [
+        {
+          "run": "my_world_field_s2",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 757.4,
+          "corridor_m": 0.7306846497573537,
+          "connected_disarm": {
+            "capture_stamp": 778.799999999,
+            "received_stamp": 778.7999999990001,
+            "recorded_stamp": 778.8099999990001,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s3",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 854.2,
+          "corridor_m": 0.7366969363323567,
+          "connected_disarm": {
+            "capture_stamp": 875.599999999,
+            "received_stamp": 875.599999999,
+            "recorded_stamp": 875.609999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s3",
+          "pass_navigation": false,
+          "failures": [
+            "return lane flown THROUGH the corridor",
+            "never above the corridor",
+            "no failsafe / unexpected flight mode",
+            "flight within 900 s"
+          ],
+          "airborne_s": 1000.4,
+          "corridor_m": 0.7324888753411164,
+          "connected_disarm": {
+            "capture_stamp": 1021.799999999,
+            "received_stamp": 1021.7999999990001,
+            "recorded_stamp": 1021.8099999990001,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s1",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 753.5,
+          "corridor_m": 0.7271964021516837,
+          "connected_disarm": {
+            "capture_stamp": 774.999999999,
+            "received_stamp": 774.999999999,
+            "recorded_stamp": 775.009999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s4",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 863.2,
+          "corridor_m": 0.7374763608324453,
+          "connected_disarm": {
+            "capture_stamp": 884.599999999,
+            "received_stamp": 884.599999999,
+            "recorded_stamp": 884.609999999,
+            "connected": true,
+            "armed": false
+          }
+        }
+      ],
+      "accepted": false
+    },
+    "v23_closed_targeted": {
+      "path": "logs\\reliability_reduced_scope_v23_source_20261008\\targeted_failure_closed_review.json",
+      "results": [
+        {
+          "run": "my_world_field_s2",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 698.3,
+          "corridor_m": 0.7394724882841229,
+          "connected_disarm": {
+            "capture_stamp": 719.799999999,
+            "received_stamp": 719.7999999990001,
+            "recorded_stamp": 719.8099999990001,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s3",
+          "pass_navigation": false,
+          "failures": [
+            "no failsafe / unexpected flight mode",
+            "flight within 900 s"
+          ],
+          "airborne_s": 931.4,
+          "corridor_m": 0.7371162115200232,
+          "connected_disarm": {
+            "capture_stamp": 952.749999999,
+            "received_stamp": 952.7599999990001,
+            "recorded_stamp": 952.7999999990001,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s3",
+          "pass_navigation": false,
+          "failures": [
+            "return lane flown THROUGH the corridor",
+            "no failsafe / unexpected flight mode",
+            "ceiling over zone",
+            "flight within 900 s"
+          ],
+          "airborne_s": 1002.4,
+          "corridor_m": 1.1426100622603035,
+          "connected_disarm": {
+            "capture_stamp": 1023.739999999,
+            "received_stamp": 1023.739999999,
+            "recorded_stamp": 1023.749999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s1",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 660.8,
+          "corridor_m": 0.7232543912533838,
+          "connected_disarm": {
+            "capture_stamp": 682.199999999,
+            "received_stamp": 682.199999999,
+            "recorded_stamp": 682.209999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s4",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 777.6,
+          "corridor_m": 0.7343096841936073,
+          "connected_disarm": {
+            "capture_stamp": 798.999999999,
+            "received_stamp": 798.999999999,
+            "recorded_stamp": 799.009999999,
+            "connected": true,
+            "armed": false
+          }
+        }
+      ],
+      "accepted": false
+    },
+    "v24_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v24_source_20261008/installed_startup_imports.json",
+      "red": "logs/reliability_return_tilt_bracket_red_20261008.log",
+      "focused": "logs/reliability_v24_camera_framing_focused_20261008.log",
+      "checks": 314,
+      "accepted": false
+    },
+    "v23_return_crop_diagnosis": "logs/reliability_reduced_v23_targeted_20261008/my_world_random_s3/return_top_crop_diagnosis.json",
+    "v24_closed_targeted": {
+      "path": "logs\\reliability_reduced_scope_v24_source_20261008\\targeted_failure_closed_review.json",
+      "results": [
+        {
+          "run": "my_world_field_s2",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 705.5,
+          "corridor_m": 0.7419664715335927,
+          "connected_disarm": {
+            "capture_stamp": 726.999999999,
+            "received_stamp": 726.999999999,
+            "recorded_stamp": 727.009999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s3",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 737.7,
+          "corridor_m": 0.740913874563184,
+          "connected_disarm": {
+            "capture_stamp": 759.199999999,
+            "received_stamp": 759.199999999,
+            "recorded_stamp": 759.209999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s3",
+          "pass_navigation": false,
+          "failures": [
+            "corridor clearance at least 0.70 m"
+          ],
+          "airborne_s": 792.1,
+          "corridor_m": 0.6948520402727778,
+          "connected_disarm": {
+            "capture_stamp": 813.599999999,
+            "received_stamp": 813.599999999,
+            "recorded_stamp": 813.609999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s1",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 667.4,
+          "corridor_m": 0.7384337724460417,
+          "connected_disarm": {
+            "capture_stamp": 688.799999999,
+            "received_stamp": 688.7999999990001,
+            "recorded_stamp": 688.8099999990001,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s4",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 773.2,
+          "corridor_m": 0.7400486108094808,
+          "connected_disarm": {
+            "capture_stamp": 794.599999999,
+            "received_stamp": 794.599999999,
+            "recorded_stamp": 794.609999999,
+            "connected": true,
+            "armed": false
+          }
+        }
+      ],
+      "accepted": false
+    },
+    "v25_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v25_source_20261008/installed_startup_imports.json",
+      "red": "logs/reliability_clipped_backoff_transit_red_20261008.log",
+      "focused": "logs/reliability_v25_clipped_backoff_focused_20261008.log",
+      "checks": 297,
+      "accepted": false
+    },
+    "v24_clearance_diagnosis": "logs/reliability_reduced_v24_targeted_20261008/my_world_random_s3/corridor_clearance_diagnosis.json",
+    "v25_closed_targeted": {
+      "path": "logs\\reliability_reduced_scope_v25_source_20261008\\targeted_failure_closed_review.json",
+      "results": [
+        {
+          "run": "my_world_field_s2",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 702.5,
+          "corridor_m": 0.7296104198142106,
+          "connected_disarm": {
+            "capture_stamp": 723.999999999,
+            "received_stamp": 723.999999999,
+            "recorded_stamp": 724.009999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s3",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 665.6,
+          "corridor_m": 0.7366124471037312,
+          "connected_disarm": {
+            "capture_stamp": 686.999999999,
+            "received_stamp": 686.999999999,
+            "recorded_stamp": 687.009999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s3",
+          "pass_navigation": false,
+          "failures": [
+            "no failsafe / unexpected flight mode",
+            "flight within 900 s",
+            "corridor clearance at least 0.70 m"
+          ],
+          "airborne_s": 930.0,
+          "corridor_m": 0.6849396857248734,
+          "connected_disarm": {
+            "capture_stamp": 951.399999999,
+            "received_stamp": 951.3999999990001,
+            "recorded_stamp": 951.4099999990001,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_field_s1",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 673.6,
+          "corridor_m": 0.7427040088939838,
+          "connected_disarm": {
+            "capture_stamp": 694.999999999,
+            "received_stamp": 694.999999999,
+            "recorded_stamp": 695.009999999,
+            "connected": true,
+            "armed": false
+          }
+        },
+        {
+          "run": "my_world_random_s4",
+          "pass_navigation": true,
+          "failures": [],
+          "airborne_s": 779.5,
+          "corridor_m": 0.739971730804082,
+          "connected_disarm": {
+            "capture_stamp": 800.999999999,
+            "received_stamp": 800.999999999,
+            "recorded_stamp": 801.009999999,
+            "connected": true,
+            "armed": false
+          }
+        }
+      ],
+      "accepted": false
+    },
+    "v26_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v26_source_20261008/installed_startup_imports.json",
+      "framing_red": "logs/reliability_side_vertical_crop_red_20261008.log",
+      "certificate_red": "logs/reliability_zero_queue_normal_budget_red_20261008.log",
+      "focused": "logs/reliability_v26_integrated_focused_20261008.log",
+      "focused_checks": 122,
+      "normal_navigation": "logs/reliability_v26_normal_navigation_focused_20261008.log",
+      "normal_checks": 24,
+      "accepted": false
+    },
+    "v25_crop_diagnosis": "logs/reliability_reduced_v25_targeted_20261008/my_world_random_s3/return_crop_sequence_diagnosis.json",
+    "v26_return_climb_diagnosis": "logs\\reliability_reduced_v26_targeted_20261008\\my_world_random_s3\\return_climb_diagnosis.json",
+    "v27_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v27_source_20261008/installed_startup_imports.json",
+      "red": "logs/reliability_return_climb_completion_red_20261008.log",
+      "focused": "logs/reliability_v27_return_climb_focused_20261008.log",
+      "checks": 226,
+      "accepted": false
+    },
+    "v26_closed_failure_review": "logs/reliability_reduced_scope_v26_source_20261008/targeted_failure_closed_review.json",
+    "v27_closed_failure_review": "logs/reliability_reduced_scope_v27_source_20261008/targeted_failure_closed_review.json",
+    "v28_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v28_source_20261008/installed_startup_imports.json",
+      "red": "logs/reliability_orbit_camera_restart_red_20261008.log",
+      "focused": "logs/reliability_v28_orbit_camera_focused_20261008.log",
+      "checks": 93,
+      "accepted": false
+    },
+    "v27_projection_diagnosis": "logs/reliability_reduced_v27_targeted_20261008/my_world_random_s3/orbit_camera_projection_diagnosis.json",
+    "v28_closed_failure_review": "logs/reliability_reduced_scope_v28_source_20261008/targeted_failure_closed_review.json",
+    "v29_startup_and_focused": {
+      "startup": "logs/reliability_reduced_scope_v29_source_20261008/installed_startup_imports.json",
+      "red": "logs/reliability_gate_motion_physics_red_20261008.log",
+      "focused": "logs/reliability_v29_gate_motion_focused_20261008.log",
+      "checks": 91,
+      "accepted": false
+    },
+    "v28_gate_trace_diagnosis": "logs/reliability_reduced_v28_targeted_20261008/my_world_random_s3/gate_trace_diagnosis.json",
+    "v29_gate_motion_diagnostic": "logs/reliability_gate_motion_arrival_probe_20261008.json",
+    "v29_closed_failure_review": "logs/reliability_reduced_scope_v29_source_20261008/targeted_failure_closed_review.json",
+    "v30_focused": {
+      "red": "logs/reliability_landing_capture_gap_red_20261008.log",
+      "focused": "logs/reliability_v30_landing_focused_20261008.log",
+      "checks": 52,
+      "accepted": false
+    },
+    "v30_closed_failure_review": "logs/reliability_reduced_scope_v30_source_20261008/targeted_failure_closed_review.json",
+    "v31_focused": {
+      "red": "logs/reliability_scan_pose_noise_physics_red_20261008.log",
+      "focused": [
+        "logs/reliability_v31_scan_motion_focused_20261008.log",
+        "logs/reliability_v31_controller_focused_20261008.log"
+      ],
+      "batch_checks": [
+        51,
+        80
+      ],
+      "overlap": true,
+      "accepted": false
+    },
+    "v31_corridor_probe": "logs/reliability_v31_scan_motion_corridor_probe_20261008.json",
+    "rejected_v30_reserve": "logs/reliability_v30_corridor_reserve_probe_20261008.json",
+    "v31_closed_failure_review": "logs/reliability_reduced_scope_v31_source_20261008/targeted_failure_closed_review.json",
+    "v32_focused": {
+      "red": "logs/reliability_search_hazard_hold_red_20261008.log",
+      "focused": "logs/reliability_v32_hazard_hold_focused_20261008.log",
+      "checks": 99,
+      "accepted": false
+    },
+    "v31_red_diagnosis": "logs/reliability_reduced_v31_targeted_20261008/my_world_random_s3/red_clearance_diagnosis.json",
+    "v32_targeted_closed_review": "logs/reliability_reduced_scope_v32_source_20261008/targeted_closed_review.json",
+    "v32_interrupted_offline_failure_review": "logs/reliability_reduced_scope_v32_source_20261008/interrupted_offline_failure_review.json",
+    "v33_focused": {
+      "log": "logs/reliability_v33_combined_focused_20261008.log",
+      "checks": 121,
+      "accepted": false
+    },
+    "v33_frontier_timing_probe": "logs/reliability_frontier_hazard_schedule_probe_20261008.log",
+    "v33_closed_failure_review": "logs/reliability_reduced_scope_v33_source_20261008/targeted_failure_closed_review.json",
+    "v33_return_camera_diagnosis": "logs/reliability_reduced_v33_targeted_20261008/my_world_field_s3/return_banner_handoff_diagnosis.json",
+    "v34_focused": {
+      "red": "logs/reliability_return_camera_handoff_red_20261008.log",
+      "log": "logs/reliability_v34_return_handoff_focused_20261008.log",
+      "checks": 59,
+      "accepted": false
+    },
+    "v34_closed_failure_review": "logs/reliability_reduced_scope_v34_source_20261008/targeted_failure_closed_review.json",
+    "v35_focused": {
+      "log": "logs/reliability_v35_integrated_focused_20261008.log",
+      "checks": 66,
+      "accepted": false
+    },
+    "v35_closed_failure_review": "logs/reliability_reduced_scope_v35_source_20261008/targeted_failure_closed_review.json",
+    "v36_focused": {
+      "log": "logs/reliability_v36_integrated_focused_20261008.log",
+      "checks": 98,
+      "accepted": false
+    },
+    "v36_closed_failure_review": "logs/reliability_reduced_scope_v36_source_20261008/targeted_failure_closed_review.json",
+    "v37_focused": {
+      "log": "logs/reliability_v37_integrated_focused_20261008.log",
+      "checks": 107,
+      "accepted": false
+    },
+    "v37_failed_offline_review": "logs/reliability_reduced_scope_v37_source_20261008/failed_full_offline_closed_review.json",
+    "v38_focused": {
+      "log": "logs/reliability_v38_integrated_focused_20261009.log",
+      "checks": 152,
+      "accepted": false
+    },
+    "v38_targeted_closed_review": "logs/reliability_reduced_scope_v38_source_20261008/targeted_closed_review.json",
+    "v38_targeted_navigation": [
+      {
+        "weather": "random",
+        "seed": 3,
+        "corridor_clearance_m": 0.745196781238411,
+        "red_clearance_m": 2.2620712635552493,
+        "flight_time_s": 823.8,
+        "precision": "PRECISE (committed at 6.94 m, 1 re-acquisition(s))",
+        "path": "logs/reliability_reduced_v38_targeted_20261008/my_world_random_s3"
+      },
+      {
+        "weather": "field",
+        "seed": 1,
+        "corridor_clearance_m": 0.7284264865881087,
+        "red_clearance_m": 2.368071263555251,
+        "flight_time_s": 643.2,
+        "precision": "PRECISE (committed at 6.93 m, 0 re-acquisition(s))",
+        "path": "logs/reliability_reduced_v38_targeted_20261008/my_world_field_s1"
+      },
+      {
+        "weather": "field",
+        "seed": 2,
+        "corridor_clearance_m": 0.7396021531922389,
+        "red_clearance_m": 2.3050712635552486,
+        "flight_time_s": 634.8,
+        "precision": "PRECISE (committed at 6.98 m, 0 re-acquisition(s))",
+        "path": "logs/reliability_reduced_v38_targeted_20261008/my_world_field_s2"
+      },
+      {
+        "weather": "field",
+        "seed": 3,
+        "corridor_clearance_m": 0.750233138352898,
+        "red_clearance_m": 2.3190712635552515,
+        "flight_time_s": 654.6,
+        "precision": "PRECISE (committed at 6.74 m, 0 re-acquisition(s))",
+        "path": "logs/reliability_reduced_v38_targeted_20261008/my_world_field_s3"
+      },
+      {
+        "weather": "random",
+        "seed": 4,
+        "corridor_clearance_m": 0.730813181240002,
+        "red_clearance_m": 2.0150712635552495,
+        "flight_time_s": 657.0,
+        "precision": "DEGRADED (precision lock not achieved by 7.52 m after 601 ticks; landing normally)",
+        "path": "logs/reliability_reduced_v38_targeted_20261008/my_world_random_s4"
+      }
+    ],
+    "v38_full_offline_closed_review": "logs/reliability_reduced_scope_v38_source_20261008/full_offline_closed_review.json",
+    "v38_native_split_recording_checkpoint": "logs/reliability_reduced_v38_render_split_corridors_s20261003_20261008/user_recording_delivery_checkpoint.json",
+    "user_birdseye_recording_20261009": "logs/user_birdseye_split_v38_s20261003_retry3_20261009/birds_eye_recording_closed_review.json",
+    "v38_native_split_failure_closed_review": "logs/reliability_reduced_scope_v38_source_20261008/native_split_failure_closed_review.json",
+    "v39_candidate_source": "logs/reliability_reduced_scope_v39_source_20261008/provenance.json",
+    "v39_focused_checks": "logs/reliability_v39_continuous_certificate_focused_20261009.log",
+    "v40_candidate_source": "logs/reliability_reduced_scope_v40_source_20261010/provenance.json",
+    "v40_build": "logs/reliability_v40_build_20261010.log",
+    "v40_installed_startup_imports": "logs/reliability_reduced_scope_v40_source_20261010/installed_startup_imports.json",
+    "v39_focused_contact_diagnosis": "logs/focused_contact_diagnosis_20261010.json",
+    "v40_focused_closed_review": "logs/reliability_reduced_v40_focused_split_s20261003_20261010/focused_source_closed_review.json"
+  },
+  "trace_run": "logs/reliability_render_split_return_integrated_trace_20261007",
+  "trace_result": {
+    "focused_pass": false,
+    "checks": {
+      "rendered return trial completed": false,
+      "disarmed at trial end": true,
+      "complete camera timeline verified through disarm": true,
+      "independent return samples recorded": true,
+      "navigation-time input isolation audit passed": true,
+      "corridor clearance at least 0.70 m": false,
+      "full return lane traversed below walls": false
+    },
+    "recorded_disarm": {
+      "capture_stamp": 153.75,
+      "received_stamp": 153.75,
+      "recorded_stamp": 153.76500000000001,
+      "connected": true,
+      "armed": false
+    },
+    "handover_mode": "stationary",
+    "clearance_phase_source": "all recorded native aircraft samples, including operator approach",
+    "measured_corridor_clearance_m": 0.6855508406968163,
+    "full_mission_qualified": false,
+    "rendered_search_qualified": false,
+    "motor_delivery_qualified": false,
+    "phase_source": "timestamped operator trial commands aligned to native aircraft samples",
+    "note": "Starting fixture comes from a recorded FCU pose. This trial omits perception gate finding, search and delivery."
+  },
+  "next_diagnostic": "Resume only after user instruction. Inspect focused V39 unloaded payload/skid contacts and post-disarm ground contact classification; keep all failures.",
+  "active_runs": [],
+  "current_continuation": {
+    "source": "V40 provisional",
+    "source_files": 951,
+    "archive_sha256": "956fadafef24af84b9c047ac87004a273bf14bfebd115def032fdc9a67b3d52e",
+    "previous_source": "V39 provisional",
+    "previous_archive_sha256": "000dd0834aff203801af9fa8980597634b846ab7806084ed907719478ff2671e",
+    "headless_rtf": 1.0,
+    "native_rtf": 0.25,
+    "status": "running_v40_gates",
+    "resumed": "2026-10-10 on the user instruction to continue the simulation work",
+    "flown_decision_modules_unchanged_since_v39": true,
+    "remaining": "Five targeted navigation cases reflown on V40; one complete reduced offline suite; five full native acceptances; 96-flight campaign; final evidence closure"
+  },
+  "reduced_scope": {
+    "selected_weather_cases": 120,
+    "excluded_weather_cases": 80,
+    "mean_wind_ceiling_mps": 4,
+    "gust_ceiling_mps": 2,
+    "artificial_transport_queue_s": 0,
+    "normal_controller_timing_model_s": {
+      "native_default": 0.4,
+      "zero_added_queue_navigation_fixture": 0.0
+    },
+    "physical_response_s": 0.6,
+    "computation_budget_s": 0.2,
+    "completed": false,
+    "selected_cases": 120,
+    "planned_eligible_flights": 96,
+    "classified_without_flight": 24,
+    "classification_audit": "logs/reliability_reduced_scope_v29_source_20261008/planned_geometry_scope.json",
+    "executed_campaign_cases": 0,
+    "camera_capture_hz": 20,
+    "lidar_scan_hz": 10
+  },
+  "deferred_unresolved": [
+    "strong-gust obstacle contacts",
+    "artificially delayed-control contacts and return-gate failures"
+  ],
+  "active_trial": null
+}

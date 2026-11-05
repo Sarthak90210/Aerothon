@@ -1,0 +1,1 @@
+[{"path": "ldlidar_driver/include/logger/log_module.h", "change": "Enable Linux pthread declarations", "before_sha256": "115e43a8c846a3f6f51cf034ebbfcdffac373f2d43c4ea608200a4d70cd44c5b", "after_sha256": "0fb45587c86960b9d1dac2122a825e0092c924fedb5aa97cd126144870c18d0b"}]

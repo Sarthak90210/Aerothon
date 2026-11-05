@@ -1,0 +1,6 @@
+{"cmd": "set_arena_dimensions", "id": "pi-f-set_arena_dimensions-a1050f84", "res": {"command_id": "pi-f-set_arena_dimensions-a1050f84", "state": "Accepted", "reason": ""}}
+{"cmd": "set_banner_colours", "id": "pi-f-set_banner_colours-a41f19ce", "res": {"command_id": "pi-f-set_banner_colours-a41f19ce", "state": "Accepted", "reason": ""}}
+{"cmd": "set_geofence", "id": "pi-f-set_geofence-8f93b834", "res": {"command_id": "pi-f-set_geofence-8f93b834", "state": "Accepted", "reason": ""}}
+{"cmd": "set_arena_dimensions", "id": "pi-f-set_arena_dimensions-78d0388e", "res": {"command_id": "pi-f-set_arena_dimensions-78d0388e", "state": "Accepted", "reason": ""}}
+{"cmd": "set_banner_colours", "id": "pi-f-set_banner_colours-da80623d", "res": {"command_id": "pi-f-set_banner_colours-da80623d", "state": "Accepted", "reason": ""}}
+{"cmd": "set_geofence", "id": "pi-f-set_geofence-102086d1", "res": {"command_id": "pi-f-set_geofence-102086d1", "state": "Accepted", "reason": ""}}

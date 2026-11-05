@@ -1,0 +1,20 @@
+{
+  "view": "fixed bird-eye native Gazebo camera",
+  "topic": "/evaluation/birdseye/image",
+  "world": "split_corridors.json",
+  "pose": [
+    24.25,
+    -4.8,
+    90,
+    0,
+    1.5707963267948966,
+    1.5707963267948966
+  ],
+  "horizontal_fov_rad": 0.84,
+  "width": 1600,
+  "height": 1200,
+  "update_rate_hz": 3,
+  "ros_publications": false,
+  "controller_source_modified": false,
+  "qualification": "user-requested recording; qualification paused"
+}

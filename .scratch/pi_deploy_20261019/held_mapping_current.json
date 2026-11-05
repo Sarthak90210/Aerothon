@@ -1,0 +1,144 @@
+{
+  "endpoint": "http://192.168.0.103:8899",
+  "asset": "/assets/index-BvJeOAWo.js",
+  "profile_id": "drone",
+  "runtime": "Running",
+  "host_fresh": true,
+  "execution": null,
+  "telemetry_messages": 120,
+  "map_messages": 13,
+  "closes": 0,
+  "first": {
+    "mission": {
+      "selected": null,
+      "part": "mission",
+      "state": "idle",
+      "armed": true,
+      "mode": "POSHOLD",
+      "elapsed": 83,
+      "delivery_offset_m": null,
+      "landing_precision": null,
+      "result": null,
+      "result_reason": null
+    },
+    "sample_age_s": {
+      "lidar": 0.075,
+      "readiness": 0.239,
+      "state": 0.916,
+      "gps": 0.368,
+      "magnetic": 0.358,
+      "sats": 0.343,
+      "vibration": 0.326,
+      "power": 0.323,
+      "winch": 0.07,
+      "slam_status": 0.072,
+      "pose": 0.327,
+      "velocity": 0.327,
+      "fence": 89.898,
+      "devices": 0
+    },
+    "slam_status": {
+      "source": "LiDAR scan matching",
+      "state": "Held",
+      "reason": "insufficient overlap; mapping held",
+      "frame": "lidar_odom"
+    },
+    "scan_frame": "base_scan",
+    "scan_returns": 226,
+    "scan_total": 720,
+    "devices": {
+      "camera": {
+        "ok": false,
+        "receipt_age_s": null
+      },
+      "lidar": {
+        "ok": true,
+        "receipt_age_s": 0.007248758999992333
+      },
+      "identity": {
+        "ok": true,
+        "value": 1,
+        "basis": "configured MAVROS target; live FCU link"
+      },
+      "clock": {
+        "ok": true,
+        "reason": "system ROS clock"
+      },
+      "camera_actuator": {
+        "ok": false,
+        "reason": "hardware camera motion feedback has not been qualified"
+      },
+      "winch_actuator": {
+        "ok": true,
+        "reason": ""
+      }
+    }
+  },
+  "last": {
+    "mission": {
+      "selected": null,
+      "part": "mission",
+      "state": "idle",
+      "armed": true,
+      "mode": "POSHOLD",
+      "elapsed": 95,
+      "delivery_offset_m": null,
+      "landing_precision": null,
+      "result": null,
+      "result_reason": null
+    },
+    "sample_age_s": {
+      "lidar": 0.091,
+      "readiness": 0.139,
+      "state": 0.812,
+      "gps": 0.271,
+      "magnetic": 0.26,
+      "sats": 0.24,
+      "vibration": 0.225,
+      "power": 0.221,
+      "winch": 0.171,
+      "slam_status": 0.089,
+      "pose": 0.227,
+      "velocity": 0.227,
+      "fence": 101.798,
+      "devices": 0
+    },
+    "slam_status": {
+      "source": "LiDAR scan matching",
+      "state": "Held",
+      "reason": "insufficient overlap; mapping held",
+      "frame": "lidar_odom"
+    },
+    "scan_frame": "base_scan",
+    "scan_returns": 207,
+    "scan_total": 720,
+    "devices": {
+      "camera": {
+        "ok": false,
+        "receipt_age_s": null
+      },
+      "lidar": {
+        "ok": true,
+        "receipt_age_s": 0.02163664799999765
+      },
+      "identity": {
+        "ok": true,
+        "value": 1,
+        "basis": "configured MAVROS target; live FCU link"
+      },
+      "clock": {
+        "ok": true,
+        "reason": "system ROS clock"
+      },
+      "camera_actuator": {
+        "ok": false,
+        "reason": "hardware camera motion feedback has not been qualified"
+      },
+      "winch_actuator": {
+        "ok": true,
+        "reason": ""
+      }
+    }
+  },
+  "closed_while_sampling": 0
+}

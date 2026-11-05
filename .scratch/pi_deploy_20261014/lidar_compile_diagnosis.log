@@ -1,0 +1,95 @@
+/**
+* @file         ldlidar_logger.h
+* @author       LDRobot (support@ldrobot.com)
+* @brief         
+* @version      0.1
+* @date         2022.08.10
+* @note          
+* @copyright    Copyright (c) 2022  SHENZHEN LDROBOT CO., LTD. All rights reserved.
+* Licensed under the MIT License (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License in the file LICENSE
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
+#ifndef  __LOGMODULE_H_
+#define  __LOGMODULE_H_
+
+
+#define LINUX
+
+#define ENABLE_LOG_DIS_OUTPUT
+
+#define ENABLE_CONSOLE_LOG_DIS
+
+//#define ENABLE_LOG_WRITE_TO_FILE
+
+#define LOGFILEPATH "./ldlidar-driver.log"
+
+#include <stdio.h>
+#include <string>
+#include <chrono>
+#include <stdlib.h>
+
+#ifndef LINUX
+#include <windows.h>
+#else
+//#include <pthread.h>
+#include <stdarg.h>
+#define printf_s(fileptr,str)  (fprintf(fileptr,"%s",str))
+#define __in
+#endif // ??????????????????????
+
+
+struct LogVersion {
+  int		       n_version;     
+  std::string  str_descruble;
+};
+
+
+class ILogRealization {
+public:
+  virtual ~ILogRealization() {
+/**
+* @file         ldlidar_logger.cpp
+* @author       LDRobot (support@ldrobot.com)
+* @brief         
+* @version      0.1
+* @date         2022.08.10
+* @note          
+* @copyright    Copyright (c) 2022  SHENZHEN LDROBOT CO., LTD. All rights reserved.
+* Licensed under the MIT License (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License in the file LICENSE
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
+#include "log_module.h"
+
+#include <time.h>
+#include <string.h>
+
+#ifndef LINUX
+#include <comutil.h>  
+#pragma comment(lib, "comsuppw.lib")
+#else
+#include <stdlib.h>
+#endif
+
+//使用vswprintf会出现奔溃的情况如果，传入数据大于 VA_PARAMETER_MAX 就会出现崩溃
+#define  VA_PARAMETER_MAX  (1024 * 2)
+
+LogModule* LogModule::s_plog_module_ = NULL;
+
+
+LogModule* LogModule::GetInstance(__in const char* filename, __in const char* funcname, __in int lineno,LogLevel level,ILogRealization*plog) {
+	if (s_plog_module_ == NULL) {
+		s_plog_module_ = new LogModule();
+	}
+	s_plog_module_->logInfo_.str_filename = filename;

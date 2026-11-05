@@ -1,0 +1,50 @@
+{
+  "completed_scope": "documentation, conservative cleanup, runtime package and requested video",
+  "guides": [
+    "AGENTS.md",
+    "MASTER_DOCUMENTATION.md"
+  ],
+  "archived_project_markdown": 104,
+  "algorithm_change": false,
+  "postflight_changes": [
+    "MASTER_DOCUMENTATION.md",
+    "AGENTS.md"
+  ],
+  "postflight_changes_are_documentation_only": true,
+  "offline_passed": 1920,
+  "offline_skipped": 8,
+  "isolated_packages_built": 11,
+  "isolated_runtime_imports": 13,
+  "gcs_static_browser_validation": true,
+  "rendered_checks_passed": 21,
+  "rendered_checks_total": 22,
+  "rendered_accepted": false,
+  "failed_checks": [
+    "corridor clearance at least 0.70 m"
+  ],
+  "minimum_corridor_clearance_m": 0.6636450303182718,
+  "flight_time_s": 886.1,
+  "payload_error_m": 0.11,
+  "connected_disarm": true,
+  "unexpected_contacts": 0,
+  "video": "D:\\MY DOCUMENTS\\VIT\\Team Rotor Fpv\\AEROTHON\\logs\\pi_cleanup_hard_field_both_s20261004_retry1_20261013\\overview\\world_overview.mp4",
+  "video_sha256": "ce4a6190b1d621fadc0080d0174ed620144b01ac05993ebb157c76a18c10de7e",
+  "video_full_decode_verified": true,
+  "video_visual_samples_reviewed": [
+    "start",
+    "search",
+    "clearance_failure",
+    "disarmed"
+  ],
+  "bundle": "D:\\MY DOCUMENTS\\VIT\\Team Rotor Fpv\\AEROTHON\\logs\\AEROTHON_PI_RUNTIME_20261013.zip",
+  "bundle_bytes": 1399706,
+  "bundle_sha256": "4786afd9c4bbb06671e9cdc75e5634b8765beb177b19db795e2f8ebfe117f4f3",
+  "hardware_qualified": false,
+  "gpio_wiring_assigned": true,
+  "encoder_backend_implemented": false,
+  "real_pi_deployment_performed": false,
+  "remaining_functional_work": [
+    "field clearance correction",
+    "Pi GPIO/encoder winch backend and measured calibration"
+  ]
+}

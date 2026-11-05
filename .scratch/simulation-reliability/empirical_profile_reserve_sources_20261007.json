@@ -1,0 +1,27 @@
+{
+  "archive": "empirical_profile_reserve_sources_20261007.zip",
+  "archive_sha256": "3f328bd2582ab0c363c97191848803145a1cda259d89130ad6ba570e888bd565",
+  "sources": {
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+    "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+    "src/aerothon_avoidance/avoidance/avoidance/scan_geometry.py": "c9faabc6ade09c5a877cbd19189aea28553ff943dfa6ce58d4cf789010675eb7",
+    "src/aerothon_sim/sim_gazebo/sim_gazebo/corruptions.py": "3857a80869f086261af49f09a6300da0297371e2db15230f49ff2dd25a20e238",
+    "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+    "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+    ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9",
+    ".scratch/simulation-reliability/probe_gust_empirical_viability_20261007.py": "c7bc1c2427ae6e7d87f06af1bfa123d8cbbcf92c285b91bdf420653fe341608b",
+    ".scratch/simulation-reliability/probe_gust_empirical_viability_initial_20261007.py": "86bfe8b5ae9e980e884e7055547b2cd3c717e14c7d4c7591eec015434fe1c370",
+    ".scratch/simulation-reliability/check_gust_empirical_viability_20261007.sh": "c858cb01f71ebd674be29a21e755c093788dedfa68c9771e02336cd8719883f0",
+    ".scratch/simulation-reliability/analyse_empirical_viability_run_20261007.py": "7ba9bcae9ee59510460339c7ee17da21fe7c84e8c4d0408b0f2a760b625690a4",
+    ".scratch/simulation-reliability/probe_gust_empirical_path_reserve_20261007.py": "da0127421714199fb632ff2220dcb8c97876ea264dcb563d455161c37ca5cd9c",
+    ".scratch/simulation-reliability/check_gust_empirical_path_reserve_20261007.sh": "3b9fa5d9f3f32ed2b4457d2ebd6ff49ed8767d341f8774678f3cde08541bf118",
+    ".scratch/simulation-reliability/probe_gust_empirical_profile_reserve_20261007.py": "d0a5622f704e39f2767bcbdcb40ae17efd17e0359d259e8150413671b558109b",
+    ".scratch/simulation-reliability/check_gust_empirical_profile_reserve_20261007.sh": "31345139658864666630a017975a982c0627f5f2a1c92adde11da11d007cf84d",
+    ".scratch/simulation-reliability/probe_gust_still_air_baseline_20261007.py": "34392274d1b146ccfda144dd231cdef26457db753c3ca3eee2fae69152aa16f4",
+    ".scratch/simulation-reliability/check_gust_still_air_baseline_20261007.sh": "9b65371281edc3cd948018b91841a717a04b6e3f4e1a30fd6c6a37aec7bf6fd1",
+    ".scratch/simulation-reliability/analyse_empirical_hold_release_receipts_20261007.py": "ce532a8b1d63bef66d9361f50dc4acb3af5f54a059acbb116f939cffef6457b2",
+    ".scratch/simulation-reliability/analyse_empirical_release_stalls_20261007.py": "638738da3dc3495fe0de1e581470f2cbc3e65c9605770fd7b0532da679398fa7",
+    ".scratch/simulation-reliability/archive_empirical_profile_sources_20261007.py": "e05ef2c1c4d94566e4dd7953f5dd794f4f4dfdd14c555e738804da8985dc3bc4"
+  },
+  "files": 20
+}

@@ -1,0 +1,34 @@
+{
+  "feature": "return_slot_recentre_20261024",
+  "problem": "final_mission_r12 and r13 (world 'shipped', 20 km/h search) stalled STUCK at x=9.94 at the mouth of the return slalom's second slot (1.0 m wide against the simulation's 2 x 0.45 m). r10 had passed the same slot 3 cm off centre with 0.466/0.471 m; corridor code and world were byte-identical between r10 and r12.",
+  "root_cause": [
+    "The planner preferred the straight line at the bare 0.45 m clearance (and fell to the zero-reserve tier when no lattice row fitted the 5 cm reserve band) over a route keeping the 2.5 cm sampling reserve; on recorded scans it routed 0.450-0.457 m from the block corner.",
+    "Once 1-2 cm inside the clearance, every command (the planned recentre sidestep included) was certified against 0.45 m from its start point, which it already failed.",
+    "The nose lidar (0.139 m ahead of base_link) with the masked 150-210 deg rear sector never observes the strip beside the body centre; only a 2.5 cm-wide body-to-sensor link counted as observed, so every sideways step over 2.5 cm was refused. The kinematic test harness put the lidar at the body origin and could not reproduce this."
+  ],
+  "change": [
+    "fast_connected_planner_candidate.py: sampling-reserve graph routes, including a lattice shifted half a cell across the axis (HALF_CELL_RETRY), are tried before the bare-limit straight line; recentre_clear certifies only the recentre sidestep against clearance - RECENTRE_SLACK and requires it to end with more clearance.",
+    "local_planner.py: BODY_LINK_HALFWIDTH_M 0.05 (was 0.025): 5 cm either side of the body-to-sensor link, inside the central airframe, counts as observed. User-approved 24 Oct 2026. Wider blind sideways travel stays refused (test_occupied_sensor_link_does_not_make_blind_sideways_travel_free unchanged).",
+    "velocity_controller.py: the RECENTRE branch publishes with recentre=True so only that motion uses recentre_clear; local_planner polyline_clear/_clear_samples take an optional limit.",
+    "Clearance values unchanged: 0.45 m simulation floor, 0.70 m aircraft."
+  ],
+  "tests": {
+    "new": "sim/test_return_slot_recentre_motion.py (10 tests) with recorded fixture sim/fixtures/return_slot_reserve_shipped_20261024.json (r10/r12 scans); sim/test_slalom_traverse.py fly() gained a lidar `mount` option.",
+    "against_committed_560da40_config": "all 4 targeted tests fail: recorded routes 0.451-0.457 m, 4 cm sidestep unobserved, closed loop STUCK at (9.92,-4.94) and (9.96,-4.93)",
+    "avoidance_regression": "277 passed; 3 strong-gust SplitLaneStressTests deselected (they fail identically on clean HEAD 560da40; user-deferred strong gusts)",
+    "reduced_offline_suite": "not yet run on this tree"
+  },
+  "evidence": {
+    "r12": "logs/return_lap_20261020/final_mission_r12 (STUCK x=9.94; red-zone delivery-zone filter in place)",
+    "r13": "logs/return_lap_20261020/final_mission_r13 (recentre certificate only; STUCK x=9.94)",
+    "r14": "logs/return_lap_20261020/final_mission_r14 (all fixes; aborted at delivery: DO_WINCH ack timeout with search real-time factor 0.26 and 8 MAVLink ack timeouts; return corridor not reached)",
+    "r15": "logs/return_lap_20261020/final_mission_r15 (all fixes; 14/14 PASS; return lane 23.8 s, block clearance 0.465/0.465 m, RECENTRE 3 ticks then CRUISE, no BLOCKED/BACKOFF/STUCK; flight 462.9 s; payload error 0.26 m; landed 0.15 m from home; search RTF 0.41)"
+  },
+  "status": "simulation pass on one run; uncommitted",
+  "blockers": [
+    "Real aircraft keeps 0.70 m clearance: a 1.0 m slot is physically impassable for it; confirm the competition slalom dimensions.",
+    "DO_WINCH lower faults on a single ack timeout (r14); unrelated to this change, not addressed.",
+    "Not deployed to the Pi; reduced offline suite not rerun."
+  ],
+  "completion": "r15 COMPLETED 14/14 in simulation"
+}

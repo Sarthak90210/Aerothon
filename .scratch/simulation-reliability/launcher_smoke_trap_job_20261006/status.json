@@ -1,0 +1,24 @@
+{
+  "state": "STOPPED",
+  "started_wall": 1791289109.1449182,
+  "supervisor": {
+    "pid": 654,
+    "pgid": 654,
+    "start_ticks": 33964,
+    "boot_id": "8b1ef19a-ee72-41dd-87da-2eafd1f5afef"
+  },
+  "command": [
+    "/usr/bin/bash",
+    ".scratch/simulation-reliability/launcher_smoke_trap_20261006.sh",
+    ".scratch/simulation-reliability/launcher_smoke_trap_job_20261006"
+  ],
+  "cwd": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON",
+  "command_process": {
+    "pid": 655,
+    "pgid": 655,
+    "start_ticks": 33970,
+    "boot_id": "8b1ef19a-ee72-41dd-87da-2eafd1f5afef"
+  },
+  "exit_code": -15,
+  "finished_wall": 1791289119.5020514
+}

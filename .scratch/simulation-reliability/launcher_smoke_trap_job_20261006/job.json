@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/usr/bin/bash",
+    ".scratch/simulation-reliability/launcher_smoke_trap_20261006.sh",
+    ".scratch/simulation-reliability/launcher_smoke_trap_job_20261006"
+  ],
+  "cwd": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON",
+  "created_wall": 1791289109.0939088
+}

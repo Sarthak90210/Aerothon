@@ -1,0 +1,16 @@
+{
+  "id": "laptop-sitl",
+  "gateway": "http://192.168.0.102:19090",
+  "component_id": 1,
+  "marker_m": 3.0,
+  "rc_config": {},
+  "name": "Laptop SITL / rendered sensors",
+  "camera_hfov": 0.851919,
+  "delivery_calibration": "sitl_delivery_load_20261005.json",
+  "host": "192.168.0.102",
+  "transport": "tcp",
+  "bind_port": 14555,
+  "port": 5762,
+  "slam": true,
+  "system_id": 1
+}

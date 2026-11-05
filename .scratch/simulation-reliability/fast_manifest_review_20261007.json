@@ -1,0 +1,7 @@
+{
+  "matches_active_frozen_manifest": true,
+  "source_files": 833,
+  "elapsed_wall_s": 29.91146294400005,
+  "changed": {},
+  "limitation": "Future coordinator optimization; active coordinator is unchanged"
+}

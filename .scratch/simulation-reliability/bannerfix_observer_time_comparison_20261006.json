@@ -1,0 +1,250 @@
+{
+  "summary": [
+    {
+      "window": [
+        869.5,
+        880.5
+      ],
+      "samples": 55,
+      "receipt_residual_rms": 0.06882475027372369,
+      "aligned_residual_rms": 0.07030100253289089,
+      "mismatch_rms": 0.006627910614115898,
+      "mismatch_peak": 0.024060616235090065
+    },
+    {
+      "window": [
+        880.5,
+        884.5
+      ],
+      "samples": 20,
+      "receipt_residual_rms": 0.06885678805147666,
+      "aligned_residual_rms": 0.07056748812844446,
+      "mismatch_rms": 0.003746055943917061,
+      "mismatch_peak": 0.012639867826744903
+    },
+    {
+      "window": [
+        884.5,
+        895.5
+      ],
+      "samples": 55,
+      "receipt_residual_rms": 0.019457559282800484,
+      "aligned_residual_rms": 0.01946982188328726,
+      "mismatch_rms": 2.7215377346317207e-05,
+      "mismatch_peak": 0.00018546600162742662
+    }
+  ],
+  "window": [
+    {
+      "stamp": 879.629,
+      "measurement_stamp": 879.611,
+      "measurement_age_s": 0.018000000000029104,
+      "actual": [
+        -0.49793949723243713,
+        -0.25741076469421387
+      ],
+      "receipt_time_residual": [
+        -0.03344279500299491,
+        -0.11046225922526465
+      ],
+      "sample_time_residual": [
+        -0.027087304782309973,
+        -0.11695702980929334
+      ],
+      "mismatch_contribution": [
+        -0.006355490220684934,
+        0.006494770584028697
+      ]
+    },
+    {
+      "stamp": 879.8290000000001,
+      "measurement_stamp": 879.811,
+      "measurement_age_s": 0.018000000000029104,
+      "actual": [
+        -0.49937671422958374,
+        -0.23104169964790344
+      ],
+      "receipt_time_residual": [
+        0.0634618888512336,
+        0.02658526942731454
+      ],
+      "sample_time_residual": [
+        0.039529693571838664,
+        0.024102673463170132
+      ],
+      "mismatch_contribution": [
+        0.02393219527939494,
+        0.0024825959641444073
+      ]
+    },
+    {
+      "stamp": 880.0290000000001,
+      "measurement_stamp": 880.011,
+      "measurement_age_s": 0.01800000000014279,
+      "actual": [
+        -0.5047652721405029,
+        -0.2513802647590637
+      ],
+      "receipt_time_residual": [
+        -0.025218900979833814,
+        -0.12883393197580434
+      ],
+      "sample_time_residual": [
+        -0.010614539736567785,
+        -0.12510184052305814
+      ],
+      "mismatch_contribution": [
+        -0.014604361243266029,
+        -0.0037320914527462085
+      ]
+    },
+    {
+      "stamp": 880.23,
+      "measurement_stamp": 880.21,
+      "measurement_age_s": 0.01999999999998181,
+      "actual": [
+        -0.5415533781051636,
+        -0.27493876218795776
+      ],
+      "receipt_time_residual": [
+        0.003038986235779695,
+        -0.06169803415364461
+      ],
+      "sample_time_residual": [
+        -0.017895796939577546,
+        -0.07211337300830842
+      ],
+      "mismatch_contribution": [
+        0.02093478317535724,
+        0.010415338854663808
+      ]
+    },
+    {
+      "stamp": 880.4300000000001,
+      "measurement_stamp": 880.411,
+      "measurement_age_s": 0.019000000000119144,
+      "actual": [
+        -0.4029531478881836,
+        -0.20066764950752258
+      ],
+      "receipt_time_residual": [
+        0.10832915460167458,
+        -0.012017973021904466
+      ],
+      "sample_time_residual": [
+        0.12477810664177458,
+        -0.005948743819601282
+      ],
+      "mismatch_contribution": [
+        -0.016448952040099996,
+        -0.0060692292023031835
+      ]
+    },
+    {
+      "stamp": 880.6300000000001,
+      "measurement_stamp": 880.611,
+      "measurement_age_s": 0.019000000000119144,
+      "actual": [
+        -0.20803453028202057,
+        -0.09675291180610657
+      ],
+      "receipt_time_residual": [
+        0.1083610945915498,
+        0.018936583787267994
+      ],
+      "sample_time_residual": [
+        0.11965995025260256,
+        0.02460245701460699
+      ],
+      "mismatch_contribution": [
+        -0.011298855661052765,
+        -0.005665873227338997
+      ]
+    },
+    {
+      "stamp": 880.831,
+      "measurement_stamp": 880.811,
+      "measurement_age_s": 0.01999999999998181,
+      "actual": [
+        -0.16593006253242493,
+        -0.05201685056090355
+      ],
+      "receipt_time_residual": [
+        0.03651495098361324,
+        0.008239590440661401
+      ],
+      "sample_time_residual": [
+        0.03979577875762971,
+        0.010495564478929575
+      ],
+      "mismatch_contribution": [
+        -0.003280827774016476,
+        -0.0022559740382681742
+      ]
+    },
+    {
+      "stamp": 881.0310000000001,
+      "measurement_stamp": 881.011,
+      "measurement_age_s": 0.020000000000095497,
+      "actual": [
+        -0.12994927167892456,
+        -0.024954121559858322
+      ],
+      "receipt_time_residual": [
+        0.168952413410367,
+        0.06143666105666282
+      ],
+      "sample_time_residual": [
+        0.16413600511148652,
+        0.06116013457361863
+      ],
+      "mismatch_contribution": [
+        0.00481640829888047,
+        0.00027652648304418714
+      ]
+    },
+    {
+      "stamp": 881.2310000000001,
+      "measurement_stamp": 881.211,
+      "measurement_age_s": 0.020000000000095497,
+      "actual": [
+        -0.0660647451877594,
+        -0.006269602105021477
+      ],
+      "receipt_time_residual": [
+        0.17532323581957987,
+        0.05897637355107142
+      ],
+      "sample_time_residual": [
+        0.18350510883687227,
+        0.061187893302302426
+      ],
+      "mismatch_contribution": [
+        -0.008181873017292396,
+        -0.002211519751231003
+      ]
+    },
+    {
+      "stamp": 881.432,
+      "measurement_stamp": 881.41,
+      "measurement_age_s": 0.022000000000048203,
+      "actual": [
+        -0.039772097021341324,
+        0.004477823618799448
+      ],
+      "receipt_time_residual": [
+        0.13290215920454732,
+        0.05115081980996334
+      ],
+      "sample_time_residual": [
+        0.13935105587282945,
+        0.052893924637600134
+      ],
+      "mismatch_contribution": [
+        -0.006448896668282134,
+        -0.0017431048276367947
+      ]
+    }
+  ],
+  "limitation": "Compare model response at receipt and FCU sample times, postflight only.\n\nOnboard records are sampled at 5 Hz. Heading is interpolated from that record,\nso this measures a timestamp mismatch contribution, not an exact controller\nreplay or a causal proof that the complete rendered failure is fixed.\n"
+}

@@ -1,0 +1,46 @@
+# Fail-safes the rulebook inspects (Section 5.4, item 6 "Fail-Safe Systems
+# Check", 4 marks). Loaded as SITL defaults by sim_full.launch.py and meant to
+# be loaded onto the Pixhawk from Mission Planner (Config > Full Parameter
+# List > Load from file) before technical inspection.
+#
+# Nothing in the repo set any of these before, so all three inspection items
+# depended on whatever the flight controller happened to hold.
+
+# 6.1 RTL on low battery. The pack is 4S2P Li-ion, not LiPo: it delivers to
+# 2.5 V/cell and sags ~0.3 V/cell at hover current, so the LiPo figures (3.5 /
+# 3.3 V/cell) would RTL a half-charged pack in the first minutes. Li-ion:
+# 3.2 V/cell low, 3.0 V/cell critical, judged on the sag-compensated resting
+# voltage (VOLTSRC 1) and only when held for LOW_TIMER s. The readiness
+# interlock separately refuses to start below 15.0 V.
+# Low -> RTL (2); critical -> LAND (1).
+BATT_FS_LOW_ACT 2
+BATT_FS_CRT_ACT 1
+BATT_FS_VOLTSRC 1
+BATT_LOW_VOLT 12.8
+BATT_CRT_VOLT 12.0
+BATT_LOW_TIMER 10
+
+# 6.2 RTL on datalink loss: GCS heartbeat lost for FS_GCS_TIMEOUT seconds.
+# ArduPilot only arms this once a GCS (SYSID_MYGCS) has been heard, so a run
+# with no ground station attached is not RTL'd on the pad.
+FS_GCS_ENABLE 1
+FS_GCS_TIMEOUT 5
+# RC link loss -> RTL.
+FS_THR_ENABLE 1
+FS_THR_VALUE 975
+
+# RTL climbs above every corridor wall (3.6 m) before heading home. cm.
+RTL_ALT 1500
+RTL_ALT_FINAL 0
+
+# 6.3 Geo-fence. The polygon is the organiser's, uploaded by the mission
+# (UploadArenaFence) before arming, which sets FENCE_ENABLE=1 only after the
+# polygon reads back intact. Left 0 here so an old polygon from a previous
+# arena cannot be enforced before the new one is loaded.
+# TYPE 5 = max altitude + polygon. ACTION 1 = RTL, else LAND.
+# ALT_MAX (m) sits above the 10 m mission ceiling and above RTL_ALT.
+FENCE_TYPE 5
+FENCE_ACTION 1
+FENCE_ALT_MAX 20
+FENCE_MARGIN 2
+FENCE_ENABLE 0

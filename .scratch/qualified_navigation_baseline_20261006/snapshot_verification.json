@@ -1,0 +1,32 @@
+{
+  "source": "exact standard-pair qualified archive",
+  "snapshot": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006",
+  "source_entries_verified": 756,
+  "standard_seeds": [
+    20261003,
+    1001
+  ],
+  "archive": {
+    "source_files": 756,
+    "runtime_assets_verified": 53,
+    "archive": "recorded_source.zip",
+    "archive_sha256": "d3f93345289d050b4fe27e9cf0b83d8952c8fb0cbcd6e3efdec905dc1c8feac1",
+    "archive_verified": true
+  },
+  "qualification_pair": {
+    "standard_seeds": [
+      20261003,
+      1001
+    ],
+    "both_full_acceptances_passed": true,
+    "full_offline_suite_exit_code": 0,
+    "source_unchanged": true,
+    "broader_campaigns_started": false,
+    "note": "Broader campaigns, changing-gust qualification and deferred hardware remain outstanding"
+  },
+  "limitations": [
+    "Current-source coupled narrow-corridor gust/delay tests fail.",
+    "This snapshot campaign cannot qualify a later producer repair.",
+    "Headless navigation cannot qualify rendered perception or motor delivery."
+  ]
+}

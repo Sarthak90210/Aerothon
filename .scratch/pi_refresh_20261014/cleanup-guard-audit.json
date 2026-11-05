@@ -1,0 +1,39 @@
+{
+  "removed_paths_confirmed": [
+    "/home/pi5/aerothon_ws.previous-380beb23c6d9",
+    "/home/pi5/aerothon-pre-refresh-20261014.tar.gz",
+    "/home/pi5/aerothon-previous-20261014.tar.gz",
+    "/home/pi5/aerothon-runtime-new-20261014.zip",
+    "/home/pi5/aerothon-check-refresh.py",
+    "/home/pi5/aerothon-capture-refresh.py",
+    "/home/pi5/aerothon-deploy/runtime_20261013.zip",
+    "/home/pi5/aerothon-deploy/runtime_deploy_preview.zip",
+    "/home/pi5/aerothon-deploy/extract_runtime.py",
+    "/home/pi5/aerothon-deploy/capture_ws.py",
+    "/home/pi5/aerothon-deploy/check_installed.py",
+    "/home/pi5/aerothon-deploy/native_import_review.json",
+    "/home/pi5/aerothon-deploy/removed_old_files.json"
+  ],
+  "4b289afb555d": {
+    "image": "sha256:0f6d78de3a6efa8d765b782837cb8ebf9bda7ce08ada5a3c6250df99548869d2",
+    "name": "/sleepy_wilbur",
+    "state": "exited",
+    "mounts": [],
+    "command": [
+      "/bin/sh",
+      "-c",
+      "apt-get update && apt-get install -y --no-install-recommends     ros-jazzy-mavros ros-jazzy-mavros-extras ros-jazzy-cv-bridge     ros-jazzy-web-video-server ros-jazzy-usb-cam ros-jazzy-xacro     ros-jazzy-robot-state-publisher ros-jazzy-py-trees     python3-opencv python3-numpy python3-scipy python3-serial     python3-websockets python3-pyzbar tesseract-ocr libzbar0     geographiclib-tools     && /opt/ros/jazzy/lib/mavros/install_geographiclib_datasets.sh     && rm -rf /var/lib/apt/lists/*"
+    ]
+  },
+  "1d3f133612b4": {
+    "image": "sha256:0f6d78de3a6efa8d765b782837cb8ebf9bda7ce08ada5a3c6250df99548869d2",
+    "name": "/elated_edison",
+    "state": "exited",
+    "mounts": [],
+    "command": [
+      "/bin/sh",
+      "-c",
+      "apt-get update && apt-get install -y --no-install-recommends     ros-jazzy-mavros ros-jazzy-mavros-extras ros-jazzy-cv-bridge     ros-jazzy-web-video-server ros-jazzy-usb-cam ros-jazzy-xacro     ros-jazzy-robot-state-publisher ros-jazzy-py-trees     python3-opencv python3-numpy python3-scipy python3-serial     python3-websockets python3-pyzbar tesseract-ocr libzbar0     geographiclib-tools     && /opt/ros/jazzy/lib/mavros/install_geographiclib_datasets.sh     && rm -rf /var/lib/apt/lists/*"
+    ]
+  }
+}

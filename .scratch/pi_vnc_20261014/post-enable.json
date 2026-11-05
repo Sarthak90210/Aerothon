@@ -1,0 +1,37 @@
+{
+  "vnc": {
+    "code": 0,
+    "stdout": "ActiveState=active\nSubState=running\nUnitFileState=enabled",
+    "stderr": ""
+  },
+  "listener": {
+    "code": 0,
+    "stdout": "State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess                                    \nLISTEN 0      5            0.0.0.0:5900      0.0.0.0:*    users:((\"vncserver-x11-c\",pid=3912,fd=12))\nLISTEN 0      5               [::]:5900         [::]:*    users:((\"vncserver-x11-c\",pid=3912,fd=11))",
+    "stderr": ""
+  },
+  "desktop": {
+    "code": 1,
+    "stdout": "",
+    "stderr": ""
+  },
+  "session": {
+    "code": 0,
+    "stdout": "1 1000 pi5 seat0 1200 user    tty1 yes -\n2 1000 pi5 -     1217 manager -    no  -\n8 1000 pi5 -     3436 user    -    no  -\n9 1000 pi5 -     3532 user    -    no  -",
+    "stderr": ""
+  },
+  "vnc_log": {
+    "code": 0,
+    "stdout": "Oct 14 17:50:25 pi5 systemd[1]: Started vncserver-x11-serviced.service - VNC Server in Service Mode daemon.\nOct 14 17:50:25 pi5 vncserver-x11[3912]: ServerManager: Server started\nOct 14 17:50:27 pi5 vncserver-x11[3912]: ConsoleDisplay: Cannot find a running X server on vt1\nOct 14 17:50:27 pi5 vncserver-x11[3912]: ConsoleDisplay: Found running X server (pid=4058, binary=/usr/lib/xorg/Xorg)\nOct 14 17:50:27 pi5 vncserver-x11[3912]: AgentInitCheck: agent comms failure\nOct 14 17:50:32 pi5 vncserver-x11[3912]: ConsoleDisplay: Cannot find a running X server on vt7\nOct 14 17:50:32 pi5 vncserver-x11[3912]: AgentInitCheck: no response from agent\nOct 14 17:50:37 pi5 vncserver-x11[3912]: AgentInitCheck: agent comms failure\nOct 14 17:50:42 pi5 vncserver-x11[3912]: ConsoleDisplay: Found running X server (pid=5793, binary=/usr/lib/xorg/Xorg)\nOct 14 17:50:42 pi5 vncserver-x11[3912]: AgentInitCheck: agent comms failure\nOct 14 17:50:47 pi5 vncserver-x11[3912]: ConsoleDisplay: Cannot find a running X server on vt7\nOct 14 17:50:47 pi5 vncserver-x11[3912]: AgentInitCheck: no response from agent\nOct 14 17:50:52 pi5 vncserver-x11[3912]: ConsoleDisplay: Found running X server (pid=6945, binary=/usr/lib/xorg/Xorg)\nOct 14 17:50:52 pi5 vncserver-x11[3912]: AgentInitCheck: agent comms failure\nOct 14 17:50:57 pi5 vncserver-x11[3912]: ConsoleDisplay: Cannot find a running X server on vt7\nOct 14 17:50:57 pi5 vncserver-x11[3912]: AgentInitCheck: no response from agent\nOct 14 17:51:02 pi5 vncserver-x11[3912]: AgentInitCheck: agent comms failure",
+    "stderr": ""
+  },
+  "lightdm_log": {
+    "code": 0,
+    "stdout": "[+39.83s] DEBUG: Process 8343 exited with return value 1\n[+39.83s] DEBUG: XServer 0: X server stopped\n[+39.83s] DEBUG: XServer 0: Removing X server authority /var/run/lightdm/root/:0\n[+39.83s] DEBUG: Seat seat0: Display server stopped\n[+39.83s] DEBUG: Seat seat0: Failed to start display server - trying to restart\n[+39.83s] DEBUG: XServer 0: Logging to /var/log/lightdm/x-0.log\n[+39.83s] DEBUG: XServer 0: Writing X server authority to /var/run/lightdm/root/:0\n[+39.83s] DEBUG: XServer 0: Launching X Server\n[+39.83s] DEBUG: Launching process 8345: /usr/bin/X :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch\n[+39.83s] DEBUG: XServer 0: Waiting for ready signal from X server :0\n[+39.84s] DEBUG: Process 8345 exited with return value 1\n[+39.84s] DEBUG: XServer 0: X server stopped\n[+39.84s] DEBUG: XServer 0: Removing X server authority /var/run/lightdm/root/:0\n[+39.84s] DEBUG: Seat seat0: Display server stopped\n[+39.84s] DEBUG: Seat seat0: Failed to start display server - trying to restart\n[+39.84s] DEBUG: XServer 0: Logging to /var/log/lightdm/x-0.log\n[+39.84s] DEBUG: XServer 0: Writing X server authority to /var/run/lightdm/root/:0\n[+39.84s] DEBUG: XServer 0: Launching X Server\n[+39.84s] DEBUG: Launching process 8347: /usr/bin/X :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch\n[+39.84s] DEBUG: XServer 0: Waiting for ready signal from X server :0\n[+39.85s] DEBUG: Process 8347 exited with return value 1\n[+39.85s] DEBUG: XServer 0: X server stopped\n[+39.85s] DEBUG: XServer 0: Removing X server authority /var/run/lightdm/root/:0\n[+39.85s] DEBUG: Seat seat0: Display server stopped\n[+39.85s] DEBUG: Seat seat0: Failed to start display server - trying to restart\n[+39.85s] DEBUG: XServer 0: Logging to /var/log/lightdm/x-0.log\n[+39.85s] DEBUG: XServer 0: Writing X server authority to /var/run/lightdm/root/:0\n[+39.85s] DEBUG: XServer 0: Launching X Server\n[+39.85s] DEBUG: Launching process 8349: /usr/bin/X :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch\n[+39.85s] DEBUG: XServer 0: Waiting for ready signal from X server :0",
+    "stderr": ""
+  },
+  "gcs_services": {
+    "code": 0,
+    "stdout": "active\nactive",
+    "stderr": ""
+  }
+}

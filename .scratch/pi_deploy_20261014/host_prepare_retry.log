@@ -1,0 +1,77 @@
+Hit:1 http://deb.debian.org/debian trixie InRelease
+Hit:2 http://deb.debian.org/debian trixie-updates InRelease
+Hit:3 http://deb.debian.org/debian-security trixie-security InRelease
+Hit:4 http://archive.raspberrypi.com/debian trixie InRelease
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+docker.io is already the newest version (26.1.5+dfsg1-9+deb13u1).
+python3-serial is already the newest version (3.5-2).
+Suggested packages:
+  docker-doc
+Recommended packages:
+  docker-buildx
+The following NEW packages will be installed:
+  docker-cli
+0 upgraded, 1 newly installed, 0 to remove and 54 not upgraded.
+Need to get 6,317 kB of archives.
+After this operation, 29.7 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian trixie/main arm64 docker-cli arm64 26.1.5+dfsg1-9+deb13u1 [6,317 kB]
+Fetched 6,317 kB in 1s (5,907 kB/s)
+Selecting previously unselected package docker-cli.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 132611 files and directories currently installed.)
+Preparing to unpack .../docker-cli_26.1.5+dfsg1-9+deb13u1_arm64.deb ...
+Unpacking docker-cli (26.1.5+dfsg1-9+deb13u1) ...
+Setting up docker-cli (26.1.5+dfsg1-9+deb13u1) ...
+Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable docker
+26.1.5+dfsg1
+jazzy-ros-base-noble: Pulling from library/ros
+90812e242c93: Pulling fs layer
+67678ff0249d: Pulling fs layer
+dfd9c2548850: Pulling fs layer
+47eab992b037: Pulling fs layer
+a5682617504e: Pulling fs layer
+cea7a1574b6b: Pulling fs layer
+e1464792e2dc: Pulling fs layer
+e4b84fc58bc2: Pulling fs layer
+3e4fe4a81959: Pulling fs layer
+4acb301d1f70: Pulling fs layer
+47eab992b037: Waiting
+a5682617504e: Waiting
+cea7a1574b6b: Waiting
+3e4fe4a81959: Waiting
+4acb301d1f70: Waiting
+e1464792e2dc: Waiting
+e4b84fc58bc2: Waiting
+67678ff0249d: Download complete
+47eab992b037: Download complete
+dfd9c2548850: Verifying Checksum
+dfd9c2548850: Download complete
+cea7a1574b6b: Verifying Checksum
+cea7a1574b6b: Download complete
+a5682617504e: Verifying Checksum
+a5682617504e: Download complete
+90812e242c93: Download complete
+e4b84fc58bc2: Verifying Checksum
+e4b84fc58bc2: Download complete
+3e4fe4a81959: Download complete
+90812e242c93: Pull complete
+67678ff0249d: Pull complete
+dfd9c2548850: Pull complete
+47eab992b037: Pull complete
+e1464792e2dc: Verifying Checksum
+e1464792e2dc: Download complete
+4acb301d1f70: Verifying Checksum
+4acb301d1f70: Download complete
+a5682617504e: Pull complete
+cea7a1574b6b: Pull complete
+e1464792e2dc: Pull complete
+e4b84fc58bc2: Pull complete
+3e4fe4a81959: Pull complete
+4acb301d1f70: Pull complete
+Digest: sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca
+Status: Downloaded newer image for ros:jazzy-ros-base-noble
+docker.io/library/ros:jazzy-ros-base-noble
+["ros@sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca"] arm64

@@ -1,0 +1,16 @@
+{
+  "kind": "native ROS synthetic-scan integration, no FCU/GPS",
+  "map_messages": 25,
+  "tracking_scans": 116,
+  "scans": 120,
+  "resolution_m": 0.05000000074505806,
+  "width": 180,
+  "height": 140,
+  "occupied_cells": 284,
+  "occupied_within_120mm_of_wall": 1.0,
+  "held_reasons": [
+    "\"base_link\" passed to lookupTransform argument target_frame does not exist. "
+  ],
+  "hardware_qualified": false,
+  "pass_check": true
+}

@@ -1,0 +1,5459 @@
+{
+  "latest": {
+    "mission": {
+      "selected": null,
+      "part": "mission",
+      "state": "idle",
+      "armed": false,
+      "mode": "STABILIZE",
+      "elapsed": 0.0,
+      "delivery_offset_m": null,
+      "landing_precision": null,
+      "result": null,
+      "result_reason": null
+    },
+    "flight": {
+      "x": 0.12,
+      "y": 0.06,
+      "alt": -0.02,
+      "gs": 0.21,
+      "roll_deg": 0.0,
+      "pitch_deg": -0.1,
+      "yaw_deg": 291.1
+    },
+    "gps": {
+      "lat": -35.3632438,
+      "lon": 149.1652167,
+      "sats": 18,
+      "fix": "3D"
+    },
+    "power": {
+      "volt": 16.8,
+      "pct": 100,
+      "current_a": -0.0
+    },
+    "sensor_diagnostics": {
+      "vibration_mps2": [
+        3.120670795440674,
+        0.36473339796066284,
+        null
+      ],
+      "clipping": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "magnetic_ut": [
+        -19.900000000000002,
+        13.000000000000007,
+        52.800000000000004
+      ],
+      "magnetic_strength_ut": 57.90379952990996,
+      "magnetic_units_basis": "mavros_milligauss_x1000",
+      "magnetic_frame": "base_link",
+      "magnetic_capture_stamp": 73.472
+    },
+    "nav": {
+      "front_m": 0,
+      "centering_err": 0,
+      "cmd_vx": 0
+    },
+    "percep": {
+      "start_qr": "",
+      "target_match": false,
+      "banner": false,
+      "mission_target": "",
+      "qr_reference": false,
+      "qr_match_basis": [],
+      "qr_appearance_score": null,
+      "redzone_visible": false,
+      "redzone_status": "NOT_VISIBLE",
+      "redzone_reason": "altitude -0.0 m too low to project",
+      "redzone_exclusions": [],
+      "redzone_area_m2": 0.0,
+      "square_angle_deg": null,
+      "square_standoff_m": null,
+      "square_ok": null,
+      "square_reason": ""
+    },
+    "safety": {
+      "ready": true,
+      "fcu_connected": true,
+      "ekf": "UNKNOWN",
+      "ekf_flags": {},
+      "geofence": "NONE",
+      "fence_count": 0,
+      "battery_ok": true,
+      "stale": [
+        "ekf:never",
+        "fence:91s"
+      ],
+      "ready_items": [
+        {
+          "key": "fcu_link",
+          "label": "FCU link",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "gps_sats",
+          "label": "GPS satellites",
+          "ok": true,
+          "value": 18,
+          "reason": ""
+        },
+        {
+          "key": "gps_hdop",
+          "label": "GPS HDOP",
+          "ok": true,
+          "value": 0.8,
+          "reason": ""
+        },
+        {
+          "key": "battery",
+          "label": "Battery voltage",
+          "ok": true,
+          "value": 16.8,
+          "reason": ""
+        },
+        {
+          "key": "ekf",
+          "label": "EKF health",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "lidar_rate",
+          "label": "Lidar rate",
+          "ok": true,
+          "value": 9.7,
+          "reason": ""
+        },
+        {
+          "key": "mavlink_latency",
+          "label": "MAVLink latency",
+          "ok": true,
+          "value": 0.0,
+          "reason": ""
+        },
+        {
+          "key": "camera_pose",
+          "label": "Camera pose",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "detectors",
+          "label": "Detector health",
+          "ok": true,
+          "value": {
+            "qr": 0.0,
+            "banner": 0.0,
+            "redzone": 0.0
+          },
+          "reason": ""
+        },
+        {
+          "key": "actuator",
+          "label": "Winch health",
+          "ok": true,
+          "value": "healthy",
+          "reason": ""
+        },
+        {
+          "key": "rc_failsafe",
+          "label": "RC failsafe",
+          "ok": true,
+          "value": false,
+          "reason": ""
+        },
+        {
+          "key": "delivery_zone",
+          "label": "Search area",
+          "ok": true,
+          "value": "supplied corners",
+          "reason": ""
+        },
+        {
+          "key": "geofence",
+          "label": "Arena geofence",
+          "ok": true,
+          "value": "judges' points",
+          "reason": ""
+        },
+        {
+          "key": "banner_colours",
+          "label": "Banner colours",
+          "ok": true,
+          "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+          "reason": ""
+        },
+        {
+          "key": "arena_dimensions",
+          "label": "Arena dimensions",
+          "ok": true,
+          "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+          "reason": ""
+        }
+      ],
+      "ready_reasons": [],
+      "ready_waived": []
+    },
+    "checklist": {
+      "takeoff": false,
+      "start_qr": false,
+      "banner": false,
+      "corridor": false,
+      "target_id": false,
+      "drop": false,
+      "return": false,
+      "land": false
+    },
+    "scan": {
+      "yaw_deg": 291.1,
+      "ranges": [
+        0.24,
+        0.21,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.34,
+        0.35,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        6.84,
+        6.9,
+        6.97,
+        6.99,
+        7.05,
+        7.14,
+        7.21,
+        7.31,
+        7.39,
+        7.49,
+        7.57,
+        7.67,
+        7.76,
+        7.89,
+        7.97,
+        8.19,
+        8.31,
+        8.43,
+        8.56,
+        8.68,
+        8.79,
+        8.91,
+        9.06,
+        9.36,
+        9.4,
+        9.31,
+        9.26,
+        6.27,
+        6.17,
+        6.14,
+        6.08,
+        6.02,
+        5.98,
+        5.92,
+        4.35,
+        4.38,
+        4.49,
+        4.3,
+        4.27,
+        4.23,
+        4.18,
+        4.16,
+        4.31,
+        4.51,
+        4.67,
+        4.83,
+        5.04,
+        5.18,
+        5.48,
+        5.83,
+        6.02,
+        6.24,
+        6.74,
+        7.0,
+        7.67,
+        8.06,
+        8.5,
+        9.04,
+        10.27,
+        11.04,
+        11.95,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        11.02,
+        10.14,
+        9.35,
+        8.73,
+        8.17,
+        7.66,
+        7.23,
+        6.84,
+        6.45,
+        6.47,
+        6.16,
+        5.88,
+        5.6,
+        5.39,
+        5.15,
+        4.95,
+        4.77,
+        4.6,
+        4.45,
+        4.45,
+        4.3,
+        4.3,
+        4.33,
+        4.36,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.37,
+        0.33,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.24,
+        0.26
+      ],
+      "angle_min": -3.1415927410125732,
+      "angle_step": 0.013993730768561363,
+      "range_min": 0.019999999552965164,
+      "range_max": 12.0,
+      "frame": "base_scan",
+      "stamp": 73.8
+    },
+    "lidar_cal": {
+      "raw_fresh": false,
+      "raw_nearest": null,
+      "body_nearest": [
+        151.9,
+        0.33
+      ],
+      "captures": {
+        "ahead": null,
+        "port": null
+      },
+      "result": null,
+      "applied": null,
+      "geometry": null,
+      "background_ready": false,
+      "samples": 0,
+      "capture_details": {}
+    },
+    "scans": [
+      {
+        "key": "banner||green region too small (2512 px, need 3454)",
+        "seq": 1,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2512 px, need 3454)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2638 px, need 3454)",
+        "seq": 2,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2638 px, need 3454)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2882 px, need 3454)",
+        "seq": 3,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2882 px, need 3454)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2664 px, need 3454)",
+        "seq": 4,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2664 px, need 3454)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2666 px, need 3454)",
+        "seq": 5,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2666 px, need 3454)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2654 px, need 7348)",
+        "seq": 6,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2654 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2650 px, need 7348)",
+        "seq": 7,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2650 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2646 px, need 7348)",
+        "seq": 8,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2646 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2604 px, need 7348)",
+        "seq": 9,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2604 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2598 px, need 7348)",
+        "seq": 10,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2598 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2595 px, need 7348)",
+        "seq": 11,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2595 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2584 px, need 7348)",
+        "seq": 12,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2584 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2590 px, need 7348)",
+        "seq": 13,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2590 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2539 px, need 7348)",
+        "seq": 14,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2539 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2532 px, need 7348)",
+        "seq": 15,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2532 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2490 px, need 7348)",
+        "seq": 16,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2490 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2486 px, need 7348)",
+        "seq": 17,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2486 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2484 px, need 7348)",
+        "seq": 18,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2484 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2483 px, need 7348)",
+        "seq": 19,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2483 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2480 px, need 7348)",
+        "seq": 20,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2480 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2479 px, need 7348)",
+        "seq": 21,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2479 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2431 px, need 7348)",
+        "seq": 22,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2431 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2422 px, need 7348)",
+        "seq": 23,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2422 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2427 px, need 7348)",
+        "seq": 24,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2427 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2380 px, need 7348)",
+        "seq": 25,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2380 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2378 px, need 7348)",
+        "seq": 26,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2378 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2376 px, need 7348)",
+        "seq": 27,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2376 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2371 px, need 7348)",
+        "seq": 28,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2371 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2366 px, need 7348)",
+        "seq": 29,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2366 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2324 px, need 7348)",
+        "seq": 30,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2324 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2320 px, need 7348)",
+        "seq": 31,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2320 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2318 px, need 7348)",
+        "seq": 32,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2318 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2313 px, need 7348)",
+        "seq": 33,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2313 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2314 px, need 7348)",
+        "seq": 34,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2314 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2309 px, need 7348)",
+        "seq": 35,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2309 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2274 px, need 7348)",
+        "seq": 36,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2274 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2268 px, need 7348)",
+        "seq": 37,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2268 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 2
+      },
+      {
+        "key": "banner||green region too small (2264 px, need 7348)",
+        "seq": 38,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2264 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2262 px, need 7348)",
+        "seq": 39,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2262 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2220 px, need 7348)",
+        "seq": 40,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2220 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2218 px, need 7348)",
+        "seq": 41,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2218 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2216 px, need 7348)",
+        "seq": 42,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2216 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2253 px, need 7348)",
+        "seq": 43,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2253 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2212 px, need 7348)",
+        "seq": 44,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2212 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2167 px, need 7348)",
+        "seq": 45,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2167 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2202 px, need 7348)",
+        "seq": 46,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2202 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2200 px, need 7348)",
+        "seq": 47,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2200 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2199 px, need 7348)",
+        "seq": 48,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2199 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2161 px, need 7348)",
+        "seq": 49,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2161 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2160 px, need 7348)",
+        "seq": 50,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2160 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2159 px, need 7348)",
+        "seq": 51,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2159 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2152 px, need 7348)",
+        "seq": 52,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2152 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      },
+      {
+        "key": "banner||green region too small (2114 px, need 7348)",
+        "seq": 53,
+        "kind": "banner",
+        "payload": "",
+        "matched": false,
+        "status": "REJECTED",
+        "reason": "green region too small (2114 px, need 7348)",
+        "via": "",
+        "read": false,
+        "stage": "idle",
+        "t": 0.0,
+        "t_last": 0.0,
+        "count": 1
+      }
+    ],
+    "gimbal": {
+      "pitch_deg": 0.0
+    },
+    "arena_dimensions": {
+      "sent": {
+        "corridor": {
+          "length_m": 10.0,
+          "width_m": 3.5,
+          "wall_height_m": 3.6,
+          "nav_height_m": 3.0,
+          "spacing_m": 4.0,
+          "return_side": "right"
+        },
+        "hall": {
+          "length_m": 80.0,
+          "width_m": 45.0,
+          "ceiling_m": 30.0
+        },
+        "banner": {
+          "width_m": 3.7,
+          "height_m": 1.15,
+          "border_m": 0.07619999999999999,
+          "suspended_bottom_m": 2.805,
+          "placement": "suspended"
+        },
+        "qr": {
+          "target_m": 3.0,
+          "start_m": 2.2,
+          "border_m": 0.07619999999999999
+        },
+        "red_zone": {
+          "side_m": 1.524,
+          "border_m": 0.1524
+        },
+        "payload": {
+          "length_m": 0.1,
+          "width_m": 0.055,
+          "mass_kg": 0.1
+        },
+        "obstacle": {
+          "reach_frac": 0.5
+        }
+      },
+      "applied": {
+        "corridor": {
+          "length_m": 10.0,
+          "width_m": 3.5,
+          "wall_height_m": 3.6,
+          "nav_height_m": 3.0,
+          "spacing_m": 4.0,
+          "return_side": "right"
+        },
+        "hall": {
+          "length_m": 80.0,
+          "width_m": 45.0,
+          "ceiling_m": 30.0
+        },
+        "banner": {
+          "width_m": 3.7,
+          "height_m": 1.15,
+          "border_m": 0.07619999999999999,
+          "suspended_bottom_m": 2.805,
+          "placement": "suspended"
+        },
+        "qr": {
+          "target_m": 3.0,
+          "start_m": 2.2,
+          "border_m": 0.07619999999999999
+        },
+        "red_zone": {
+          "side_m": 1.524,
+          "border_m": 0.1524
+        },
+        "payload": {
+          "length_m": 0.1,
+          "width_m": 0.055,
+          "mass_kg": 0.1
+        },
+        "obstacle": {
+          "reach_frac": 0.5
+        }
+      },
+      "params": {
+        "corridor_alt": 3.0,
+        "corridor_wall_m": 3.6,
+        "gate_advance_m": 10.0,
+        "return_lane_offset_m": -4.0,
+        "banner_w_m": 3.7,
+        "banner_h_m": 1.15,
+        "banner_bottom_m": 2.805,
+        "target_marker_m": 3.0,
+        "start_marker_m": 2.2,
+        "payload_size_m": 0.1,
+        "banner_placement": "suspended",
+        "takeoff_alt": 5.0,
+        "search_alt": 10.0,
+        "drop_alt": 5.0
+      },
+      "ok": true,
+      "reason": ""
+    },
+    "dimension_presets": {
+      "builtin": {
+        "Simulator arena": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.6,
+            "nav_height_m": 3.0,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.7,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.805,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 2.2,
+            "start_m": 2.2,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "SAE Aerothon 2026 (clarified)": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.8980000000000001,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        }
+      },
+      "saved": {
+        "Aerothon 2026 sim h030L5_both": {
+          "corridor": {
+            "length_m": 5.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h030_both": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h030_ground": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "ground"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h030_suspended": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 0.3048,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.7432,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115L5_both": {
+          "corridor": {
+            "length_m": 5.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115_both": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "both"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115_ground": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "ground"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "Aerothon 2026 sim h115_suspended": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.898,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        }
+      }
+    },
+    "dimension_fields": [
+      {
+        "group": "corridor",
+        "key": "length_m",
+        "label": "Corridor length",
+        "default": 10.0,
+        "min": 2.0,
+        "max": 30.0,
+        "used_by": "clear distance needed to cross the gate"
+      },
+      {
+        "group": "corridor",
+        "key": "width_m",
+        "label": "Corridor width",
+        "default": 3.5,
+        "min": 1.0,
+        "max": 10.0,
+        "used_by": null
+      },
+      {
+        "group": "corridor",
+        "key": "wall_height_m",
+        "label": "Corridor wall height",
+        "default": 3.6,
+        "min": 1.0,
+        "max": 8.0,
+        "used_by": "upper bound on the navigation height"
+      },
+      {
+        "group": "corridor",
+        "key": "nav_height_m",
+        "label": "Navigation height",
+        "default": 3.0,
+        "min": 0.8,
+        "max": 7.0,
+        "used_by": "corridor flying altitude"
+      },
+      {
+        "group": "corridor",
+        "key": "spacing_m",
+        "label": "Corridor spacing, centre to centre",
+        "default": 4.0,
+        "min": 1.0,
+        "max": 30.0,
+        "used_by": "where the return lane is found"
+      },
+      {
+        "group": "hall",
+        "key": "length_m",
+        "label": "Hall length",
+        "default": 80.0,
+        "min": 10.0,
+        "max": 500.0,
+        "used_by": null
+      },
+      {
+        "group": "hall",
+        "key": "width_m",
+        "label": "Hall width",
+        "default": 45.0,
+        "min": 10.0,
+        "max": 500.0,
+        "used_by": null
+      },
+      {
+        "group": "hall",
+        "key": "ceiling_m",
+        "label": "Hall ceiling / max altitude",
+        "default": 30.0,
+        "min": 3.0,
+        "max": 120.0,
+        "used_by": "caps take-off, search and drop altitudes"
+      },
+      {
+        "group": "banner",
+        "key": "width_m",
+        "label": "Banner width",
+        "default": 3.7,
+        "min": 0.3,
+        "max": 10.0,
+        "used_by": "range to the banner"
+      },
+      {
+        "group": "banner",
+        "key": "height_m",
+        "label": "Banner height",
+        "default": 1.15,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "range to the banner"
+      },
+      {
+        "group": "banner",
+        "key": "border_m",
+        "label": "Banner border",
+        "default": 0.07619999999999999,
+        "min": 0.0,
+        "max": 0.5,
+        "used_by": null
+      },
+      {
+        "group": "banner",
+        "key": "suspended_bottom_m",
+        "label": "Hung banner lower edge",
+        "default": 2.805,
+        "min": 0.5,
+        "max": 8.0,
+        "used_by": "the height the square-up scans the hung banner at"
+      },
+      {
+        "group": "qr",
+        "key": "target_m",
+        "label": "Target QR side",
+        "default": 2.2,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "search altitude and landing"
+      },
+      {
+        "group": "qr",
+        "key": "start_m",
+        "label": "Start QR side",
+        "default": 2.2,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "precision landing on the start QR"
+      },
+      {
+        "group": "qr",
+        "key": "border_m",
+        "label": "QR white border",
+        "default": 0.07619999999999999,
+        "min": 0.0,
+        "max": 0.5,
+        "used_by": null
+      },
+      {
+        "group": "red_zone",
+        "key": "side_m",
+        "label": "Red zone side",
+        "default": 1.524,
+        "min": 0.3,
+        "max": 20.0,
+        "used_by": null
+      },
+      {
+        "group": "red_zone",
+        "key": "border_m",
+        "label": "Red zone border",
+        "default": 0.1524,
+        "min": 0.0,
+        "max": 2.0,
+        "used_by": null
+      },
+      {
+        "group": "payload",
+        "key": "length_m",
+        "label": "Payload length",
+        "default": 0.1,
+        "min": 0.02,
+        "max": 0.5,
+        "used_by": "drop confirmation blob size"
+      },
+      {
+        "group": "payload",
+        "key": "width_m",
+        "label": "Payload width",
+        "default": 0.055,
+        "min": 0.02,
+        "max": 0.5,
+        "used_by": "drop confirmation blob size"
+      },
+      {
+        "group": "payload",
+        "key": "mass_kg",
+        "label": "Payload mass (kg)",
+        "default": 0.1,
+        "min": 0.01,
+        "max": 2.0,
+        "used_by": null
+      },
+      {
+        "group": "obstacle",
+        "key": "reach_frac",
+        "label": "Obstacle reach, fraction of corridor width",
+        "default": 0.5,
+        "min": 0.1,
+        "max": 0.9,
+        "used_by": null
+      }
+    ],
+    "sample_age_s": {
+      "gps": 0.011,
+      "magnetic": 0.684,
+      "lidar": 0.026,
+      "readiness": 0.648,
+      "winch": 0.094,
+      "state": 1.045,
+      "sats": 0.683,
+      "vibration": 0.678,
+      "power": 0.343,
+      "fence": 89.696,
+      "pose": 0.006,
+      "velocity": 0.006,
+      "slam_pose": 1.83,
+      "devices": 0.0
+    },
+    "devices": {
+      "identity": {
+        "ok": true,
+        "value": 1,
+        "session": "08df12cf14944f22a146a76aad594a2a",
+        "streams_reopened": {}
+      },
+      "camera": {
+        "ok": true,
+        "hz": 9.27,
+        "receipt_age_s": 0.038338628000019526,
+        "capture_age_s": 0.04000000000000625,
+        "vehicle_hz": 18.16513761467889,
+        "required_vehicle_hz": 10,
+        "reason": ""
+      },
+      "lidar": {
+        "ok": true,
+        "hz": 4.79,
+        "receipt_age_s": 0.09498758699919563,
+        "capture_age_s": 0.09000000000000341,
+        "vehicle_hz": 9.999999999999995,
+        "required_vehicle_hz": 8,
+        "reason": ""
+      },
+      "clock": {
+        "ok": true,
+        "reason": "vehicle clock must be advancing"
+      },
+      "camera_calibration": {
+        "ok": true,
+        "value": {
+          "width": 640,
+          "height": 360,
+          "hfov": 0.8519190161604344
+        }
+      },
+      "camera_actuator": {
+        "ok": true,
+        "reason": "SITL output and measured model joint required"
+      },
+      "winch_actuator": {
+        "ok": true,
+        "reason": "SITL output and measured model joint required"
+      }
+    },
+    "runtime_health": {
+      "controller_pid": 13809,
+      "state": "ready",
+      "fresh": true
+    },
+    "winch": {
+      "state": "IDLE",
+      "payout_m": 0.0,
+      "at_limit": false,
+      "ground": null,
+      "payout_estimate_m": 0.0,
+      "measured_payout_m": 3.0830995546014036e-13,
+      "measurement_age_s": 0.0309999999999917,
+      "payout_basis": "integrated commanded motor rate; no encoder",
+      "released": null,
+      "release_requested": false,
+      "hook": "gravity",
+      "hook_open": null,
+      "fault": "",
+      "release_ok": false,
+      "blockers": [
+        "payload not down (payout 0.00 m, alt -0.02)",
+        "altitude -0.02 m outside [1.0, 8.0]"
+      ]
+    },
+    "detector_rates": {
+      "qr": {
+        "hz": 17.818181818181817,
+        "capture_stamp": 73.8,
+        "processed_stamp": 73.82900000000001,
+        "received": 1792336708.0787072
+      },
+      "red": {
+        "hz": 17.818181818181817,
+        "capture_stamp": 73.8,
+        "processed_stamp": 73.82900000000001,
+        "received": 1792336708.078805
+      },
+      "banner": {
+        "hz": 17.818181818181817,
+        "capture_stamp": 73.8,
+        "processed_stamp": 73.82900000000001,
+        "received": 1792336708.0821362
+      }
+    },
+    "slam_pose": {
+      "x": 0.021,
+      "y": 0.136,
+      "yaw": 4.9705,
+      "frame": "map"
+    },
+    "geofence_vertices": [
+      [
+        -35.36345051251535,
+        149.16513368355777
+      ],
+      [
+        -35.36345051251535,
+        149.16587723153788
+      ],
+      [
+        -35.36307322009602,
+        149.16587723153788
+      ],
+      [
+        -35.36307322009602,
+        149.16513368355777
+      ]
+    ],
+    "banner_colours": {
+      "green": "#039E3D",
+      "orange": "#FF8000",
+      "red": "#F20A0A"
+    }
+  },
+  "receipts": [],
+  "history": [
+    {
+      "wall": 1792336701.1267505,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:84s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": false,
+            "value": "invalid",
+            "reason": "delivery-zone boundary is missing"
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": false,
+            "value": "invalid",
+            "reason": "arena geofence boundary is missing"
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          }
+        ],
+        "ready_reasons": [
+          "Search area: delivery-zone boundary is missing",
+          "Arena geofence: arena geofence boundary is missing",
+          "Banner colours: no data received",
+          "Arena dimensions: no data received"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.82,
+          "receipt_age_s": 0.1050532019999082,
+          "capture_age_s": 0.0730000000000075,
+          "vehicle_hz": 18.67924528301888,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.7,
+          "receipt_age_s": 0.07983309300016117,
+          "capture_age_s": 0.0730000000000075,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.159299984648297e-06,
+        "measurement_age_s": 0.0,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336701.6280653,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:85s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": false,
+            "value": "invalid",
+            "reason": "delivery-zone boundary is missing"
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": false,
+            "value": "invalid",
+            "reason": "arena geofence boundary is missing"
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          }
+        ],
+        "ready_reasons": [
+          "Search area: delivery-zone boundary is missing",
+          "Arena geofence: arena geofence boundary is missing",
+          "Banner colours: no data received",
+          "Arena dimensions: no data received"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.75,
+          "receipt_age_s": 0.101143582000077,
+          "capture_age_s": 0.06299999999998818,
+          "vehicle_hz": 18.504672897196233,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.71,
+          "receipt_age_s": 0.07581420800033811,
+          "capture_age_s": 0.06299999999998818,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0831069407287037e-13,
+        "measurement_age_s": 0.012000000000000455,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336702.128604,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:85s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "fenced field beyond the corridor",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          }
+        ],
+        "ready_reasons": [
+          "Banner colours: no data received",
+          "Arena dimensions: no data received"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.78,
+          "receipt_age_s": 0.023187159999906726,
+          "capture_age_s": 0.025000000000005684,
+          "vehicle_hz": 18.504672897196283,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.69,
+          "receipt_age_s": 0.20926677799980098,
+          "capture_age_s": 0.125,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.1595407008901395e-06,
+        "measurement_age_s": 0.021000000000000796,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336702.630409,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:86s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "fenced field beyond the corridor",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          }
+        ],
+        "ready_reasons": [
+          "Banner colours: no data received",
+          "Arena dimensions: no data received"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.85,
+          "receipt_age_s": 0.1099744319999445,
+          "capture_age_s": 0.0800000000000125,
+          "vehicle_hz": 18.33333333333336,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.68,
+          "receipt_age_s": 0.1685465259997727,
+          "capture_age_s": 0.13000000000000966,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.083111963634081e-13,
+        "measurement_age_s": 0.028000000000005798,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336703.1313045,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:86s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          }
+        ],
+        "ready_reasons": [
+          "Arena dimensions: no data received"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.82,
+          "receipt_age_s": 0.08341303700035496,
+          "capture_age_s": 0.05200000000000671,
+          "vehicle_hz": 18.16513761467889,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.68,
+          "receipt_age_s": 0.15930282099998294,
+          "capture_age_s": 0.10200000000000387,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.159752910896097e-06,
+        "measurement_age_s": 0.010000000000005116,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336703.6316674,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": false,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:87s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": false,
+            "value": null,
+            "reason": "no data received"
+          }
+        ],
+        "ready_reasons": [
+          "Arena dimensions: no data received"
+        ],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.88,
+          "receipt_age_s": 0.07749837500068679,
+          "capture_age_s": 0.056000000000011596,
+          "vehicle_hz": 18.33333333333336,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.67,
+          "receipt_age_s": 0.13910996100003103,
+          "capture_age_s": 0.10600000000000875,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.083103705062845e-13,
+        "measurement_age_s": 0.010000000000005116,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336704.1322627,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:87s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.92,
+          "receipt_age_s": 0.03581561300052272,
+          "capture_age_s": 0.04200000000000159,
+          "vehicle_hz": 18.504672897196283,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.68,
+          "receipt_age_s": 0.13978754599975218,
+          "capture_age_s": 0.09199999999999875,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.160030496434174e-06,
+        "measurement_age_s": 0.013999999999995794,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336704.633465,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:88s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.95,
+          "receipt_age_s": 0.053491650999603735,
+          "capture_age_s": 0.05100000000000193,
+          "vehicle_hz": 18.504672897196283,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.67,
+          "receipt_age_s": 0.1230656480001926,
+          "capture_age_s": 0.10099999999999909,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.160200594991224e-06,
+        "measurement_age_s": 0.015999999999991132,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336705.1363394,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:88s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 8.98,
+          "receipt_age_s": 0.08948654100004205,
+          "capture_age_s": 0.07500000000000284,
+          "vehicle_hz": 18.504672897196283,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.67,
+          "receipt_age_s": 0.14911129400024947,
+          "capture_age_s": 0.125,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0830973099640934e-13,
+        "measurement_age_s": 0.015000000000000568,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336705.6352177,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:89s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.02,
+          "receipt_age_s": 0.07640488600009121,
+          "capture_age_s": 0.05499999999999261,
+          "vehicle_hz": 18.333333333333314,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.7,
+          "receipt_age_s": 0.04067527000006521,
+          "capture_age_s": 0.05499999999999261,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.160519630409736e-06,
+        "measurement_age_s": 0.01300000000000523,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336706.138214,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:89s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.0,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.13,
+          "receipt_age_s": 0.0014428489994315896,
+          "capture_age_s": 0.02599999999999625,
+          "vehicle_hz": 18.504672897196233,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.71,
+          "receipt_age_s": 0.07398187599937955,
+          "capture_age_s": 0.07600000000000762,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.1606357824939606e-06,
+        "measurement_age_s": 0.015000000000000568,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336706.6378722,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:90s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.33,
+          "receipt_age_s": 0.07357748699996591,
+          "capture_age_s": 0.05299999999999727,
+          "vehicle_hz": 18.67924528301888,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.72,
+          "receipt_age_s": 0.13288232400009292,
+          "capture_age_s": 0.10299999999999443,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.16089017605172e-06,
+        "measurement_age_s": 0.012000000000000455,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336707.1379502,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:90s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.1,
+              "banner": 0.1,
+              "redzone": 0.1
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.35,
+          "receipt_age_s": 0.006896631999552483,
+          "capture_age_s": 0.028999999999996362,
+          "vehicle_hz": 18.504672897196233,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.73,
+          "receipt_age_s": 0.16898936300003697,
+          "capture_age_s": 0.1290000000000049,
+          "vehicle_hz": 10.000000000000009,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": false,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.161005188672697e-06,
+        "measurement_age_s": 0.04099999999999682,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336707.638633,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:91s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.32,
+          "receipt_age_s": 0.08013839700015524,
+          "capture_age_s": 0.06499999999999773,
+          "vehicle_hz": 18.333333333333314,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.78,
+          "receipt_age_s": 0.05013967299964861,
+          "capture_age_s": 0.06499999999999773,
+          "vehicle_hz": 10.000000000000002,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 5.161193872766168e-06,
+        "measurement_age_s": 0.04400000000001114,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    },
+    {
+      "wall": 1792336708.1390433,
+      "mission": {
+        "selected": null,
+        "part": "mission",
+        "state": "idle",
+        "armed": false,
+        "mode": "STABILIZE",
+        "elapsed": 0.0,
+        "delivery_offset_m": null,
+        "landing_precision": null,
+        "result": null,
+        "result_reason": null
+      },
+      "safety": {
+        "ready": true,
+        "fcu_connected": true,
+        "ekf": "UNKNOWN",
+        "ekf_flags": {},
+        "geofence": "NONE",
+        "fence_count": 0,
+        "battery_ok": true,
+        "stale": [
+          "ekf:never",
+          "fence:91s"
+        ],
+        "ready_items": [
+          {
+            "key": "fcu_link",
+            "label": "FCU link",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "gps_sats",
+            "label": "GPS satellites",
+            "ok": true,
+            "value": 18,
+            "reason": ""
+          },
+          {
+            "key": "gps_hdop",
+            "label": "GPS HDOP",
+            "ok": true,
+            "value": 0.8,
+            "reason": ""
+          },
+          {
+            "key": "battery",
+            "label": "Battery voltage",
+            "ok": true,
+            "value": 16.8,
+            "reason": ""
+          },
+          {
+            "key": "ekf",
+            "label": "EKF health",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "lidar_rate",
+            "label": "Lidar rate",
+            "ok": true,
+            "value": 9.7,
+            "reason": ""
+          },
+          {
+            "key": "mavlink_latency",
+            "label": "MAVLink latency",
+            "ok": true,
+            "value": 0.0,
+            "reason": ""
+          },
+          {
+            "key": "camera_pose",
+            "label": "Camera pose",
+            "ok": true,
+            "value": true,
+            "reason": ""
+          },
+          {
+            "key": "detectors",
+            "label": "Detector health",
+            "ok": true,
+            "value": {
+              "qr": 0.0,
+              "banner": 0.0,
+              "redzone": 0.0
+            },
+            "reason": ""
+          },
+          {
+            "key": "actuator",
+            "label": "Winch health",
+            "ok": true,
+            "value": "healthy",
+            "reason": ""
+          },
+          {
+            "key": "rc_failsafe",
+            "label": "RC failsafe",
+            "ok": true,
+            "value": false,
+            "reason": ""
+          },
+          {
+            "key": "delivery_zone",
+            "label": "Search area",
+            "ok": true,
+            "value": "supplied corners",
+            "reason": ""
+          },
+          {
+            "key": "geofence",
+            "label": "Arena geofence",
+            "ok": true,
+            "value": "judges' points",
+            "reason": ""
+          },
+          {
+            "key": "banner_colours",
+            "label": "Banner colours",
+            "ok": true,
+            "value": "green=#039E3D orange=#FF8000 red=#F20A0A",
+            "reason": ""
+          },
+          {
+            "key": "arena_dimensions",
+            "label": "Arena dimensions",
+            "ok": true,
+            "value": "QR 3.00 m, corridor 10.0 m at 3.00 m",
+            "reason": ""
+          }
+        ],
+        "ready_reasons": [],
+        "ready_waived": []
+      },
+      "devices": {
+        "identity": {
+          "ok": true,
+          "value": 1,
+          "session": "08df12cf14944f22a146a76aad594a2a",
+          "streams_reopened": {}
+        },
+        "camera": {
+          "ok": true,
+          "hz": 9.27,
+          "receipt_age_s": 0.038338628000019526,
+          "capture_age_s": 0.04000000000000625,
+          "vehicle_hz": 18.16513761467889,
+          "required_vehicle_hz": 10,
+          "reason": ""
+        },
+        "lidar": {
+          "ok": true,
+          "hz": 4.79,
+          "receipt_age_s": 0.09498758699919563,
+          "capture_age_s": 0.09000000000000341,
+          "vehicle_hz": 9.999999999999995,
+          "required_vehicle_hz": 8,
+          "reason": ""
+        },
+        "clock": {
+          "ok": true,
+          "reason": "vehicle clock must be advancing"
+        },
+        "camera_calibration": {
+          "ok": true,
+          "value": {
+            "width": 640,
+            "height": 360,
+            "hfov": 0.8519190161604344
+          }
+        },
+        "camera_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        },
+        "winch_actuator": {
+          "ok": true,
+          "reason": "SITL output and measured model joint required"
+        }
+      },
+      "execution": null,
+      "winch": {
+        "state": "IDLE",
+        "payout_m": 0.0,
+        "at_limit": false,
+        "ground": null,
+        "payout_estimate_m": 0.0,
+        "measured_payout_m": 3.0830995546014036e-13,
+        "measurement_age_s": 0.0309999999999917,
+        "payout_basis": "integrated commanded motor rate; no encoder",
+        "released": null,
+        "release_requested": false,
+        "hook": "gravity",
+        "hook_open": null,
+        "fault": "",
+        "release_ok": false,
+        "blockers": [
+          "payload not down (payout 0.00 m, alt -0.02)",
+          "altitude -0.02 m outside [1.0, 8.0]"
+        ]
+      }
+    }
+  ]
+}

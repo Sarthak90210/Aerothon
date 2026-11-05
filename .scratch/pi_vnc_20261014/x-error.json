@@ -1,0 +1,14 @@
+{
+  "xorg_error": "",
+  "video_drivers": [
+    "modesetting_drv.so",
+    "radeon_drv.so",
+    "ati_drv.so",
+    "amdgpu_drv.so",
+    "fbdev_drv.so",
+    "nouveau_drv.so"
+  ],
+  "drm_devices": [],
+  "virtual_server": "/usr/bin/vncserver-virtual",
+  "xvfb": null
+}

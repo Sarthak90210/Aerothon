@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "cursor/canvas": [
+        "C:/Users/sarth/.cursor/skills-cursor/canvas/sdk/index.d.ts"
+      ],
+      "react": [
+        "D:/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/src/aerothon_gcs/tauri_app/node_modules/@types/react/index.d.ts"
+      ],
+      "react/jsx-runtime": [
+        "D:/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/src/aerothon_gcs/tauri_app/node_modules/@types/react/jsx-runtime.d.ts"
+      ]
+    }
+  },
+  "include": [
+    "AEROTHON-status-report.canvas.tsx"
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "run": "logs/reliability_render_my_world_s20261003_bannerfix_20261006",
+  "scope": "independent file review only",
+  "acceptance": {
+    "passed": false,
+    "checks_passed": 16,
+    "checks_total": 22,
+    "failures": [
+      "return lane flown THROUGH the corridor",
+      "never above the corridor",
+      "no failsafe / unexpected flight mode",
+      "landed at take-off point",
+      "corridor clearance at least 0.70 m",
+      "complete camera timeline verified through disarm"
+    ],
+    "flight_time_s": 870.9,
+    "final_armed": true,
+    "corridor_clearance_m": 0.6842457669223637,
+    "restricted_zone_clearance_m": 1.626468465646198
+  },
+  "provenance": {
+    "archive_sha256": "3c7ce74100b3b7b9c90733fbb9fdef28414cdd5195e325bd01017e49e8e5a236",
+    "source_files": 752,
+    "archived_source_hash_mismatches": [],
+    "archived_vs_recorded_manifest_mismatches": [],
+    "runtime_assets": 53,
+    "runtime_asset_hash_mismatches": [],
+    "runtime_parameter_files": 32
+  },
+  "calibration": {
+    "profile_sha256": "ab8a664dce960bf046ec77354c9dc431777bfec5e909b005b78bcf07188f8b13",
+    "source": "fcu_motor_output_squared",
+    "unloaded_ceiling": 0.415636489282869,
+    "fixtures": [
+      {
+        "mode": "loaded",
+        "path": "logs/delivery_loaded_20261005/effort_samples.json",
+        "samples": 83,
+        "samples_sha256": "fccc818e60e53746797bd08ff06670b56abf423b23f2d446b966ac08159803b8",
+        "mean": 0.4237461054216868,
+        "std": 0.00037887771556848127,
+        "frozen_statistics_match": true,
+        "sampling_config": {
+          "motor_channels": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "pwm_min": 1000.0,
+          "pwm_max": 2000.0,
+          "camera_hfov": 0.851721995,
+          "payload_size_m": 0.1,
+          "mode": "loaded",
+          "basis": "default parameters in recorded delivery_demo invocation and source"
+        },
+        "exact_source_manifest_present": false,
+        "runtime_manifest_present": false
+      },
+      {
+        "mode": "unloaded",
+        "path": "logs/delivery_unloaded_20261005/effort_samples.json",
+        "samples": 90,
+        "samples_sha256": "5ac6f583a8a38c9a2315edd9f2ae041d811f80c126871143859ccf7386f0bf9b",
+        "mean": 0.4070919,
+        "std": 0.0005238687635855685,
+        "frozen_statistics_match": true,
+        "sampling_config": {
+          "motor_channels": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "pwm_min": 1000.0,
+          "pwm_max": 2000.0,
+          "camera_hfov": 0.851721995,
+          "payload_size_m": 0.1,
+          "mode": "unloaded",
+          "basis": "default parameters in recorded delivery_demo invocation and source"
+        },
+        "exact_source_manifest_present": false,
+        "runtime_manifest_present": false
+      }
+    ]
+  },
+  "delivery": {
+    "decision_stamp": 692.8000000000001,
+    "recorded_stamp": 692.9050000000001,
+    "attempt": 1,
+    "priority": "calibrated_motor_output",
+    "touchdown_inferred": true,
+    "detachment_inferred": true,
+    "confirmed": true,
+    "visual_ground_support_inferred": false,
+    "visual_frames": 0,
+    "provisional_probe_used": false,
+    "estimated_payout_m": 0.0,
+    "payout_basis": "integrated commanded motor rate; no encoder",
+    "telemetry_stable_independently_recomputed": true,
+    "decision_effort": 0.40658275,
+    "recomputed_raw_motor_effort": 0.40689050000000004,
+    "raw_motor_channels": [
+      1660,
+      1615,
+      1659,
+      1616
+    ],
+    "raw_motor_capture_stamp": 692.879,
+    "raw_motor_age_s": 0.026000000000067303,
+    "raw_motor_unloaded": true,
+    "aircraft_armed": true
+  },
+  "input_isolation": {
+    "decision_inputs.json": {
+      "passed": true,
+      "nodes": [
+        "mission_bt",
+        "winch_ctrl",
+        "velocity_controller"
+      ],
+      "forbidden_subscriptions": [],
+      "missing_nodes": [],
+      "scope": "direct decision-node subscriptions including dynamic TF/native odometry; static equipment mounts, image/lidar/FCU telemetry are allowed"
+    },
+    "decision_inputs_navigation.json": {
+      "passed": true,
+      "nodes": [
+        "mission_bt",
+        "winch_ctrl",
+        "velocity_controller"
+      ],
+      "forbidden_subscriptions": [],
+      "missing_nodes": [],
+      "scope": "direct decision-node subscriptions including dynamic TF/native odometry; static equipment mounts, image/lidar/FCU telemetry are allowed"
+    }
+  },
+  "recording": {
+    "original_frames": 3124,
+    "first_capture_stamp": 9.45,
+    "last_capture_stamp": 929.2,
+    "expected_duration_s": 919.95,
+    "export": {
+      "width": 1280,
+      "height": 720,
+      "duration": "919.951000",
+      "nb_read_frames": "3125"
+    },
+    "playback": "variable frame rate from recorded capture intervals",
+    "final_hold_s": 0.2,
+    "decode_pass": true,
+    "disarmed_result_first_recorded_stamp": null,
+    "last_onboard_stamp": 929.5150000000001,
+    "last_onboard_armed": true,
+    "camera_capture_reaches_disarmed_result": false,
+    "review_redecoded_video": false
+  },
+  "detector_rates": {
+    "qr_timing": {
+      "distinct_captures": 7957,
+      "invalid_capture_events": 0,
+      "capture_hz": 17.87262720431315,
+      "delivered_hz": 17.87266735407695,
+      "delivered_wall_hz": 4.272611474425742,
+      "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+      "maximum_capture_gap_s": 0.39999999999997726,
+      "latency_sim_p95_s": 0.2370000000000232,
+      "processing_wall_p95_s": 0.026746791200002916
+    },
+    "red_timing": {
+      "distinct_captures": 7970,
+      "invalid_capture_events": 0,
+      "capture_hz": 17.901830843535887,
+      "delivered_hz": 17.90162976940616,
+      "delivered_wall_hz": 4.279535362514727,
+      "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+      "maximum_capture_gap_s": 0.35000000000002274,
+      "latency_sim_p95_s": 0.23399999999998045,
+      "processing_wall_p95_s": 0.013493506750023695
+    },
+    "usable_red_ground": {
+      "distinct_captures": 7970,
+      "invalid_capture_events": 0,
+      "capture_hz": 17.901830843535887,
+      "delivered_hz": 17.90162976940616,
+      "delivered_wall_hz": 4.279535362514727,
+      "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+      "maximum_capture_gap_s": 0.35000000000002274,
+      "latency_sim_p95_s": 0.23399999999998045,
+      "processing_wall_p95_s": 0.013493506750023695
+    }
+  }
+}

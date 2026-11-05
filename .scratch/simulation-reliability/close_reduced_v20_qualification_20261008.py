@@ -1,0 +1,132 @@
+"""Accept only the complete reduced scope, preserving all historical failures."""
+import hashlib
+import json
+import sys
+import zipfile
+from pathlib import Path
+
+root = Path(__file__).resolve().parents[2]
+sys.path[:0] = [str(root/'sim'), str(root/'scripts')]
+from campaign_record import source_manifest
+from qualification_evidence import recorded_disarm
+from run_navigation_campaign import verify_targeted_runs
+
+version = 'v20'
+source = root/f'logs/reliability_reduced_scope_{version}_source_20261008'
+manifest = json.loads((root/f'.scratch/reduced_scope_{version}_candidate_20261008/source_manifest.json').read_text())
+source_manifest.cache_clear()
+assert source_manifest(root) == manifest
+provenance = json.loads((source/'provenance.json').read_text())
+archive = source/'frozen_source.zip'
+assert hashlib.sha256(archive.read_bytes()).hexdigest() == provenance['archive_sha256']
+with zipfile.ZipFile(archive) as frozen:
+    assert all(hashlib.sha256(frozen.read(name)).hexdigest() == sha for name, sha in manifest.items())
+assert json.loads((source/'targeted_closed_review.json').read_text())['pass_navigation']
+startup = json.loads((source/'installed_startup_imports.json').read_text())
+assert len(startup) == 11
+for record in startup.values():
+    path = Path(record['file']).resolve()
+    name = str(path.relative_to(root)).replace('\\', '/')
+    assert record['sha256'] == manifest[name]
+offline = json.loads((source/'full_offline_closed_review.json').read_text())
+assert offline['all_offline_checks_pass'] and offline['source_unchanged']
+trials = [('my_world',20261003),('my_world',1001),('shipped',20261003),('rb_rotated',20261003),('split_corridors',20261003)]
+rendered = [root/f'logs/reliability_reduced_{version}_render_{world}_s{seed}_20261008' for world,seed in trials]
+gate = verify_targeted_runs(rendered, root)
+
+def files_at(directory):
+    return {p.name:dict(bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest())
+            for p in directory.iterdir() if p.is_file()}
+
+native = []
+tools_manifest = None
+for run in rendered:
+    tools = json.loads((run/'qualification_tools_manifest.json').read_text())
+    if tools_manifest is None: tools_manifest = tools
+    assert tools == tools_manifest
+    assert all(hashlib.sha256((root/name).read_bytes()).hexdigest() == sha for name,sha in tools.items())
+    rows = [json.loads(line) for line in (run/'onboard.jsonl').read_text().splitlines()]
+    disarm = recorded_disarm(rows)
+    assert disarm
+    native.append(dict(path=str(run.relative_to(root)),summary=json.loads((run/'summary.json').read_text()),
+                       grade=json.loads((run/'grade.json').read_text()),connected_disarm=disarm,files=files_at(run)))
+
+campaign = root/f'logs/reliability_reduced_{version}_campaign_20261008'
+report = json.loads((campaign/'report.json').read_text())
+assert report['source_unchanged'] and report['reduced_scope'] and not report['original_200_case_qualified']
+assert (report['requested_trials'],report['executed_trials'],report['excluded_trials'],report['classified_without_flight']) == (120,96,80,24)
+assert report['navigation_passes'] == 96 and not report['failures'] and report['injected_command_delay_s'] == 0
+assert json.loads((campaign/'source_manifest.json').read_text()) == manifest
+cases = json.loads((campaign/'summary.json').read_text())
+assert len(cases) == 96 and len({case['run'] for case in cases}) == 96
+campaign_evidence = []
+for case in cases:
+    run = campaign/case['run']
+    cfg = json.loads((run/'configuration.json').read_text())
+    assert cfg['navigation_only'] and not cfg['artificial_transport_delay_injected']
+    assert cfg['injected_command_delay_s'] == 0 and cfg['vel_response_s'] == .6
+    assert cfg['camera_capture_hz'] == 20 and cfg['lidar_scan_hz'] == 10 and cfg['rtf'] == 2
+    assert json.loads((run/'source_manifest.json').read_text()) == manifest
+    grade = json.loads((run/'navigation_grade.json').read_text())
+    assert grade['pass_navigation'] and len(grade['checks']) == 13 and all(grade['checks'].values())
+    fixture = json.loads((run/'run.json').read_text())
+    assert fixture['contacts'] == [] and fixture['fence_breaches'] == 0
+    disarm = recorded_disarm([json.loads(line) for line in (run/'onboard.jsonl').read_text().splitlines()])
+    assert disarm
+    campaign_evidence.append(dict(path=str(run.relative_to(root)),configuration=cfg,grade=grade,
+                                  connected_disarm=disarm,files=files_at(run)))
+
+# No completion marker is written until every source, case and artifact is checked.
+review = dict(qualification_complete=True,accepted_source=provenance['archive_sha256'],source_files=len(manifest),
+              original_200_case_qualified=False,offline=offline,normal_startup_imports=startup,targeted_gate=gate,rendered=native,
+              campaign=report,campaign_evidence=campaign_evidence,files=files_at(campaign),
+              unresolved_excluded=['strong gusts','artificially delayed control'],
+              unresolved_cleanup=['post-disarm headless duplicate rcl_shutdown exception; original stderr preserved',
+                                  'V16 native contact recorder pybind11 GIL shutdown abort after disarm; original stderr preserved'],
+              skipped_real_photograph_tests=dict(count=3,reason='empty QR/banner photograph corpus',path='tests/perception/corpus/',physical_camera_qualified=False),
+              negative_geometry_cases=24,weather_exclusions=80)
+with (source/'final_reduced_scope_closed_review.json').open('x') as stream:
+    json.dump(review,stream,indent=2)
+base = root/'.scratch/simulation-reliability'
+current = base/'evidence_report_20261007.md'
+historical = current.read_text(encoding='utf-8')
+with (base/'evidence_report_before_final_v20_20261008.md').open('x',encoding='utf-8') as stream:
+    stream.write(historical)
+lines = ['# Reduced-scope qualification evidence — passed','',
+         f'Accepted archive SHA256: `{provenance["archive_sha256"]}` ({len(manifest)} controlled files).',
+         'All five targeted navigation cases, the final offline suite, five full rendered acceptances and 96 campaign navigation flights passed on this source.',
+         'The original 200-case qualification is not claimed. Strong-gust and artificially delayed-control failures remain unresolved, preserved and excluded.', '',
+         '## Offline verification','',f'{offline["pytest_passed"]} tests passed; {offline["pytest_skipped"]} skipped. Python and shell syntax, configuration parsing and the frontend build passed. The complete log and its SHA256 are preserved.', '',
+         'The three skips are the empty real-photograph QR/banner corpus in `tests/perception/corpus/`. They are not passes; physical camera performance remains unverified.', '',
+         '## Targeted navigation','', 'Field seeds 1, 2 and 3 and retained random seeds 3 and 4 passed all 13 navigation checks, with actual disarm and zero contacts/fence breaches. Their closed review includes exact clearances, airborne time, configurations and artifact hashes.', '',
+         '## Rendered acceptance','', '| Course | Seed | Checks | Airborne seconds | Corridor metres |', '|---|---:|---:|---:|---:|']
+for (world,seed),record in zip(trials,native):
+    grade=record['grade'];summary=record['summary']
+    clearance=grade.get('measured_corridor_clearance_m',grade.get('corridor_clearance_m'))
+    lines.append(f'| {world} | {seed} | {len(grade["checks"])}/{len(grade["checks"])} | {summary["flight_time_s"]} | {clearance} |')
+lines += ['', '## Measured detector rates', '',
+          '| Course / seed | Camera ledger Hz sim | QR Hz sim / host | Red Hz sim / host | QR / red p95 latency seconds sim |',
+          '|---|---:|---:|---:|---:|']
+for (world,seed),record in zip(trials,native):
+    rates=record['summary']['detector_rates'];qr=rates['search']['qr_timing'];red=rates['search']['red_timing']
+    lines.append(f'| {world} / {seed} | {rates["camera"]["capture_hz"]:.4f} | {qr["capture_hz"]:.4f} / {qr["delivered_wall_hz"]:.4f} | {red["capture_hz"]:.4f} / {red["delivered_wall_hz"]:.4f} | {qr["latency_sim_p95_s"]:.4f} / {red["latency_sim_p95_s"]:.4f} |')
+lines += ['', 'Rates use distinct captures. Camera ledger rates describe the recorder subscription; exported video keeps its normal 5 Hz sampling. Search QR/red rates and host delivery rates come from the detector-event journal. Exact counts, maximum gaps and processing times remain in each summary.', '']
+lines += ['', 'Every rendered run completed, confirmed motor delivery, passed independent aircraft-contact evidence, preserved camera recordings through actual disarm, and passed both decision-input audits.',
+          'Detector rates, configurations, calibration, recordings, telemetry and per-artifact SHA256 values are stored in `final_reduced_scope_closed_review.json` and each run directory.', '',
+          '## Reduced campaign','', '120 selected entries: 96 navigation flights passed and 24 existing invalid/infeasible geometry cases were negatively classified. Eighty original weather entries were excluded. Every executed flight used zero added transport delay and normal actuator behaviour. Object fixtures qualify navigation; rendered motor-delivery evidence is supplied by the five acceptance runs.', '',
+          '## Preserved failures and unresolved exclusions','',
+          historical.split('## Closed evidence and remaining failures',1)[1].split('## Work still required',1)[0]]
+lines += ['', '## Source and configuration history', '',
+          'Normal startup resolves all 11 checked decision modules to the accepted source. Exact module hashes, the complete source manifest, archive, calibrated delivery profile, nested runtime configuration manifest and qualification-tool hashes are archived.', '',
+          'The object LAND model retains estimated horizontal position control, matching the archived ArduPilot source review. The actual physical response, wind and controller timing remain unchanged. The model is not a replacement for the five native aircraft runs.', '',
+          'V17 lower-load and V18 targeted failures remain closed with their original grades, disarms, RTL receipts and per-artifact hashes. The complete pre-acceptance report is preserved in `evidence_report_before_final_v20_20261008.md`; all source-specific failures remain available through the evidence index.', '']
+current.write_text('\n'.join(lines).rstrip()+'\n',encoding='utf-8')
+index_path=base/'evidence_index_20261007.json'
+index=json.loads(index_path.read_text(encoding='utf-8'))
+index.update(accepted_source=provenance['archive_sha256'],qualification_complete=True,campaign_200_qualified=False,active_runs=[])
+index['current_continuation'].update(source='V20 accepted for reduced scope',remaining=[])
+index['verification']['final_reduced_scope_closed_review']=str((source/'final_reduced_scope_closed_review.json').relative_to(root))
+index_path.write_text(json.dumps(index,indent=2),encoding='utf-8')
+status=base/'status.md'
+status.write_text(f'# Reduced qualification complete — V20\n\nAccepted archive SHA256 {provenance["archive_sha256"]}.\nFive targeted navigation cases, the final full offline suite, five full rendered\nacceptances and 96 campaign navigation flights passed on this source.\n24 negative geometry classifications and 80 weather exclusions are not passes.\nStrong gusts and artificially delayed control remain unresolved/excluded; the\noriginal 200-case qualification is not claimed.\n\n## Prior checkpoints\n\n'+status.read_text(encoding='utf-8'),encoding='utf-8')
+print('Reduced scope verified and report closed; original 200-case qualification not claimed')

@@ -1,0 +1,45 @@
+{
+  "removed_paths": [
+    "/home/pi5/aerothon_ws.previous-380beb23c6d9",
+    "/home/pi5/aerothon-pre-refresh-20261014.tar.gz",
+    "/home/pi5/aerothon-previous-20261014.tar.gz",
+    "/home/pi5/aerothon-runtime-new-20261014.zip",
+    "/home/pi5/aerothon-check-refresh.py",
+    "/home/pi5/aerothon-capture-refresh.py",
+    "/home/pi5/aerothon-deploy/runtime_20261013.zip",
+    "/home/pi5/aerothon-deploy/runtime_deploy_preview.zip",
+    "/home/pi5/aerothon-deploy/extract_runtime.py",
+    "/home/pi5/aerothon-deploy/capture_ws.py",
+    "/home/pi5/aerothon-deploy/check_installed.py",
+    "/home/pi5/aerothon-deploy/native_import_review.json",
+    "/home/pi5/aerothon-deploy/removed_old_files.json",
+    "/home/pi5/src",
+    "/home/pi5/.venvs",
+    "/home/pi5/.mavproxy",
+    "/home/pi5/.tilecache/SRTM3",
+    "/home/pi5/.tilecache"
+  ],
+  "removed_stopped_installer_containers": [
+    "4b289afb555d",
+    "1d3f133612b4"
+  ],
+  "removed_duplicate_image_tag": "aerothon-dependency-cache:20261014",
+  "builder_cache_pruned": true,
+  "removed_mavproxy_terrain_cache_files": 3,
+  "terrain_hashes_matched_verified_laptop_archive": true,
+  "recovery_location": "Verified laptop archives in .scratch/pi_refresh_20261014 and .scratch/pi_deploy_20261014",
+  "required_images_retained": [
+    "aerothon-runtime:20261014 80920de57d2d",
+    "aerothon-dependencies:20261014 a8d7bdd83be3",
+    "ros:jazzy-ros-base-noble c3c5545ce255"
+  ],
+  "current_containers": [
+    "b258f6a1697b aerothon-console Up 21 minutes"
+  ],
+  "calibration_and_current_logs_preserved": true,
+  "disk_free_bytes": 17982009344,
+  "resolved_guard_failures": [
+    "Incorrectly transcribed installer image hash blocked its removal until checked against the archived audit.",
+    "Non-empty legacy terrain cache was verified against its archive before removal."
+  ]
+}

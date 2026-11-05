@@ -1,0 +1,27 @@
+{
+  "remaining_paths": [
+    "/home/pi5/.tilecache/SRTM3",
+    "/home/pi5/.tilecache"
+  ],
+  "terrain_files": [
+    {
+      "path": ".tilecache/SRTM3/filelist_python",
+      "bytes": 778981,
+      "symlink": false
+    },
+    {
+      "path": ".tilecache/SRTM3/N12E079.hgt.zip",
+      "bytes": 1067803,
+      "symlink": false
+    },
+    {
+      "path": ".tilecache/SRTM3/S36E149.hgt.zip",
+      "bytes": 1699784,
+      "symlink": false
+    }
+  ],
+  "mavproxy_program": null,
+  "docker_containers": "b258f6a1697b aerothon-console Up 20 minutes\n",
+  "docker_images": "aerothon-runtime:20261014 80920de57d2d\naerothon-dependencies:20261014 a8d7bdd83be3\nros:jazzy-ros-base-noble c3c5545ce255\n",
+  "disk_free_bytes": 17978449920
+}

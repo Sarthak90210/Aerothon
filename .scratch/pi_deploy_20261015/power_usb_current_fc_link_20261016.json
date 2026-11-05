@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-16",
+  "triage": "ready-for-human",
+  "problems": {
+    "pi_knocked_out_after_new_lead_and_capacitor": {
+      "status": "open: supply-side; the USB-current setting is not the cause",
+      "usb_max_current_enable": {
+        "origin": "added by an earlier Claude session at 2026-10-15T20:10Z (16 Oct 01:40 IST) for the then-assumed LD06 lidar; backup /boot/firmware/config.txt.before-usb-current-20261016",
+        "reverted": "16 Oct 23:29 IST at the user's request: config.txt restored byte-identical to the backup (sha256 974592f1...); setting version kept as config.txt.with-usb-current-20261016 (ee96494e...); reboot confirmed usb_max_current_enable=0 in firmware and device tree",
+        "effect": "only the USB-port limit (1.6 A -> 600 mA shared by lidar and camera); Pi draw unchanged"
+      },
+      "evidence": [
+        "with the setting, this boot: Undervoltage detected at 5.5 s and 21.7 s, and again at 98 s and 156 s while idle (load 0.09, no flight runtime)",
+        "after revert: Undervoltage at 5.4 s and 37.6 s of boot; idle 120 s at 10 Hz: EXT5V min 4.967, p5 5.016, median 5.049, max 5.084 V, no new event (power_log_idle_nousbcurrent_20261016_233259.csv)",
+        "earlier step test: C1 spinning did not move EXT5V; two CPU cores sagged it and it kept falling after the load stopped"
+      ],
+      "next": ["user: how the 5 V enters (GPIO 2/4 jumpers or USB-C), what feeds the BEC input, where the capacitor sits", "restore usb_max_current_enable=1 before running lidar and camera together if USB devices drop at 600 mA"]
+    },
+    "pixhawk_not_connecting": {
+      "status": "open: physical; no bytes from the FC on TELEM3",
+      "evidence": [
+        "last FC traffic in runtime.log 20:45:31 IST (PreArm messages)",
+        "router owns /dev/ttyAMA0 at 115200: '0 pkts routed | 0 FCU'; PL011 uart0 counters tx:0 rx:0",
+        "router stopped, pins as inputs: GPIO14 (Pi TX, header 8) reads 0 with pull-up and pull-down = held low externally; GPIO15 (Pi RX, header 10) follows the pull (0 with pull-down, 1 with pull-up) = nothing drives it",
+        "pins restored to a4 (pn/pu) and the router restarted"
+      ],
+      "conclusion": "the FC TELEM3 TX is not driving the Pi RX and the Pi TX is pulled to 0 V: FC/TELEM3 unpowered (its input clamps Pi TX low), or the header-8/10 wires were disturbed or a 0 V lead touches pin 8 during the BEC rework (pins 2/4/6 are adjacent)",
+      "next": "user: check the X7+ is powered and TELEM3 is plugged, and that pin 8 = Pi TX -> FC RX, pin 10 = Pi RX <- FC TX, GND shared; then recheck",
+      "recheck_after_user_rewire": [
+        "Pi rebooted (user); throttled 0x0, EXT5V 5.13-5.17 V",
+        "selected connection /home/pi5/.aerothon/vehicle_connection.json = 'laptop-sitl' (tcp, hardware_reviewed false), written by the GCS ~2 min after boot; profile_router therefore does not open /dev/ttyAMA0 (drone profile: serial /dev/ttyAMA0 115200, reviewed true)",
+        "port free: GPIO14 (header 8) follows pull-up and pull-down; GPIO15 (header 10) follows pull-up and pull-down: both float, neither driven nor clamped",
+        "2.5 s raw read at 115200: 0 bytes",
+        "spare GPIO4-13/16-27 briefly as inputs with pull-down, 15 reads each: none driven high; all restored to 'none' with original pulls",
+        "a further cold power loss (power_reset 0) about 23:44 while the GCS was starting the laptop-sitl runtime, with no under-voltage flag beforehand"
+      ],
+      "after_telem3_reseat_and_drone_selection": [
+        "selected connection still laptop-sitl, rewritten ~1 min after the 23:51 boot; the Pi then lost power again (~23:54, power_reset 0)",
+        "GCS trap: Connections.tsx puts the profile <select> inside <fieldset disabled={!can_edit_profiles}>; after a reboot the host restores profile_id laptop-sitl from runtime-owner.json and cannot confirm disarm, so the selector is locked while 'Connect vehicle' (outside the fieldset) posts the shown profile; web.py also accepts only the same profile until Disconnect",
+        "only client to the Pi web host: Brave on the laptop (port 8899); the frontend has no automatic connect",
+        "23:55 boot: throttled 0x50005 (under-voltage now), EXT5V 4.907 V at idle",
+        "pin 10 with pull-down 20/20 reads 0; 2.5 s raw read at 115200: 0 bytes"
+      ],
+      "link_restored_23_57": [
+        "pin 10 with pull-down then read 20/20 high (FC TX driving)",
+        "4 s raw read at 115200 with the port free: 109 bytes, 5 MAVLink frames from (sysid 1, compid 1): 4 HEARTBEAT + 1 TIMESYNC; UART rx counter 109",
+        "router still idle because the selected connection remains laptop-sitl"
+      ],
+      "mission_planner_stuck_on_params_00_02": [
+        "drone profile connected (runtime running); router: 1 FCU, 1 MAVROS, 1 GCS endpoint, 0 FC writes timed out, ~7-9 pkts/s",
+        "PL011 counters over 5 s: tx +292 B (Pi -> FC, ~58 B/s requests), rx +105 B (FC -> Pi, ~21 B/s = heartbeats only)",
+        "MAVROS: AUTOPILOT_VERSION request timeout; Mission Planner stuck at 'Getting params'",
+        "conclusion: FC -> Pi (FC TELEM3 pin 2 -> Pi header 10) works; Pi -> FC (Pi header 8 -> FC TELEM3 RX, pin 3) does not deliver, so the FC never answers requests"
+      ],
+      "after_user_pin8_fix_00_09": [
+        "Pi now at 192.168.0.100 (laptop Wi-Fi 192.168.0.101); router LAN broadcast 192.168.0.255:14550",
+        "6 s: Pi->FC 398 B (66 B/s), FC->Pi 126 B (21 B/s, heartbeats only); Mission Planner still stuck on params",
+        "router reports 2 GCS endpoints: the drone profile's gcs_host is 192.168.0.100, now the Pi's own address, so the router also sends FC traffic to itself",
+        "pin 8 drive test: output-low reads 1 (3/3), output-high 1, input pull-down 1, pull-up 1 = held high by a strong external source (TELEM3 5 V pin 1 or FC TX pin 2), not the FC RX input",
+        "pin 8 left as a high-impedance input (pinctrl set 14 ip pn) to stop driver contention; restore with 'pinctrl set 14 a4 pn' after rewiring"
+      ],
+      "router_verified_00_20": [
+        "mav_router.py logic: FC reads -> MAVROS + learned/configured GCS + LAN broadcast; GCS/MAVROS -> whole-datagram UART writes; own broadcast and the self gcs_host copy are dropped by own_echo",
+        "end-to-end: 200 MAVLink2 GCS heartbeats (4200 B) sent from the laptop to 192.168.0.100:14550 raised the PL011 tx counter by 4454 B in 5 s (background ~65 B/s): every frame reached the UART",
+        "method check: free GPIO26/16 read 0 driven low and 1 driven high; GPIO14 still reads 1 driven low, so its wire is on a low-impedance source",
+        "user: only RX and TX wired to the Pixhawk, ground common through the BEC",
+        "another cold power loss ~00:19 restored GPIO14 to a4 (UART); re-parked as input; each reboot restores it until the wire is moved"
+      ],
+      "pins_reset_00_26": [
+        "user: Pixhawk RX is on GPIO14; asked to reset any pin changes",
+        "GPIO14 restored to a4 pn; all GPIO0-27 verified at the 23:30 boot defaults (0/1 ip pu, 2-8 no pu, 9-13 no pd, 14 a4 pn, 15 a4 pu, 16-27 no pd); dtoverlay=uart0-pi5 untouched",
+        "6 s: Pi->FC 58 B/s, FC->Pi 25 B/s (heartbeats only): unchanged",
+        "remaining hypotheses: GPIO14 output stage cannot sink (damaged) with the FC RX pull-up holding the line high, or a strong FC-side source; decisive test is the drive test with the wire unplugged; fallback UART2 on GPIO4/5 (header 7/29, dtoverlay=uart2-pi5, /dev/ttyAMA2) only with the user's OK"
+      ],
+      "reupload_00_00": "pi_reupload.py: 262 bundle files hashed (text LF-normalised); 12 replaced with backups in backup-reupload-20261017_000004/: guide, GCS index.html + 2 assets, and 8 sources that differed only by CRLF (content identical after CR strip); all 262 then matched commit 3c3334b; workspace rebuild deferred while the drone runtime runs",
+      "conclusion_after_recheck": "the FC TX reaches no header GPIO: TELEM3 unplugged/unpowered at the FC end, or the wires land on a power/ground pin; independently, the GCS must select the drone profile for the router to own the FC UART"
+    }
+  }
+}

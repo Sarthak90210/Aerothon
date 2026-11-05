@@ -1,0 +1,205 @@
+{
+  "run": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/logs/reliability_corrected_headless_focus_20261007/my_world_calm_s1",
+  "configuration": {
+    "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/sim/worlds/my_world.json",
+    "seed": 1,
+    "conditions": "calm",
+    "rtf": 4.0,
+    "max_sim_s": 1200.0,
+    "ros_domain": 222,
+    "fidelity": "object-level navigation; no rendered images or motor telemetry",
+    "navigation_only": true,
+    "delivery_exercised": false,
+    "vel_command_delay_s": 0.4,
+    "vel_response_s": 0.6
+  },
+  "source_manifest_sha256": "09b2debded0df8d938141f8b57f2b9614e2374f81ba53ef3a3b893e4578ad54e",
+  "recorded_rows": 2962,
+  "partial_lines": {
+    "commands": 0,
+    "onboard": 0,
+    "detectors": 0
+  },
+  "command_topics": {
+    "/camera/set_pose": 10,
+    "/mavros/setpoint_position/local": 5595,
+    "/mavros/setpoint_raw/local": 299
+  },
+  "raw_frames": {
+    "9": 299
+  },
+  "raw_header_to_recorder_receipt_s": {
+    "samples": 299,
+    "minimum": 0.030000000000001137,
+    "median": 0.030000000000015348,
+    "p95": 0.04000000000000625,
+    "maximum": 0.09000000000000341,
+    "negative": 0
+  },
+  "raw_header_phases": [
+    {
+      "first_header_stamp": 96.05,
+      "last_header_stamp": 111.0,
+      "commands": 299
+    }
+  ],
+  "sensors": {
+    "flight": {
+      "distinct_capture_count": 2953,
+      "first_capture_stamp": 0.4,
+      "last_capture_stamp": 611.399999999,
+      "record_age_s": {
+        "samples": 2960,
+        "minimum": 0.009999999999990905,
+        "median": 0.11000000000001364,
+        "p95": 0.20000000000001705,
+        "maximum": 0.22000000000002728,
+        "negative": 0
+      },
+      "recorder_delivery_delta_s": {
+        "samples": 2953,
+        "minimum": 0.0,
+        "median": 0.009999999999990905,
+        "p95": 0.010000000000104592,
+        "maximum": 0.03000000000002956,
+        "negative": 0
+      }
+    },
+    "pose": {
+      "distinct_capture_count": 2961,
+      "first_capture_stamp": 0.030000000000000002,
+      "last_capture_stamp": 611.459999999,
+      "record_age_s": {
+        "samples": 2961,
+        "minimum": 0.009999999999990905,
+        "median": 0.020000000000010232,
+        "p95": 0.03000000000002956,
+        "maximum": 0.24000000000000002,
+        "negative": 0
+      },
+      "recorder_delivery_delta_s": {
+        "samples": 2961,
+        "minimum": 0.0,
+        "median": 0.0,
+        "p95": 1.1368683772161603e-13,
+        "maximum": 0.020000000000095497,
+        "negative": 0
+      }
+    },
+    "velocity": {
+      "distinct_capture_count": 2961,
+      "first_capture_stamp": 0.15000000000000002,
+      "last_capture_stamp": 611.459999999,
+      "record_age_s": {
+        "samples": 2961,
+        "minimum": 0.009999999999990905,
+        "median": 0.020000000000010232,
+        "p95": 0.03000000000002956,
+        "maximum": 0.12,
+        "negative": 0
+      },
+      "recorder_delivery_delta_s": {
+        "samples": 2961,
+        "minimum": -0.12000000000000002,
+        "median": 0.0,
+        "p95": 1.1368683772161603e-13,
+        "maximum": 0.020000000000095497,
+        "negative": 1
+      }
+    }
+  },
+  "detectors": {
+    "qr_timing": {
+      "events": 6131,
+      "distinct_frames": 6131,
+      "delivered_distinct_hz": 10.00000000000673,
+      "declared_processing_latency_s": {
+        "samples": 6131,
+        "minimum": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0,
+        "negative": 0
+      },
+      "recorder_delivery_latency_s": {
+        "samples": 6131,
+        "minimum": -9.999991945619513e-10,
+        "median": -6.630216375924647e-10,
+        "p95": 0.009999999983349994,
+        "maximum": 0.17000000000000004,
+        "negative": 4369
+      }
+    },
+    "red_timing": {
+      "events": 6131,
+      "distinct_frames": 6131,
+      "delivered_distinct_hz": 10.00000000000673,
+      "declared_processing_latency_s": {
+        "samples": 6131,
+        "minimum": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0,
+        "negative": 0
+      },
+      "recorder_delivery_latency_s": {
+        "samples": 6131,
+        "minimum": -9.99996974115902e-10,
+        "median": 0.00999999900003301,
+        "p95": 0.009999999989730668,
+        "maximum": 0.17000000000000004,
+        "negative": 3053
+      }
+    }
+  },
+  "avoidance_unique_decisions": 73,
+  "avoidance_states": {
+    "CRUISE": 73
+  },
+  "first_uncertified_braking": null,
+  "first_observed_clearance_below_070": null,
+  "final": {
+    "stamp": 611.479999999,
+    "mission": "RETURN_TRANSIT",
+    "flight": {
+      "received_stamp": 611.4099999990001,
+      "received_wall_s": 551.179080959,
+      "data": {
+        "header": {
+          "stamp": {
+            "sec": 611,
+            "nanosec": 399999999
+          },
+          "frame_id": ""
+        },
+        "connected": true,
+        "armed": true,
+        "guided": true,
+        "manual_input": false,
+        "mode": "GUIDED",
+        "system_status": 4
+      }
+    },
+    "result": null,
+    "avoidance": {
+      "state": "OBSERVING",
+      "front_m": 12.0,
+      "corridor_entered": true,
+      "corridor_exited": true,
+      "side_left_m": 12.0,
+      "side_right_m": 12.0,
+      "open_depth_m": 12.0,
+      "open_width_m": 24.0
+    }
+  },
+  "limits": [
+    "Raw command header stamps are controller transmission stamps.",
+    "flight_commands stamp is this independent recorder callback time, not the world callback.",
+    "Simulator schedules reception .4 s after its own callback; that callback time is not recorded here.",
+    "Avoidance detail has no decision capture timestamp; recorded_stamp is a recorder sample of cached detail.",
+    "Detector events are object-level generated observations; their rates cannot qualify rendered images.",
+    "This report does not use independent simulator truth for drone decisions."
+  ],
+  "run.json": null,
+  "navigation_grade.json": null
+}

@@ -1,0 +1,278 @@
+{
+  "capture_sha256": "b972d92c986c35187b333e0d4dd09ab5c8e5ee9c86a2262cb5e5de5e95896c27",
+  "controller_sha256": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+  "analysis_sha256": "1b6d2b610571ec15f057e6d59cf886e4d98063e4de341d23be9462db3e405dfa",
+  "recording_did_not_change_commands": true,
+  "complete_delay_interval_comparisons": 92,
+  "first_recorded_clearance_breach": {
+    "stamp": 5.1999999999999895,
+    "clearance": 0.6997897363130583
+  },
+  "worst_delay_prediction_errors": [
+    {
+      "stamp": 4.699999999999991,
+      "pose": [
+        7.427561307513407,
+        0.5614770533212834
+      ],
+      "first_delay_interval_clearance_m": 0.728314070109016,
+      "exact_body_command": [
+        0.3821802540006954,
+        -0.179546597802089
+      ],
+      "observed_ground_world": [
+        -0.4000498580370644,
+        -0.12187675880597895
+      ],
+      "wind_rate_world": [
+        0.08318104857581851,
+        -0.4143940259972376
+      ],
+      "predicted_body_displacement_m": [
+        0.1212090317459763,
+        0.04378734788180777
+      ],
+      "actual_body_displacement_m": [
+        0.12143967496432147,
+        0.089924932670614
+      ],
+      "prediction_error_body_m": [
+        0.000230643218345164,
+        0.046137584788806224
+      ],
+      "prediction_error_m": 0.04613816128150809
+    },
+    {
+      "stamp": 0.39999999999999997,
+      "pose": [
+        8.300412868970353,
+        -0.04177237141884485
+      ],
+      "first_delay_interval_clearance_m": 1.0872829781097724,
+      "exact_body_command": [
+        0.32954639493153187,
+        -0.3197537449636088
+      ],
+      "observed_ground_world": [
+        0.0003421940528449501,
+        -0.1803440993941301
+      ],
+      "wind_rate_world": [
+        0.0,
+        0.0
+      ],
+      "predicted_body_displacement_m": [
+        0.024307344103858514,
+        0.013611644063584687
+      ],
+      "actual_body_displacement_m": [
+        0.023793589082410797,
+        0.056322392789808454
+      ],
+      "prediction_error_body_m": [
+        -0.0005137550214477163,
+        0.04271074872622377
+      ],
+      "prediction_error_m": 0.04271383851840862
+    },
+    {
+      "stamp": 0.0,
+      "pose": [
+        8.3,
+        0.0
+      ],
+      "first_delay_interval_clearance_m": 1.1199407249940037,
+      "exact_body_command": [
+        0.1647058823529412,
+        -0.25882352941176473
+      ],
+      "observed_ground_world": [
+        0.0,
+        0.0
+      ],
+      "wind_rate_world": [
+        0.0,
+        0.0
+      ],
+      "predicted_body_displacement_m": [
+        0.0,
+        0.0
+      ],
+      "actual_body_displacement_m": [
+        -0.0004128689703524253,
+        0.04177237141884485
+      ],
+      "prediction_error_body_m": [
+        -0.0004128689703524253,
+        0.04177237141884485
+      ],
+      "prediction_error_m": 0.04177441172225656
+    },
+    {
+      "stamp": 4.6499999999999915,
+      "pose": [
+        7.44756380041526,
+        0.5675708912615823
+      ],
+      "first_delay_interval_clearance_m": 0.7426489114823837,
+      "exact_body_command": [
+        0.32576469278581377,
+        -0.19158582258312434
+      ],
+      "observed_ground_world": [
+        -0.4095988726644672,
+        -0.08823739295345259
+      ],
+      "wind_rate_world": [
+        -0.019694367272973794,
+        -0.4751496939733061
+      ],
+      "predicted_body_displacement_m": [
+        0.13071419604125822,
+        0.04205411405761045
+      ],
+      "actual_body_displacement_m": [
+        0.128143737328348,
+        0.08361892211715112
+      ],
+      "prediction_error_body_m": [
+        -0.0025704587129102285,
+        0.04156480805954067
+      ],
+      "prediction_error_m": 0.041644213607909965
+    },
+    {
+      "stamp": 0.35,
+      "pose": [
+        8.30039575926771,
+        -0.03275516644913835
+      ],
+      "first_delay_interval_clearance_m": 1.0935056114535846,
+      "exact_body_command": [
+        0.3295383433067585,
+        -0.31551035438962927
+      ],
+      "observed_ground_world": [
+        0.0013698709075767646,
+        -0.15984475055751526
+      ],
+      "wind_rate_world": [
+        0.0,
+        0.0
+      ],
+      "predicted_body_displacement_m": [
+        0.018238122489036,
+        0.01993108967770771
+      ],
+      "actual_body_displacement_m": [
+        0.018173269412141473,
+        0.06056361345319924
+      ],
+      "prediction_error_body_m": [
+        -6.485307689452907e-05,
+        0.04063252377549153
+      ],
+      "prediction_error_m": 0.04063257553106211
+    },
+    {
+      "stamp": 4.599999999999992,
+      "pose": [
+        7.468043744048483,
+        0.5719827609092549
+      ],
+      "first_delay_interval_clearance_m": 0.7572603996339993,
+      "exact_body_command": [
+        0.11930299439913426,
+        -0.12692252371354684
+      ],
+      "observed_ground_world": [
+        -0.41927050867350696,
+        -0.05679429847234396
+      ],
+      "wind_rate_world": [
+        -0.07590234014520554,
+        -0.4081593906905607
+      ],
+      "predicted_body_displacement_m": [
+        0.1380484304658005,
+        0.03515551188480367
+      ],
+      "actual_body_displacement_m": [
+        0.1354910162766324,
+        0.07567881553406264
+      ],
+      "prediction_error_body_m": [
+        -0.0025574141891681057,
+        0.04052330364925897
+      ],
+      "prediction_error_m": 0.04060392229803672
+    },
+    {
+      "stamp": 0.25,
+      "pose": [
+        8.300234807925237,
+        -0.017929152333481982
+      ],
+      "first_delay_interval_clearance_m": 1.1041244867003253,
+      "exact_body_command": [
+        0.3294626014985362,
+        -0.30853340657049694
+      ],
+      "observed_ground_world": [
+        0.0021605636877696905,
+        -0.11266977924611721
+      ],
+      "wind_rate_world": [
+        0.0,
+        0.0
+      ],
+      "predicted_body_displacement_m": [
+        0.008619261862579415,
+        0.02364395929181342
+      ],
+      "actual_body_displacement_m": [
+        0.00902689483134899,
+        0.06367793649583439
+      ],
+      "prediction_error_body_m": [
+        0.00040763296876957476,
+        0.04003397720402097
+      ],
+      "prediction_error_m": 0.04003605244538101
+    },
+    {
+      "stamp": 0.3,
+      "pose": [
+        8.30032726572233,
+        -0.024762928921262584
+      ],
+      "first_delay_interval_clearance_m": 1.099150705477357,
+      "exact_body_command": [
+        0.3295061110501094,
+        -0.3117493014353348
+      ],
+      "observed_ground_world": [
+        0.001849155941844949,
+        -0.13667553175561206
+      ],
+      "wind_rate_world": [
+        0.0,
+        0.0
+      ],
+      "predicted_body_displacement_m": [
+        0.013002778349468613,
+        0.023093686712241376
+      ],
+      "actual_body_displacement_m": [
+        0.01320914371346759,
+        0.06304440123421338
+      ],
+      "prediction_error_body_m": [
+        0.00020636536399897681,
+        0.039950714521972006
+      ],
+      "prediction_error_m": 0.03995124750842661
+    }
+  ],
+  "accepted_commands_with_breach_inside_unavoidable_delay": []
+}

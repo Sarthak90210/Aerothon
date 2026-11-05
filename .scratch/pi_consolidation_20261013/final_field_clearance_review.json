@@ -1,0 +1,377 @@
+{
+  "run": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/logs/pi_cleanup_hard_field_both_s20261004_retry1_20261013",
+  "measured_minimum_m": 0.6636450303182718,
+  "required_m": 0.7,
+  "nearest_feature": "obstacle 0",
+  "native_aircraft_sample": {
+    "t": 842.099,
+    "x": 14.713325784835707,
+    "y": -6.08791242239091,
+    "z": 1.2855607787842138,
+    "armed": true,
+    "state": "RETURN_CORRIDOR",
+    "roll": 0.7900315754849053,
+    "pitch": 1.6263731587103216,
+    "mode": "GUIDED",
+    "pay": [
+      54.70018211653868,
+      13.001460429951269,
+      0.10499989709759919
+    ]
+  },
+  "below_floor_samples": 70,
+  "below_floor": [
+    {
+      "stamp": 840.374,
+      "clearance_m": 0.6999062409626912,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.426,
+      "clearance_m": 0.6982065119956744,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.482,
+      "clearance_m": 0.6963757963632138,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.535,
+      "clearance_m": 0.6946446681000694,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.586,
+      "clearance_m": 0.6929835759527658,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.64,
+      "clearance_m": 0.6912421045368315,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.69,
+      "clearance_m": 0.6896475963295756,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.744,
+      "clearance_m": 0.687951774392451,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.797,
+      "clearance_m": 0.6863177383835729,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.85,
+      "clearance_m": 0.6847173070639954,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.904,
+      "clearance_m": 0.6831273584141393,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 840.955,
+      "clearance_m": 0.6816624199150048,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.008,
+      "clearance_m": 0.6801748842394151,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.059,
+      "clearance_m": 0.6787730640552925,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.11,
+      "clearance_m": 0.6773977534197393,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.165,
+      "clearance_m": 0.6759522071975417,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.215,
+      "clearance_m": 0.6746831145511419,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.267,
+      "clearance_m": 0.6734211439902023,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.322,
+      "clearance_m": 0.6721605374880529,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.374,
+      "clearance_m": 0.6710413491365627,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.427,
+      "clearance_m": 0.6699844041180936,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.48,
+      "clearance_m": 0.6690169297545081,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.531,
+      "clearance_m": 0.668169993136369,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.583,
+      "clearance_m": 0.6673907047268663,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.636,
+      "clearance_m": 0.6666846041140289,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.687,
+      "clearance_m": 0.6660859815707079,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.739,
+      "clearance_m": 0.6655472234468228,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.791,
+      "clearance_m": 0.6650701040456556,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.844,
+      "clearance_m": 0.6646474562811854,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.895,
+      "clearance_m": 0.6643061654552624,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.946,
+      "clearance_m": 0.6640315930811374,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 841.997,
+      "clearance_m": 0.6638246742152938,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.047,
+      "clearance_m": 0.6636969823497548,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.099,
+      "clearance_m": 0.6636450303182718,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.155,
+      "clearance_m": 0.6636780904300177,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.205,
+      "clearance_m": 0.6637767782697457,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.259,
+      "clearance_m": 0.6639451968262072,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.31,
+      "clearance_m": 0.6641618576577073,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.364,
+      "clearance_m": 0.6644544552581322,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.419,
+      "clearance_m": 0.6648238068740115,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.469,
+      "clearance_m": 0.6652338332779173,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.525,
+      "clearance_m": 0.6657840682310722,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.577,
+      "clearance_m": 0.6663753006038414,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.629,
+      "clearance_m": 0.6670385120962343,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.681,
+      "clearance_m": 0.6677679377765413,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.732,
+      "clearance_m": 0.6685403335086981,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.783,
+      "clearance_m": 0.6693633104732233,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.835,
+      "clearance_m": 0.6702577169206574,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.886,
+      "clearance_m": 0.6711835165663214,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.937,
+      "clearance_m": 0.6721523688177656,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 842.989,
+      "clearance_m": 0.6731750433997195,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.046,
+      "clearance_m": 0.6743309878921412,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.098,
+      "clearance_m": 0.6754162178844233,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.148,
+      "clearance_m": 0.6764915209049526,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.201,
+      "clearance_m": 0.6776794850333654,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.253,
+      "clearance_m": 0.6788992886831358,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.307,
+      "clearance_m": 0.6802162217103445,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.36,
+      "clearance_m": 0.6815537308283202,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.411,
+      "clearance_m": 0.6828799379316812,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.463,
+      "clearance_m": 0.6842689549495401,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.516,
+      "clearance_m": 0.6857151221805495,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.566,
+      "clearance_m": 0.6871037688000072,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.621,
+      "clearance_m": 0.6886596589601617,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.675,
+      "clearance_m": 0.6902188083344123,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.726,
+      "clearance_m": 0.6917173021163756,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.778,
+      "clearance_m": 0.6932681645044727,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.829,
+      "clearance_m": 0.6948135605478135,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.882,
+      "clearance_m": 0.6964410453706478,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.932,
+      "clearance_m": 0.6980008243438429,
+      "feature": "obstacle 0"
+    },
+    {
+      "stamp": 843.984,
+      "clearance_m": 0.6996514877368996,
+      "feature": "obstacle 0"
+    }
+  ],
+  "original_grade_modified": false,
+  "algorithm_modified": false
+}

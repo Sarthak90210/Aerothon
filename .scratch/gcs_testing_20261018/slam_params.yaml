@@ -1,0 +1,27 @@
+# Same values as mission2.launch.py (FCU-odometry mode) for a real slam_toolbox.
+slam_toolbox:
+  ros__parameters:
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    scan_topic: /scan
+    mode: mapping
+    resolution: 0.05
+    max_laser_range: 12.0
+    minimum_time_interval: 0.1
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.0
+    throttle_scans: 1
+    scan_queue_size: 3
+    map_update_interval: 1.0
+    minimum_travel_distance: 0.1
+    minimum_travel_heading: 0.1
+    use_scan_matching: true
+    use_scan_barycenter: true
+    min_pass_through: 1
+    occupancy_threshold: 0.1
+lifecycle_manager_slam:
+  ros__parameters:
+    autostart: true
+    node_names: [slam_toolbox]
+    bond_timeout: 0.0

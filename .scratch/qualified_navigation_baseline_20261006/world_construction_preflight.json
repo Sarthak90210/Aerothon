@@ -1,0 +1,42 @@
+{
+  "editor_test.json": {
+    "boxes": 18,
+    "markers": 6
+  },
+  "example_custom.json": {
+    "boxes": 18,
+    "markers": 6
+  },
+  "my_world.json": {
+    "boxes": 19,
+    "markers": 6
+  },
+  "my_world_offaxis.json": {
+    "boxes": 19,
+    "markers": 6
+  },
+  "rb_high_board.json": {
+    "boxes": 18,
+    "markers": 6
+  },
+  "rb_long_tight.json": {
+    "boxes": 19,
+    "markers": 6
+  },
+  "rb_low_board.json": {
+    "boxes": 18,
+    "markers": 6
+  },
+  "rb_rotated.json": {
+    "boxes": 14,
+    "markers": 6
+  },
+  "shipped.json": {
+    "boxes": 18,
+    "markers": 6
+  },
+  "split_corridors.json": {
+    "boxes": 17,
+    "markers": 6
+  }
+}

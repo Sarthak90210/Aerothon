@@ -1,0 +1,68 @@
+{
+  "gazebo-gcs-debug-2026-09-11.md": {
+    "bytes": 5201
+  },
+  "gazebo-window-debug.md": {
+    "bytes": 1808
+  },
+  "gps-hdop-and-native-linux-2026-09-11.md": {
+    "bytes": 6281
+  },
+  "open_gazebo.sh": {
+    "bytes": 1096
+  },
+  "run_sim_from_windows.bat": {
+    "bytes": 797
+  },
+  "show_sim.sh": {
+    "bytes": 1014
+  },
+  "sitl-interlock-and-rtf-2026-09-11.md": {
+    "bytes": 9822
+  },
+  "lidar-square-on/codebase-status.md": {
+    "bytes": 8535
+  },
+  "lidar-square-on/spec.md": {
+    "bytes": 15468
+  },
+  "lidar-square-on/issues/01-recover-the-banner-by-moving.md": {
+    "bytes": 6354
+  },
+  "lidar-square-on/issues/02-align-off-the-box-immediately.md": {
+    "bytes": 4848
+  },
+  "lidar-square-on/issues/03-duck-under-the-board-before-advancing.md": {
+    "bytes": 4603
+  },
+  "mission2-final-gaps/spec.md": {
+    "bytes": 26546
+  },
+  "rulebook-compliance/status.md": {
+    "bytes": 15489
+  },
+  "simulation-reliability/capture_end_observer.py": {
+    "bytes": 2497
+  },
+  "simulation-reliability/flight_snapshot.py": {
+    "bytes": 537
+  },
+  "simulation-reliability/spec.md": {
+    "bytes": 2302
+  },
+  "simulation-reliability/status.md": {
+    "bytes": 178669
+  },
+  "simulation-reliability/issues/01-reject-clipped-return-sightings.md": {
+    "bytes": 962
+  },
+  "simulation-reliability/issues/02-preserve-stall-until-progress.md": {
+    "bytes": 1223
+  },
+  "simulation-reliability/issues/03-offaxis-corridor-envelope.md": {
+    "bytes": 2435
+  },
+  "simulation-reliability/issues/04-rendered-camera-rate-validation.md": {
+    "bytes": 3467
+  }
+}

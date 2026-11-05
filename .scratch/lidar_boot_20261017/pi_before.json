@@ -1,0 +1,816 @@
+{
+  "summary": {
+    "runtime": "Running",
+    "profile": "drone",
+    "telemetry_messages": 73,
+    "map_messages": 0,
+    "fcu": true,
+    "armed": false,
+    "scan_beams": 72,
+    "valid_returns": 71,
+    "sample_age_s": {
+      "lidar": 0.025,
+      "gps": 0.009,
+      "magnetic": 0.411,
+      "readiness": 0.017,
+      "sats": 0.396,
+      "vibration": 0.386,
+      "power": 0.382,
+      "winch": 0.117,
+      "state": 0.86,
+      "fence": 565.869,
+      "devices": 0.0
+    },
+    "slam_status": null,
+    "gps": {
+      "lat": 0.0,
+      "lon": 0.0,
+      "sats": 0,
+      "fix": "NO"
+    },
+    "readiness": [
+      {
+        "key": "fcu_link",
+        "label": "FCU link",
+        "ok": true,
+        "value": true,
+        "reason": ""
+      },
+      {
+        "key": "gps_sats",
+        "label": "GPS satellites",
+        "ok": false,
+        "value": 0,
+        "reason": "0 satellites, need 12"
+      },
+      {
+        "key": "gps_hdop",
+        "label": "GPS HDOP",
+        "ok": false,
+        "value": 100.0,
+        "reason": "HDOP 100.00, need below 1.2"
+      },
+      {
+        "key": "battery",
+        "label": "Battery voltage",
+        "ok": false,
+        "value": 12.73,
+        "reason": "12.73 V, need above 15.0 V"
+      },
+      {
+        "key": "ekf",
+        "label": "EKF health",
+        "ok": true,
+        "value": true,
+        "reason": ""
+      },
+      {
+        "key": "lidar_rate",
+        "label": "Lidar rate",
+        "ok": true,
+        "value": 9.7,
+        "reason": ""
+      },
+      {
+        "key": "mavlink_latency",
+        "label": "MAVLink latency",
+        "ok": true,
+        "value": 0.0,
+        "reason": ""
+      },
+      {
+        "key": "camera_pose",
+        "label": "Camera pose",
+        "ok": false,
+        "value": false,
+        "reason": "camera joint feedback stale"
+      },
+      {
+        "key": "detectors",
+        "label": "Detector health",
+        "ok": false,
+        "value": {
+          "qr": null,
+          "banner": null,
+          "redzone": null
+        },
+        "reason": "stale: banner, qr, redzone"
+      },
+      {
+        "key": "actuator",
+        "label": "Winch health",
+        "ok": true,
+        "value": "healthy",
+        "reason": ""
+      },
+      {
+        "key": "rc_failsafe",
+        "label": "RC failsafe",
+        "ok": false,
+        "value": true,
+        "reason": "RC failsafe active"
+      },
+      {
+        "key": "delivery_zone",
+        "label": "Search area",
+        "ok": false,
+        "value": null,
+        "reason": "no data received"
+      },
+      {
+        "key": "geofence",
+        "label": "Arena geofence",
+        "ok": false,
+        "value": null,
+        "reason": "no data received"
+      },
+      {
+        "key": "banner_colours",
+        "label": "Banner colours",
+        "ok": false,
+        "value": null,
+        "reason": "no data received"
+      },
+      {
+        "key": "arena_dimensions",
+        "label": "Arena dimensions",
+        "ok": false,
+        "value": null,
+        "reason": "no data received"
+      }
+    ],
+    "map_shape": null,
+    "map_resolution": null
+  },
+  "telemetry": {
+    "mission": {
+      "selected": null,
+      "part": "mission",
+      "state": "idle",
+      "armed": false,
+      "mode": "STABILIZE",
+      "elapsed": 0.0,
+      "delivery_offset_m": null,
+      "landing_precision": null,
+      "result": null,
+      "result_reason": null
+    },
+    "flight": {
+      "x": 0,
+      "y": 0,
+      "alt": 0,
+      "gs": 0,
+      "roll_deg": 0,
+      "pitch_deg": 0,
+      "yaw_deg": 0
+    },
+    "gps": {
+      "lat": 0.0,
+      "lon": 0.0,
+      "sats": 0,
+      "fix": "NO"
+    },
+    "power": {
+      "volt": 12.73,
+      "pct": 96,
+      "current_a": -0.33000001311302185
+    },
+    "sensor_diagnostics": {
+      "vibration_mps2": [
+        0.055749256163835526,
+        0.04436375945806503,
+        null
+      ],
+      "clipping": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "magnetic_ut": [
+        -5.9,
+        0.600000000000001,
+        7.1000000000000005
+      ],
+      "magnetic_strength_ut": 9.250945897582582,
+      "magnetic_units_basis": "mavros_milligauss_x1000",
+      "magnetic_frame": "base_link",
+      "magnetic_capture_stamp": 1792244319.014516
+    },
+    "nav": {
+      "front_m": 0,
+      "centering_err": 0,
+      "cmd_vx": 0
+    },
+    "percep": {
+      "start_qr": "",
+      "target_match": false,
+      "banner": false,
+      "mission_target": "",
+      "qr_reference": false,
+      "qr_match_basis": [],
+      "qr_appearance_score": null,
+      "redzone_visible": false,
+      "redzone_status": "UNKNOWN",
+      "redzone_reason": "",
+      "redzone_exclusions": [],
+      "redzone_area_m2": 0.0,
+      "square_angle_deg": null,
+      "square_standoff_m": null,
+      "square_ok": null,
+      "square_reason": ""
+    },
+    "safety": {
+      "ready": false,
+      "fcu_connected": true,
+      "ekf": "UNKNOWN",
+      "ekf_flags": {},
+      "geofence": "NONE",
+      "fence_count": 0,
+      "battery_ok": true,
+      "stale": [
+        "ekf:never",
+        "fence:566s"
+      ],
+      "ready_items": [
+        {
+          "key": "fcu_link",
+          "label": "FCU link",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "gps_sats",
+          "label": "GPS satellites",
+          "ok": false,
+          "value": 0,
+          "reason": "0 satellites, need 12"
+        },
+        {
+          "key": "gps_hdop",
+          "label": "GPS HDOP",
+          "ok": false,
+          "value": 100.0,
+          "reason": "HDOP 100.00, need below 1.2"
+        },
+        {
+          "key": "battery",
+          "label": "Battery voltage",
+          "ok": false,
+          "value": 12.73,
+          "reason": "12.73 V, need above 15.0 V"
+        },
+        {
+          "key": "ekf",
+          "label": "EKF health",
+          "ok": true,
+          "value": true,
+          "reason": ""
+        },
+        {
+          "key": "lidar_rate",
+          "label": "Lidar rate",
+          "ok": true,
+          "value": 9.7,
+          "reason": ""
+        },
+        {
+          "key": "mavlink_latency",
+          "label": "MAVLink latency",
+          "ok": true,
+          "value": 0.0,
+          "reason": ""
+        },
+        {
+          "key": "camera_pose",
+          "label": "Camera pose",
+          "ok": false,
+          "value": false,
+          "reason": "camera joint feedback stale"
+        },
+        {
+          "key": "detectors",
+          "label": "Detector health",
+          "ok": false,
+          "value": {
+            "qr": null,
+            "banner": null,
+            "redzone": null
+          },
+          "reason": "stale: banner, qr, redzone"
+        },
+        {
+          "key": "actuator",
+          "label": "Winch health",
+          "ok": true,
+          "value": "healthy",
+          "reason": ""
+        },
+        {
+          "key": "rc_failsafe",
+          "label": "RC failsafe",
+          "ok": false,
+          "value": true,
+          "reason": "RC failsafe active"
+        },
+        {
+          "key": "delivery_zone",
+          "label": "Search area",
+          "ok": false,
+          "value": null,
+          "reason": "no data received"
+        },
+        {
+          "key": "geofence",
+          "label": "Arena geofence",
+          "ok": false,
+          "value": null,
+          "reason": "no data received"
+        },
+        {
+          "key": "banner_colours",
+          "label": "Banner colours",
+          "ok": false,
+          "value": null,
+          "reason": "no data received"
+        },
+        {
+          "key": "arena_dimensions",
+          "label": "Arena dimensions",
+          "ok": false,
+          "value": null,
+          "reason": "no data received"
+        }
+      ],
+      "ready_reasons": [
+        "GPS satellites: 0 satellites, need 12",
+        "GPS HDOP: HDOP 100.00, need below 1.2",
+        "Battery voltage: 12.73 V, need above 15.0 V",
+        "Camera pose: camera joint feedback stale",
+        "Detector health: stale: banner, qr, redzone",
+        "RC failsafe: RC failsafe active",
+        "Search area: no data received",
+        "Arena geofence: no data received",
+        "Banner colours: no data received",
+        "Arena dimensions: no data received"
+      ],
+      "ready_waived": []
+    },
+    "checklist": {
+      "takeoff": false,
+      "start_qr": false,
+      "banner": false,
+      "corridor": false,
+      "target_id": false,
+      "drop": false,
+      "return": false,
+      "land": false
+    },
+    "scan": {
+      "yaw_deg": 0,
+      "ranges": [
+        0.42,
+        1.49,
+        1.64,
+        1.63,
+        2.04,
+        2.06,
+        2.1,
+        2.15,
+        2.24,
+        2.15,
+        1.86,
+        2.54,
+        2.65,
+        2.44,
+        3.21,
+        3.11,
+        0.26,
+        1.1,
+        0.2,
+        0.2,
+        0.2,
+        0.25,
+        0.55,
+        1.73,
+        1.81,
+        1.83,
+        1.89,
+        0.63,
+        0.66,
+        0.7,
+        0.74,
+        0.82,
+        0.9,
+        1.04,
+        1.05,
+        0.97,
+        null,
+        0.97,
+        1.81,
+        1.8,
+        1.41,
+        1.8,
+        1.79,
+        1.86,
+        1.93,
+        2.0,
+        2.11,
+        2.19,
+        2.0,
+        1.87,
+        1.42,
+        1.53,
+        1.46,
+        1.41,
+        1.36,
+        1.32,
+        1.31,
+        1.3,
+        1.4,
+        1.4,
+        1.43,
+        1.46,
+        0.64,
+        1.58,
+        0.3,
+        0.3,
+        0.32,
+        0.29,
+        2.38,
+        2.35,
+        1.83,
+        0.44
+      ],
+      "angle_min": -3.1416,
+      "angle_step": 0.08739
+    },
+    "lidar_cal": {
+      "raw_fresh": true,
+      "raw_nearest": [
+        142.4,
+        0.3
+      ],
+      "body_nearest": [
+        142.4,
+        0.3
+      ],
+      "captures": {
+        "ahead": null,
+        "port": null
+      },
+      "result": null,
+      "applied": {
+        "yaw_deg": 0.0,
+        "mirrored": false,
+        "source": "launch arguments",
+        "reason": ""
+      }
+    },
+    "scans": [],
+    "gimbal": {
+      "pitch_deg": 0.0
+    },
+    "arena_dimensions": null,
+    "dimension_presets": {
+      "builtin": {
+        "Simulator arena": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.6,
+            "nav_height_m": 3.0,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.7,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 2.805,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 2.2,
+            "start_m": 2.2,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        },
+        "SAE Aerothon 2026 (clarified)": {
+          "corridor": {
+            "length_m": 10.0,
+            "width_m": 3.5,
+            "wall_height_m": 3.048,
+            "nav_height_m": 2.4384,
+            "spacing_m": 4.0,
+            "return_side": "right"
+          },
+          "hall": {
+            "length_m": 80.0,
+            "width_m": 45.0,
+            "ceiling_m": 30.0
+          },
+          "banner": {
+            "width_m": 3.5,
+            "height_m": 1.15,
+            "border_m": 0.07619999999999999,
+            "suspended_bottom_m": 1.8980000000000001,
+            "placement": "suspended"
+          },
+          "qr": {
+            "target_m": 1.0,
+            "start_m": 1.0,
+            "border_m": 0.07619999999999999
+          },
+          "red_zone": {
+            "side_m": 1.524,
+            "border_m": 0.1524
+          },
+          "payload": {
+            "length_m": 0.1,
+            "width_m": 0.055,
+            "mass_kg": 0.1
+          },
+          "obstacle": {
+            "reach_frac": 0.5
+          }
+        }
+      },
+      "saved": {}
+    },
+    "dimension_fields": [
+      {
+        "group": "corridor",
+        "key": "length_m",
+        "label": "Corridor length",
+        "default": 10.0,
+        "min": 2.0,
+        "max": 30.0,
+        "used_by": "clear distance needed to cross the gate"
+      },
+      {
+        "group": "corridor",
+        "key": "width_m",
+        "label": "Corridor width",
+        "default": 3.5,
+        "min": 1.0,
+        "max": 10.0,
+        "used_by": null
+      },
+      {
+        "group": "corridor",
+        "key": "wall_height_m",
+        "label": "Corridor wall height",
+        "default": 3.6,
+        "min": 1.0,
+        "max": 8.0,
+        "used_by": "upper bound on the navigation height"
+      },
+      {
+        "group": "corridor",
+        "key": "nav_height_m",
+        "label": "Navigation height",
+        "default": 3.0,
+        "min": 0.8,
+        "max": 7.0,
+        "used_by": "corridor flying altitude"
+      },
+      {
+        "group": "corridor",
+        "key": "spacing_m",
+        "label": "Corridor spacing, centre to centre",
+        "default": 4.0,
+        "min": 1.0,
+        "max": 30.0,
+        "used_by": "where the return lane is found"
+      },
+      {
+        "group": "hall",
+        "key": "length_m",
+        "label": "Hall length",
+        "default": 80.0,
+        "min": 10.0,
+        "max": 500.0,
+        "used_by": null
+      },
+      {
+        "group": "hall",
+        "key": "width_m",
+        "label": "Hall width",
+        "default": 45.0,
+        "min": 10.0,
+        "max": 500.0,
+        "used_by": null
+      },
+      {
+        "group": "hall",
+        "key": "ceiling_m",
+        "label": "Hall ceiling / max altitude",
+        "default": 30.0,
+        "min": 3.0,
+        "max": 120.0,
+        "used_by": "caps take-off, search and drop altitudes"
+      },
+      {
+        "group": "banner",
+        "key": "width_m",
+        "label": "Banner width",
+        "default": 3.7,
+        "min": 0.3,
+        "max": 10.0,
+        "used_by": "range to the banner"
+      },
+      {
+        "group": "banner",
+        "key": "height_m",
+        "label": "Banner height",
+        "default": 1.15,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "range to the banner"
+      },
+      {
+        "group": "banner",
+        "key": "border_m",
+        "label": "Banner border",
+        "default": 0.07619999999999999,
+        "min": 0.0,
+        "max": 0.5,
+        "used_by": null
+      },
+      {
+        "group": "banner",
+        "key": "suspended_bottom_m",
+        "label": "Hung banner lower edge",
+        "default": 2.805,
+        "min": 0.5,
+        "max": 8.0,
+        "used_by": "the height the square-up scans the hung banner at"
+      },
+      {
+        "group": "qr",
+        "key": "target_m",
+        "label": "Target QR side",
+        "default": 2.2,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "search altitude and landing"
+      },
+      {
+        "group": "qr",
+        "key": "start_m",
+        "label": "Start QR side",
+        "default": 2.2,
+        "min": 0.2,
+        "max": 5.0,
+        "used_by": "precision landing on the start QR"
+      },
+      {
+        "group": "qr",
+        "key": "border_m",
+        "label": "QR white border",
+        "default": 0.07619999999999999,
+        "min": 0.0,
+        "max": 0.5,
+        "used_by": null
+      },
+      {
+        "group": "red_zone",
+        "key": "side_m",
+        "label": "Red zone side",
+        "default": 1.524,
+        "min": 0.3,
+        "max": 20.0,
+        "used_by": null
+      },
+      {
+        "group": "red_zone",
+        "key": "border_m",
+        "label": "Red zone border",
+        "default": 0.1524,
+        "min": 0.0,
+        "max": 2.0,
+        "used_by": null
+      },
+      {
+        "group": "payload",
+        "key": "length_m",
+        "label": "Payload length",
+        "default": 0.1,
+        "min": 0.02,
+        "max": 0.5,
+        "used_by": "drop confirmation blob size"
+      },
+      {
+        "group": "payload",
+        "key": "width_m",
+        "label": "Payload width",
+        "default": 0.055,
+        "min": 0.02,
+        "max": 0.5,
+        "used_by": "drop confirmation blob size"
+      },
+      {
+        "group": "payload",
+        "key": "mass_kg",
+        "label": "Payload mass (kg)",
+        "default": 0.1,
+        "min": 0.01,
+        "max": 2.0,
+        "used_by": null
+      },
+      {
+        "group": "obstacle",
+        "key": "reach_frac",
+        "label": "Obstacle reach, fraction of corridor width",
+        "default": 0.5,
+        "min": 0.1,
+        "max": 0.9,
+        "used_by": null
+      }
+    ],
+    "sample_age_s": {
+      "lidar": 0.025,
+      "gps": 0.009,
+      "magnetic": 0.411,
+      "readiness": 0.017,
+      "sats": 0.396,
+      "vibration": 0.386,
+      "power": 0.382,
+      "winch": 0.117,
+      "state": 0.86,
+      "fence": 565.869,
+      "devices": 0.0
+    },
+    "devices": {
+      "camera": {
+        "ok": false,
+        "receipt_age_s": null
+      },
+      "lidar": {
+        "ok": true,
+        "receipt_age_s": 0.003330481999910262
+      },
+      "identity": {
+        "ok": true,
+        "value": 1,
+        "basis": "configured MAVROS target; live FCU link"
+      },
+      "clock": {
+        "ok": true,
+        "reason": "system ROS clock"
+      },
+      "camera_actuator": {
+        "ok": false,
+        "reason": "hardware camera motion feedback has not been qualified"
+      },
+      "winch_actuator": {
+        "ok": true,
+        "reason": ""
+      }
+    },
+    "runtime_health": {
+      "controller_pid": 62,
+      "state": "ready",
+      "fresh": true
+    },
+    "winch": {
+      "state": "IDLE",
+      "payout_m": 0.0,
+      "at_limit": false,
+      "ground": null,
+      "payout_estimate_m": 0.0,
+      "measured_payout_m": null,
+      "measurement_age_s": null,
+      "payout_basis": "integrated commanded motor rate; no encoder",
+      "released": null,
+      "release_requested": false,
+      "hook": "gravity",
+      "hook_open": null,
+      "fault": "",
+      "release_ok": false,
+      "blockers": [
+        "payload not down (payout 0.00 m, alt None)",
+        "no altitude"
+      ]
+    }
+  },
+  "grid": null
+}

@@ -1,0 +1,30 @@
+{
+  "velocity_controller.py": {
+    "base_sha256": "87ab2189a30dd701cd1e38b2d8e3439bb72adbfe8bc29372970cfd5b3886c84d",
+    "staged_sha256": "028d5bd40116c13c5a9d92f3cef26ea38d856818d234acb08b75fcf1f654fbd9"
+  },
+  "buffered_scan_pose.py": {
+    "base_sha256": "20f1a4a4bcc6219c75b4173acb8f136894c844c6c1e3e4af3db5602536b6ed56",
+    "staged_sha256": "20f1a4a4bcc6219c75b4173acb8f136894c844c6c1e3e4af3db5602536b6ed56"
+  },
+  "paired_scan_pose.py": {
+    "base_sha256": "7d0389fac10acdf4a33e633ad48976f8c6b62bd774897c085600f61944b72482",
+    "staged_sha256": "7d0389fac10acdf4a33e633ad48976f8c6b62bd774897c085600f61944b72482"
+  },
+  "capture_inbox.py": {
+    "base_sha256": "37b7be5af07cc72015940606eb680cf94ec406dd95c7f77c61377cefe409bd99",
+    "staged_sha256": "37b7be5af07cc72015940606eb680cf94ec406dd95c7f77c61377cefe409bd99"
+  },
+  "independent_ros_clock_candidate.py": {
+    "base_sha256": "c3fce31cb6cd8135df3a58a0126da3ed2c80e066ab40ba700fa58e8e3f11b83c",
+    "staged_sha256": "c3fce31cb6cd8135df3a58a0126da3ed2c80e066ab40ba700fa58e8e3f11b83c"
+  },
+  "fast_connected_planner_candidate.py": {
+    "base_sha256": "0d5bf7f50565519b4a7ebeaf3c0df9a386ac799dfaad53d9fb0aec5fc10f64f0",
+    "staged_sha256": "0d5bf7f50565519b4a7ebeaf3c0df9a386ac799dfaad53d9fb0aec5fc10f64f0"
+  },
+  "motion_forecast_trace.py": {
+    "base_sha256": "7f15de1d9a75c30e3c765b3ac5fa1ac3b36ceaa1fd34e747d157d6393762f0f9",
+    "staged_sha256": "7f15de1d9a75c30e3c765b3ac5fa1ac3b36ceaa1fd34e747d157d6393762f0f9"
+  }
+}

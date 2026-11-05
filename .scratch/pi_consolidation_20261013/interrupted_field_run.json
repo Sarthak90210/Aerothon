@@ -1,0 +1,13 @@
+{
+  "run": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/logs/phase2_rendered_clarified_h115_ground_s20261004_field_p2r12",
+  "reason": "Already exceeded 900 s during outbound banner alignment; superseded by cleanup and final video request",
+  "queued_parent_stopped": true,
+  "parent_pid": 303,
+  "requested_at_wall": 1791890943.9638436,
+  "ack": {
+    "cmd_id": "cleanup-stop-field-20261013",
+    "cmd": "abort",
+    "result": "accepted",
+    "reason": ""
+  }
+}

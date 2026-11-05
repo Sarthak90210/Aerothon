@@ -1,0 +1,41 @@
+{
+  "status": "SAFE_DIAGNOSTIC_HORIZON_WITH_TRAVERSAL_FAILURE",
+  "diagnostic_only": true,
+  "original_traversal_passed": false,
+  "original_failure": "AssertionError: did not get through in 150 s; stuck near (8.36, -0.23), yaw 3.142; detail {'state': 'CRUISE', 'front_m': 1.15, 'corridor_entered': True, 'corridor_exited': False, 'side_left_m': 1.33, 'side_right_m': 1.78, 'open_depth_m': 1.15, 'open_width_m': 3.11, 'gap_bearing_deg': 0.0, 'cmd_vx': 0.12, 'cmd_vy_left': -0.62, 'cmd_vz': 0.0, 'cmd_yaw_rate': 0.0, 'hold_alt_m': None, 'alt_m': 3.0, 'backoffs': 0, 'disturbance_estimate_valid': True, 'disturbance_world_mps': [0.1257568811689321, -0.22299494288437374], 'disturbance_rate_world_mps2': [-0.09351825217429205, -0.3616462386234725], 'command_response_state': 'observed own velocity response', 'ground_velocity_world_mps': [0.015385293488620291, -0.006369288611555501], 'ground_velocity_basis': 'fresh FCU EKF velocity_local', 'fcu_velocity_age_s': 0.0, 'command_delay_s': 0.4, 'commanded_yaw_rate_rad_s': 0.0, 'command_receipt_turn_rad': 0.0, 'drift_left_mps': 0.22, 'planner_state': 'connected lidar path', 'required_clearance_m': 0.7, 'observed_clearance_m': 1.1548714637756348, 'scan_age_s': 0.0, 'pose_age_s': 0.0, 'planner_path_body_m': [(0.0, 0.0), (0.35000000000000003, -0.65), (1.1500000000000001, -0.8500000000000001), (1.9500000000000002, -0.7000000000000001), (2.5500000000000003, 0.2), (2.95, 0.2)], 'axis_progress_m': -0.06, 'gap_width_deg': 0.0, 'gap_depth_m': 1.54, 'reach_m': 1.54, 'diagnostic_control_policy': 'empirical forecast-error viability reserve', 'diagnostic_mode': 'EMPIRICAL_HOLD', 'diagnostic_error_max_m': 0.09068422606607979, 'diagnostic_error_samples': 2984, 'diagnostic_raw_residual_rate_max_mps2': 1.437908613096949, 'diagnostic_travel_reserve_m': 0.8096385326145543, 'diagnostic_travel_speed_mps': 0.0, 'diagnostic_path_minimum_m': 1.1512639365587158, 'diagnostic_queue_clear': True, 'diagnostic_path_body_m': [(0, 0), (0.10460164520157994, -0.5037144711094498), (1.2046016452015804, -0.9037144711094499), (2.2046016452015804, -0.5037144711094499), (2.7546016452015802, 0.046285528890550216)], 'diagnostic_hold_count': 1, 'diagnostic_hold_target_world_m': [8.3, 0.0], 'diagnostic_reserve_is_empirical': True}; track tail [(149.8, 8.36, -0.22), (149.85, 8.36, -0.23), (149.9, 8.36, -0.23), (149.95, 8.36, -0.23), (150.0, 8.36, -0.23), (150.05, 8.36, -0.23)]",
+  "seed": 0,
+  "kind": "dirty",
+  "wind_profile": "default",
+  "actual_minimum_clearance_m": 1.0359819630509364,
+  "first_recorded_clearance_failure": null,
+  "last_stamp": 149.99999999999986,
+  "records": 3001,
+  "observed_forecast_error_max_m": 0.09068422606607979,
+  "observed_raw_residual_rate_max_mps2": 1.437908613096949,
+  "transitions": [
+    {
+      "stamp": 0.0,
+      "mode": "EMPIRICAL_HOLD",
+      "pose": [
+        8.3,
+        0.0
+      ],
+      "actual_clearance_m": 1.1280514172678482,
+      "observed_clearance_m": 1.0845361948013306,
+      "empirical_forecast_error_max_m": 0.0,
+      "empirical_raw_residual_rate_max_mps2": 0.0,
+      "empirical_travel_reserve_m": 0.0,
+      "permitted_speed_mps": 0.3019906150494932
+    }
+  ],
+  "capture_sha256": "5effbb8adb2f33ceedb26879a74faa1dc62123b336f1b70509841082d6ec142a",
+  "analysis_sha256": "7ba9bcae9ee59510460339c7ee17da21fe7c84e8c4d0408b0f2a760b625690a4",
+  "source_hashes": {
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+    "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+    "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+    "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+    ".scratch/simulation-reliability/probe_gust_empirical_viability_20261007.py": "c7bc1c2427ae6e7d87f06af1bfa123d8cbbcf92c285b91bdf420653fe341608b"
+  },
+  "current_source_hashes_match": true
+}

@@ -4,7 +4,12 @@
       "Bash(python3 -m py_compile src/aerothon_perception/perception_qr/perception_qr/qr_node.py src/aerothon_perception/perception_banner/perception_banner/banner_node.py src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py src/aerothon_mission/mission_bt/mission_bt/mission_tree.py src/aerothon_gcs/gcs_aggregator/gcs_aggregator/aggregator.py src/aerothon_mission/mission_bringup/launch/mission2.launch.py)",
       "Bash(python3 -c \"import numpy, matplotlib; print\\('numpy', numpy.__version__, '| matplotlib', matplotlib.__version__\\)\")",
       "Bash(python3 -c \"import matplotlib; matplotlib.use\\('Agg'\\); from matplotlib.animation import PillowWriter; print\\('PillowWriter OK'\\)\")",
-      "Bash(awk '{print $5, $9}')"
+      "Bash(awk '{print $5, $9}')",
+      "Bash(MSYS_NO_PATHCONV=1 wsl.exe -d Ubuntu -- bash -c \"pgrep -af 'gz sim|arducopter|launch_level6_sim|run_recorded' | head -5; echo rc=\\\\$?\")",
+      "Bash(awk 'NR>=281 && NR<=2170 && /^    def |^    @|^    # ----/ {print NR\": \"$0}' src/aerothon_mission/mission_bt/mission_bt/mission_tree.py)",
+      "Bash(python -c ' *)",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(MSYS_NO_PATHCONV=1 wsl.exe -d Ubuntu -- bash -c 'pgrep -af \"arducopter|gz sim|ros2|aggregator|http.server|serve.py\" | head; ls ~/.aerothon/ 2>/dev/null; cat ~/.aerothon/dimension_presets.json 2>/dev/null | head -20; ls ~/aerothon_stack 2>/dev/null | head')"
     ]
   }
 }

@@ -1,0 +1,254 @@
+{
+  "scan_count": 339,
+  "status_count": 341,
+  "status_counts": {
+    "Held: insufficient overlap; mapping held": 341
+  },
+  "accepted_mapping_scans": 0,
+  "scan_hz": 10.012359960370068,
+  "capture_interval_s": {
+    "min": 0.06721615791320801,
+    "median": 0.10025036334991455,
+    "p95": 0.10321328639984131,
+    "max": 0.12873077392578125
+  },
+  "receipt_interval_s": {
+    "min": 0.001817963000007694,
+    "median": 0.09979584200002023,
+    "p95": 0.1066420512499576,
+    "max": 0.3533408339999937
+  },
+  "scan_age_s": {
+    "min": 0.0691690444946289,
+    "median": 0.10247921943664551,
+    "p95": 0.10867347717285154,
+    "max": 0.35654354095458984
+  },
+  "valid_returns": {
+    "min": 117.0,
+    "median": 424.0,
+    "p95": 444.0,
+    "max": 459.0
+  },
+  "scan_beams": [
+    720
+  ],
+  "scan_frames": [
+    "base_scan"
+  ],
+  "pose_span_m": [
+    0.5184972286224365,
+    1.6638151481747627,
+    1.2792894840240479
+  ],
+  "imu_roll_deg": {
+    "min": -0.7152757660171295,
+    "median": -0.022845021762348913,
+    "p95": 0.3758598005177407,
+    "max": 0.6350936140294107
+  },
+  "imu_pitch_deg": {
+    "min": -6.122273786599956,
+    "median": -0.28447583146629696,
+    "p95": 1.6874566112247125,
+    "max": 4.0579306453468185
+  },
+  "flight_state_counts": {
+    "armed=True,mode=POSHOLD": 34
+  },
+  "static_transforms": [
+    {
+      "stamp": 1792361167.3835661,
+      "parent": "map",
+      "child": "map_ned",
+      "translation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.7071067811865476,
+        0.7071067811865475,
+        4.329780281177466e-17,
+        4.329780281177467e-17
+      ]
+    },
+    {
+      "stamp": 1792361167.3835683,
+      "parent": "odom",
+      "child": "odom_ned",
+      "translation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.7071067811865476,
+        0.7071067811865475,
+        4.329780281177466e-17,
+        4.329780281177467e-17
+      ]
+    },
+    {
+      "stamp": 1792361167.3835688,
+      "parent": "base_link",
+      "child": "base_link_frd",
+      "translation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        6.123233995736766e-17
+      ]
+    },
+    {
+      "stamp": 0.0,
+      "parent": "lidar_mapping_base",
+      "child": "lidar_mapping_scan",
+      "translation": [
+        0.139,
+        -0.002,
+        0.082
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "webcam_link",
+      "child": "camera_optical_frame",
+      "translation": [
+        0.026,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        -0.49999999999997324,
+        0.49999983660255165,
+        -0.49999999999997324,
+        0.5000001633974483
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "base_link",
+      "child": "rotor_0",
+      "translation": [
+        0.172,
+        -0.17,
+        0.0706
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "base_link",
+      "child": "rotor_1",
+      "translation": [
+        -0.172,
+        0.17,
+        0.0706
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "base_link",
+      "child": "rotor_2",
+      "translation": [
+        0.172,
+        0.17,
+        0.0706
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "base_link",
+      "child": "rotor_3",
+      "translation": [
+        -0.172,
+        -0.17,
+        0.0706
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "base_link",
+      "child": "base_scan",
+      "translation": [
+        0.139,
+        -0.002,
+        0.082
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "base_link",
+      "child": "webcam_servo_base",
+      "translation": [
+        0.163,
+        -0.008,
+        0.008
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "stamp": 1792361163.6690555,
+      "parent": "base_link",
+      "child": "winch_link",
+      "translation": [
+        0.0,
+        -0.0015,
+        -0.07
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "maps": 35
+}

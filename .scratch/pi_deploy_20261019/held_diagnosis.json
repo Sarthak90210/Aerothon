@@ -1,0 +1,174 @@
+{
+  "scope": "Subscriber-only live diagnosis and offline replay of initialized-then-held mapping",
+  "date_client": "2026-10-19",
+  "recorded_utc": "2026-10-18T22:53:08.612214+00:00",
+  "status": "live_symptom_and_offline_failure_mode_confirmed; original_first_rejection_not_captured",
+  "endpoint": "http://192.168.0.103:8899/",
+  "ssh_identity_matches_deployed_pi": true,
+  "aircraft_state_during_capture": {
+    "armed=True,mode=POSHOLD": 34
+  },
+  "live": {
+    "scan_count": 339,
+    "status_count": 341,
+    "status_counts": {
+      "Held: insufficient overlap; mapping held": 341
+    },
+    "accepted_mapping_scans": 0,
+    "scan_hz": 10.012359960370068,
+    "capture_interval_s": {
+      "min": 0.06721615791320801,
+      "median": 0.10025036334991455,
+      "p95": 0.10321328639984131,
+      "max": 0.12873077392578125
+    },
+    "receipt_interval_s": {
+      "min": 0.001817963000007694,
+      "median": 0.09979584200002023,
+      "p95": 0.1066420512499576,
+      "max": 0.3533408339999937
+    },
+    "scan_age_s": {
+      "min": 0.0691690444946289,
+      "median": 0.10247921943664551,
+      "p95": 0.10867347717285154,
+      "max": 0.35654354095458984
+    },
+    "valid_returns": {
+      "min": 117.0,
+      "median": 424.0,
+      "p95": 444.0,
+      "max": 459.0
+    },
+    "scan_beams": [
+      720
+    ],
+    "scan_frames": [
+      "base_scan"
+    ],
+    "pose_span_m": [
+      0.5184972286224365,
+      1.6638151481747627,
+      1.2792894840240479
+    ],
+    "imu_roll_deg": {
+      "min": -0.7152757660171295,
+      "median": -0.022845021762348913,
+      "p95": 0.3758598005177407,
+      "max": 0.6350936140294107
+    },
+    "imu_pitch_deg": {
+      "min": -6.122273786599956,
+      "median": -0.28447583146629696,
+      "p95": 1.6874566112247125,
+      "max": 4.0579306453468185
+    },
+    "flight_state_counts": {
+      "armed=True,mode=POSHOLD": 34
+    },
+    "maps": 35
+  },
+  "replay": {
+    "source": "actual deployed matcher and captured live scans",
+    "self_match": {
+      "Tracking: ": 339
+    },
+    "adjacent_match": {
+      "Tracking: ": 207,
+      "Held: scan alignment error exceeds 40 mm; mapping held": 114,
+      "Held: scan matching did not converge; mapping held": 17
+    },
+    "fresh_origin_replay": {
+      "Tracking: ": 46,
+      "Held: scan alignment error exceeds 40 mm; mapping held": 60,
+      "Held: scan matching did not converge; mapping held": 41,
+      "Held: too few consistent returns; mapping held": 4,
+      "Held: lost scene is not revalidated; restart mapping at a new origin": 9,
+      "Held: insufficient overlap; mapping held": 179
+    },
+    "self_match_line_fraction_percentiles": [
+      0.7597173144876325,
+      0.9060240963855422,
+      0.9852941176470589
+    ]
+  },
+  "recovery_evidence": {
+    "last_accepted_index": 93,
+    "retained_reference_index": 46,
+    "final_hold_duration_s": 24.479130029678345,
+    "later_adjacent_pairs_matching": 170,
+    "first_rejection": {
+      "index": 4,
+      "stamp": 1792361410.2578838,
+      "reference_returns": 445,
+      "current_returns": 428,
+      "reference_line_fraction": 0.8674157303370786,
+      "close_fraction": 0.9509345794392523,
+      "matched_line_count": 345,
+      "matched_line_fraction": 0.8060747663551402,
+      "last_success_age_s": 0.09950661659240723,
+      "reference_index": 0,
+      "state": "Held",
+      "reason": "scan alignment error exceeds 40 mm; mapping held"
+    },
+    "first_failed_recovery": {
+      "index": 104,
+      "stamp": 1792361420.2330248,
+      "reference_returns": 428,
+      "current_returns": 389,
+      "reference_line_fraction": 0.9088785046728972,
+      "close_fraction": 0.8020565552699229,
+      "matched_line_count": 280,
+      "matched_line_fraction": 0.7197943444730077,
+      "last_success_age_s": 1.098245620727539,
+      "reference_index": 46,
+      "state": "Held",
+      "reason": "lost scene is not revalidated; restart mapping at a new origin",
+      "raw_match": {
+        "pose": [
+          -0.3383592150887216,
+          -0.044940389243213585,
+          -0.0620466519542902
+        ],
+        "quality": {
+          "rmse_m": 0.03907419963840847,
+          "overlap": 0.6195372750642674,
+          "returns": 389
+        }
+      }
+    }
+  },
+  "findings": [
+    "LiDAR remained fresh at 10 Hz while mapping withheld all fresh mapping scans.",
+    "Every captured scan passed the matcher self-registration check, while 207/338 adjacent pairs passed full unchanged registration.",
+    "A fresh-origin replay reproduced initialization then persistent hold against retained reference scan 46.",
+    "Periodic grid messages continued despite no accepted mapping scans; map publication rate does not prove tracking."
+  ],
+  "limits": [
+    "The original initialized-to-held transition happened before recording; exact initial trigger remains unconfirmed.",
+    "Recorded position/attitude changed during parts of the capture; it is not a stationary ground-truth fixture.",
+    "Passing pair registration does not independently prove globally correct pose or map alignment.",
+    "No source fix or hardware qualification is claimed."
+  ],
+  "reproduction": {
+    "live_assertion": "python .scratch/pi_deploy_20261019/summarize_held.py --assert-tracking",
+    "live_exit": 1,
+    "replay_assertion": "python .scratch/pi_deploy_20261019/replay_held.py --assert-recovery",
+    "replay_exit": 1,
+    "replay_message": "Initialized, then held for 24.48s while 170 subsequent adjacent scan pairs still align"
+  },
+  "runtime_changes": {
+    "restarts": false,
+    "flight_commands": false,
+    "parameter_changes": false,
+    "source_changes": false,
+    "observer_exited_normally": true
+  },
+  "evidence_sha256": {
+    "held_observation.jsonl": "5b01289e47bb45ca41266583cd203b31c0b358fc1465ff4ea40c258569a98cfb",
+    "held_summary.json": "48ffb05b13f73e2e2344710114de111aca88fd7ad2d1250526f271800e078351",
+    "held_replay.json": "d92e9bd7dbd32d076b20cbf383841fb7750d64fc1673673e573137dc89e8b550",
+    "held_runtime.log": "373930efdc293f2a73015addd27ed59afc165322250a71e136154df12ef92c12",
+    "held_source_and_runtime_tail.log": "2b4ddaed0b5439a06ea45f1d61683246550c025b87ac81fdc0b1942a9a011fe5"
+  }
+}

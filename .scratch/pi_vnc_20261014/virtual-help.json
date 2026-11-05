@@ -1,0 +1,17 @@
+{
+  "virtual_help": {
+    "code": 1,
+    "stdout": "RealVNC(R) Server 7.13.1 (r57) ARMv8-A (Dec 6 2024 18:49:22)\nCopyright (C) RealVNC Ltd.\nRealVNC and VNC are trademarks of RealVNC Ltd and are protected by trademark\nregistrations and/or pending trademark applications in the European Union,\nUnited States of America and other jurisdictions.\nProtected by UK patent 2481870; US patent 8760366; EU patent 2652951.\nSee https://www.realvnc.com for information on VNC.\nFor third party acknowledgements see:\nhttps://www.realvnc.com/docs/7/foss.html\nOS: Debian GNU/Linux 13, Linux 6.18.50+rpt, aarch64\n\nUsage: vncserver-virtual [OPTION...] [:DISPLAY]\n       vncserver-virtual [OPTION...] [COMMAND]\n\nCommon operations:\n    :DISPLAY         Run VNC Server on DISPLAY. If a number is not specified, a\n                     display is automatically chosen.\n    -kill :DISPLAY   Kill the existing VNC Server running on DISPLAY.\n    -config FILE     Load Xvnc/Xorg options from FILE, in preference to\n                     /home/pi5/.vnc/config\n    -list            List OPTIONS.\n    -test            Print Xvnc/Xorg/vncserver-x11 command-line without\n                     executing.\n    -clean           Remove any stale X11 sockets and pidfiles.\n\nFor more information, and for details of available COMMANDS and OPTIONS, see the\nvncserver-virtual man page.\n",
+    "stderr": ""
+  },
+  "display_manager_state": {
+    "code": 0,
+    "stdout": "ActiveState=failed\nSubState=failed\n",
+    "stderr": ""
+  },
+  "xserver_processes": {
+    "code": 1,
+    "stdout": "",
+    "stderr": ""
+  }
+}

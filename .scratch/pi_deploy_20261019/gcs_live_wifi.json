@@ -1,0 +1,126 @@
+{
+  "endpoint": "http://192.168.0.103:8899",
+  "asset": "/assets/index-BvJeOAWo.js",
+  "profile_id": "drone",
+  "runtime": "Running",
+  "host_fresh": true,
+  "execution": null,
+  "telemetry_messages": 120,
+  "map_messages": 0,
+  "closes": 0,
+  "first": {
+    "mission": {
+      "selected": null,
+      "part": "mission",
+      "state": "idle",
+      "armed": false,
+      "mode": "LAND",
+      "elapsed": 0,
+      "delivery_offset_m": null,
+      "landing_precision": null,
+      "result": null,
+      "result_reason": null
+    },
+    "sample_age_s": {
+      "winch": 0.099,
+      "gps": 0.48,
+      "magnetic": 0.468,
+      "sats": 0.452,
+      "pose": 0.014,
+      "velocity": 0.011,
+      "state": 0.897,
+      "vibration": 0.441,
+      "power": 0.435,
+      "readiness": 0.363,
+      "fence": 139.789,
+      "devices": 0
+    },
+    "scan_returns": 0,
+    "scan_total": 0,
+    "devices": {
+      "camera": {
+        "ok": false,
+        "receipt_age_s": null
+      },
+      "lidar": {
+        "ok": false,
+        "receipt_age_s": null
+      },
+      "identity": {
+        "ok": true,
+        "value": 1,
+        "basis": "configured MAVROS target; live FCU link"
+      },
+      "clock": {
+        "ok": true,
+        "reason": "system ROS clock"
+      },
+      "camera_actuator": {
+        "ok": false,
+        "reason": "hardware camera motion feedback has not been qualified"
+      },
+      "winch_actuator": {
+        "ok": true,
+        "reason": ""
+      }
+    }
+  },
+  "last": {
+    "mission": {
+      "selected": null,
+      "part": "mission",
+      "state": "idle",
+      "armed": false,
+      "mode": "LAND",
+      "elapsed": 0,
+      "delivery_offset_m": null,
+      "landing_precision": null,
+      "result": null,
+      "result_reason": null
+    },
+    "sample_age_s": {
+      "winch": 0.001,
+      "gps": 0.375,
+      "magnetic": 0.353,
+      "sats": 0.338,
+      "pose": 0.322,
+      "velocity": 0.32,
+      "state": 0.789,
+      "vibration": 0.32,
+      "power": 0.317,
+      "readiness": 0.263,
+      "fence": 151.689,
+      "devices": 0
+    },
+    "scan_returns": 0,
+    "scan_total": 0,
+    "devices": {
+      "camera": {
+        "ok": false,
+        "receipt_age_s": null
+      },
+      "lidar": {
+        "ok": false,
+        "receipt_age_s": null
+      },
+      "identity": {
+        "ok": true,
+        "value": 1,
+        "basis": "configured MAVROS target; live FCU link"
+      },
+      "clock": {
+        "ok": true,
+        "reason": "system ROS clock"
+      },
+      "camera_actuator": {
+        "ok": false,
+        "reason": "hardware camera motion feedback has not been qualified"
+      },
+      "winch_actuator": {
+        "ok": true,
+        "reason": ""
+      }
+    }
+  },
+  "closed_while_sampling": 0
+}

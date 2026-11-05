@@ -1,0 +1,4 @@
+FROM aerothon-runtime:20261014
+USER root
+ARG INSTALL_PROXY
+RUN apt-get -o Acquire::http::Proxy="$INSTALL_PROXY" -o Acquire::Retries=3 update && apt-get -o Acquire::http::Proxy="$INSTALL_PROXY" -o Acquire::Retries=3 install -y --no-install-recommends python3-aiohttp ros-jazzy-slam-toolbox ros-jazzy-nav2-lifecycle-manager && rm -rf /var/lib/apt/lists/*

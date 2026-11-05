@@ -1,0 +1,319 @@
+{
+  "deploy": [
+    {
+      "name": "Dockerfile",
+      "kind": "file",
+      "bytes": 296,
+      "sha256": "bba05771127c6f5389036d19826c6928a82b11c7452fb4de0a3d1c3cc92fe115"
+    },
+    {
+      "name": "Dockerfile.dependencies",
+      "kind": "file",
+      "bytes": 782,
+      "sha256": "fd1c22f0fa19969ff2cbbc575c24a2b75c6ec8c53f47f3342b35378bb6c85d52"
+    },
+    {
+      "name": "capture_ws.py",
+      "kind": "file",
+      "bytes": 1021,
+      "sha256": "11fdf36aa56a4cfa75ebadecb425c97bf2b8a133957ce2dbbfec4b19c8fee129"
+    },
+    {
+      "name": "check_installed.py",
+      "kind": "file",
+      "bytes": 1790,
+      "sha256": "6889190b874a9d1f5b9d6a75e8d98236980b914698390182f5507413ca663d27"
+    },
+    {
+      "name": "console.launch.py",
+      "kind": "file",
+      "bytes": 956,
+      "sha256": "eb76e77026301066132fd1468c5f6dfda6e4021e68dea8e78600f6e23473c302"
+    },
+    {
+      "name": "external_driver.json",
+      "kind": "file",
+      "bytes": 6767,
+      "sha256": "97dd1cc655dbf5869856916bf0f5e7dee2dff63f73462201539c7b8ee891f2b5"
+    },
+    {
+      "name": "extract_runtime.py",
+      "kind": "file",
+      "bytes": 1033,
+      "sha256": "3faaf53c8a2b3013fb6814b9ff4575ea9fc4f5224f5eb0d90c10e5764bd843fc"
+    },
+    {
+      "name": "native_import_review.json",
+      "kind": "file",
+      "bytes": 1774,
+      "sha256": "891b416957681f99db2770d9d4fc07ef905281bb80384a17cee82622d3f485eb"
+    },
+    {
+      "name": "removed_old_files.json",
+      "kind": "file",
+      "bytes": 644,
+      "sha256": "e93d76669768abb37eed4b03ea2a7e20d6d9b7ffe6ab2741f0dc8d47f22d4d2f"
+    },
+    {
+      "name": "run_container.sh",
+      "kind": "file",
+      "bytes": 2174,
+      "sha256": "65fe86b8b6d82774ba0678c38cf6dbc1b8684097544d84e4bf7ed95b808b40dc"
+    },
+    {
+      "name": "run_router.sh",
+      "kind": "file",
+      "bytes": 297,
+      "sha256": "fb4922e7cf09c560fd6b725c08843cad4a301805441c04e4b9197ef3db0c87f1"
+    },
+    {
+      "name": "runtime.env",
+      "kind": "file",
+      "bytes": 384,
+      "sha256": "5827a835277ab75c83776dbb8a5e13d5f5eaf457e0b3379322aedafd1ce5f978"
+    },
+    {
+      "name": "runtime_20261013.zip",
+      "kind": "file",
+      "bytes": 1399706,
+      "sha256": "4786afd9c4bbb06671e9cdc75e5634b8765beb177b19db795e2f8ebfe117f4f3"
+    },
+    {
+      "name": "runtime_deploy_preview.zip",
+      "kind": "file",
+      "bytes": 1406655,
+      "sha256": "5533229b2df196628a9ba5d9a4ea0e820e479ab78882a6417b84c23256a1e1b2"
+    }
+  ],
+  "workspace": [
+    {
+      "name": "AGENTS.md",
+      "kind": "file",
+      "bytes": 8891,
+      "sha256": "93ecc1ffdcd07c9e26d1df2229a6eaa345f3beaf91567464521ade80efa152ec"
+    },
+    {
+      "name": "MASTER_DOCUMENTATION.md",
+      "kind": "file",
+      "bytes": 33963,
+      "sha256": "b3b42a432eb788a9f47635962cc94f135fb6ccf2fb2137e88d63e4b047998351"
+    },
+    {
+      "name": "build",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "gcs",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "install",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "log",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "runtime_manifest.json",
+      "kind": "file",
+      "bytes": 29004,
+      "sha256": "aa40fc09901ba810fa25602089d21101cd9bfc7eec9159753d3de641a4131d49"
+    },
+    {
+      "name": "scripts",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "src",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    }
+  ],
+  "workspace_src": [
+    {
+      "name": "aerothon_avoidance",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "aerothon_gcs",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "aerothon_mission",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "aerothon_payload",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "aerothon_perception",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    },
+    {
+      "name": "ldlidar_stl_ros2",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    }
+  ],
+  "other_src": [],
+  "venvs": [],
+  "mavproxy": [],
+  "tilecache": [
+    {
+      "name": "SRTM3",
+      "kind": "directory",
+      "bytes": 4096,
+      "sha256": null
+    }
+  ],
+  "devices": [
+    "/dev/ttyAMA10",
+    "/dev/serial0"
+  ],
+  "external_driver_manifest": {
+    "repository": "https://github.com/ldrobotSensorTeam/ldlidar_stl_ros2",
+    "revision": "bf668a89baf722a787dadc442860dcbf33a82f5a",
+    "files": {
+      "LICENSE": "9a73e53bf9966dfe69c0f8723d7db4b06ff8e81cfa2ea39b9d89f86565282950",
+      "package.xml": "d7cc6c9b21013a09114582d8df4fc3f0b909d4cba82916737b6fd1a2551e3c37",
+      ".gitignore": "7c7c35138ea3faf6762797b1bd8477e402f9286158e04c8349d58835b8de500d",
+      "CMakeLists.txt": "abac938f49a6e72a5a968bf20e712b67ec672fe95036a235d84c8ed0c446957c",
+      "src/demo.cpp": "9ee91c2005310b3ae31858bad885e982977364e4ded1eba81fc1c568a6ebfc13",
+      "launch/viewer_ld19.launch.py": "5cbf3790ebc9234a9714fe3ab3eb5c55d4e0e058512f197be02d44dd89dd849b",
+      "launch/stl27l.launch.py": "9aae663ad3ec3dc21a6315fe546c7c342ec2b79f80d7677cd89875e26eb5f9b8",
+      "launch/ld06.launch.py": "8a0ee13cc55602688b0e26ae04e82172d77b30c80a1cca3d2d9aa7fe132596b4",
+      "launch/ld19.launch.py": "1e512b513e2915318fc7caa578b1722400ecf35df50a3a9a5cfa80ceabad994c",
+      "launch/viewer_stl27l.launch.py": "e5d520bce555342af4e6dcda3561ccb35293cd4058717cabe450af2ad8016881",
+      "launch/viewer_ld06.launch.py": "163cd5668211dada091e3d268b49b92c79a7dad855dae4700ee41eddc767d274",
+      "scripts/delete_udev_rules.sh": "301cd24ee18ba24c35f6ab80422dce21ab1da2215b88667c4f308bb94ec32ada",
+      "scripts/create_udev_rules.sh": "eed88ca0aa27188d32ec5e04972dc6c38895fd07f5b7fb0a78c7bde7c0b429d9",
+      "scripts/ldlidar.rules": "605b8f5a6f1f7038c31e31ba4a7551b5842414a11fa49fa0803333ed4affa116",
+      "rviz2/ldlidar.rviz": "e8dced0b0f2bd11eefa3cd40d9fb9f696368e188d25701f0c6c5ad46786bd115",
+      "include/ros2_api.h": "b7d8772692b5aaac8cc19ed57d0ccd068960d5f4389e2a60584619f4f46b7957",
+      "ldlidar_driver/include/logger/log_module.h": "115e43a8c846a3f6f51cf034ebbfcdffac373f2d43c4ea608200a4d70cd44c5b",
+      "ldlidar_driver/include/serialcom/serial_interface_linux.h": "9cc341eeed37079961f0ed2576565d386bc9134e6abe13b7a1c7266be0e2d137",
+      "ldlidar_driver/include/networkcom/network_socket_interface_linux.h": "a3c08ee8f807b4ff63557f9da1c27ea760e23db945fb4e5f1a313025b13e8a18",
+      "ldlidar_driver/include/core/ldlidar_datatype.h": "6876333c0573801d8387a99e5a81a783d1944a58b993c559e8de61bbcc0c9d28",
+      "ldlidar_driver/include/core/ldlidar_driver.h": "afe9cc140380ffce229aaf85b100fe49d20a27924bd59010b72f491cc178b34f",
+      "ldlidar_driver/include/filter/tofbf.h": "2cfc8950c15b3396e4b9c1653740de8e7d4e1bc9ca015d6c0e68026c216a2dea",
+      "ldlidar_driver/include/dataprocess/lipkg.h": "62b9466cab5a8e7957ca327f25676ee92a3b1be508a5471753512bd442af4836",
+      "ldlidar_driver/src/logger/log_module.cpp": "ee4cb98fc3e6b518240c37167a47792bf97dc308e25a916cd24bfb9bac3bb548",
+      "ldlidar_driver/src/serialcom/serial_interface_linux.cpp": "282e4499342a44a47ca1ad36cf3be9fde9c80cb075131fd86faa0b4678745889",
+      "ldlidar_driver/src/networkcom/network_socket_interface_linux.cpp": "53351c84a20ba312f22989cbd22e7ae6950659dc34525b910637b4607ecf7659",
+      "ldlidar_driver/src/core/ldlidar_driver.cpp": "2022f37067d9403bfe650afb90b3162d560fce98de7d5bc3ad1092d784601c4c",
+      "ldlidar_driver/src/filter/tofbf.cpp": "c969b076f8fa5d23f9c64d43f59bf8bf05beb374830a3709b098d8adc524c949",
+      "ldlidar_driver/src/dataprocess/lipkg.cpp": "acb1992bbf0e947e756c138ae4f8d448b4a7d00b4dd6cbc17860a41a27e8d473"
+    },
+    "patches": [
+      {
+        "path": "ldlidar_driver/include/logger/log_module.h",
+        "change": "Enable Linux pthread declarations",
+        "before_sha256": "115e43a8c846a3f6f51cf034ebbfcdffac373f2d43c4ea608200a4d70cd44c5b",
+        "after_sha256": "0fb45587c86960b9d1dac2122a825e0092c924fedb5aa97cd126144870c18d0b"
+      }
+    ],
+    "installed_files": {
+      "LICENSE": "9a73e53bf9966dfe69c0f8723d7db4b06ff8e81cfa2ea39b9d89f86565282950",
+      "package.xml": "d7cc6c9b21013a09114582d8df4fc3f0b909d4cba82916737b6fd1a2551e3c37",
+      ".gitignore": "7c7c35138ea3faf6762797b1bd8477e402f9286158e04c8349d58835b8de500d",
+      "CMakeLists.txt": "abac938f49a6e72a5a968bf20e712b67ec672fe95036a235d84c8ed0c446957c",
+      "src/demo.cpp": "9ee91c2005310b3ae31858bad885e982977364e4ded1eba81fc1c568a6ebfc13",
+      "launch/viewer_ld19.launch.py": "5cbf3790ebc9234a9714fe3ab3eb5c55d4e0e058512f197be02d44dd89dd849b",
+      "launch/stl27l.launch.py": "9aae663ad3ec3dc21a6315fe546c7c342ec2b79f80d7677cd89875e26eb5f9b8",
+      "launch/ld06.launch.py": "8a0ee13cc55602688b0e26ae04e82172d77b30c80a1cca3d2d9aa7fe132596b4",
+      "launch/ld19.launch.py": "1e512b513e2915318fc7caa578b1722400ecf35df50a3a9a5cfa80ceabad994c",
+      "launch/viewer_stl27l.launch.py": "e5d520bce555342af4e6dcda3561ccb35293cd4058717cabe450af2ad8016881",
+      "launch/viewer_ld06.launch.py": "163cd5668211dada091e3d268b49b92c79a7dad855dae4700ee41eddc767d274",
+      "scripts/delete_udev_rules.sh": "301cd24ee18ba24c35f6ab80422dce21ab1da2215b88667c4f308bb94ec32ada",
+      "scripts/create_udev_rules.sh": "eed88ca0aa27188d32ec5e04972dc6c38895fd07f5b7fb0a78c7bde7c0b429d9",
+      "scripts/ldlidar.rules": "605b8f5a6f1f7038c31e31ba4a7551b5842414a11fa49fa0803333ed4affa116",
+      "rviz2/ldlidar.rviz": "e8dced0b0f2bd11eefa3cd40d9fb9f696368e188d25701f0c6c5ad46786bd115",
+      "include/ros2_api.h": "b7d8772692b5aaac8cc19ed57d0ccd068960d5f4389e2a60584619f4f46b7957",
+      "ldlidar_driver/include/logger/log_module.h": "0fb45587c86960b9d1dac2122a825e0092c924fedb5aa97cd126144870c18d0b",
+      "ldlidar_driver/include/serialcom/serial_interface_linux.h": "9cc341eeed37079961f0ed2576565d386bc9134e6abe13b7a1c7266be0e2d137",
+      "ldlidar_driver/include/networkcom/network_socket_interface_linux.h": "a3c08ee8f807b4ff63557f9da1c27ea760e23db945fb4e5f1a313025b13e8a18",
+      "ldlidar_driver/include/core/ldlidar_datatype.h": "6876333c0573801d8387a99e5a81a783d1944a58b993c559e8de61bbcc0c9d28",
+      "ldlidar_driver/include/core/ldlidar_driver.h": "afe9cc140380ffce229aaf85b100fe49d20a27924bd59010b72f491cc178b34f",
+      "ldlidar_driver/include/filter/tofbf.h": "2cfc8950c15b3396e4b9c1653740de8e7d4e1bc9ca015d6c0e68026c216a2dea",
+      "ldlidar_driver/include/dataprocess/lipkg.h": "62b9466cab5a8e7957ca327f25676ee92a3b1be508a5471753512bd442af4836",
+      "ldlidar_driver/src/logger/log_module.cpp": "ee4cb98fc3e6b518240c37167a47792bf97dc308e25a916cd24bfb9bac3bb548",
+      "ldlidar_driver/src/serialcom/serial_interface_linux.cpp": "282e4499342a44a47ca1ad36cf3be9fde9c80cb075131fd86faa0b4678745889",
+      "ldlidar_driver/src/networkcom/network_socket_interface_linux.cpp": "53351c84a20ba312f22989cbd22e7ae6950659dc34525b910637b4607ecf7659",
+      "ldlidar_driver/src/core/ldlidar_driver.cpp": "2022f37067d9403bfe650afb90b3162d560fce98de7d5bc3ad1092d784601c4c",
+      "ldlidar_driver/src/filter/tofbf.cpp": "c969b076f8fa5d23f9c64d43f59bf8bf05beb374830a3709b098d8adc524c949",
+      "ldlidar_driver/src/dataprocess/lipkg.cpp": "acb1992bbf0e947e756c138ae4f8d448b4a7d00b4dd6cbc17860a41a27e8d473"
+    }
+  },
+  "4b289afb555d": {
+    "Name": "/sleepy_wilbur",
+    "Created": "2026-10-13T21:51:06.110922211Z",
+    "Image": "sha256:0f6d78de3a6efa8d765b782837cb8ebf9bda7ce08ada5a3c6250df99548869d2",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 137,
+      "Error": "",
+      "StartedAt": "2026-10-13T21:51:06.418885933Z",
+      "FinishedAt": "2026-10-13T21:53:13.569841672Z"
+    },
+    "Mounts": [],
+    "command": [
+      "/bin/sh",
+      "-c",
+      "apt-get update && apt-get install -y --no-install-recommends     ros-jazzy-mavros ros-jazzy-mavros-extras ros-jazzy-cv-bridge     ros-jazzy-web-video-server ros-jazzy-usb-cam ros-jazzy-xacro     ros-jazzy-robot-state-publisher ros-jazzy-py-trees     python3-opencv python3-numpy python3-scipy python3-serial     python3-websockets python3-pyzbar tesseract-ocr libzbar0     geographiclib-tools     && /opt/ros/jazzy/lib/mavros/install_geographiclib_datasets.sh     && rm -rf /var/lib/apt/lists/*"
+    ]
+  },
+  "1d3f133612b4": {
+    "Name": "/elated_edison",
+    "Created": "2026-10-13T21:19:27.488258713Z",
+    "Image": "sha256:0f6d78de3a6efa8d765b782837cb8ebf9bda7ce08ada5a3c6250df99548869d2",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-13T21:34:59.758632287Z",
+      "FinishedAt": "2026-10-13T21:49:50.753866848Z"
+    },
+    "Mounts": [],
+    "command": [
+      "/bin/sh",
+      "-c",
+      "apt-get update && apt-get install -y --no-install-recommends     ros-jazzy-mavros ros-jazzy-mavros-extras ros-jazzy-cv-bridge     ros-jazzy-web-video-server ros-jazzy-usb-cam ros-jazzy-xacro     ros-jazzy-robot-state-publisher ros-jazzy-py-trees     python3-opencv python3-numpy python3-scipy python3-serial     python3-websockets python3-pyzbar tesseract-ocr libzbar0     geographiclib-tools     && /opt/ros/jazzy/lib/mavros/install_geographiclib_datasets.sh     && rm -rf /var/lib/apt/lists/*"
+    ]
+  }
+}

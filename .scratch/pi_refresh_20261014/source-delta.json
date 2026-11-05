@@ -1,0 +1,16 @@
+{
+  "pi_edits_since_its_manifest": [],
+  "payload_changes_from_prior_pi_version": [
+    "MASTER_DOCUMENTATION.md",
+    "gcs/assets/Graphs-Tvv_RgCw.js",
+    "gcs/assets/index-CIO3r3xq.js",
+    "gcs/assets/index-E0rYcH6q.css",
+    "gcs/index.html",
+    "src/aerothon_gcs/gcs_aggregator/gcs_aggregator/aggregator.py",
+    "src/aerothon_gcs/gcs_aggregator/gcs_aggregator/sensor_metrics.py",
+    "src/aerothon_gcs/gcs_aggregator/package.xml",
+    "src/aerothon_mission/mission_bringup/launch/mission2.launch.py",
+    "src/aerothon_mission/mission_bringup/mission_bringup/stream_rate_keeper.py"
+  ],
+  "flight_decision_differences_from_prior_pi_version": []
+}

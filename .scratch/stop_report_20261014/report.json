@@ -1,0 +1,1004 @@
+{
+  "schema": "aerothon-stopped-project-report/1",
+  "client_date": "2026-10-14",
+  "timezone": "Asia/Calcutta",
+  "status": "stopped_by_user",
+  "accepted_source": false,
+  "flight_qualified": false,
+  "original_200_case_qualified": false,
+  "summary": "The plain GCS and much of the Pi/laptop runtime were implemented and software-tested. I did not complete the requested final flight qualification, campaign or physical integration. The latest Pi connection reached disarmed preflight observation, not a completed mission.",
+  "accountability": "I spent substantial effort fixing GCS migration, Pi deployment and network/sensor integration. I did not carry that work through the required final complete suite and matching-source flights. Working screens, Accepted receipts and green focused tests are insufficient to call the whole system ready. I am not assigning a completion percentage because software items and flight qualification gates are different obligations.",
+  "stop_state": "No AeroTHON simulator, gateway relay or camera/telemetry recorder was found active on the laptop at the stop check. Pi HTTP and SSH at 192.168.0.100 timed out, so its current process and armed state could not be confirmed. Last saved Pi telemetry was idle, STABILIZE and disarmed. No mission Start or arm command was sent during the latest Pi integration. No further feature work or qualification run was started to write this report.",
+  "original_instructions": [
+    {
+      "instruction": "Fix return-corridor recovery and meet 0.70 m clearance.",
+      "status": "Unresolved",
+      "done": "Several earlier navigation subsets passed. V44 completed three calm clarified-arena missions. The later combined-banner field mission completed delivery, return and disarm.",
+      "gap": "That field mission failed clearance at 0.663645 m, with 70 below-floor samples. No current Pi-source flight closes this obligation."
+    },
+    {
+      "instruction": "Fix QR search, especially seed 2, and run seeds 1, 2 and 3 with normal timing and actuators.",
+      "status": "Incomplete",
+      "done": "Older object-level navigation records include passes for field seeds 1, 2 and 3. QR/camera/perception regressions and new capture transport checks passed.",
+      "gap": "Object-level navigation did not exercise rendered QR delivery. The latest Pi deployment has no completed seed 1, 2 or 3 mission proving QR search and return braking."
+    },
+    {
+      "instruction": "Resolve strong gusts and artificially delayed control, later explicitly defer both.",
+      "status": "Deferred, unresolved",
+      "done": "Failures and the rejected wider lidar filter were preserved. Strong gusts and artificial control delay were excluded from the requested qualification scope.",
+      "gap": "These cases remain failures or unqualified. They cannot be counted as passes. Thin obstacles and acceptance thresholds were retained."
+    },
+    {
+      "instruction": "Integrate the final controller, camera scheduling and perception with normal startup, then regress and run the full offline suite.",
+      "status": "Partly implemented",
+      "done": "Production planner, scan buffering, capture inbox and independent clock paths were retained. A managed Pi launch and remote sensor/actuator adapters were integrated. Focused tests and builds passed.",
+      "gap": "The latest complete offline attempt ended in a frontend TypeScript error after 1,955 Python passes. Focused checks passed after fixes, but no complete final-source offline pass exists."
+    },
+    {
+      "instruction": "On one final source, pass standard seeds 20261003 and 1001, plus shipped, rotated and split rendered courses.",
+      "status": "Not completed",
+      "done": "Older V44 calm clarified-arena runs passed 22/22. Their source, configurations and evidence are preserved.",
+      "gap": "Those are a different matrix and source. None of the five requested rendered gates is qualified on the latest Pi bundle. Actual contact evidence, delivery and connected disarm are still required."
+    },
+    {
+      "instruction": "Run the corrected campaign, later exclude strong gusts and delayed control and report the exact remaining case count.",
+      "status": "Not completed",
+      "done": "An older 96-flight reduced campaign plan is documented. Offline exclusions have an explicit ledger.",
+      "gap": "The final reduced world/seed/weather campaign has not been closed on the latest source. Its case list and exclusions need a final audit. Neither 96 qualified flights nor the original 200-case qualification is claimed."
+    },
+    {
+      "instruction": "Consolidate accepted source, configurations, detector rates, recordings, telemetry, results and all remaining failures.",
+      "status": "Interim report complete; acceptance report pending",
+      "done": "Source bundles, run recordings, telemetry, configuration inputs, deployment receipts and failed attempts were retained. This report accounts for the stopped state.",
+      "gap": "There is no accepted final source. A final qualification report must wait for matching-source acceptance and campaign evidence."
+    }
+  ],
+  "gcs_instructions": [
+    "Replace the old GCS with the plain interface we designed, with Flight operations and Testing, neutral themes, readable text and thin dividers.",
+    "Host the GCS and production algorithms on the Pi; run only Gazebo, SITL and a connection gateway on the laptop.",
+    "Make profiles detailed and editable for changing addresses, FCU transports, identity, devices, sensor gateway, calibration and RC mappings. Keep DDS local to the Pi.",
+    "Use the same production mission and component algorithms in both deployments, with one movement owner, explicit Start, recovery and transmitter takeover.",
+    "Provide full mission, manual SLAM, transmitter and route avoidance, QR, banner, mechanism and position/GPS delivery tests.",
+    "Restore map loading, all 20 production arena dimensions, flight/sensor graphs, vibration and magnetic indications, plus explicit stale/unavailable data.",
+    "Initially allow a standalone receive-only telemetry GCS without algorithms; later merge it into the requested command-capable shared production runtime.",
+    "Replace stale Pi code and services, preserve recovery copies and measured configuration, and work directly in main without new worktrees.",
+    "Make green, orange and red banner colours operator-supplied hex codes, and apply them through the GCS to perception.",
+    "At this stop, keep the report and project in the AEROTHON working folder, remove extra worktrees after preservation, and keep one maintained GCS."
+  ],
+  "completion": [
+    {
+      "area": "Plain GCS, map and arena",
+      "status": "Software delivered",
+      "proof": "Correct React interface restored; obsolete render.ts removed. Offline map assets, 20 arena fields and plain HTTP commands verified in the earlier merge and Pi refresh.",
+      "left": "Latest profile/task changes still need complete browser-to-flight verification. Cached imagery covers its bundled area, not arbitrary locations."
+    },
+    {
+      "area": "Graphs and sensor indications",
+      "status": "Partly verified",
+      "proof": "Flight and sensor views, history, freshness gaps, selectable traces and CSV export exist. 25 frontend tests pass.",
+      "left": "The latest saved magnetic strength is 5.789e11 microtesla, an implausible value. Verify units/conversion before relying on it. Vibration Z is unavailable in that sample. No calibrated magnetic interference percentage is claimed."
+    },
+    {
+      "area": "Pi software deployment and cleanup",
+      "status": "Software delivered",
+      "proof": "Latest bundle receipt verifies 255 files. ARM64 build finished 13 packages, including 12 local packages and the external lidar driver. Earlier cleanup freed about 1.77 GB and kept recovery archives.",
+      "left": "Latest live Pi status and boot/reconnect behaviour could not be checked at this stop because HTTP and SSH timed out."
+    },
+    {
+      "area": "Laptop SITL/Gazebo to Pi connection",
+      "status": "Demonstrated while disarmed",
+      "proof": "Pi ran production ROS nodes and consumed actual rendered images, calibrated camera data, lidar and FCU telemetry from the laptop. FCU identity 1/1 and gateway session were checked.",
+      "left": "Changed-address profiles and duplicate receipts were observed, but dropped-link, pause, restart and recovery scenarios still need integrated operational trials."
+    },
+    {
+      "area": "Shared supervisor and nine tasks",
+      "status": "Implemented, software tested",
+      "proof": "Nine task entrypoints construct using production components. Typed contracts, exclusive ownership, durable command IDs and lifecycle states exist; 38 focused runtime/native tests pass.",
+      "left": "Zero of the nine tasks has a completed Pi-to-laptop execution trial in this latest integration. Arming, takeoff, takeover, recovery and completion remain unverified together."
+    },
+    {
+      "area": "Sensor timing and camera scheduling",
+      "status": "Implemented, passive observation verified",
+      "proof": "Capture timestamps retained; camera uses a newest-frame inbox on separate traffic; clock/lidar reader is independent. WebSocket heartbeat and camera backlog failures were corrected. Lidar rate uses capture-clock time plus a steady watchdog.",
+      "left": "No full mission proves detector throughput, freshness or congestion behaviour during flight. Production lidar and camera minimums were retained."
+    },
+    {
+      "area": "Camera and winch compatibility",
+      "status": "Observation only",
+      "proof": "SITL PWM outputs and measured Gazebo joints gate capability checks. Passive readback reported camera FORWARD near 0.001 rad and winch payout near 0.000005 m.",
+      "left": "These values do not demonstrate commanded motion, release or delivery. Physical GPIO/encoder control is absent and unsupported hardware actuation is blocked."
+    },
+    {
+      "area": "Dynamic green/orange/red hex colours",
+      "status": "Implemented, software and applied-input checks passed",
+      "proof": "All three #RRGGBB inputs are required. Banner and red-zone masks derive from them, including clipped-boundary evidence. 216 focused perception/configuration checks passed; applied colours appeared in Pi telemetry.",
+      "left": "No final rendered mission or physical photo set verifies the new path across lighting, backgrounds and all required courses."
+    },
+    {
+      "area": "Final complete offline suite",
+      "status": "Incomplete",
+      "proof": "Earlier merge passed 1,927 tests with 8 skips. Latest broad attempt passed 1,955 Python tests with 8 skips and 9 native checks, then failed the frontend step. Later focused runtime/frontend/build checks passed.",
+      "left": "One complete final-source reduced suite, including frontend and configuration checks, remains outstanding. Overlapping focused counts must not be summed as unique tests."
+    },
+    {
+      "area": "Rendered mission qualification",
+      "status": "Incomplete",
+      "proof": "Three older V44 calm clarified-arena missions passed 22/22. The later combined-banner field run completed and disarmed but failed 21/22.",
+      "left": "Seeds 1/2/3, the five requested rendered gates and actual Pi-managed full workflow are not closed on the latest source."
+    },
+    {
+      "area": "Reduced campaign",
+      "status": "Pending",
+      "proof": "Historical source/configuration records and exclusions remain available. The original 200-case claim remains false.",
+      "left": "Freeze the final source, enumerate the final matrix and exclusions, run it after targeted gates, and record every outcome."
+    },
+    {
+      "area": "Physical FCU, winch and power",
+      "status": "Hardware unqualified",
+      "proof": "Earlier physical telemetry worked through TELEM3 at 115200 on /dev/ttyAMA0. CPU power cap was recorded during earlier BEC diagnosis. Wiring records identify the camera servo and BTS7960/encoder plan.",
+      "left": "The UART was absent at the latest destination audit. GPIO/encoder winch implementation, loaded calibration, camera travel and BEC-only boot remain pending. USB-C boot does not qualify the BEC."
+    }
+  ],
+  "failures": [
+    {
+      "name": "Original corridor and QR blockers",
+      "outcome": "Initial split return run passed only 17/22 with 0.687 m clearance; isolated seed 2 missed delivery after two QR search passes.",
+      "resolution": "Later navigation and calm mission subsets improved. Current-source rendered closure is still missing."
+    },
+    {
+      "name": "Earlier V39 native contact evidence",
+      "outcome": "A focused native trial passed seven geometric checks but failed the independent contact-free assertion. The saved record includes armed skid/ground contacts.",
+      "resolution": "Preserved in the earlier stopped checkpoint. Geometry-only success was not promoted to full acceptance."
+    },
+    {
+      "name": "Combined-banner field clearance",
+      "outcome": "21/22 checks. Minimum 0.663645 m against 0.70 m at return obstacle 0, native time 842.099 s. Seventy below-floor samples. Zero unexpected contacts, 0.11 m payload error, 886.1 s flight, actual disarm.",
+      "resolution": "Unresolved. The aircraft completed the mission, but the acceptance failure remains. The miss is about 3.64 cm."
+    },
+    {
+      "name": "Operator-interrupted field run",
+      "outcome": "The next laid-only field trial was stopped in outbound banner alignment, then landed/disarmed with GRADE_FAIL and ABORTED_RTL.",
+      "resolution": "Retained as interrupted evidence. It is not a naturally completed mission or a claimed 900 s violation."
+    },
+    {
+      "name": "Strong gusts and coupled artificial delay",
+      "outcome": "Obstacle-contact/return failures remain. A wider lidar filter was rejected because it could erase thin obstacles.",
+      "resolution": "Explicitly deferred and excluded. No obstacle removal or threshold relaxation was used."
+    },
+    {
+      "name": "First Pi rendered connection",
+      "outcome": "FCU connected but sensor WebSockets closed; camera, lidar and clock became stale. No arm/start trial was run.",
+      "resolution": "Added the receiver loop needed for heartbeat replies. Original failed attempt retained."
+    },
+    {
+      "name": "Second Pi rendered connection",
+      "outcome": "Camera processing queued frames, closed the stream and disrupted other channels. No flight was attempted.",
+      "resolution": "Changed transport scheduling to a newest-frame inbox and independent reader, with camera failure separated from clock/lidar."
+    },
+    {
+      "name": "Third connection preflight",
+      "outcome": "QR health went silent while the camera was in a non-QR pose; lidar wall-clock rate looked below 8 Hz despite 10 Hz capture-clock input.",
+      "resolution": "QR reports NOT_VISIBLE health; lidar evaluates capture-clock rate and steady-time loss. Focused checks and disarmed readiness passed. Flight proof is still absent."
+    },
+    {
+      "name": "Latest offline run",
+      "outcome": "After 1,955 passes and eight skips, Node rejected a TypeScript constructor parameter property in ApiError. The full command exited FAILED.",
+      "resolution": "Fixed the TypeScript syntax; 25 frontend checks and build passed afterward. Further readiness fixes mean a complete final suite is still required."
+    },
+    {
+      "name": "Earlier banner performance run",
+      "outcome": "An earlier loaded merge trial failed the 100 ms/frame benchmark at about 214 ms/frame. A quiet full run passed afterward.",
+      "resolution": "Both records retained. The quiet pass does not establish worst-case detector throughput under Pi flight load."
+    },
+    {
+      "name": "Development/deployment failures",
+      "outcome": "ROS import/test-runner and NumPy ABI conflicts, Windows/WSL file issues, reserved port 8090, WSL mirrored networking failure, Pi download failure, CRLF scripts, root-owned SQLite state and stale built asset references interrupted progress.",
+      "resolution": "Individual fixes and receipts exist. WSL now uses NAT with an explicit two-port relay. Reboot and integrated recovery verification remains incomplete."
+    },
+    {
+      "name": "Telemetry and readiness inconsistencies",
+      "outcome": "Latest saved magnetic units are implausible. That same sample shows overall readiness true while the separate EKF display is UNKNOWN and stale markers remain.",
+      "resolution": "These are unresolved verification findings, not proof of a specific root cause. Reconcile units and readiness/display sources before treating the indication as reliable."
+    },
+    {
+      "name": "Stop-time Pi access",
+      "outcome": "HTTP at 192.168.0.100:8899 and SSH at 192.168.0.100 timed out. No laptop simulator/relay/recorder was found active.",
+      "resolution": "Implementation stopped. Current Pi runtime and armed state cannot be certified remotely. Last recorded mission state was idle and disarmed; no mission Start or arm was sent during this integration."
+    }
+  ],
+  "remaining": [
+    {
+      "item": "Restore Pi visibility and establish stopped state",
+      "proof": "Reach the new address, inspect fresh FCU/runtime state and receipts, and disconnect only after confirmed disarm. Verify one GCS service and no legacy controller process."
+    },
+    {
+      "item": "Reconcile GCS telemetry and readiness",
+      "proof": "Verify magnetic units, vibration availability, EKF/fence freshness and agreement between capability/readiness/status views. Complete browser profile/task parameter and reviewed-Start checks."
+    },
+    {
+      "item": "Close corridor, QR and return braking",
+      "proof": "Run normal-timing seeds 1, 2 and 3 without strong gusts or artificial delay. Diagnose observed failures and retain safe stopped attempts. Clearance must stay at least 0.70 m."
+    },
+    {
+      "item": "Freeze and pass the final complete offline suite",
+      "proof": "Review the changed adapters/perception, freeze source and configuration, then complete the reduced suite, syntax/configuration and frontend checks once the final fixes are integrated."
+    },
+    {
+      "item": "Execute all nine tasks through the Pi",
+      "proof": "Observe SLAM map/frame/origin/timestamp, QR, banner, manual/route avoidance, mechanism and delivery behaviours in laptop SITL/Gazebo. Prove movement ownership, transmitter takeover, recovery and duplicate-command handling."
+    },
+    {
+      "item": "Verify connection and actuation failure behaviour",
+      "proof": "Exercise wrong identity, changed addresses, reconnects, stale sensors, simulation pause, dropped links, gateway restart and web/service restart. Prove actual camera/winch movement and release feedback, not only command acceptance."
+    },
+    {
+      "item": "Complete the normal Pi-managed mission",
+      "proof": "Record the real rendered model workflow from Start through delivery, return, land and connected disarm, with source/configuration, native contacts and captured camera/telemetry."
+    },
+    {
+      "item": "Pass all five requested rendered gates",
+      "proof": "On that same final source, pass standard seeds 20261003 and 1001 plus shipped, rotated and split courses. Keep 0.70 m corridor, 1.50 m restricted-zone clearance, 900 s limit, contact evidence, delivery and actual disarm."
+    },
+    {
+      "item": "Close the reduced campaign and evidence report",
+      "proof": "Audit the exact final world/seed/weather case count and exclusions, run the remaining matrix after targeted passes, retain every outcome and state accepted_source only when acceptance is actually achieved."
+    },
+    {
+      "item": "Complete physical hardware separately",
+      "proof": "Restore/verify the single-owner FCU UART; implement and measure Pi 5 GPIO/encoder winch control; calibrate camera travel, payload retention and loaded/unloaded delivery; prove BEC-only boot. Simulation passes do not close these hardware obligations."
+    }
+  ],
+  "statistics": [
+    [
+      "Earlier V44 calm clarified-arena flights",
+      "3 passed 22/22",
+      "Earlier source; separate from current Pi qualification"
+    ],
+    [
+      "Earlier V44 headless navigation",
+      "16 passed",
+      "Rendered perception and physical delivery not qualified"
+    ],
+    [
+      "Latest runtime task registry",
+      "9 entrypoints",
+      "Software construction checked; 0 completed Pi execution trials"
+    ],
+    [
+      "Latest Pi-managed full missions",
+      "0 completed",
+      "Only disarmed connection/preflight observations"
+    ],
+    [
+      "Latest requested rendered gates",
+      "0 of 5 qualified",
+      "No current-source acceptance claim"
+    ],
+    [
+      "Latest native/runtime focused checks",
+      "38 passed",
+      "Focused software tests, not flight acceptance"
+    ],
+    [
+      "Latest colour/perception checks",
+      "216 passed",
+      "Focused and overlapping with other reported subsets"
+    ],
+    [
+      "Latest frontend checks",
+      "25 passed",
+      "Build passed; full final suite still missing"
+    ],
+    [
+      "Latest broad Python attempt",
+      "1,955 passed; 8 skipped",
+      "Whole offline command FAILED at frontend"
+    ],
+    [
+      "Latest verified Pi package",
+      "255 files; 13 ARM packages",
+      "Software installation; not hardware qualification"
+    ],
+    [
+      "Archived latest rendered input",
+      "4,995 JPEG captures",
+      "Passive pre-arm session; not a mission acceptance video"
+    ]
+  ],
+  "source": {
+    "branch": "main",
+    "git_head": "780c27b529b12a76b27f8633b7c350e55b063954",
+    "dirty_worktree": true,
+    "bundle": ".scratch/pi_remote_runtime_20261014/runtime7.zip",
+    "bundle_sha256": "4b767bbfd837872152f4c2773af577fd165b16243e1cbe4d75809a999722a238",
+    "frozen_copy_sha256": "4b767bbfd837872152f4c2773af577fd165b16243e1cbe4d75809a999722a238",
+    "verified_payload_files": 255,
+    "current_payload_mismatches": [
+      "MASTER_DOCUMENTATION.md"
+    ],
+    "image_id": "sha256:3b17f1eacc92891c3badb318c1a29bd7df6af4b53fb969771ead7bae5c47e51d",
+    "image_tag": "aerothon-runtime:20261014-network",
+    "changed_baseline_files": [
+      {
+        "path": "src/aerothon_sim/sim_gazebo/launch/sim_full.launch.py",
+        "before_sha256": "956f89e2acc632f8e914a4306692dd855e1704050c90d0f564cb9edd29a21c14",
+        "current_sha256": "d91e9981f5d49323ee8489f3f281b041b34bcbba5cbcef7055a708e33ce8556d"
+      },
+      {
+        "path": "src/aerothon_perception/perception_redzone/perception_redzone/partial_boundary.py",
+        "before_sha256": "78748c8531a8b2cb7a17cf6e21d0ae5f14e058a6a6286208d0c41fc684f13085",
+        "current_sha256": "bdad98791ecb8c3eff45b08eca9de918fd4736dd1002c0669ac5db27ad670359"
+      },
+      {
+        "path": "src/aerothon_perception/perception_redzone/perception_redzone/redzone_node.py",
+        "before_sha256": "4c74b8355e85d081d8acf83e54b13812c03076160ee2cc2c93805d1b6969b4d7",
+        "current_sha256": "860ccb7bfda3124cb4489a070b401f137b257fabd623a8a94141f7bd78a888fe"
+      },
+      {
+        "path": "src/aerothon_perception/perception_qr/perception_qr/qr_node.py",
+        "before_sha256": "8cbee5f5dd8eb7384b6fefc70bc891e3350c10eaa637037b584503c4e4b7600c",
+        "current_sha256": "5eddeb36c8c8b8650cb073f048c5b0fb2407fe26ce866d288269c25859421587"
+      },
+      {
+        "path": "src/aerothon_perception/perception_banner/perception_banner/banner_node.py",
+        "before_sha256": "fcb7da31c6e12176677ffdf822f1eccc712ca54fedcf8f6cc8fac819c3d2806d",
+        "current_sha256": "1c4c9bb73268bd7350d55d13c4b9ee9391a3d6a29abd2f50742acbdfff39375d"
+      },
+      {
+        "path": "src/aerothon_perception/camera_ctrl/camera_ctrl/camera_ctrl_node.py",
+        "before_sha256": "8f992f25190ccad34cdc0ab1247d20295a69253bd3cbb113333f7fbcd7dde993",
+        "current_sha256": "f94753fd45d1afe306abe8d1c86a79b430f97399b93a6cee8efd52adfe0ab8ea"
+      },
+      {
+        "path": "src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py",
+        "before_sha256": "803bf8f3adc799ed9bef5b336e7dd88a146c5268b116c76736aa53a3f1f664f6",
+        "current_sha256": "3fca0bde5be7b8c80a386d6b8f6bdddd23f6cdf972ec623c62ff2e01685a7059"
+      },
+      {
+        "path": "src/aerothon_mission/mission_bringup/launch/mission2.launch.py",
+        "before_sha256": "df5d81efcce41c978e983911b3913f152919047fcf090c01a75f7de39c4bc55b",
+        "current_sha256": "146a3883fe3e022e3838c71ab3f5df368760533d3e4dd18c82b3b25280ff0080"
+      },
+      {
+        "path": "src/aerothon_gcs/tauri_app/src/App.tsx",
+        "before_sha256": "158d8e0ff355123d7a7afc3f662e9c762f4d4ef2e34461f192faaaa2ed729a7f",
+        "current_sha256": "1b2e60585ab5940683ea938d4695c432c0c93cbbc932948308a9e8819076cd22"
+      },
+      {
+        "path": "src/aerothon_gcs/tauri_app/src/runtime.ts",
+        "before_sha256": "700dcf861dfabb15a504a681187515e3d767008571963bff1669c0943a060638",
+        "current_sha256": "ddec5a33324b33a6922e9a5c2aa400cacab7435f4350d97ad7485875fe2a7f5b"
+      },
+      {
+        "path": "src/aerothon_gcs/tauri_app/src/types.ts",
+        "before_sha256": "0fe29c690caaf16a77604b21f63a4089272bac664bd307a541d00224900bb2c8",
+        "current_sha256": "16a28d11eee892d8efeaed8e0e6a698493092970319e9804a4033bf935467b03"
+      },
+      {
+        "path": "src/aerothon_gcs/gcs_aggregator/gcs_aggregator/aggregator.py",
+        "before_sha256": "e8d549f8943b211dd8e64bf1425bfe0d6b10bcc2de9dddb3bd4417ea6d7fad5b",
+        "current_sha256": "ad9e60c16434c8bae6f0d474887f65bec7c411ab3f63772124d25af1f1c114dc"
+      },
+      {
+        "path": "src/aerothon_gcs/gcs_aggregator/gcs_aggregator/readiness_node.py",
+        "before_sha256": "3ad146e559f7374998e441268de1321bc0db1c44e89c12ed549ebb151fda0a8f",
+        "current_sha256": "279e0a5e782d4c13b6bb4bacbd167fc71fc98f6df0ea0ee2b0c5eb191d342c4f"
+      },
+      {
+        "path": "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py",
+        "before_sha256": "9204dcb828ce61b2a0aea653c9f2f8405259d47beaeb39012479f333757baf3c",
+        "current_sha256": "10f5c655fc609e69f769eb007c9b5abe67f9d433e139d1fd728c2f89ab899c69"
+      },
+      {
+        "path": "scripts/check_pi_runtime.sh",
+        "before_sha256": "33c8947c68e9b15aee60b78ffb37a7466fd78532b60da668fc8ab08c85b72e3d",
+        "current_sha256": "381461f788fb29f45266f5f25bd57d0b7d74a6da504c1563f54779366734692e"
+      },
+      {
+        "path": "scripts/launch_level6_sim.sh",
+        "before_sha256": "2abc618b5adbc33edfeaa1e457c6e69b0a841acbabb0aca140d071245637ff5c",
+        "current_sha256": "569fe353139fc666b7d19d6bdffe229e77fe267904c46ac7bcb45c04026b6fa9"
+      },
+      {
+        "path": "scripts/package_pi_runtime.py",
+        "before_sha256": "3d167e60e9d4ad96689edf16bf89580e433df0bae6de1e6548a383335ddb9c91",
+        "current_sha256": "2d9e085bdce9a9143aaa89aecf6271518152cc9364679a66e22453bf03425ae6"
+      },
+      {
+        "path": "scripts/run_tests.sh",
+        "before_sha256": "f2c3ce7469797e5654baa36d3bba300c8c239b2fe64a3cf8b84f99b6c0a143e6",
+        "current_sha256": "6ead6381fe0dcaf4660e7e68b60874fef9c3003612f6d82a3fc7a49c55ce2c97"
+      },
+      {
+        "path": "scripts/serve_gcs.sh",
+        "before_sha256": "4c54953591b0fdca3a470be375edb51ce9216596a4759e4056f2e7c78873860d",
+        "current_sha256": "abe4fa5fab08bc0b34befa22a276dfea61ad6d6432250e2478558e7fd2c386c5"
+      },
+      {
+        "path": "scripts/pi_runtime/install_services.sh",
+        "before_sha256": "50bb5777cd0bd3a9445b9c4cedbbba9f0b76a5095025ce16867108079164b836",
+        "current_sha256": "dd6417989e11577835857e6a3a7f6ffd8e0a53aadc3f229288fcd64558551466"
+      },
+      {
+        "path": "scripts/pi_runtime/run_container.sh",
+        "before_sha256": "65fe86b8b6d82774ba0678c38cf6dbc1b8684097544d84e4bf7ed95b808b40dc",
+        "current_sha256": "8addd149c56c488c89775c871b120a24243804f14943ee7b62368412ddcc3642"
+      },
+      {
+        "path": "scripts/pi_runtime/run_router.sh",
+        "before_sha256": "fb4922e7cf09c560fd6b725c08843cad4a301805441c04e4b9197ef3db0c87f1",
+        "current_sha256": "ead2482fc0d0a3b35ccf62182ca5e094cc8cb647fefe0e7be16e6419f8df2514"
+      }
+    ],
+    "flight_code_scope": "The earlier GCS merge and Pi refresh kept flight decisions unchanged. The later shared-runtime work changed launch/readiness, the velocity-controller external-intent adapter, camera and winch feedback handling, QR health reporting, and banner/red-zone colour perception. The existing mission tree and fast planner were retained relative to the latest integration baseline. These flight-facing changes need new flight evidence. This was more than a GCS-only migration."
+  },
+  "configuration": {
+    "pi_address": "192.168.0.100, last requested; unreachable at stop-time check",
+    "laptop_lan": "192.168.0.102",
+    "wsl_nat": "172.26.219.3",
+    "fcu_tcp_port": 5762,
+    "sensor_http_port": 19090,
+    "identity": "system 1, component 1",
+    "profile": {
+      "id": "laptop-sitl",
+      "gateway": "http://192.168.0.102:19090",
+      "component_id": 1,
+      "marker_m": 3.0,
+      "rc_config": {},
+      "name": "Laptop SITL / rendered sensors",
+      "camera_hfov": 0.851919,
+      "delivery_calibration": "sitl_delivery_load_20261005.json",
+      "host": "192.168.0.102",
+      "transport": "tcp",
+      "bind_port": 14555,
+      "port": 5762,
+      "slam": true,
+      "system_id": 1
+    },
+    "banner_hex": {
+      "green": "#07A03D",
+      "orange": "#EB5A0A",
+      "red": "#C4161C"
+    },
+    "dds_domains": {
+      "pi": 42,
+      "laptop": 43
+    },
+    "timing": "Normal control/actuator behaviour; no artificially injected command delay. Strong gusts excluded."
+  },
+  "rates": {
+    "scope": "One saved disarmed snapshot, not mission-wide detector throughput",
+    "camera": {
+      "ok": true,
+      "hz": 5.14,
+      "receipt_age_s": 0.4018092619999152,
+      "capture_age_s": 0.16800000000012005,
+      "vehicle_hz": 10.760869565217337,
+      "required_vehicle_hz": 10,
+      "reason": ""
+    },
+    "lidar": {
+      "ok": true,
+      "hz": 4.74,
+      "receipt_age_s": 0.061695905000306084,
+      "capture_age_s": 0.06799999999998363,
+      "vehicle_hz": 9.999999999999908,
+      "required_vehicle_hz": 8,
+      "reason": ""
+    },
+    "historical_failed_field_detector_rates": {
+      "camera": {
+        "distinct_captures": 3607,
+        "invalid_capture_events": 0,
+        "capture_hz": 3.8519468033968915,
+        "delivered_hz": 3.851979721025229,
+        "delivered_wall_hz": 1.0167414493721547,
+        "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+        "maximum_capture_gap_s": 2.300000000000068,
+        "latency_sim_p95_s": 0.2980000000001155,
+        "processing_wall_p95_s": null
+      },
+      "search": {
+        "qr_timing": {
+          "distinct_captures": 7613,
+          "invalid_capture_events": 0,
+          "capture_hz": 17.204203864843485,
+          "delivered_hz": 17.206692797692515,
+          "delivered_wall_hz": 4.513440229096911,
+          "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+          "maximum_capture_gap_s": 0.44999999999998863,
+          "latency_sim_p95_s": 0.36199999999999477,
+          "processing_wall_p95_s": 0.04091465520009478
+        },
+        "red_timing": {
+          "distinct_captures": 7619,
+          "invalid_capture_events": 0,
+          "capture_hz": 17.21192950745594,
+          "delivered_hz": 17.220489172204893,
+          "delivered_wall_hz": 4.517144265754631,
+          "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+          "maximum_capture_gap_s": 0.44999999999998863,
+          "latency_sim_p95_s": 0.3550000000000182,
+          "processing_wall_p95_s": 0.029426171199997953
+        },
+        "usable_red_ground": {
+          "distinct_captures": 7619,
+          "invalid_capture_events": 0,
+          "capture_hz": 17.21192950745594,
+          "delivered_hz": 17.220489172204893,
+          "delivered_wall_hz": 4.517144265754631,
+          "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+          "maximum_capture_gap_s": 0.44999999999998863,
+          "latency_sim_p95_s": 0.3550000000000182,
+          "processing_wall_p95_s": 0.029426171199997953
+        }
+      }
+    },
+    "actual_qr_banner_red_processing_rates_for_current_full_mission": "Not measured; no current full mission"
+  },
+  "recording": {
+    "jpeg_count": 4995,
+    "first_capture_stamp": 1734.85,
+    "last_capture_stamp": 2150.45,
+    "basis": "Original rendered camera capture stamps; camera_optical_frame; not fabricated or restamped"
+  },
+  "offline_exclusions": {
+    "collected_tests": 1963,
+    "included_tests": 1958,
+    "excluded_tests": [
+      {
+        "nodeid": "sim/test_corridor_stress.py::ShippedLaneStressTests::test_everything_at_once",
+        "reason": "User-deferred strong gusts: fixture mean 8 m/s, gust 4 m/s; unresolved and excluded from qualification",
+        "mean_wind_mps": 8.0,
+        "gust_mps": 4.0,
+        "seeds": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "nodeid": "sim/test_corridor_stress.py::ShippedLaneStressTests::test_gusty_crosswind",
+        "reason": "User-deferred strong gusts: fixture mean 8 m/s, gust 4 m/s; unresolved and excluded from qualification",
+        "mean_wind_mps": 8.0,
+        "gust_mps": 4.0,
+        "seeds": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "nodeid": "sim/test_corridor_stress.py::SplitLaneStressTests::test_gusty_crosswind",
+        "reason": "User-deferred strong gusts: fixture mean 8 m/s, gust 4 m/s; unresolved and excluded from qualification",
+        "mean_wind_mps": 8.0,
+        "gust_mps": 4.0,
+        "seeds": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "nodeid": "sim/test_corridor_stress.py::SplitLaneStressTests::test_gusty_crosswind_with_dirty_lidar",
+        "reason": "User-deferred strong gusts: fixture mean 8 m/s, gust 4 m/s; unresolved and excluded from qualification",
+        "mean_wind_mps": 8.0,
+        "gust_mps": 4.0,
+        "seeds": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "nodeid": "sim/test_corridor_stress.py::SplitLaneStressTests::test_gusty_crosswind_with_late_scans",
+        "reason": "User-deferred strong gusts: fixture mean 8 m/s, gust 4 m/s; unresolved and excluded from qualification",
+        "mean_wind_mps": 8.0,
+        "gust_mps": 4.0,
+        "seeds": [
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "missing_photo_skips": 3,
+    "flight_campaign_count": "Historical reduced plan 96; final current-source case list and completed count not established"
+  },
+  "worktrees_at_report": "worktree D:/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON\nHEAD 780c27b529b12a76b27f8633b7c350e55b063954\nbranch refs/heads/main\n\n",
+  "consolidation": {
+    "status": "completed_single_main_workspace_and_one_maintained_gcs",
+    "worktrees": [
+      {
+        "label": "pi-web-gcs",
+        "source": "C:\\Users\\sarth\\.codex\\worktrees\\pi-web-gcs\\AEROTHON",
+        "head": "c6348a1fbacea45548287ba89a7fdba44a31a72c",
+        "source_archive": ".scratch\\worktree_consolidation_20261014\\pi-web-gcs-source.zip",
+        "archive_sha256": "54eefc6fb520ac00b555053fdba5d56d5097a176a28637a97bf10b29d54d4c02",
+        "verified_files": 1553,
+        "bytes_preserved": 142812664,
+        "status": "M scripts/build_cad_vehicle.py\n M scripts/materialize_vehicle_model.py\n M scripts/materialize_world.py\n M scripts/run_tests.sh\n M scripts/set_stream_rates.py\n M sim/fly_headless.py\n M sim/headless_world.py\n M sim/test_altitude_hold.py\n M sim/test_banner_identity.py\n M sim/test_camera_gate.py\n M sim/test_corridor_recovery.py\n M sim/test_corridor_stress.py\n M sim/test_corridor_yaw_alignment.py\n M sim/test_fail_closed_stages.py\n M sim/test_frame_conventions.py\n M sim/test_gcs_aggregator.py\n M sim/test_leg_routing.py\n M sim/test_navigator_equivalence.py\n M sim/test_organiser_inputs.py\n M sim/test_payload_drop.py\n M sim/test_perception_corruption.py\n M sim/test_phase0_rails.py\n M sim/test_return_gate_search.py\n M sim/test_slalom_traverse.py\n M sim/test_stream_rate_coverage.py\n M sim/test_winch.py\n M src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py\n M src/aerothon_avoidance/avoidance/package.xml\n M src/aerothon_gcs/gcs_aggregator/gcs_aggregator/aggregator.py\n M src/aerothon_gcs/tauri_app/package.json\n M src/aerothon_gcs/tauri_app/src/App.tsx\n M src/aerothon_gcs/tauri_app/src/gcs.css\n M src/aerothon_gcs/tauri_app/src/types.ts\n M src/aerothon_mission/mission_bringup/launch/mission2.launch.py\n M src/aerothon_mission/mission_bringup/mission_bringup/stream_rate_keeper.py\n M src/aerothon_mission/mission_bringup/package.xml\n M src/aerothon_mission/mission_bt/mission_bt/banner_orbit.py\n M src/aerothon_mission/mission_bt/mission_bt/leg_router.py\n M src/aerothon_mission/mission_bt/mission_bt/mav_commander.py\n M src/aerothon_mission/mission_bt/mission_bt/mission_tree.py\n M src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py\n M src/aerothon_perception/camera_ctrl/camera_ctrl/camera_ctrl_node.py\n M src/aerothon_perception/perception_banner/perception_banner/banner_node.py\n M src/aerothon_perception/perception_qr/perception_qr/qr_node.py\n M src/aerothon_perception/perception_redzone/perception_redzone/payload.py\n M src/aerothon_perception/perception_redzone/perception_redzone/payload_node.py\n M src/aerothon_perception/perception_redzone/perception_redzone/redzone_node.py\n M src/aerothon_sim/sim_gazebo/config/gz_bridge.yaml\n M src/aerothon_sim/sim_gazebo/launch/sim_full.launch.py\n M src/aerothon_sim/sim_gazebo/setup.py\n M src/aerothon_sim/sim_gazebo/worlds/mission2.sdf\n?? .scratch/pi-web-gcs/artifact-hashes.json\n?? .scratch/pi-web-gcs/baseline.json\n?? .scratch/pi-web-gcs/baseline_source_manifest.json\n?? .scratch/pi-web-gcs/before-graphs-integrated-source.json\n?? .scratch/pi-web-gcs/before-graphs-pi-gcs-evidence.zip\n?? .scratch/pi-web-gcs/before-graphs-pi-gcs-source.zip\n?? .scratch/pi-web-gcs/before-graphs-source-version.txt\n?? .scratch/pi-web-gcs/before-graphs-verification.json\n?? .scratch/pi-web-gcs/before-map-integrated-source.json\n?? .scratch/pi-web-gcs/before-map-pi-gcs-source.zip\n?? .scratch/pi-web-gcs/before-map-verification.json\n?? .scratch/pi-web-gcs/before-sensors-integrated-source.json\n?? .scratch/pi-web-gcs/before-sensors-pi-gcs-evidence.zip\n?? .scratch/pi-web-gcs/before-sensors-pi-gcs-source.zip\n?? .scratch/pi-web-gcs/before-sensors-source-version.txt\n?? .scratch/pi-web-gcs/before-sensors-verification.json\n?? .scratch/pi-web-gcs/before-standalone-integrated-source.json\n?? .scratch/pi-web-gcs/before-standalone-pi-gcs-evidence.zip\n?? .scratch/pi-web-gcs/before-standalone-pi-gcs-source.zip\n?? .scratch/pi-web-gcs/before-standalone-source-version.txt\n?? .scratch/pi-web-gcs/before-standalone-verification.json\n?? .scratch/pi-web-gcs/before-streams-integrated-source.json\n?? .scratch/pi-web-gcs/before-streams-pi-gcs-evidence.zip\n?? .scratch/pi-web-gcs/before-streams-pi-gcs-source.zip\n?? .scratch/pi-web-gcs/before-streams-source-version.txt\n?? .scratch/pi-web-gcs/before-streams-standalone-deployment-manifest.json\n?? .scratch/pi-web-gcs/before-streams-standalone-verification.json\n?? .scratch/pi-web-gcs/before-streams-verification.json\n?? .scratch/pi-web-gcs/build_frontend.sh\n?? .scratch/pi-web-gcs/build_ros.sh\n?? .scratch/pi-web-gcs/changes-from-v23.json\n?? .scratch/pi-web-gcs/clock_red.sh\n?? .scratch/pi-web-gcs/collect.sh\n?? .scratch/pi-web-gcs/collected.txt\n?? .scratch/pi-web-gcs/contrast.json\n?? .scratch/pi-web-gcs/corpus_skips.sh\n?? .scratch/pi-web-gcs/final_checks.sh\n?? .scratch/pi-web-gcs/first_failure.sh\n?? .scratch/pi-web-gcs/fixture-hashes.json\n?? .scratch/pi-web-gcs/flight-data-verification.json\n?? .scratch/pi-web-gcs/flight-display-assets.tar.gz\n?? .scratch/pi-web-gcs/focused.sh\n?? .scratch/pi-web-gcs/format_frontend.sh\n?? .scratch/pi-web-gcs/frame_regression.sh\n?? .scratch/pi-web-gcs/full_suite.sh\n?? .scratch/pi-web-gcs/gateway_preflight.sh\n?? .scratch/pi-web-gcs/gcs-connections.jpg\n?? .scratch/pi-web-gcs/gcs-graphs-fixture.jpg\n?? .scratch/pi-web-gcs/gcs-graphs.jpg\n?? .scratch/pi-web-gcs/gcs-map-fixed.jpg\n?? .scratch/pi-web-gcs/gcs-sensors-fixture.jpg\n?? .scratch/pi-web-gcs/gcs-sensors.jpg\n?? .scratch/pi-web-gcs/gcs-status-scroll.jpg\n?? .scratch/pi-web-gcs/gcs-testing.jpg\n?? .scratch/pi-web-gcs/grader-dependency.json\n?? .scratch/pi-web-gcs/grader_regression.sh\n?? .scratch/pi-web-gcs/graph-final-fixture-export.csv\n?? .scratch/pi-web-gcs/graph-fixture-export.csv\n?? .scratch/pi-web-gcs/graph-sensors-fixture-export.csv\n?? .scratch/pi-web-gcs/graph_browser_fixture.py\n?? .scratch/pi-web-gcs/graph_checks.sh\n?? .scratch/pi-web-gcs/graph_frontend.sh\n?? .scratch/pi-web-gcs/integrated-source.json\n?? .scratch/pi-web-gcs/issues/01-runtime-and-web.md\n?? .scratch/pi-web-gcs/issues/02-pi-integrated-verification.md\n?? .scratch/pi-web-gcs/issues/03-map-loading.md\n?? .scratch/pi-web-gcs/issues/04-telemetry-graphs.md\n?? .scratch/pi-web-gcs/issues/05-standalone-pi-deployment.md\n?? .scratch/pi-web-gcs/issues/06-pixhawk-uart.md\n?? .scratch/pi-web-gcs/issues/07-flight-data-streams.md\n?? .scratch/pi-web-gcs/laptop-mavlink-reception.json\n?? .scratch/pi-web-gcs/launch_args.sh\n?? .scratch/pi-web-gcs/map_build.sh\n?? .scratch/pi-web-gcs/map_checks.sh\n?? .scratch/pi-web-gcs/original-ui/App.tsx\n?? .scratch/pi-web-gcs/original-ui/gcs.css\n?? .scratch/pi-web-gcs/pi-bec-power-cap.json\n?? .scratch/pi-web-gcs/pi-flight-data.jpg\n?? .scratch/pi-web-gcs/pi-gcs-evidence.zip\n?? .scratch/pi-web-gcs/pi-gcs-source.zip\n?? .scratch/pi-web-gcs/pi-intranet-api.json\n?? .scratch/pi-web-gcs/pi-pixhawk-live.jpg\n?? .scratch/pi-web-gcs/pi-pixhawk-verification.json\n?? .scratch/pi-web-gcs/pi-port-fixed.jpg\n?? .scratch/pi-web-gcs/pi-profile-port-fix.json\n?? .scratch/pi-web-gcs/pi-sensor-data.jpg\n?? .scratch/pi-web-gcs/pi-standalone-gcs.jpg\n?? .scratch/pi-web-gcs/pi_router_probe.py\n?? .scratch/pi-web-gcs/preview-state/commands.sqlite\n?? .scratch/pi-web-gcs/preview-state/map-tiles/10/538/515.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/11/1076/1029.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/11/1076/1030.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/11/1076/1031.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/11/1077/1029.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/11/1077/1030.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/12/2153/2059.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/12/2153/2060.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/12/2153/2061.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/12/2154/2060.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/13/4307/4120.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/13/4307/4121.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/14/8614/8241.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/14/8614/8242.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/14/8614/8243.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/14/8615/8241.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/14/8615/8242.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/14/8615/8243.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/16/34457/32969.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/16/34457/32970.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/16/34458/32969.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/16/34458/32970.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/16/34459/32969.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/16/34459/32970.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/17/68916/65938.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/17/68916/65939.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/17/68917/65938.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/17/68917/65939.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/17/68918/65938.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/17/68918/65939.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137833/131878.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137833/131879.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137833/131880.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137834/131877.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137834/131878.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137834/131879.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137834/131880.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137834/131881.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137835/131877.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137835/131878.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137835/131879.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137835/131880.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137835/131881.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137836/131877.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137836/131878.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137836/131879.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137836/131880.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137837/131878.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/18/137837/131879.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275668/263755.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275668/263756.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275668/263757.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275669/263755.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275669/263756.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275669/263757.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275670/263755.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275670/263756.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275670/263757.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275671/263755.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275671/263756.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275671/263757.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275672/263755.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275672/263756.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275672/263757.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275673/263755.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275673/263756.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/19/275673/263757.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/0/1.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/0/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/0/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/1/1.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/1/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/1/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/2/1.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/2/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/2/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/3/1.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/3/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/2/3/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/1/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/1/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/1/4.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/1/5.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/2/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/2/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/2/4.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/2/5.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/3/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/3/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/3/4.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/3/5.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/4/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/4/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/4/4.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/4/5.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/5/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/5/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/5/4.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/5/5.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/6/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/6/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/6/4.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/6/5.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/7/2.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/7/3.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/7/4.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/3/7/5.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/4/6/8.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/4/7/7.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/4/7/8.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/4/8/7.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/4/8/8.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/4/9/7.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/4/9/8.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/5/16/15.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/5/16/16.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/31/31.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/31/32.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/32/31.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/32/32.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/32/33.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/33/31.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/33/32.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/33/33.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/6/34/32.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/7/64/64.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/7/65/63.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/7/65/64.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/7/65/65.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/7/66/64.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/7/66/65.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/8/129/129.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/8/130/128.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/8/130/129.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/8/131/128.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/8/131/129.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/8/132/129.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/261/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/261/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/261/259.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/262/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/262/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/262/259.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/263/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/263/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/264/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/264/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/265/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/265/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/266/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/266/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/267/256.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/267/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/267/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/268/256.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/268/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/268/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/269/256.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/269/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/269/258.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/270/256.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/270/257.jpg\n?? .scratch/pi-web-gcs/preview-state/map-tiles/9/270/258.jpg\n?? .scratch/pi-web-gcs/preview-state/profiles.json\n?? .scratch/pi-web-gcs/qos_red.sh\n?? .scratch/pi-web-gcs/ros_smoke.sh\n?? .scratch/pi-web-gcs/sensor-resolved-failure.txt\n?? .scratch/pi-web-gcs/sensor_build.sh\n?? .scratch/pi-web-gcs/serve_preview.sh\n?? .scratch/pi-web-gcs/source-version.txt\n?? .scratch/pi-web-gcs/spec.md\n?? .scratch/pi-web-gcs/standalone-deployment-manifest.json\n?? .scratch/pi-web-gcs/standalone-gcs.tar.gz\n?? .scratch/pi-web-gcs/standalone-verification.json\n?? .scratch/pi-web-gcs/standalone_checks.sh\n?? .scratch/pi-web-gcs/startup-telemetry.json\n?? .scratch/pi-web-gcs/startup_probe.sh\n?? .scratch/pi-web-gcs/startup_smoke.sh\n?? .scratch/pi-web-gcs/verification.json\n?? .scratch/simulation-reliability/grade_focused_return.py\n?? docs/GCS_DESIGN_RESEARCH.md\n?? docs/PI_GCS_VERIFICATION.md\n?? docs/PI_WEB_GCS.md\n?? docs/STANDALONE_GCS.md\n?? scripts/audit_claw_baseline.py\n?? scripts/calibrate_delivery_load.py\n?? scripts/check_corridor_clearance.py\n?? scripts/install_pi_gcs_service.sh\n?? scripts/launch_laptop_sim.sh\n?? scripts/run_delivery_trial.sh\n?? scripts/run_pi_gcs.sh\n?? scripts/run_recorded_acceptance.sh\n?? scripts/run_standalone_gcs.sh\n?? scripts/vehicle_contact_sensors.py\n?? sim/campaign_record.py\n?? sim/corridor_trial.py\n?? sim/delivery_demo.py\n?? sim/delivery_truth.py\n?? sim/evaluate_recorded_mission.py\n?? sim/export_recording_timeline.py\n?? sim/fixtures/return_entry_s20261003.json\n?? sim/fixtures/search_merge_margin_v15.json\n?? sim/native_contact_evidence.py\n?? sim/navigation_mission.py\n?? sim/qualification_evidence.py\n?? sim/record_contact_truth.py\n?? sim/record_delivery.py\n?? sim/record_vehicle_contacts.py\n?? sim/recording_metrics.py\n?? sim/run_navigation_campaign.py\n?? sim/sensor_cadence.py\n?? sim/test_banner_capture_contract.py\n?? sim/test_campaign_contact_evidence.py\n?? sim/test_changing_disturbance_certification.py\n?? sim/test_command_computation_deadline.py\n?? sim/test_controller_startup.py\n?? sim/test_corridor_clearance_contract.py\n?? sim/test_corridor_disarm.py\n?? sim/test_delivery_candidate_recovery.py\n?? sim/test_delivery_observer.py\n?? sim/test_delivery_provisional_release_probe.py\n?? sim/test_delivery_retry_observation_windows.py\n?? sim/test_detector_timing.py\n?? sim/test_fcu_navigation_velocity.py\n?? sim/test_fcu_velocity_sample_alignment.py\n?? sim/test_first_return_level_view.py\n?? sim/test_focused_return_evidence.py\n?? sim/test_gate_braking.py\n?? sim/test_gate_capture_pause.py\n?? sim/test_headless_command_delay.py\n?? sim/test_headless_land_position_hold.py\n?? sim/test_headless_observation_contract.py\n?? sim/test_headless_sensor_cadence.py\n?? sim/test_landing_startup_height.py\n?? sim/test_lidar_registration.py\n?? sim/test_local_planner.py\n?? sim/test_motion_certificate_batching.py\n?? sim/test_moving_return_handover.py\n?? sim/test_native_contact_evidence.py\n?? sim/test_navigation_campaign_gate.py\n?? sim/test_navigation_fixture.py\n?? sim/test_navigation_speed_restore_ack.py\n?? sim/test_observation_registration.py\n?? sim/test_observed_exclusion_certificate.py\n?? sim/test_provisional_red_entry_20261007.py\n?? sim/test_qualification_evidence.py\n?? sim/test_recording_metrics.py\n?? sim/test_reduced_qualification_scope.py\n?? sim/test_return_capture_batching.py\n?? sim/test_return_clipped_framing.py\n?? sim/test_return_fine_framing.py\n?? sim/test_return_first_sweep_capture_controls.py\n?? sim/test_return_first_sweep_lead.py\n?? sim/test_return_inherited_tilt.py\n?? sim/test_return_navigation_speed_lease.py\n?? sim/test_return_sweep_efficiency.py\n?? sim/test_return_turning_width_crop.py\n?? sim/test_return_vertical_framing.py\n?? sim/test_search_braking_20261007.py\n?? sim/test_search_current_command.py\n?? sim/test_search_escape_lookahead.py\n?? sim/test_vehicle_contact_sensors.py\n?? sim/test_velocity_command_delay.py\n?? sim/test_winch_capture_recording.py\n?? sim/test_yaw_motion_certification.py\n?? src/aerothon_avoidance/avoidance/avoidance/buffered_scan_pose.py\n?? src/aerothon_avoidance/avoidance/avoidance/capture_inbox.py\n?? src/aerothon_avoidance/avoidance/avoidance/fast_connected_planner_candidate.py\n?? src/aerothon_avoidance/avoidance/avoidance/independent_ros_clock_candidate.py\n?? src/aerothon_avoidance/avoidance/avoidance/local_planner.py\n?? src/aerothon_avoidance/avoidance/avoidance/motion_forecast_trace.py\n?? src/aerothon_avoidance/avoidance/avoidance/paired_scan_pose.py\n?? src/aerothon_avoidance/avoidance/avoidance/scan_geometry.py\n?? src/aerothon_gcs/tauri_app/src/Graphs.tsx\n?? src/aerothon_gcs/tauri_app/src/runtime.ts\n?? src/aerothon_gcs/tauri_app/src/telemetryHistory.ts\n?? src/aerothon_gcs/tauri_app/tests/telemetryHistory.test.mjs\n?? src/aerothon_mission/mission_bt/mission_bt/banner_captures.py\n?? src/aerothon_mission/mission_bt/mission_bt/delivery_observer.py\n?? src/aerothon_mission/mission_bt/mission_bt/detector_timing.py\n?? src/aerothon_mission/mission_bt/mission_bt/gate_braking.py\n?? src/aerothon_mission/mission_bt/mission_bt/search_braking.py\n?? src/aerothon_perception/perception_redzone/perception_redzone/partial_boundary.py\n?? src/aerothon_runtime/aerothon_runtime/__init__.py\n?? src/aerothon_runtime/aerothon_runtime/contracts.py\n?? src/aerothon_runtime/aerothon_runtime/device_wire.py\n?? src/aerothon_runtime/aerothon_runtime/execution_node.py\n?? src/aerothon_runtime/aerothon_runtime/gateway.py\n?? src/aerothon_runtime/aerothon_runtime/ownership.py\n?? src/aerothon_runtime/aerothon_runtime/pilot.py\n?? src/aerothon_runtime/aerothon_runtime/remote_devices.py\n?? src/aerothon_runtime/aerothon_runtime/standalone.py\n?? src/aerothon_runtime/aerothon_runtime/telemetry_streams.py\n?? src/aerothon_runtime/aerothon_runtime/web.py\n?? src/aerothon_runtime/package.xml\n?? src/aerothon_runtime/resource/aerothon_runtime\n?? src/aerothon_runtime/setup.cfg\n?? src/aerothon_runtime/setup.py\n?? src/aerothon_sim/sim_gazebo/sim_gazebo/contact_release.py\n?? tests/fixtures/banner_return_oblique_843_20261006.png\n?? tests/test_gcs_standalone.py\n?? tests/test_pi_map.py\n?? tests/test_pi_ros_runtime.py\n?? tests/test_pi_runtime.py",
+        "regenerable_or_separate": [
+          ".pytest_cache",
+          "build",
+          "install",
+          "log",
+          "scripts\\__pycache__",
+          "sim\\__pycache__",
+          "src\\aerothon_avoidance\\avoidance\\__pycache__",
+          "src\\aerothon_avoidance\\avoidance\\avoidance\\__pycache__",
+          "src\\aerothon_gcs\\gcs_aggregator\\__pycache__",
+          "src\\aerothon_gcs\\gcs_aggregator\\gcs_aggregator\\__pycache__",
+          "src\\aerothon_gcs\\tauri_app\\install",
+          "src\\aerothon_gcs\\tauri_app\\node_modules",
+          "src\\aerothon_mission\\mission_bringup\\__pycache__",
+          "src\\aerothon_mission\\mission_bringup\\launch\\__pycache__",
+          "src\\aerothon_mission\\mission_bringup\\mission_bringup\\__pycache__",
+          "src\\aerothon_mission\\mission_bt\\__pycache__",
+          "src\\aerothon_mission\\mission_bt\\mission_bt\\__pycache__",
+          "src\\aerothon_mission\\uav_description\\__pycache__",
+          "src\\aerothon_mission\\uav_description\\launch\\__pycache__",
+          "src\\aerothon_mission\\uav_description\\uav_description\\__pycache__",
+          "src\\aerothon_payload\\winch_ctrl\\__pycache__",
+          "src\\aerothon_payload\\winch_ctrl\\winch_ctrl\\__pycache__",
+          "src\\aerothon_perception\\camera_ctrl\\__pycache__",
+          "src\\aerothon_perception\\camera_ctrl\\camera_ctrl\\__pycache__",
+          "src\\aerothon_perception\\perception_banner\\__pycache__",
+          "src\\aerothon_perception\\perception_banner\\perception_banner\\__pycache__",
+          "src\\aerothon_perception\\perception_overlay\\__pycache__",
+          "src\\aerothon_perception\\perception_overlay\\perception_overlay\\__pycache__",
+          "src\\aerothon_perception\\perception_qr\\__pycache__",
+          "src\\aerothon_perception\\perception_qr\\perception_qr\\__pycache__",
+          "src\\aerothon_perception\\perception_redzone\\__pycache__",
+          "src\\aerothon_perception\\perception_redzone\\perception_redzone\\__pycache__",
+          "src\\aerothon_runtime\\__pycache__",
+          "src\\aerothon_runtime\\aerothon_runtime\\__pycache__",
+          "src\\aerothon_sim\\sim_gazebo\\__pycache__",
+          "src\\aerothon_sim\\sim_gazebo\\launch\\__pycache__",
+          "src\\aerothon_sim\\sim_gazebo\\sim_gazebo\\__pycache__",
+          "tests\\__pycache__",
+          "tests\\perception\\__pycache__",
+          "tools\\world_editor\\__pycache__"
+        ]
+      },
+      {
+        "label": "phase2",
+        "source": "D:\\MY DOCUMENTS\\VIT\\Team Rotor Fpv\\AEROTHON_phase2",
+        "head": "d5ec31ad6f230d5750b686ae7b1a6ea035ddc131",
+        "source_archive": ".scratch\\worktree_consolidation_20261014\\phase2-source.zip",
+        "archive_sha256": "be3c541cbd7c31567925baac266e39341a194081d1d7205893a4b207bf5291a7",
+        "verified_files": 665,
+        "bytes_preserved": 101677040,
+        "status": "",
+        "regenerable_or_separate": [
+          ".pytest_cache",
+          ".scratch",
+          "logs",
+          "scripts\\__pycache__",
+          "sim\\__pycache__",
+          "src\\aerothon_avoidance\\avoidance\\avoidance\\__pycache__",
+          "src\\aerothon_gcs\\gcs_aggregator\\gcs_aggregator\\__pycache__",
+          "src\\aerothon_mission\\mission_bringup\\launch\\__pycache__",
+          "src\\aerothon_mission\\mission_bringup\\mission_bringup\\__pycache__",
+          "src\\aerothon_mission\\mission_bt\\mission_bt\\__pycache__",
+          "src\\aerothon_payload\\winch_ctrl\\winch_ctrl\\__pycache__",
+          "src\\aerothon_perception\\camera_ctrl\\camera_ctrl\\__pycache__",
+          "src\\aerothon_perception\\perception_banner\\perception_banner\\__pycache__",
+          "src\\aerothon_perception\\perception_qr\\perception_qr\\__pycache__",
+          "src\\aerothon_perception\\perception_redzone\\perception_redzone\\__pycache__",
+          "src\\aerothon_sim\\sim_gazebo\\sim_gazebo\\__pycache__"
+        ],
+        "separately_preserve_before_removal": [
+          {
+            "folder": "logs",
+            "files": 2116,
+            "bytes": 6806488763,
+            "inventory": ".scratch\\worktree_consolidation_20261014\\phase2-logs-inventory.json"
+          },
+          {
+            "folder": ".scratch",
+            "files": 22,
+            "bytes": 299954,
+            "inventory": ".scratch\\worktree_consolidation_20261014\\phase2-scratch-inventory.json"
+          }
+        ]
+      }
+    ],
+    "history_bundle": {
+      "path": ".scratch\\worktree_consolidation_20261014\\phase2-history.bundle",
+      "sha256": "5938c6fb97521f305db789f3e20232d08ad50b05ab8387971e8c17d500019606"
+    },
+    "client_date": "2026-10-14",
+    "remaining_worktrees": [
+      "D:/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON"
+    ],
+    "extra_worktree_directories_removed": true,
+    "historical_evidence": {
+      "path": "logs/archived_phase2_20261014",
+      "files": 2116,
+      "bytes": 6806488763,
+      "small_json_hashes_and_all_file_sizes_verified": true,
+      "source_zip_contents_hash_verified": true
+    },
+    "maintained_gcs": {
+      "frontend": "src\\aerothon_gcs\\tauri_app\\src\\App.tsx",
+      "web_host": "src/aerothon_runtime/aerothon_runtime/web.py",
+      "launcher": "scripts/serve_gcs.sh",
+      "old_render_removed": true,
+      "old_standalone_source_absent": true
+    },
+    "app_archive": "First app request was refused because this chat was pinned. Its pin was temporarily cleared. Archive requests returned queued. Git removed the now-unpinned redundant checkout after all 1553 non-cache files were reverified against the local recovery ZIP. The original chat pin position was restored.",
+    "git_removal": "Both named extra checkouts removed after source, commit history and evidence preservation; primary main checkout unchanged.",
+    "excluded_regenerable_material": "node_modules, build/install output, Python environments and test caches. Original source and non-cache evidence were retained.",
+    "remote_pi_live_verification": "Unavailable. HTTP and SSH at 192.168.0.100 timed out; prior one-GCS destination receipts remain historical."
+  },
+  "one_gcs": {
+    "source": "src/aerothon_gcs/tauri_app",
+    "server": "src/aerothon_runtime/aerothon_runtime/web.py",
+    "launcher": "scripts/serve_gcs.sh and the Pi aerothon-gcs service call that same web host",
+    "aggregator": "ROS telemetry/perception adapter within the same GCS, not a separate frontend",
+    "old_frontend": "render.ts removed; old standalone source absent from main",
+    "remote_service_status": "Previous destination receipts configured one GCS and disabled the old console; cannot reverify current Pi services while unreachable"
+  },
+  "evidence": [
+    {
+      "label": "Operating guide and qualification ledger",
+      "path": "MASTER_DOCUMENTATION.md",
+      "exists": true
+    },
+    {
+      "label": "Preserved Phase 2 flight evidence",
+      "path": "logs/archived_phase2_20261014",
+      "exists": true
+    },
+    {
+      "label": "Earlier stopped V39 checkpoint",
+      "path": ".scratch/simulation-reliability/handoff_stop_checkpoint_20261010.json",
+      "exists": true
+    },
+    {
+      "label": "V44 source provenance",
+      "path": "logs/reliability_reduced_scope_v44_source_20261013/provenance.json",
+      "exists": true
+    },
+    {
+      "label": "Failed field mission summary",
+      "path": "logs/pi_cleanup_hard_field_both_s20261004_retry1_20261013/summary.json",
+      "exists": true
+    },
+    {
+      "label": "Field clearance review",
+      "path": ".scratch/pi_consolidation_20261013/final_field_clearance_review.json",
+      "exists": true
+    },
+    {
+      "label": "Field overview video with actual FAIL",
+      "path": "logs/pi_cleanup_hard_field_both_s20261004_retry1_20261013/overview/world_overview.mp4",
+      "exists": true
+    },
+    {
+      "label": "GCS merge report",
+      "path": ".scratch/gcs_merge_20261014/result.json",
+      "exists": true
+    },
+    {
+      "label": "Pi refresh and cleanup report",
+      "path": ".scratch/pi_refresh_20261014/result.json",
+      "exists": true
+    },
+    {
+      "label": "Latest immutable runtime bundle",
+      "path": ".scratch/pi_remote_runtime_20261014/runtime7.zip",
+      "exists": true
+    },
+    {
+      "label": "Latest destination bundle receipt",
+      "path": ".scratch/pi_remote_runtime_20261014/runtime7-install.log",
+      "exists": true
+    },
+    {
+      "label": "38 focused runtime/native passes",
+      "path": ".scratch/pi_remote_runtime_20261014/focused4.log",
+      "exists": true
+    },
+    {
+      "label": "216 focused colour/perception passes",
+      "path": ".scratch/pi_remote_runtime_20261014/colours-focused1.log",
+      "exists": true
+    },
+    {
+      "label": "Latest broad offline failure",
+      "path": ".scratch/pi_remote_runtime_20261014/offline-4.log",
+      "exists": true
+    },
+    {
+      "label": "Offline exclusion ledger",
+      "path": ".scratch/pi_remote_runtime_20261014/offline-scope-4.json",
+      "exists": true
+    },
+    {
+      "label": "25 frontend passes",
+      "path": ".scratch/pi_remote_runtime_20261014/frontend-final-tests.log",
+      "exists": true
+    },
+    {
+      "label": "Latest frontend build",
+      "path": ".scratch/pi_remote_runtime_20261014/frontend-final3-build.log",
+      "exists": true
+    },
+    {
+      "label": "Latest disarmed Pi telemetry",
+      "path": "logs/pi_gateway_shipped_s20261003_onboardfix_20261014/latest.json",
+      "exists": true
+    },
+    {
+      "label": "Recorded Pi telemetry stream",
+      "path": "logs/pi_gateway_shipped_s20261003_onboardfix_20261014/telemetry.jsonl",
+      "exists": true
+    },
+    {
+      "label": "Rendered input capture timeline",
+      "path": "logs/pi_gateway_shipped_s20261003_onboardfix_20261014/camera_capture_events.jsonl",
+      "exists": true
+    },
+    {
+      "label": "Rendered input frames",
+      "path": "logs/pi_gateway_shipped_s20261003_onboardfix_20261014/camera_frames",
+      "exists": true
+    },
+    {
+      "label": "Saved laptop connection profile",
+      "path": ".scratch/pi_remote_runtime_20261014/laptop-profile.json",
+      "exists": true
+    },
+    {
+      "label": "Operator dimensions",
+      "path": "logs/pi_gateway_shipped_s20261003_onboardfix_20261014/operator_dimensions.json",
+      "exists": true
+    },
+    {
+      "label": "Operator boundaries",
+      "path": "logs/pi_gateway_shipped_s20261003_onboardfix_20261014/operator_boundaries.json",
+      "exists": true
+    },
+    {
+      "label": "Archived previous Pi installation",
+      "path": ".scratch/pi_deploy_20261014/previous_pi_installation.tar.gz",
+      "exists": true
+    },
+    {
+      "label": "Archived pre-refresh runtime",
+      "path": ".scratch/pi_refresh_20261014/previous_current_runtime.tar.gz",
+      "exists": true
+    },
+    {
+      "label": "Worktree preservation and removal receipt",
+      "path": ".scratch/worktree_consolidation_20261014/result.json",
+      "exists": true
+    }
+  ],
+  "historical_memory_note": "The earlier standalone deployment, real FCU stream diagnosis, laptop forwarding and BEC power history come from the 8 October saved rollout. They were not reverified live for this report and may be outdated. Current qualification and recent deployment counts come from the actual working-folder receipts.",
+  "report_method": {
+    "frames": [
+      "regulator",
+      "3am on-call",
+      "curious 10-year-old"
+    ],
+    "candidates": [
+      {
+        "cluster": "Traceable conclusions",
+        "idea": "Claim licences",
+        "novelty": 8,
+        "viability": 6,
+        "fit": 8,
+        "weighted_score": 7.2,
+        "note": "Jargon could obscure a plain report."
+      },
+      {
+        "cluster": "Traceable conclusions",
+        "idea": "Instruction-to-flight proof chains",
+        "novelty": 8,
+        "viability": 9,
+        "fit": 10,
+        "weighted_score": 8.9,
+        "note": "Selected"
+      },
+      {
+        "cluster": "Separate source versions",
+        "idea": "Evidence grouped by source and configuration",
+        "novelty": 8,
+        "viability": 9,
+        "fit": 10,
+        "weighted_score": 8.9,
+        "note": "Same underlying idea as source-version groups."
+      },
+      {
+        "cluster": "Traceable conclusions",
+        "idea": "Challenge cards for completion claims",
+        "novelty": 7,
+        "viability": 7,
+        "fit": 8,
+        "weighted_score": 7.25,
+        "note": "Uniform cards conflict with the requested plain layout."
+      },
+      {
+        "cluster": "Operational closure",
+        "idea": "Operator handover by next action",
+        "novelty": 7,
+        "viability": 8,
+        "fit": 8,
+        "weighted_score": 7.65,
+        "note": ""
+      },
+      {
+        "cluster": "Traceable conclusions",
+        "idea": "Readiness claims with receipts",
+        "novelty": 7,
+        "viability": 8,
+        "fit": 9,
+        "weighted_score": 7.9,
+        "note": ""
+      },
+      {
+        "cluster": "Operational closure",
+        "idea": "Failure-response map by symptom",
+        "novelty": 8,
+        "viability": 7,
+        "fit": 8,
+        "weighted_score": 7.6,
+        "note": ""
+      },
+      {
+        "cluster": "Operational closure",
+        "idea": "Remaining obligations with exact acceptance evidence",
+        "novelty": 8,
+        "viability": 9,
+        "fit": 10,
+        "weighted_score": 8.9,
+        "note": "Selected"
+      },
+      {
+        "cluster": "Traceable conclusions",
+        "idea": "One evidence receipt for every promise",
+        "novelty": 7,
+        "viability": 9,
+        "fit": 10,
+        "weighted_score": 8.55,
+        "note": ""
+      },
+      {
+        "cluster": "Operational closure",
+        "idea": "Mission path with proven gates",
+        "novelty": 7,
+        "viability": 8,
+        "fit": 9,
+        "weighted_score": 7.9,
+        "note": ""
+      },
+      {
+        "cluster": "Separate source versions",
+        "idea": "Source-version evidence groups",
+        "novelty": 8,
+        "viability": 9,
+        "fit": 10,
+        "weighted_score": 8.9,
+        "note": "Selected"
+      },
+      {
+        "cluster": "Operational closure",
+        "idea": "Expected versus observed failure pairs",
+        "novelty": 7,
+        "viability": 9,
+        "fit": 10,
+        "weighted_score": 8.55,
+        "note": ""
+      }
+    ],
+    "selected": [
+      "Instruction-to-flight proof chains",
+      "Source-version evidence groups",
+      "Remaining obligations with exact acceptance evidence"
+    ],
+    "wildcard": "Make a source freeze the unit of qualification."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "scope": "Native focused return diagnostic only; coupled gust cases already fail; not production adoption",
+  "baseline_controller_sha256": "028d5bd40116c13c5a9d92f3cef26ea38d856818d234acb08b75fcf1f654fbd9",
+  "candidate_controller_sha256": "ee144216f8fc59fd9b9d444166491003516183155fff6d011c0c0f4caab5a30f",
+  "files": 3192
+}

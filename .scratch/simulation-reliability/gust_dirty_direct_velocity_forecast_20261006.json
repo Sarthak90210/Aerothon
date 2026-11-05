@@ -1,0 +1,186 @@
+{
+  "controller_sha256": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+  "fixture_sha256": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+  "capture_sha256": "b972d92c986c35187b333e0d4dd09ab5c8e5ee9c86a2262cb5e5de5e95896c27",
+  "analysis_sha256": "2df138843cb5ff7e1f4f8412e93e93f7bdbb6154ff7ebb940451092cb9899ce4",
+  "source": "post-flight evaluation only; oracle physical drift never supplied to controller",
+  "maximum_physical_ground_reconstruction_error_mps": 1.1102230246251565e-16,
+  "samples": 105,
+  "original_maximum_error_m": 0.046969732189098445,
+  "direct_feedthrough_maximum_error_m": 0.060063840922786,
+  "oracle_maximum_physical_closure_error_m": 3.4833247397614286e-15,
+  "at_last_accepted_packet": {
+    "stamp": 4.699999999999991,
+    "observed_rate_world": [
+      0.08318104857581851,
+      -0.4143940259972376
+    ],
+    "original_error_m": 0.04613816128150807,
+    "direct_feedthrough_error_m": 0.016394757311190146,
+    "oracle_physical_closure_error_m": 5.828670879282072e-16
+  },
+  "worst_original": [
+    {
+      "stamp": 4.849999999999991,
+      "observed_rate_world": [
+        -0.03356321022111158,
+        -0.4917993747805455
+      ],
+      "original_error_m": 0.046969732189098445,
+      "direct_feedthrough_error_m": 0.012360511492194984,
+      "oracle_physical_closure_error_m": 5.721958498152797e-17
+    },
+    {
+      "stamp": 4.699999999999991,
+      "observed_rate_world": [
+        0.08318104857581851,
+        -0.4143940259972376
+      ],
+      "original_error_m": 0.04613816128150807,
+      "direct_feedthrough_error_m": 0.016394757311190146,
+      "oracle_physical_closure_error_m": 5.828670879282072e-16
+    },
+    {
+      "stamp": 4.799999999999991,
+      "observed_rate_world": [
+        -0.045309154444359144,
+        -0.4749526862288096
+      ],
+      "original_error_m": 0.045642691999342455,
+      "direct_feedthrough_error_m": 0.012181870539583915,
+      "oracle_physical_closure_error_m": 1.2794688166302258e-16
+    },
+    {
+      "stamp": 4.899999999999991,
+      "observed_rate_world": [
+        0.07467370865239575,
+        -0.6180055034406252
+      ],
+      "original_error_m": 0.04332280475204191,
+      "direct_feedthrough_error_m": 0.0042574921927992174,
+      "oracle_physical_closure_error_m": 1.8253379971363983e-16
+    },
+    {
+      "stamp": 4.6499999999999915,
+      "observed_rate_world": [
+        -0.019694367272973794,
+        -0.4751496939733061
+      ],
+      "original_error_m": 0.041644213607909965,
+      "direct_feedthrough_error_m": 0.007544799298872892,
+      "oracle_physical_closure_error_m": 1.2212453270876722e-15
+    },
+    {
+      "stamp": 4.94999999999999,
+      "observed_rate_world": [
+        0.03394204088946402,
+        -0.6191711003302469
+      ],
+      "original_error_m": 0.04124011722702061,
+      "direct_feedthrough_error_m": 0.00512090723064112,
+      "oracle_physical_closure_error_m": 2.7755575615628914e-16
+    },
+    {
+      "stamp": 4.749999999999991,
+      "observed_rate_world": [
+        0.038779926760581944,
+        -0.6605545827664179
+      ],
+      "original_error_m": 0.0406303402889639,
+      "direct_feedthrough_error_m": 0.008887769651249312,
+      "oracle_physical_closure_error_m": 4.718447854656915e-16
+    },
+    {
+      "stamp": 4.599999999999992,
+      "observed_rate_world": [
+        -0.07590234014520554,
+        -0.4081593906905607
+      ],
+      "original_error_m": 0.040603922298036735,
+      "direct_feedthrough_error_m": 0.013168447827719247,
+      "oracle_physical_closure_error_m": 1.22156069063769e-15
+    }
+  ],
+  "worst_direct_feedthrough": [
+    {
+      "stamp": 4.3499999999999925,
+      "observed_rate_world": [
+        -0.10755765722005392,
+        0.3332905190960579
+      ],
+      "original_error_m": 0.03494728218325986,
+      "direct_feedthrough_error_m": 0.060063840922786,
+      "oracle_physical_closure_error_m": 1.1380632177521669e-15
+    },
+    {
+      "stamp": 4.299999999999993,
+      "observed_rate_world": [
+        -0.16837714708805995,
+        0.3492716269981976
+      ],
+      "original_error_m": 0.02074767278384827,
+      "direct_feedthrough_error_m": 0.04766695146957344,
+      "oracle_physical_closure_error_m": 1.0552823518344791e-15
+    },
+    {
+      "stamp": 4.049999999999994,
+      "observed_rate_world": [
+        -0.28897424701608726,
+        -0.3429729219525462
+      ],
+      "original_error_m": 0.021754940968409825,
+      "direct_feedthrough_error_m": 0.041186373115749395,
+      "oracle_physical_closure_error_m": 1.3409850070281778e-15
+    },
+    {
+      "stamp": 3.599999999999995,
+      "observed_rate_world": [
+        0.193541299849271,
+        0.0768940058952462
+      ],
+      "original_error_m": 0.030588397220099865,
+      "direct_feedthrough_error_m": 0.039566735691124746,
+      "oracle_physical_closure_error_m": 1.8041124150158794e-16
+    },
+    {
+      "stamp": 3.049999999999997,
+      "observed_rate_world": [
+        0.11960309440807515,
+        0.5139600557630016
+      ],
+      "original_error_m": 0.008853676540114224,
+      "direct_feedthrough_error_m": 0.038783034025892144,
+      "oracle_physical_closure_error_m": 8.604228440844963e-16
+    },
+    {
+      "stamp": 2.799999999999998,
+      "observed_rate_world": [
+        -0.07330500901821554,
+        -0.07244715242310842
+      ],
+      "original_error_m": 0.030830800267251778,
+      "direct_feedthrough_error_m": 0.036481945556799386,
+      "oracle_physical_closure_error_m": 4.163336342344337e-16
+    },
+    {
+      "stamp": 4.399999999999992,
+      "observed_rate_world": [
+        -0.09573771298704345,
+        -0.03916578630531009
+      ],
+      "original_error_m": 0.03734000498236032,
+      "direct_feedthrough_error_m": 0.0350914385265162,
+      "oracle_physical_closure_error_m": 1.333152767288562e-15
+    },
+    {
+      "stamp": 3.099999999999997,
+      "observed_rate_world": [
+        -0.034167128655347545,
+        0.42316535869843924
+      ],
+      "original_error_m": 0.006087914760574694,
+      "direct_feedthrough_error_m": 0.034811013489662104,
+      "oracle_physical_closure_error_m": 6.245004513516506e-16
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+Starting >>> camera_ctrl
+Starting >>> mission_bt
+Finished <<< mission_bt [2.02s]
+Starting >>> avoidance
+Finished <<< camera_ctrl [2.05s]
+Starting >>> perception_banner
+Finished <<< avoidance [2.02s]
+Starting >>> ldlidar_stl_ros2
+Finished <<< perception_banner [2.04s]
+Starting >>> perception_overlay
+Finished <<< perception_overlay [2.64s]
+Starting >>> uav_description
+Finished <<< uav_description [1.79s]
+Starting >>> winch_ctrl
+Finished <<< winch_ctrl [1.81s]
+Starting >>> perception_qr
+Finished <<< ldlidar_stl_ros2 [7.65s]
+Starting >>> gcs_aggregator
+Finished <<< perception_qr [1.88s]
+Starting >>> perception_redzone
+Finished <<< gcs_aggregator [1.83s]
+Finished <<< perception_redzone [1.78s]
+Starting >>> mission_bringup
+Finished <<< mission_bringup [1.81s]
+
+Summary: 12 packages finished [16.0s]
+PASS ROS package: mission_bringup
+PASS ROS package: mission_bt
+PASS ROS package: uav_description
+PASS ROS package: avoidance
+PASS ROS package: winch_ctrl
+PASS ROS package: camera_ctrl
+PASS ROS package: perception_qr
+PASS ROS package: perception_banner
+PASS ROS package: perception_redzone
+PASS ROS package: perception_overlay
+PASS ROS package: gcs_aggregator
+PASS ROS package: mavros
+PASS ROS package: usb_cam
+PASS ROS package: ldlidar_stl_ros2
+PASS ROS package: web_video_server
+PASS ROS package: robot_state_publisher
+PASS ROS package: xacro
+PASS Python import: cv_bridge
+PASS Python import: cv2
+PASS Python import: numpy
+PASS Python import: scipy
+PASS Python import: py_trees
+PASS Python import: websockets
+PASS Python import: pyzbar.pyzbar
+PASS Python import: serial
+PASS OCR confirming path: tesseract
+PASS MAVROS geoid data
+PASS Built revised GCS
+
+This checks software availability only. GPIO winch/encoder support is not implemented.
+Camera/lidar wiring, actuator calibration, loaded hover and failsafes require hardware evidence.
+sha256:80920de57d2d2ee6217b6c896f0ef5c6ec1973879faff62e9de7b51d4b7207f7 arm64 2453302808

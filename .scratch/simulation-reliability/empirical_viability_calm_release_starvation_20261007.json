@@ -1,0 +1,11 @@
+{
+  "counts": {
+    "eligible": 1488,
+    "speed_too_low": 1489,
+    "queue_not_clear": 46,
+    "no_samples": 24,
+    "ground_too_fast": 208
+  },
+  "rows": 3001,
+  "longest_uninterrupted_eligible_s": 4.450000000000063
+}

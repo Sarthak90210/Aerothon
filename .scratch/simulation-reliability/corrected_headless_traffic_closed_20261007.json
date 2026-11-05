@@ -1,0 +1,523 @@
+{
+  "run": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/logs/reliability_corrected_headless_focus_20261007/my_world_calm_s1",
+  "configuration": {
+    "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/sim/worlds/my_world.json",
+    "seed": 1,
+    "conditions": "calm",
+    "rtf": 4.0,
+    "max_sim_s": 1200.0,
+    "ros_domain": 222,
+    "fidelity": "object-level navigation; no rendered images or motor telemetry",
+    "navigation_only": true,
+    "delivery_exercised": false,
+    "vel_command_delay_s": 0.4,
+    "vel_response_s": 0.6
+  },
+  "source_manifest_sha256": "09b2debded0df8d938141f8b57f2b9614e2374f81ba53ef3a3b893e4578ad54e",
+  "recorded_rows": 4331,
+  "partial_lines": {
+    "commands": 0,
+    "onboard": 0,
+    "detectors": 0
+  },
+  "command_topics": {
+    "/camera/set_pose": 17,
+    "/mavros/setpoint_position/local": 7819,
+    "/mavros/setpoint_raw/local": 543
+  },
+  "raw_frames": {
+    "9": 543
+  },
+  "raw_header_to_recorder_receipt_s": {
+    "samples": 543,
+    "minimum": 0.0,
+    "median": 0.030000000000001137,
+    "p95": 0.04000000000000625,
+    "maximum": 0.4600000000000364,
+    "negative": 0
+  },
+  "raw_header_phases": [
+    {
+      "first_header_stamp": 96.05,
+      "last_header_stamp": 111.0,
+      "commands": 299
+    },
+    {
+      "first_header_stamp": 833.459999999,
+      "last_header_stamp": 846.009999999,
+      "commands": 244
+    }
+  ],
+  "sensors": {
+    "flight": {
+      "distinct_capture_count": 4317,
+      "first_capture_stamp": 0.4,
+      "last_capture_stamp": 891.399999999,
+      "record_age_s": {
+        "samples": 4329,
+        "minimum": 0.009999999999990905,
+        "median": 0.11000000000001364,
+        "p95": 0.20000000000004547,
+        "maximum": 0.22000000000002728,
+        "negative": 0
+      },
+      "recorder_delivery_delta_s": {
+        "samples": 4317,
+        "minimum": 0.0,
+        "median": 0.009999999999990905,
+        "p95": 0.010000000000104592,
+        "maximum": 0.030000000000086402,
+        "negative": 0
+      }
+    },
+    "pose": {
+      "distinct_capture_count": 4330,
+      "first_capture_stamp": 0.030000000000000002,
+      "last_capture_stamp": 891.569999999,
+      "record_age_s": {
+        "samples": 4330,
+        "minimum": 0.009999999999990905,
+        "median": 0.020000000000010232,
+        "p95": 0.030000000000086402,
+        "maximum": 0.24000000000000002,
+        "negative": 0
+      },
+      "recorder_delivery_delta_s": {
+        "samples": 4330,
+        "minimum": 0.0,
+        "median": 0.0,
+        "p95": 1.1368683772161603e-13,
+        "maximum": 0.020000000000095497,
+        "negative": 0
+      }
+    },
+    "velocity": {
+      "distinct_capture_count": 4330,
+      "first_capture_stamp": 0.15000000000000002,
+      "last_capture_stamp": 891.569999999,
+      "record_age_s": {
+        "samples": 4330,
+        "minimum": 0.009999999999990905,
+        "median": 0.020000000000010232,
+        "p95": 0.030000000000086402,
+        "maximum": 0.12,
+        "negative": 0
+      },
+      "recorder_delivery_delta_s": {
+        "samples": 4330,
+        "minimum": -0.12000000000000002,
+        "median": 0.0,
+        "p95": 1.1368683772161603e-13,
+        "maximum": 0.020000000000095497,
+        "negative": 1
+      }
+    }
+  },
+  "detectors": {
+    "qr_timing": {
+      "events": 8916,
+      "distinct_frames": 8916,
+      "delivered_distinct_hz": 10.00000000000747,
+      "declared_processing_latency_s": {
+        "samples": 8916,
+        "minimum": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0,
+        "negative": 0
+      },
+      "recorder_delivery_latency_s": {
+        "samples": 8916,
+        "minimum": -9.999991945619513e-10,
+        "median": -4.80554263049271e-10,
+        "p95": 0.009999999660180947,
+        "maximum": 0.17000000000000004,
+        "negative": 6493
+      }
+    },
+    "red_timing": {
+      "events": 8916,
+      "distinct_frames": 8916,
+      "delivered_distinct_hz": 10.00000000000747,
+      "declared_processing_latency_s": {
+        "samples": 8916,
+        "minimum": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0,
+        "negative": 0
+      },
+      "recorder_delivery_latency_s": {
+        "samples": 8916,
+        "minimum": -9.99996974115902e-10,
+        "median": -5.826450433232822e-13,
+        "p95": 0.009999999982909458,
+        "maximum": 0.17000000000000004,
+        "negative": 4529
+      }
+    }
+  },
+  "avoidance_unique_decisions": 132,
+  "avoidance_states": {
+    "CRUISE": 73,
+    "BLOCKED": 28,
+    "BACKOFF": 30,
+    "STUCK": 1
+  },
+  "first_uncertified_braking": {
+    "recorded_stamp": 834.109999999,
+    "mission": "RETURN_CORRIDOR",
+    "detail": {
+      "state": "BLOCKED",
+      "front_m": 0.83,
+      "corridor_entered": false,
+      "corridor_exited": false,
+      "side_left_m": 0.76,
+      "side_right_m": 1.81,
+      "open_depth_m": 2.85,
+      "open_width_m": 2.57,
+      "gap_bearing_deg": 0.0,
+      "cmd_vx": 0.0,
+      "cmd_vy_left": 0.0,
+      "cmd_vz": 0.0,
+      "cmd_yaw_rate": 0.0,
+      "hold_alt_m": 2.08,
+      "alt_m": 2.08,
+      "backoffs": 0,
+      "disturbance_estimate_valid": true,
+      "disturbance_world_mps": [
+        0.07160348319886434,
+        -0.005750145441544688
+      ],
+      "disturbance_rate_world_mps2": [
+        0.6409076489609951,
+        -0.05340102340639129
+      ],
+      "command_response_state": "observed own velocity response",
+      "ground_velocity_world_mps": [
+        -0.19557434759036596,
+        0.08131155233712661
+      ],
+      "ground_velocity_basis": "fresh FCU EKF velocity_local",
+      "fcu_velocity_age_s": 0.029999999999972715,
+      "command_delay_s": 0.4,
+      "commanded_yaw_rate_rad_s": 0.0,
+      "command_receipt_turn_rad": 0.0,
+      "drift_left_mps": -0.01,
+      "planner_state": "aircraft lacks required surface clearance",
+      "required_clearance_m": 0.7,
+      "observed_clearance_m": 0.5131346520803111,
+      "scan_age_s": 0.06,
+      "pose_age_s": 0.03,
+      "planner_path_body_m": [],
+      "axis_progress_m": 0.433,
+      "note": "no navigable gap",
+      "blocked_ticks": 3,
+      "braking_clearance_available": false,
+      "recovery_reason": "travel limited by observed braking clearance"
+    }
+  },
+  "first_observed_clearance_below_070": {
+    "recorded_stamp": 834.109999999,
+    "mission": "RETURN_CORRIDOR",
+    "detail": {
+      "state": "BLOCKED",
+      "front_m": 0.83,
+      "corridor_entered": false,
+      "corridor_exited": false,
+      "side_left_m": 0.76,
+      "side_right_m": 1.81,
+      "open_depth_m": 2.85,
+      "open_width_m": 2.57,
+      "gap_bearing_deg": 0.0,
+      "cmd_vx": 0.0,
+      "cmd_vy_left": 0.0,
+      "cmd_vz": 0.0,
+      "cmd_yaw_rate": 0.0,
+      "hold_alt_m": 2.08,
+      "alt_m": 2.08,
+      "backoffs": 0,
+      "disturbance_estimate_valid": true,
+      "disturbance_world_mps": [
+        0.07160348319886434,
+        -0.005750145441544688
+      ],
+      "disturbance_rate_world_mps2": [
+        0.6409076489609951,
+        -0.05340102340639129
+      ],
+      "command_response_state": "observed own velocity response",
+      "ground_velocity_world_mps": [
+        -0.19557434759036596,
+        0.08131155233712661
+      ],
+      "ground_velocity_basis": "fresh FCU EKF velocity_local",
+      "fcu_velocity_age_s": 0.029999999999972715,
+      "command_delay_s": 0.4,
+      "commanded_yaw_rate_rad_s": 0.0,
+      "command_receipt_turn_rad": 0.0,
+      "drift_left_mps": -0.01,
+      "planner_state": "aircraft lacks required surface clearance",
+      "required_clearance_m": 0.7,
+      "observed_clearance_m": 0.5131346520803111,
+      "scan_age_s": 0.06,
+      "pose_age_s": 0.03,
+      "planner_path_body_m": [],
+      "axis_progress_m": 0.433,
+      "note": "no navigable gap",
+      "blocked_ticks": 3,
+      "braking_clearance_available": false,
+      "recovery_reason": "travel limited by observed braking clearance"
+    }
+  },
+  "final": {
+    "stamp": 891.599999999,
+    "mission": "ABORT",
+    "flight": {
+      "received_stamp": 891.3999999990001,
+      "received_wall_s": 621.177157722,
+      "data": {
+        "header": {
+          "stamp": {
+            "sec": 891,
+            "nanosec": 399999999
+          },
+          "frame_id": ""
+        },
+        "connected": true,
+        "armed": false,
+        "guided": false,
+        "manual_input": false,
+        "mode": "LAND",
+        "system_status": 3
+      }
+    },
+    "result": {
+      "state": "FAILED",
+      "reason": "ReturnCorridor: corridor navigator reported STUCK at x=15.54",
+      "delivery_offset_m": null,
+      "delivery_confirmed": false,
+      "delivery_confirmation_basis": null,
+      "landing_precision": "UNKNOWN",
+      "t": 846.009999999
+    },
+    "avoidance": {
+      "state": "OBSERVING",
+      "front_m": 12.0,
+      "corridor_entered": true,
+      "corridor_exited": false,
+      "side_left_m": 12.0,
+      "side_right_m": 12.0,
+      "open_depth_m": 12.0,
+      "open_width_m": 24.0
+    }
+  },
+  "limits": [
+    "Raw command header stamps are controller transmission stamps.",
+    "flight_commands stamp is this independent recorder callback time, not the world callback.",
+    "Simulator schedules reception .4 s after its own callback; that callback time is not recorded here.",
+    "Avoidance detail has no decision capture timestamp; recorded_stamp is a recorder sample of cached detail.",
+    "Detector events are object-level generated observations; their rates cannot qualify rendered images.",
+    "This report does not use independent simulator truth for drone decisions."
+  ],
+  "run.json": {
+    "spec": "my_world",
+    "seed": 1,
+    "start_target": "b",
+    "conditions": {
+      "wind": {
+        "speed": 0.0,
+        "dir_deg": 0.0,
+        "gust": 0.0,
+        "gust_period_s": 6.0,
+        "veer_deg": 0.0
+      },
+      "camera": {
+        "motion_blur": 0,
+        "defocus": 0,
+        "noise": 0,
+        "haze": 0,
+        "exposure": 0,
+        "glare": 0,
+        "jpeg": 0,
+        "lens_dust": 0,
+        "vibration": 0,
+        "frame_drop": 0.0,
+        "latency_ms": 0
+      },
+      "lidar": {
+        "noise_m": 0.0,
+        "dropout": 0.0,
+        "spurious": 0.0
+      },
+      "wear": {
+        "banner": 0,
+        "qr": 0
+      },
+      "fcu": {
+        "gps_noise_m": 0.0,
+        "gps_glitch_m": 0.0,
+        "glitch_at_s": 150.0,
+        "glitch_s": 5.0,
+        "baro_noise_m": 0.0,
+        "baro_drift_mps": 0.0,
+        "imu_noise": 0.0,
+        "battery_v": 16.8
+      }
+    },
+    "result": {
+      "state": "FAILED",
+      "reason": "ReturnCorridor: corridor navigator reported STUCK at x=15.54",
+      "delivery_offset_m": null,
+      "delivery_confirmed": false,
+      "delivery_confirmation_basis": null,
+      "landing_precision": "UNKNOWN",
+      "t": 846.009999999
+    },
+    "sim_s": 891.7,
+    "contacts": [],
+    "fence_breaches": 0,
+    "events": [
+      [
+        19.46,
+        "mode GUIDED"
+      ],
+      [
+        19.49,
+        "mission started (ARMING)"
+      ],
+      [
+        19.6,
+        "mode GUIDED"
+      ],
+      [
+        21.21,
+        "armed by command"
+      ],
+      [
+        846.01,
+        "mission result FAILED: ReturnCorridor: corridor navigator reported STUCK at x=15.54"
+      ],
+      [
+        846.07,
+        "mode RTL"
+      ],
+      [
+        889.14,
+        "payload touched down at (0.06, -0.06)"
+      ],
+      [
+        889.21,
+        "mode LAND"
+      ],
+      [
+        890.67,
+        "landed and disarmed at (0.06, -0.06)"
+      ]
+    ]
+  },
+  "navigation_grade.json": {
+    "checks": {
+      "no red-zone entry": true,
+      "inside geofence": true,
+      "outbound lane flown THROUGH the corridor": true,
+      "return lane flown THROUGH the corridor": false,
+      "never above the corridor": false,
+      "no tilt beyond 30 deg": true,
+      "no failsafe / unexpected flight mode": false,
+      "ceiling over zone": true,
+      "flight within 900 s": true,
+      "no obstacle contact": true,
+      "landed at take-off point": true,
+      "restricted-zone clearance at least 1.50 m": true,
+      "corridor clearance at least 0.70 m": false
+    },
+    "pass_navigation": false,
+    "measured_red_clearance_m": 2.28007126355525,
+    "measured_corridor_clearance_m": 0.5028028772238747,
+    "full_grade": {
+      "samples": 8918,
+      "airborne_samples": 8671,
+      "red_zone_entries": [],
+      "closest_red_m": 2.28,
+      "geofence_exits": [],
+      "max_alt_in_zone_m": 10.11,
+      "max_alt_m": 15.46,
+      "flight_time_s": 869.3,
+      "landed_from_home_m": 0.08,
+      "final_armed": false,
+      "corridor_outbound": {
+        "found": true,
+        "t": [
+          96.2,
+          107.5
+        ],
+        "violations": [],
+        "n_bad": 0
+      },
+      "corridor_return": {
+        "found": true,
+        "t": [
+          833.6,
+          854.5
+        ],
+        "violations": [
+          {
+            "t": 847.1,
+            "why": "z 3.75 not below the wall tops"
+          },
+          {
+            "t": 847.2,
+            "why": "z 3.99 not below the wall tops"
+          },
+          {
+            "t": 847.3,
+            "why": "z 4.22 not below the wall tops"
+          },
+          {
+            "t": 847.4,
+            "why": "z 4.46 not below the wall tops"
+          },
+          {
+            "t": 847.5,
+            "why": "z 4.71 not below the wall tops"
+          }
+        ],
+        "n_bad": 74
+      },
+      "over_corridor_samples": 61,
+      "closest_obstacle_m": 0.5,
+      "max_tilt_deg": 14.3,
+      "tilt_events": [],
+      "unexpected_modes": [
+        "RTL"
+      ],
+      "early_land": false,
+      "payload_final": [
+        0.06,
+        -0.06,
+        0.04
+      ],
+      "payload_from_aircraft_m": 0.0,
+      "payload_error_m": 51.27,
+      "checks": {
+        "no red-zone entry": true,
+        "inside geofence": true,
+        "outbound lane flown THROUGH the corridor": true,
+        "return lane flown THROUGH the corridor": false,
+        "never above the corridor": false,
+        "no tilt beyond 30 deg": true,
+        "no failsafe / unexpected flight mode": false,
+        "ceiling over zone": true,
+        "flight within 900 s": true,
+        "no obstacle contact": true,
+        "landed at take-off point": true,
+        "payload released (on the ground, off the aircraft)": false,
+        "payload on the target pad (within 1 m)": false
+      },
+      "pass": false
+    },
+    "rendered_perception_qualified": false,
+    "motor_delivery_qualified": false
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "feature": "camera_settle_20261019",
+  "triage": "ready-for-human",
+  "problem": "Laptop-simulation search crawled and timed out before reaching the target: camera_ctrl 'settled' compared a body-relative Gazebo joint with the earth-frame mount request; under the FC-stabilised mount every nose-down acceleration read 'unsettled', perception_redzone stopped projecting, the search pacer cleared red-detector timing and held the aircraft (stop-go).",
+  "scope": "camera_ctrl publishes rate_dps on /camera/pose_state; perception_redzone, for readback 'joint' only, accepts a fresh (<=0.3 s), non-slewing (<=15 deg/s) measured angle and checks the LINE OF SIGHT (joint rotated by capture-time attitude) against the existing 0.35 rad nadir tolerance; joint footprint uses full attitude. Timed/mount readbacks unchanged (see .scratch/redzone_mount_frame_20261019). Pacer, 1.5 m red clearance, detector freshness, mission tree unchanged. World-maker profile now installs the simulator delivery calibration (logs/delivery_profile_20261005.json).",
+  "status": "camera fix verified in search (3 runs); full mission not yet passed: return corridor fails in the laptop-simulation route",
+  "frame_check": {
+    "data": ".scratch/camera_settle_frame_20261019/frame_check_before.json",
+    "nose_down": "joint - request = -0.84 x pitch (mount compensates); old rule settled 5/48",
+    "nose_up": "joint pinned at -90 (limit); belly camera looks up to 17 deg AHEAD of nadir; old rule settled 49/49",
+    "conclusion": "earth-frame settle rule rejected (would move the stop-go to braking); gate on measured, fresh, steady reading + true line of sight instead"
+  },
+  "tests": {
+    "new": [
+      "sim/test_redzone_camera_gate.py (9 cases; 7 fail on the original redzone_node)",
+      "sim/test_camera_ctrl.py rate cases (3)",
+      "sim/test_world_spec.py world-maker delivery calibration"
+    ],
+    "affected_suites": "155 passed (camera, red-zone, georef, corruption, detector timing)",
+    "reduced_offline_suite": "ALL IN-SCOPE OFFLINE CHECKS PASSED: python 2134 passed / 8 skipped, native interfaces, frontend 45 + build; ledger logs/camera_settle_20261019/offline_scope.json"
+  },
+  "sim_evidence": {
+    "baseline_before_fix": "user run 'shipped' (laptop-sim): pacing qualified 51/122, mean ground speed 0.17 m/s, 36% of samples < 0.1 m/s; search deadline passed, delivery skipped",
+    "run1_after_fix": {
+      "dir": "logs/camera_settle_20261019/manual_test_after",
+      "search": "pacing qualified 474/474, cap mean 0.56 m/s, red-zone CLEAR 1097/1097, target matched ~95 s sim after SEARCH_QR",
+      "outcome": "FAILED at WinchDrop: 'load calibration missing or unqualified' (world-maker profile had no delivery calibration) -> RTL; payload never lowered",
+      "grade": "no red-zone entry (closest 6.11 m), inside geofence, outbound corridor 0 violations, no obstacle contact, max tilt 14.1 deg, 301 s, landed 0.02 m from home; FAIL: return lane not flown, RTL mode, ceiling 15.2 m (RTL climb), no drop"
+    },
+    "run2_after_fix_with_calibration": {
+      "dir": "logs/camera_settle_20261019/manual_test_after2",
+      "outcome": "delivery inferred (image offset 0.22 m); return lap: ~30 min wall searching, entered the OUTBOUND corridor from its exit, squared on the outbound entrance board from behind at (10.5,-3.3) facing -180, DuckUnderBoard descended toward 1.6 m at 2.8 m from it; ArduPilot 'Crash: Disarming: AngErr=71>30, Accel=0.1<3.0'",
+      "confounds": "host paused ~2.5 h during the search (usage-limit gap / sleep; WSL clock changes); recorder track froze at t_sim 239 s, so the run is not gradeable",
+      "attribution": "return-banner and duck-under logic are untouched by this change; not proven unrelated"
+    },
+    "run3_after_fix_kept_awake": {
+      "dir": "logs/camera_settle_20261019/manual_test_after3",
+      "search": "pacing qualified 422/423, cap mean 0.64 m/s; red-zone CLEAR 1208, RED 3, 'camera still moving' 2",
+      "outcome": "Mission result FAILED (ReturnCorridor: corridor navigator reported STUCK at x=9.63); landed in the return corridor",
+      "grade": "11/14 PASS: no red-zone entry (closest 3.6 m), inside geofence, outbound corridor 0 violations, never above corridor, no unexpected mode, ceiling 10.07 m, 836.8 s, no obstacle contact (closest 0.67 m), drop 0.31 m, payload released on pad B (0.15 m). FAIL: return lane not completed, tilt 44.4 deg (0.2 s at (18.6,-2.95,3.2) during the return-banner hunt, outside any corridor), landed 11.7 m from home",
+      "return_lap": "run-2 wrong-corridor crash did NOT repeat: correct return entrance squared on at (21.8,-6.1), ducked at 1.2 m, wove obstacles 1-3; behind obstacle 4 the navigator logged 'gap present but no ground covered; treating as blocked' x60, 3 back-offs, 'no way through after all recovery attempts' (progress rule: 0.8 m per 12 s sim)",
+      "not_established": "why the planner did not take the 0.7 m sideways move into the south gap; scans/setpoints were not recorded. Laptop route delivers lidar at ~5.8 Hz (vs 10) and RTF ~0.4; the same world passed 22/22 in the scripted route on 15 Oct"
+    }
+  },
+  "blockers": [
+    "Return-corridor STUCK at obstacle 4 in the laptop-simulation route (cause not established; needs scan/setpoint recording and an A/B against the scripted route)",
+    "Brief 44 deg tilt during the return-banner hunt (cause not established)",
+    "Red-zone-on-lane safety world not yet flown with the fix"
+  ],
+  "completion": "Not complete: no full mission through disarm with independent pass yet."
+}

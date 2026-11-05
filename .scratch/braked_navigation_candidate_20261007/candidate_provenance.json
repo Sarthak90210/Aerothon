@@ -1,0 +1,32 @@
+{
+  "base_archive_sha256": "ce70e282063bf91821e5e09b056f58fd9ec9584e9d06b7be307d14f0eaeb5662",
+  "base_source_files": 833,
+  "candidate_source_sha256": "22a585b13a275be53df55afbff7baeacdce0c07e64815a260ffe4a7d2017263a",
+  "modified": {
+    "src/aerothon_mission/mission_bt/mission_bt/gate_braking_candidate.py": "22a585b13a275be53df55afbff7baeacdce0c07e64815a260ffe4a7d2017263a",
+    "sim/navigation_mission.py": "268ffa7bf032d11a61f2fee0a82988ca6cb8a1813da622b780eff6bebda1ba30",
+    "src/aerothon_avoidance/avoidance/avoidance/fast_connected_planner_candidate.py": "0d5bf7f50565519b4a7ebeaf3c0df9a386ac799dfaad53d9fb0aec5fc10f64f0",
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "6fd6c52c15b12e9e5c6950ba351d753abeda041a22d27270c83fc2ce4394667d",
+    "sim/headless_world.py": "2a504d4af40dbac91d88049d03e7de1f2dd8a1841efc5aaa6c62bb03245b616e",
+    "sim/run_braked_navigation_probe.py": "ef44f906b3f13c8fb6693ac8bb786af5ee9c860db859d985031e5180fc9bdb3c",
+    "src/aerothon_avoidance/avoidance/avoidance/independent_ros_clock_candidate.py": "c3fce31cb6cd8135df3a58a0126da3ed2c80e066ab40ba700fa58e8e3f11b83c"
+  },
+  "gate_speed_cap_mps": 0.5,
+  "control_scope": "navigation-only object fixture",
+  "production_source_modified": false,
+  "rendered_perception_qualified": false,
+  "motor_delivery_qualified": false,
+  "restore_speed_mps": 5.0,
+  "restore_basis": "explicit commanded navigation configuration when no prior speed command exists",
+  "planner_candidate_sha256": "0d5bf7f50565519b4a7ebeaf3c0df9a386ac799dfaad53d9fb0aec5fc10f64f0",
+  "fixture_changed": "separate command callback timing evidence only; physical motion unchanged",
+  "clock_candidate_sha256": "c3fce31cb6cd8135df3a58a0126da3ed2c80e066ab40ba700fa58e8e3f11b83c",
+  "clock_scope": "actual ROS /clock callbacks; no simulator geometry or status",
+  "physical_response_or_delay_changed": false,
+  "sensor_capture_age_included_in_motion_forecast": true,
+  "post_planning_stale_observations_stop": true,
+  "corrections": [
+    "Forecast reads command-delay parameter before the inner local assignment.",
+    "Retain existing pose-derived velocity fallback; reject stale or invalid actual EKF streams."
+  ]
+}

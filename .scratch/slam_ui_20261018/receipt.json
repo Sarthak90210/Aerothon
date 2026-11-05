@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-19",
+  "status": "ready for props-off Pi installation/build and bench verification",
+  "scope": "SLAM display redesign, freshness/frame/mounting correctness, local GCS testing continuation and winch refusal/receipt fixes",
+  "package": {
+    "bundle": "D:\\MY DOCUMENTS\\VIT\\Team Rotor Fpv\\AEROTHON\\.scratch\\slam_ui_20261018\\aerothon-pi-20261019-slam-ui.zip",
+    "files": 265,
+    "bytes": 2199811,
+    "sha256": "018ae196716af83dc3624aad8adf417655b6e373ceb3749d87bb446a2f139156"
+  },
+  "verified": {
+    "payload_hashes": 265,
+    "local_ros_packages": 13,
+    "markdown_files": 2,
+    "gzip_assets": 3,
+    "served_http": 200,
+    "served_bundle": "index-BvJeOAWo.js",
+    "offline_passed": 2103,
+    "offline_skipped": 8,
+    "native_ros_passed": 12,
+    "frontend_passed": 45,
+    "affected_backend_passed": 51,
+    "mounting_reference_cases": 80,
+    "mounting_max_error_m": 3.972054645195637e-15
+  },
+  "skip_scope": [
+    "5 deferred strong-gust cases",
+    "3 tests lacking photographed perception corpus"
+  ],
+  "browser": {
+    "performance": {
+      "connectionStates": [
+        "Live FCU"
+      ],
+      "elapsedSeconds": 523.758199999988,
+      "longTaskCount": 0,
+      "maxLongTaskMs": 0,
+      "rasterisations": 524,
+      "rasterisationsPerSecond": 1.000461472400567
+    },
+    "checks": [
+      "light/dark themes",
+      "390px viewport, no horizontal overflow after header fix",
+      "explicit follow, keyboard pan cancels follow, layer switches",
+      "fresh map with paused lidar: 0 cyan map-overlay pixels",
+      "old pose: registered overlay hidden",
+      "held mapping: backend reason visible",
+      "actual local Gazebo/SITL map, independent of synthetic fixture"
+    ],
+    "preview": "slam-ui-preview.jpg",
+    "preview_data": "synthetic ROS display fixture, not hardware"
+  },
+  "source_sha256": {
+    "MASTER_DOCUMENTATION.md": "a413c995707310ac4b919b001a1f89c05284dca9a09eb0dd7e772be6ed72601b",
+    "src/aerothon_gcs/tauri_app/src/App.tsx": "4c402a83f19e4ee3d7efbacd9edc36e3a0b927a73b205e8dc2968ca19a52db02",
+    "src/aerothon_gcs/tauri_app/src/LidarView.tsx": "0739230a9b30b2fce34a73b66dd4cf55db47a7ae891d53dcd9854018d3c92e99",
+    "src/aerothon_gcs/tauri_app/src/gcs.css": "751c36b5d7e84a7f64f8a4df358ac318cd9b96fa2b46299eb622a73c6bef1f1d",
+    "src/aerothon_gcs/tauri_app/src/lidarGeometry.ts": "a1c59454a40d9311e008c02b8d56ba5c36a394334cd656e794ce2b66a4a91e2f",
+    "src/aerothon_gcs/tauri_app/src/slamViewport.ts": "7c75bae2712af43c8d6d4e7ede070db8900288ee2471de88a5df92182da34ed1",
+    "src/aerothon_gcs/tauri_app/src/types.ts": "3dfe0a9cdcb5937a9cbbbaedcc8204c2a50f7d75a641fb0926bd44818eedc440",
+    "src/aerothon_payload/winch_ctrl/winch_ctrl/winch_node.py": "d9dfdbed41a7fb995266e19395ae1e2c10ea4ae34dfd5c3e3d4845cba4761e78",
+    "src/aerothon_runtime/aerothon_runtime/execution_node.py": "b773a600e998ebc4e3c80b8596823900f236d523529ebfd95a74ac191949ddd9",
+    "sim/test_winch.py": "5ef14993e0f2f55f0a4d2504f022bd68351b1432a68a5bafb43a59c8d17c4456",
+    "sim/test_gcs_merge_contract.py": "4df5dbf2a6ecb608a68f251b7f9c68860e02ef6dfd95bc59bcb14eb8cf22363c",
+    "src/aerothon_gcs/tauri_app/tests/lidarGeometry.test.mjs": "d9ef71e4dc60910e3a55ed626d5d21126f4fb8ef52b5218fcf38809698e3c4e1",
+    "src/aerothon_gcs/tauri_app/tests/slamViewport.test.mjs": "0d8097d055d321b10e9b4aa761917ca9fc6f30786981e4ed28f1061b4cbbbc7c"
+  },
+  "deployment": {
+    "pi_accessed": false,
+    "pi_deployed": false,
+    "arm64_build_verified": false,
+    "hardware_qualified": false
+  },
+  "remaining": [
+    "Pi ARM64 build and live sensor/mount verification",
+    "avoidance route made insufficient progress; interrupted and recovered",
+    "full mission stalled at banner alignment; interrupted and recovered",
+    "7m GPS delivery refused actuator capabilities before arming",
+    "delivery here reached WinchDrop but load calibration was unqualified"
+  ],
+  "local_testing": "local_testing.json",
+  "shutdown": "local_shutdown.json",
+  "research": "research.json"
+}

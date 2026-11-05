@@ -1,0 +1,119 @@
+{
+  "source": "operator laptop UDP to Pi router, no GCS Connect",
+  "messages": {
+    "22": 704,
+    "253": 12,
+    "36": 70,
+    "33": 15,
+    "65": 15,
+    "178": 15,
+    "30": 15,
+    "74": 14,
+    "1": 16,
+    "163": 7,
+    "125": 6,
+    "152": 7,
+    "62": 7,
+    "42": 8,
+    "27": 7,
+    "116": 7,
+    "129": 7,
+    "29": 6,
+    "137": 6,
+    "24": 6,
+    "2": 6,
+    "136": 7,
+    "193": 6,
+    "241": 6,
+    "147": 8,
+    "11039": 8,
+    "0": 16,
+    "77": 19,
+    "95": 2,
+    "111": 1,
+    "25": 1,
+    "5309186": 1,
+    "61697": 1,
+    "6243397": 1
+  },
+  "heartbeats": [
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 252,
+      "component": 1,
+      "armed": true
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false
+    }
+  ],
+  "unique_parameters": 702,
+  "heartbeat_received": true,
+  "disarmed": false
+}

@@ -1,0 +1,17 @@
+{
+  "provenance": "Current workspace non-code materials frozen at campaign setup",
+  "earlier_qualified_archive_contains_these_assets": false,
+  "source_code_changed": false,
+  "sha256": {
+    "src/aerothon_sim/sim_gazebo/materials/banner.png": "8125871a6298fde2764a4842b452f11fb17a616f5b5f1483f333647f2b6aa9fe",
+    "src/aerothon_sim/sim_gazebo/materials/qr_matrices.json": "dc77e8a56c82c76947c30ed8ee3dbcf0d04e669fe79922b8326b08de77ca31f9",
+    "src/aerothon_sim/sim_gazebo/materials/qr_payloads.txt": "721948d1a84d64a738f256dce148498db75d4bce71d2631c936e6289609ab385",
+    "src/aerothon_sim/sim_gazebo/materials/qr_start.png": "44d1a04c5e859f7c3d7165227627c43208c727b8c04fad544f315b9538a1b7a9",
+    "src/aerothon_sim/sim_gazebo/materials/qr_target_a.png": "44d1a04c5e859f7c3d7165227627c43208c727b8c04fad544f315b9538a1b7a9",
+    "src/aerothon_sim/sim_gazebo/materials/qr_target_b.png": "5784d7c04116a6d53ab59ca6bda6c100214412fc3b8a66d1d3d97f4311ff7507",
+    "src/aerothon_sim/sim_gazebo/materials/qr_target_c.png": "2f92d67300a16d3df48f13410b8f7b13586553780a64bd96d0b2f8cf524bb75b",
+    "src/aerothon_sim/sim_gazebo/materials/qr_target_d.png": "82662cc11a17c36aaf4f18ad44415ebb2d64a43bfb1ebccaec97901f98990df7",
+    "src/aerothon_sim/sim_gazebo/materials/qr_target_e.png": "ef644d6e41df372e11fb3c72ae9ce293d631ec6220b6428aeb70a855d352d470",
+    "src/aerothon_sim/sim_gazebo/materials/red_zone.png": "537b5f8375f3bb352231a6efaa2b0f943577ab9bc30620c406b4d867e5fe0bbc"
+  }
+}

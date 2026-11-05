@@ -1,0 +1,25 @@
+{
+  "archive": "current_source_gust_diagnosis_archive_20261006.zip",
+  "archive_sha256": "e5e03f472f9d2219637f20e6113dcdca6f94a015898170c34a4de018511be5b8",
+  "files": 18,
+  "sources": {
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+    "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+    "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+    "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+    ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9",
+    ".scratch/simulation-reliability/probe_gust_certificate_trace_20261006.py": "1de66b287b9048737fab35105ba13d8c8e8d2901ae86658840d2e8bbc16ff2ed",
+    ".scratch/simulation-reliability/check_gust_certificate_trace_20261006.sh": "c0f1effaf50a820648c99ecc704b9a715bb8e9aa50ef81be4b4da7871ba7242c",
+    ".scratch/simulation-reliability/analyse_gust_certificate_trace_20261006.py": "1b6d2b610571ec15f057e6d59cf886e4d98063e4de341d23be9462db3e405dfa",
+    ".scratch/simulation-reliability/probe_gust_external_drift_conjunct_20261006.py": "1a0777466310af514243b370befc8dc04e9404a149bb1cbaeb826626cf760f4b",
+    ".scratch/simulation-reliability/check_gust_external_drift_conjunct_20261006.sh": "bccb800ff250047bd3baa6ed9be14eac7dbdda286916ea36af1ad32a611eeb91",
+    ".scratch/simulation-reliability/probe_gust_receipt_path_20261006.py": "290461d20fa5d4cbc7d099f918c6cbcba5250c345392fcb3dc43acfbeead3f7e",
+    ".scratch/simulation-reliability/check_gust_receipt_path_20261006.sh": "431d94c7da4771b3aa8c0d19a3b736be2b9d64a2657be8f8719e86cde06a7fed",
+    ".scratch/simulation-reliability/probe_gust_reject_and_hold_20261006.py": "c16ad47a749587aa4f8462468b8fb75e7d18ed81452c8c71e0b53234301fb59f",
+    ".scratch/simulation-reliability/check_gust_reject_and_hold_20261006.sh": "6cbae7100235f36b9fef84118e28881c0c9e594effc3b82754253c0e21f067be",
+    ".scratch/simulation-reliability/prove_certificate_delay_wind_feedthrough_20261006.py": "1de9f9b0584ad45886e117382fdd5154655390acd1429d53c87fd1396203e2b0",
+    ".scratch/simulation-reliability/prove_certificate_delay_wind_feedthrough_initial_20261006.py": "3d458627e1383a56ab2ee06f1d7ddf3563c8e83ece0cf634a3439e29f18d5a49",
+    ".scratch/simulation-reliability/prove_certificate_delay_wind_feedthrough_before_green_20261006.py": "b6473f1ea972461a2711fc0521b88cacbcc93670fb4174937d5438a8c500faf3",
+    ".scratch/simulation-reliability/archive_current_gust_diagnosis_20261006.py": "dd0b1bfd7266aa5e986790097dee238c8bb4d069342d3c9254fd0b337536b4e0"
+  }
+}

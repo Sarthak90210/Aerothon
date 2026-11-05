@@ -1,0 +1,18 @@
+{
+  "host": "192.168.0.101",
+  "user": "pi5",
+  "os": "Debian 13 arm64",
+  "runtime": "Ubuntu 24.04 / ROS 2 Jazzy container",
+  "source_bundle_sha256": "4786afd9c4bbb06671e9cdc75e5634b8765beb177b19db795e2f8ebfe117f4f3",
+  "old_installation_archive_sha256": "0bc97164f00c615d445bb6fb91ae026d3dcfb8503fadb8f2e3034d1cd32731af",
+  "boot_services": [
+    "aerothon-gcs",
+    "aerothon-console",
+    "aerothon-router"
+  ],
+  "manual_service": "aerothon-stack",
+  "hardware_qualified": false,
+  "encoder_backend_implemented": false,
+  "flight_commands_sent": false,
+  "installation_network": "Temporary loopback HTTP proxy over SSH; remove after installation"
+}

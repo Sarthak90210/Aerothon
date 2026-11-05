@@ -1,0 +1,99 @@
+{
+  "feature": "GCS testing pass",
+  "date": "2026-10-18",
+  "problem": "GCS disconnected and reconnected repeatedly once SLAM mapping started; SLAM tab showed an old map instead of a live one. User asked for every Testing option to be exercised locally for bugs and glitches.",
+  "scope": "Browser GCS (tauri_app), web host (aerothon_runtime/web.py), GCS aggregator map/pose forwarding. Display and host only; no flight decision module changed.",
+  "rig": {
+    "files": [
+      "fake_vehicle.py",
+      "run_web.py",
+      "run_stack.sh",
+      "stop_stack.sh",
+      "probe.py",
+      "bench_map.py"
+    ],
+    "description": "Fake FCU/lidar/growing SLAM map/execution service on ROS 2 Jazzy (WSL, FASTDDS SHM), the real gcs_aggregator (managed) and the real web host with a sleeping stand-in runtime; browser pane at http://localhost:8897/.",
+    "start": "wsl.exe -d Ubuntu -- env ARENA_W=40 ARENA_H=30 bash .scratch/gcs_testing_20261018/run_stack.sh, then POST /api/connect {profile_id: benchsim}"
+  },
+  "findings": [
+    {
+      "bug": "SLAM canvas rebuilt the full occupancy grid on every telemetry frame (measured 52 rebuilds in 5 s, ~31% main thread on a laptop for 880x680 cells); a slower device falls behind, misses the host ping window and is disconnected (reproduced: 8 s main-thread stall -> code 1006 and reconnect)",
+      "fix": "rasterise once per map with a typed-array pass, draw per animation frame; browser heartbeat 5 s -> 10 s (pong window 5 s)",
+      "evidence": "after: 10 rasterisations in 10 s (one per map), no long animation frames in 6 s"
+    },
+    {
+      "bug": "page kept its last map across reconnects and runtime/profile changes; a reconnecting page had no map until the next publication",
+      "fix": "aggregator and web host replay the newest map to a new connection; page clears the map when profile_id/runtime changes or slam_toolbox restarts"
+    },
+    {
+      "bug": "aggregator 1.0 s throttle against slam_toolbox map_update_interval 1.0 dropped about every other map (7 maps in 15 s observed)",
+      "fix": "throttle 0.4 s"
+    },
+    {
+      "bug": "SLAM map had no aircraft position; map did not refit as it grew; Live/Stale label flickered at a 3 s threshold; status/legend text clipped by a fixed-height container",
+      "fix": "slam_toolbox /pose -> telemetry slam_pose; aircraft, track and live scan drawn in the map frame; auto-follow until the operator pans; map age chip (live <5 s, slow <15 s, stale); layout fixed"
+    },
+    {
+      "bug": "web host refused lidar_cal_geometry and lidar_cal_background as unknown commands; calibration wizard could not pass step 1",
+      "fix": "added to the web host command list",
+      "evidence": "UI showed 'Measurements recorded.' and 'Background recorded.'"
+    },
+    {
+      "bug": "a refused Start showed its reason for ~0.2 s, then the execution node's republished previous run replaced it; receipts never reached the event log",
+      "fix": "only results for this page's latest command replace the outcome line; receipts and execution transitions are logged"
+    },
+    {
+      "bug": "malformed waypoint text threw an uncaught exception with no message",
+      "fix": "shown as an error toast"
+    },
+    {
+      "bug": "errors and outcomes were drawn behind open Arena/Lidar dialogs",
+      "fix": "fixed-position toasts above dialogs"
+    },
+    {
+      "bug": "a disabled Review start gave no reason",
+      "fix": "startBlockReason; startAllowed derives from it"
+    },
+    {
+      "bug": "index.html served without Cache-Control; browsers kept the previous GCS after a deploy (observed in the rig)",
+      "fix": "no-cache for pages, immutable for hashed assets; pages opened before this fix need one manual reload"
+    }
+  ],
+  "checks": {
+    "frontend_tests": "node --test tests/*.test.mjs: 38 passed",
+    "web_host_tests": "test_web_robustness/test_pi_runtime/test_boot_connection: 44 passed",
+    "reduced_scope": "see logs/gcs_testing_20261018/reduced_scope.log"
+  },
+  "not_verified": [
+    "On the Pi with real slam_toolbox, C1 lidar and a phone/tablet over the drone Wi-Fi; the fix targets the reproduced mechanism, field confirmation pending",
+    "slam_toolbox /pose verified on WSL Jazzy (rig and SITL); Pi build not checked"
+  ],
+  "status": "fixed in source, not deployed to the Pi",
+  "sitl_pass": {
+    "setup": "sitl_laptop.sh (launch_laptop_sim.sh, headless, domain 43) + sitl_pi_loop.sh (real web host, production runtime on Connect, domain 42); profile created and connected from the GCS UI",
+    "exercised": [
+      "Connections: save profile, connect, connection check, disconnect, runtime log",
+      "organiser inputs: banner colours, geofence (drawn on map), arena preset applied by mission",
+      "GUIDED, Arm, Takeoff 5 m, Camera down/forward, Land, RTL, Abort",
+      "Testing: SLAM mapping, QR detection (start/stop), Banner alignment (refused/failed, see open issues), Mechanism (blocked by winch flag)",
+      "Camera: all five feeds through real web_video_server",
+      "SLAM map live in flight: connection never dropped, map age <= 1 s, no script errors"
+    ],
+    "fixed": [
+      "MJPEG connection leak exhausted the browser pool (Stop/Land queued) -> one stream, explicit release; API timeout 10 s",
+      "no-frame camera feed showed blank -> overlay reason, Retry reloads",
+      "SLAM marker vanished when still (/pose only on motion) -> last pose kept with age",
+      "Stop/Abort accepted with no execution while aircraft hovered -> review warning, use Land/RTL",
+      "refusal \"camera (not ok)\" -> measured rate shown",
+      "runtime exited at launch silently -> Connections notice and runtime log",
+      "leftover nodes of a killed launch + second runtime -> Connect refuses, Disconnect cleans up, aggregator retries port",
+      "web host restart ~60 s with page open -> ~10 s",
+      "-0.0 m, trailing separator, Execution shows last run as last"
+    ],
+    "open_runtime_issues": [
+      "laptop-sim camera 8.7 Hz vehicle time vs 10 Hz required and actuator flags toggling: camera-dependent flight tasks refused (host throughput, known 15 Oct)",
+      "Banner alignment failed RequireDeliveryZone with readiness ready: fence not resolved without FCU home position",
+      "WSL kills processes launched by a wsl.exe that exits (test-setup artifact; Pi uses KillMode=process)"
+    ]
+  }
+}

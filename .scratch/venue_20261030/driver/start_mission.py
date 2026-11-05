@@ -1,4 +1,5 @@
 """Wait for the GCS flight-readiness interlock, then Start the mission as the operator does."""
+import os
 import json
 import time
 import urllib.request
@@ -28,7 +29,7 @@ print("flight_ready", flush=True)
 time.sleep(5)
 cid = str(uuid.uuid4())
 r = call("/api/commands", {"command_id": cid, "cmd": "start", "confirm": True,
-                           "args": {"task": "mission", "params": {"height": 5.0, "target": "", "waypoints": []}}})
+                           "args": {"task": os.environ.get("VENUE_TASK", "mission"), "params": {"height": 5.0, "target": "", "waypoints": []}}})
 print("start:", json.dumps(r)[:300], flush=True)
 for _ in range(30):
     r = call(f"/api/commands/{cid}")

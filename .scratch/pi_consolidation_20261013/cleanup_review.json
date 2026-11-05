@@ -1,0 +1,35 @@
+{
+  "scope": "Two maintained project guides, conservative cleanup, runtime-only Pi bundle and field simulation video",
+  "adhd_frames": ["hardware engineer", "3am on-call", "inversion"],
+  "ideas": [
+    {"cluster":"ownership", "idea":"Single UART/interface owner contract", "novelty":5,"viability":10,"fit":10},
+    {"cluster":"hardware", "idea":"Measured complete-stack Pi resource envelope", "novelty":6,"viability":8,"fit":9},
+    {"cluster":"ownership", "idea":"Receive-only GCS boundary", "novelty":4,"viability":3,"fit":1,"trap":"Changes existing command-capable GCS behavior"},
+    {"cluster":"evidence", "idea":"Immutable source/configuration qualification bundles", "novelty":5,"viability":10,"fit":10},
+    {"cluster":"verification", "idea":"Recorded hardware-interface trace equivalence", "novelty":8,"viability":4,"fit":6,"trap":"Physical hardware is not connected or qualified"},
+    {"cluster":"evidence", "idea":"Synchronized actual world and onboard recording", "novelty":6,"viability":9,"fit":10},
+    {"cluster":"documentation", "idea":"Symptom-oriented operator recovery guide", "novelty":6,"viability":10,"fit":10},
+    {"cluster":"evidence", "idea":"Recovery capsule with commit/configuration hashes", "novelty":6,"viability":10,"fit":10},
+    {"cluster":"verification", "idea":"Read-only runtime prerequisite command", "novelty":5,"viability":9,"fit":10},
+    {"cluster":"documentation", "idea":"Old-to-new archive path and hash ledger", "novelty":7,"viability":10,"fit":10},
+    {"cluster":"evidence", "idea":"Link supported capabilities to exact evidence", "novelty":5,"viability":10,"fit":10},
+    {"cluster":"evidence", "idea":"Mission/time/outcome annotations on native video", "novelty":6,"viability":9,"fit":10},
+    {"cluster":"documentation", "idea":"Loss ledger before deleting guides", "novelty":7,"viability":10,"fit":10},
+    {"cluster":"evidence", "idea":"Keep failed runs as qualification witnesses", "novelty":6,"viability":10,"fit":10},
+    {"cluster":"ownership", "idea":"Explicit runtime boundary contracts", "novelty":5,"viability":10,"fit":10},
+    {"cluster":"deployment", "idea":"Positive runtime inventory and isolated build", "novelty":8,"viability":10,"fit":10},
+    {"cluster":"verification", "idea":"Source/AST fingerprint per cleanup batch", "novelty":7,"viability":10,"fit":10},
+    {"cluster":"evidence", "idea":"Native overview with source and grade receipt", "novelty":7,"viability":9,"fit":10}
+  ],
+  "shortlist": ["Positive runtime inventory and isolated build", "Loss ledger and symptom-oriented guide", "Ownership and measured-versus-estimated hardware contract"],
+  "focus": {
+    "runtime_inventory": {"risk":"Hidden simulator, dynamic import or GCS asset dependency", "action":"Extract ZIP, build all 11 local packages, import runtime modules and expand CAD URDF"},
+    "documentation": {"risk":"Stale guides contradict live code or failed evidence disappears", "action":"Archive original paths and hashes; write two dated guides from current source and run receipts"},
+    "hardware": {"risk":"GPIO configuration falsely implies an implemented encoder backend", "action":"Record confirmed SERVO9 and user wire functions, explicitly pending driver/encoder levels and unsupported backend"}
+  },
+  "removed_code": ["Unused std_msgs.Empty import", "Duplicate mission_bt exec_depend", "Unused echarts and echarts-for-react dependencies"],
+  "removed_project_docs": 104,
+  "deleted_runtime_modules": [],
+  "algorithm_change": false,
+  "unsupported_hardware": "Pi motor/encoder backend remains unimplemented pending driver and electrical details"
+}

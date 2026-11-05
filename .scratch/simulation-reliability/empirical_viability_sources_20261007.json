@@ -1,0 +1,19 @@
+{
+  "archive": "empirical_viability_sources_20261007.zip",
+  "archive_sha256": "ecea416743f413d8cf60dc49600443afe51f8addbdb1e2122db41a9e4edf1564",
+  "sources": {
+    "src/aerothon_avoidance/avoidance/avoidance/velocity_controller.py": "76ec878ba6c5747176e6e6d5456d4295977344d75cdbc59c610451b662f40e93",
+    "src/aerothon_avoidance/avoidance/avoidance/local_planner.py": "bd48ad8d9efff5b48c50165a5087be2eecb2df5494a3437d4d0b0a85228d36d9",
+    "src/aerothon_avoidance/avoidance/avoidance/scan_geometry.py": "c9faabc6ade09c5a877cbd19189aea28553ff943dfa6ce58d4cf789010675eb7",
+    "src/aerothon_sim/sim_gazebo/sim_gazebo/corruptions.py": "3857a80869f086261af49f09a6300da0297371e2db15230f49ff2dd25a20e238",
+    "sim/test_slalom_traverse.py": "60ab6b0edb875fc45ae8a2eb3bc9b6fda67ff172ba6510a16a08bd9ef2952edc",
+    "sim/test_corridor_stress.py": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+    ".scratch/simulation-reliability/probe_gust_margin.py": "913f46506a8b4d465824f9eb2f8a3e33eeffe2679a749e726e1c99b43c80cba9",
+    ".scratch/simulation-reliability/probe_gust_empirical_viability_20261007.py": "c7bc1c2427ae6e7d87f06af1bfa123d8cbbcf92c285b91bdf420653fe341608b",
+    ".scratch/simulation-reliability/probe_gust_empirical_viability_initial_20261007.py": "86bfe8b5ae9e980e884e7055547b2cd3c717e14c7d4c7591eec015434fe1c370",
+    ".scratch/simulation-reliability/check_gust_empirical_viability_20261007.sh": "c858cb01f71ebd674be29a21e755c093788dedfa68c9771e02336cd8719883f0",
+    ".scratch/simulation-reliability/analyse_empirical_viability_run_20261007.py": "7ba9bcae9ee59510460339c7ee17da21fe7c84e8c4d0408b0f2a760b625690a4",
+    ".scratch/simulation-reliability/archive_empirical_viability_sources_20261007.py": "64d018f2c6c3da7900ce14159d200d793e2146a450263b57f7bd8fe81d6396a7"
+  },
+  "files": 12
+}

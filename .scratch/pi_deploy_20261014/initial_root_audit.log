@@ -1,0 +1,57 @@
+/boot/firmware/config.txt 0 bytes
+[General]
+TcpServerPort=0
+
+[UartEndpoint pixhawk_telem3]
+Device=/dev/ttyAMA0
+Baud=115200
+
+[UdpEndpoint standalone_gcs]
+Mode=Normal
+Address=127.0.0.1
+Port=14570
+
+[UdpEndpoint telemetry_requests]
+Mode=Normal
+Address=127.0.0.1
+Port=14571
+
+[UdpEndpoint laptop_gcs]
+Mode=Normal
+Address=192.168.0.103
+Port=14550
+/usr/bin/pipx
+nothing has been installed with pipx 😴
+logs/direct.log 786
+logs/pip-install.log 4299
+logs/sitl.log 966
+logs/supervisor.log 0
+logs/mavproxy.log 2965
+venv/pyvenv.cfg 191
+venv/.gitignore 69
+mavproxy.pid 4
+bin/arducopter 16383904
+copter.parm 1957
+supervisor.pid 5
+stop.sh 368
+firmware-version.txt 37
+README.txt 739
+sitl.pid 4
+run/eeprom.bin 16384
+supervisor.py 1356
+start.sh 413
+16M	/home/pi5/sitl-disposable/bin
+4.0K	/home/pi5/sitl-disposable/copter.parm
+4.0K	/home/pi5/sitl-disposable/firmware-version.txt
+24K	/home/pi5/sitl-disposable/logs
+4.0K	/home/pi5/sitl-disposable/mavproxy.pid
+4.0K	/home/pi5/sitl-disposable/README.txt
+5.3M	/home/pi5/sitl-disposable/run
+4.0K	/home/pi5/sitl-disposable/sitl.pid
+4.0K	/home/pi5/sitl-disposable/start.sh
+4.0K	/home/pi5/sitl-disposable/stop.sh
+4.0K	/home/pi5/sitl-disposable/supervisor.pid
+4.0K	/home/pi5/sitl-disposable/supervisor.py
+927M	/home/pi5/sitl-disposable/venv
+inactive
+2026-10-08T22:13:22+05:30

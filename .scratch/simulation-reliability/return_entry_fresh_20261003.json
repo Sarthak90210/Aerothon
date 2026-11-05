@@ -1,0 +1,15 @@
+{
+  "x": 16.078388214111328,
+  "y": -15.309822082519531,
+  "alt": 1.6612329483032227,
+  "yaw": 2.958773807683263,
+  "source": "logs/reliability_render_my_world_s20261003_gustfix_20261006/onboard.jsonl",
+  "source_sha256": "1ebabfd62b083d3b5ce1ee71c80239458792376b369fc4065133217a86cd3757",
+  "captured_stamp": 866.274,
+  "purpose": "focused starting condition from FCU pose, no geometry input to planner",
+  "approach": {
+    "x": 21.377208709716797,
+    "y": -16.15591049194336,
+    "captured_stamp": 850.8470000000001
+  }
+}

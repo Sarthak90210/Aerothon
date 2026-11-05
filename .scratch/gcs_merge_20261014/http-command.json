@@ -1,0 +1,16 @@
+{
+  "scope": "isolated command sink, no hardware",
+  "request": {
+    "v": 1,
+    "kind": "command",
+    "t": 1791933628.987,
+    "data": {
+      "cmd_id": "bab921e8-3f86-4124-8e7d-8649cdfc0e48",
+      "cmd": "set_target",
+      "args": {
+        "target": "HTTP_CONTRACT_TEST"
+      },
+      "confirm": true
+    }
+  }
+}

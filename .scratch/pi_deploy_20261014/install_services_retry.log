@@ -1,0 +1,6 @@
+Created symlink '/etc/systemd/system/multi-user.target.wants/aerothon-gcs.service' → '/etc/systemd/system/aerothon-gcs.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/aerothon-router.service' → '/etc/systemd/system/aerothon-router.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/aerothon-console.service' → '/etc/systemd/system/aerothon-console.service'.
+active
+active
+GCS HTTP 000

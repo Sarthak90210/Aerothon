@@ -1,0 +1,10 @@
+{
+  "connectionStates": [
+    "Live FCU"
+  ],
+  "elapsedSeconds": 523.758199999988,
+  "longTaskCount": 0,
+  "maxLongTaskMs": 0,
+  "rasterisations": 524,
+  "rasterisationsPerSecond": 1.000461472400567
+}

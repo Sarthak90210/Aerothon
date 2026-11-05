@@ -1,0 +1,251 @@
+{
+  "source": "operator laptop UDP to Pi router, no GCS Connect",
+  "messages": {
+    "178": 78,
+    "30": 195,
+    "74": 78,
+    "1": 78,
+    "36": 365,
+    "253": 15,
+    "22": 1023,
+    "0": 35,
+    "33": 96,
+    "65": 92,
+    "77": 51,
+    "163": 37,
+    "125": 37,
+    "152": 37,
+    "62": 37,
+    "42": 38,
+    "27": 38,
+    "116": 39,
+    "129": 39,
+    "29": 39,
+    "137": 39,
+    "24": 39,
+    "2": 39,
+    "136": 39,
+    "193": 39,
+    "241": 39,
+    "147": 39,
+    "11039": 39,
+    "111": 4
+  },
+  "heartbeats": [
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 0.111
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 1.774
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 2.114
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 3.134
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 4.115
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 5.117
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 6.112
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 7.114
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 8.112
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 9.11
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 10.624
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 11.143
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 12.113
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 13.12
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 14.114
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 15.111
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 16.116
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 17.117
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 18.114
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 19.465
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 20.124
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 21.111
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 22.124
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 23.113
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 24.108
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 25.124
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 26.114
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 27.112
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 28.349
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 29.166
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 30.111
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 31.111
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 32.116
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 33.11
+    },
+    {
+      "system": 1,
+      "component": 1,
+      "armed": false,
+      "received_after_s": 34.121
+    }
+  ],
+  "unique_parameters": 1022,
+  "expected_parameters": 1047,
+  "invalid_known_crc": 3,
+  "heartbeat_received": true,
+  "disarmed": true
+}

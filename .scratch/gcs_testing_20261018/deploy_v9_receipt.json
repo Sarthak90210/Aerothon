@@ -1,0 +1,27 @@
+{
+  "feature": "GCS SLAM reconnect/live-map fixes, Pi deploy (v9)",
+  "date": "2026-10-18",
+  "source": "fa63885c7cd0758d1bc7b00bf30fa7734b7201d2, built from a clean git archive export (the working tree's uncommitted App.tsx/gcs.css/runtime.ts/arenaSchema.json edits are NOT in this bundle)",
+  "build": {
+    "gcs": "npm ci; npm run build (vite) in the export; node --test tests/*.test.mjs: 37 passed",
+    "bundle": {
+      "zip": "aerothon-pi-20261018-gcs-slam-v9.zip",
+      "files": 265,
+      "bytes": 2183292,
+      "sha256": "29e9f1b7c2885ce94baabc84c9b9d1c99c86b818b5262dd3be42dde9c0f30493"
+    }
+  },
+  "deploy": {
+    "target": "pi5@192.168.0.101 (user-confirmed address)",
+    "attempts": [
+      {"when": "2026-10-18", "result": "unreachable: SSH timeout, no ping, no TCP 22/8899 on any 192.168.0.1-254 from the laptop Ethernet 192.168.0.102/24; only the router 192.168.0.1 in the neighbour table"}
+    ],
+    "needs": "web.py and gcs_aggregator changed, so the update must restart aerothon-gcs.service (v6 pattern: stop_runtime.py, systemctl stop/start, colcon build in the runtime container), which needs sudo on the Pi"
+  },
+  "verification": {
+    "link_stability_phone": "pending",
+    "slam_map_age_and_pose": "pending",
+    "lidar_cal_steps_1_2": "pending"
+  },
+  "status": "bundle built, not deployed (Pi unreachable)"
+}

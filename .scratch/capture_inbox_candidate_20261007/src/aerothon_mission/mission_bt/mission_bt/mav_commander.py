@@ -1,0 +1,1299 @@
+#!/usr/bin/env python3
+"""MAVROS commander — thin wrapper the behaviour tree calls into.
+
+Holds the MAVROS clients/pubs/subs and a 10 Hz setpoint streamer so the
+py_trees leaves stay simple (they poll state + issue intents; this object
+does the ROS work). ArduPilot GUIDED flow: set GUIDED -> arm -> takeoff ->
+stream position setpoints; hand the corridor to the avoidance node.
+
+Phase 0 fail-closed rails live here:
+  * setpoints are never published while the aircraft is disarmed
+  * external LAND / DISARM / mode changes raise a mission-reset request
+  * excessive attitude is measured and exposed to the abort guard
+  * mission outcome is latched on /mission/result with an explicit reason
+"""
+
+import json
+import math
+from pathlib import Path
+from rclpy.node import Node
+from rclpy.qos import (QoSProfile, QoSDurabilityPolicy, QoSHistoryPolicy,
+                       qos_profile_sensor_data)
+from geometry_msgs.msg import PoseStamped, Vector3, TwistStamped
+from sensor_msgs.msg import BatteryState, LaserScan, Imu
+from std_msgs.msg import Bool, Float32, String
+from mavros_msgs.msg import HomePosition, State, WaypointList, RCOut
+from mavros_msgs.srv import WaypointPush as _WaypointPush
+from mavros_msgs.srv import (CommandBool, CommandLong, ParamSetV2, SetMode,
+                             CommandTOL)
+from rcl_interfaces.msg import ParameterType, ParameterValue
+
+from mission_bt.delivery_zone import (boundary_to_local_zone, inset_zone,
+                                      parse_boundary, parse_polygon,
+                                      polygon_to_local)
+from mission_bt.banner_orbit import SELF_M
+from mission_bt.detector_timing import DetectorTiming
+from mission_bt.scan_geometry import (despeckle, fit_surface, gate_opening,
+                                      no_surface as _no_surface)
+
+
+# Modes the aircraft may legitimately enter under our own command. A change
+# into any other mode, or into one of these without us asking, is treated as
+# an outside intervention (safety pilot, Mission Planner, failsafe).
+_TERMINAL_MODES = ("LAND", "RTL")
+
+# How long after we issue a mode command we still consider that mode "ours".
+_COMMAND_OWNERSHIP_S = 5.0
+
+
+def _latched_qos(depth: int = 1) -> QoSProfile:
+    """Transient-local QoS so a late-joining GCS still sees the last result."""
+    return QoSProfile(
+        depth=depth,
+        history=QoSHistoryPolicy.KEEP_LAST,
+        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+    )
+
+
+class Mav:
+    def __init__(self, node: Node):
+        self.node = node
+        self.state = State()
+        self._fcu_state = State()          # last state reported over a live link
+        self.battery = BatteryState()
+        self.pose = PoseStamped()
+        self.qr_decoded = ""
+        self.qr_matched = False
+        # Consecutive-frame confidence. A single decode is not a decision: one
+        # frame of motion blur or a reflection can produce a spurious read, and
+        # the mission commits to a delivery target on the strength of it.
+        self._qr_streak = 0
+        self._qr_last = ""
+        # Operator-supplied target (goal.md Q19): if the start QR is physically
+        # unreadable the mission can still run, but the substitution is
+        # explicit and logged rather than a silent empty string.
+        self.target_override = ""
+        # Latched terminal failure of the mission sequence, distinct from an
+        # abort. Cleared only by an explicit new START.
+        self.mission_failed = False
+        # Latched terminal SUCCESS. Also cleared only by an explicit new START:
+        # a memory Sequence that reaches its last child returns SUCCESS and is
+        # re-initialised on the next tick, which re-armed and took off again
+        # 0.4 s after a successful landing.
+        self.mission_complete = False
+        # How the aircraft got down: PRECISE (visual lock held to the commit
+        # altitude) or DEGRADED with the reason. Reported in the outcome
+        # rather than left implicit -- "landed" alone does not say whether it
+        # landed on the pad.
+        self.landing_precision = "UNKNOWN"
+        # Once airborne, dropping below this altitude means something is wrong;
+        # set on takeoff, cleared on landing. See low_altitude_fault().
+        self.airborne_floor = None
+        self._low_alt_samples = 0
+        self.qr_offset = Vector3()
+        # Offsets received, so a stage can tell a frame taken since it began
+        # from the latched one: Vector3 carries no stamp.
+        self.qr_offset_seq = 0
+        self.banner = Vector3()
+        self.banner_reject_reason = ""
+        self.banner_reject_counts = {}
+        self.banner_board_aspect = 0.0
+        self.banner_board_area = 0.0
+        self.banner_clipped = False
+        self.banner_green = None       # largest green region in view, if any
+        self.abort_requested = False
+        self.abort_reason = ""
+        # Once an abort fires it must STAY fired. The guard condition is
+        # level-triggered (attitude recovers, battery sag recovers, the FCU
+        # reconnects), so without a latch the mission silently resumed mid-air
+        # after an abort had already commanded RTL. Cleared only by an explicit
+        # new START or a mission reset.
+        self.abort_latched = False
+        self.mission_started = False
+        self.mission_seq = 0               # counts STARTs; a new one resets memory
+
+        # The team's 4S2P Li-ion pack: 3.0 V/cell under load is the last of
+        # its usable charge (Li-ion runs to 2.5 V; LiPo figures of 3.5 V/cell
+        # would call a Li-ion pack flat at half charge). Held below for
+        # `critical_battery_hold_s`, because a climb or a gust draws the pack
+        # down for a second or two and recovers.
+        self.critical_battery_voltage = node.declare_parameter(
+            'critical_battery_voltage', 12.0).value
+        self.critical_battery_hold_s = node.declare_parameter(
+            'critical_battery_hold_s', 5.0).value
+        self._battery_low_since = None
+        self._logged = set()
+        # Keep-out round the airframe on every POSITION setpoint. ArduPilot's
+        # own proximity avoidance does not run in GUIDED, and a held setpoint
+        # beside a wall is exactly as good as the GPS: with a metre of wander
+        # and a gust, the square-up flew into the corridor wall it was
+        # standing 1.5 m from (sim/fly_headless.py, worst conditions).
+        # Returns nearer than the lidar sees its own airframe are ignored
+        # (banner_orbit.SELF_M), so the band is 0.55..keepout_m.
+        self.keepout_m = node.declare_parameter('keepout_m', 1.0).value
+        self.keepout_events = 0
+        self.board_face_t = None           # when a square-up last fitted the board
+        self._keepout_on = False
+        # Beyond this roll/pitch the aircraft is not flying the mission any
+        # more, it is falling into something. The last recorded live run sat at
+        # 54 deg against a corridor wall and nothing in the stack objected.
+        self.attitude_limit_deg = node.declare_parameter(
+            'attitude_limit_deg', 45.0).value
+        # Consecutive pose samples beyond the limit before the guard trips, so
+        # a single noisy quaternion cannot abort a healthy flight.
+        self.attitude_limit_samples = node.declare_parameter(
+            'attitude_limit_samples', 5).value
+
+        self._sp = None            # streamed PoseStamped target (local ENU)
+        # Altitude-divergence trace -- see _track_altitude_error().
+        self.active_stage = ""
+        self.alt_error_worst = 0.0
+        self.alt_error_worst_stage = ""
+        self.alt_error_warn = 0.8
+        self._alt_warned_stage = None
+        self._alt_target = None
+        self._alt_arrived = False
+
+        # ---- fail-closed bookkeeping ---- #
+        self.roll_deg = 0.0
+        self.pitch_deg = 0.0
+        self._attitude_violations = 0
+        self.setpoints_suppressed = 0      # counts gated publishes (testable)
+        self.setpoint_block_reason = ""
+        self._reset_requested = False
+        self._reset_reason = ""
+        self._expect_disarm = False        # set by the Land leaf
+        self._commanded_modes = {}         # mode -> monotonic timestamp
+        self._result = None                # latched (state, reason)
+
+        qos = 10
+        node.create_subscription(State, '/mavros/state', self._on_state, qos)
+        node.create_subscription(BatteryState, '/mavros/battery', self._on_battery,
+                                 qos_profile_sensor_data)
+        self.delivery_inputs = {}
+        self.delivery_load_profile = None
+        profile_path = node.declare_parameter('delivery_load_calibration', '').value
+        if profile_path:
+            try:
+                self.delivery_load_profile = json.loads(Path(profile_path).read_text())
+            except (OSError, ValueError) as exc:
+                node.get_logger().error(f'delivery load calibration unavailable: {exc}')
+        self.motor_channels = node.declare_parameter('delivery_motor_channels', [0, 1, 2, 3]).value
+        self.motor_pwm_min = float(node.declare_parameter('delivery_motor_pwm_min', 1000.0).value)
+        self.motor_pwm_max = float(node.declare_parameter('delivery_motor_pwm_max', 2000.0).value)
+        if self.delivery_load_profile is not None and self.delivery_load_profile.get('motor_config') != dict(
+                motor_channels=list(self.motor_channels), pwm_min=self.motor_pwm_min,
+                pwm_max=self.motor_pwm_max):
+            node.get_logger().error('delivery load profile motor configuration mismatch')
+            self.delivery_load_profile = None
+        node.create_subscription(RCOut, '/mavros/rc/out', self._delivery_motors, qos_profile_sensor_data)
+        node.create_subscription(Imu, '/mavros/imu/data', self._delivery_imu, qos_profile_sensor_data)
+        node.create_subscription(TwistStamped, '/mavros/local_position/velocity_local',
+                                 self._delivery_velocity, qos_profile_sensor_data)
+        self.pub_delivery_observation = node.create_publisher(String, '/mission/delivery_observation', 10)
+        node.create_subscription(PoseStamped, '/mavros/local_position/pose',
+                                 self._on_pose, qos_profile_sensor_data)
+        node.create_subscription(String, '/percep/qr/decoded', self._on_qr, qos)
+        self.detector_timing = {'qr':DetectorTiming(),'red':DetectorTiming()}
+        node.create_subscription(String,'/percep/qr/detail',self._on_qr_detail,qos)
+        self.pub_search_timing = node.create_publisher(String,'/mission/search_timing',10)
+        node.create_subscription(Bool, '/percep/qr/matched', self._on_match, qos)
+        node.create_subscription(Vector3, '/percep/qr/target_offset', self._on_off, qos)
+        node.create_subscription(Vector3, '/percep/banner', self._on_banner, qos)
+        # WHY the detail and not just the Vector3: when AlignToBanner gives up,
+        # "green objects seen but rejected, or none" is all the aircraft could
+        # say. The detector knows exactly WHY it rejected each candidate --
+        # aspect, area, missing lettering -- and publishes it here, where
+        # nothing was reading it. A failed sweep was undiagnosable from the run
+        # artifacts (arena regression seed 1001).
+        node.create_subscription(String, '/percep/banner/detail',
+                                 self._on_banner_detail, qos)
+        node.create_subscription(String, '/percep/redzone/detail',
+                                 self._on_redzone, qos)
+        # The payload as the camera sees it (perception_redzone payload_node):
+        # what WinchDrop confirms a drop with.
+        self.payload_det = {"visible": False}
+        self.payload_det_t = None
+        node.create_subscription(String, '/percep/payload',
+                                 self._on_payload, qos)
+        # THE LIDAR, finally reaching the mission tree.
+        #
+        # /scan has been live and bridged since Phase 0, and the only things
+        # reading it were the avoidance navigator and the GCS aggregator. The
+        # mission itself had no way to ask "am I perpendicular to that
+        # surface", so it inferred squareness from a camera bounding box that
+        # includes the gate posts -- a proxy whose plateau (1.88 to 1.91) made
+        # every threshold above it unreachable, and which failed fourteen
+        # watched runs.
+        self._scan = None
+        self._scan_t = None
+        node.create_subscription(LaserScan, '/scan', self._on_scan,
+                                 qos_profile_sensor_data)
+        self.pub_square_on = node.create_publisher(String, '/mission/square_on',
+                                                   qos)
+        node.create_subscription(Bool, '/mission/abort', self._on_abort, qos)
+        node.create_subscription(Bool, '/mission/start', self._on_start, qos)
+        node.create_subscription(String, '/mission/target_override',
+                                 self._on_target_override, qos)
+        # Home is the ONE legitimate global reference (audit A11). It was
+        # assumed to be local (0,0) — true only because the EKF origin happens
+        # to be set at the arming point. Read it from the FC instead.
+        self.home = None
+        node.create_subscription(HomePosition, '/mavros/home_position/home',
+                                 self._on_home, qos)
+        self.delivery_zone_global = None
+        self.delivery_zone_local = None
+        self.delivery_zone_reason = "delivery-zone boundary is missing"
+        node.create_subscription(String, '/mission/delivery_zone',
+                                 self._on_delivery_zone, _latched_qos())
+        # RULEBOOK, Mission 2 Operation: "Coordinates for the geo-fence
+        # boundary will be provided. Teams must program these into the ground
+        # station software to ensure the UAS stays within the designated
+        # area." Supplied, not inferred: a polygon of 3+ WGS84 vertices.
+        self.geofence_global = None
+        self.geofence_local = None
+        self.geofence_reason = "arena geofence boundary is missing"
+        node.create_subscription(String, '/mission/geofence',
+                                 self._on_geofence, _latched_qos())
+        # Geofence: pushed, then READ BACK. An unverified fence is worse than
+        # none because it is believed (goal.md Q13/Q24).
+        self.fence_readback = None
+        node.create_subscription(WaypointList, '/mavros/geofence/fences',
+                                 self._on_fence_readback, _latched_qos(depth=1))
+        self.cli_fence_push = node.create_client(_WaypointPush,
+                                                 '/mavros/geofence/push')
+        # MAVROS2 serves /mavros/param/set as ParamSetV2. A ParamSet (v1)
+        # client on the same name never matches, so service_is_ready() stays
+        # False forever -- which is how FENCE_ENABLE was never once set.
+        self.cli_param_set = node.create_client(ParamSetV2, '/mavros/param/set')
+
+        self.pub_sp = node.create_publisher(PoseStamped, '/mavros/setpoint_position/local', qos)
+        self.pub_enable = node.create_publisher(Bool, '/avoidance/enable', qos)
+        self.pub_hold_alt = node.create_publisher(Float32, '/avoidance/hold_alt', qos)
+        self.pub_target = node.create_publisher(String, '/mission/target', qos)
+        self.pub_winch = node.create_publisher(String, '/winch/cmd', qos)
+        self.pub_result = node.create_publisher(String, '/mission/result', _latched_qos())
+        self.pub_camera_pose = node.create_publisher(String, '/camera/set_pose', 10)
+
+        # Corridor navigator feedback: exit is DETECTED, not assumed from a
+        # hardcoded x threshold (geometry audit A6/A10).
+        self.avoid_detail = {}
+        self._avoiding = False
+        self._avoid_fresh = 0
+        # Observed geometry, recorded in flight. These replace the asserted
+        # zone_entry / zone_bounds / corridor_return_entry constants (audit
+        # A7, A8, A9): everything here is measured during this mission.
+        self.corridor_exit_pose = None      # (x, y, z, yaw) where walls fell away
+        self.gate_heading = None            # yaw squared on the outbound gate
+        self.outbound_banner_xy = None      # where that gate's board stands
+        self.observed_zone = None           # (x0, x1, y0, y1) from the lidar
+        # Red ground the camera has mapped, as local-frame rectangles. The
+        # search planner routes lanes around these and the geofence encodes
+        # them; the fence is the authoritative one (goal.md Q13/Q24).
+        self.exclusions = []
+        self.redzone_status = "NOT_VISIBLE"
+        self.fence_verified = False
+        self.fence_reason = "not uploaded"
+        node.create_subscription(String, '/avoidance/detail',
+                                 self._on_avoid_detail, qos)
+
+        # Winch feedback. Until winch_ctrl existed this stayed empty and
+        # WinchDrop released on a fixed timer instead.
+        self.winch_status = {}
+        self.winch_status_t = None
+        node.create_subscription(String, '/winch/status',
+                                 self._on_winch_status, qos)
+
+        # Phase 2: camera orientation is measured state, not an assumption.
+        self.camera_state = {}
+        node.create_subscription(String, '/camera/pose_state',
+                                 self._on_camera_state, qos)
+
+        self.cli_arm = node.create_client(CommandBool, '/mavros/cmd/arming')
+        self.cli_mode = node.create_client(SetMode, '/mavros/set_mode')
+        self.cli_takeoff = node.create_client(CommandTOL, '/mavros/cmd/takeoff')
+        self.cli_land = node.create_client(CommandTOL, '/mavros/cmd/land')
+        self.cli_command = node.create_client(CommandLong, '/mavros/cmd/command')
+        self.speed_cmd = None               # last ground speed requested, m/s
+        # (x, y, heading, advance) of the last gate crossing, from GateAdvance
+        self.gate_crossing = None
+
+        node.create_timer(0.1, self._stream)   # 10 Hz setpoint stream
+
+    # ------------------------------------------------------------------ #
+    # callbacks
+    # ------------------------------------------------------------------ #
+    def _on_battery(self, m):
+        self.battery = m
+        low = ((m.voltage > 0.0 and m.voltage < self.critical_battery_voltage)
+               or (m.percentage > 0.0 and m.percentage < 0.15))
+        if not low:
+            self._battery_low_since = None
+        elif self._battery_low_since is None:
+            self._battery_low_since = self.node.get_clock().now().nanoseconds / 1e9
+    def _on_match(self, m): self.qr_matched = m.data
+
+    def _on_qr(self, m):
+        value = m.data
+        if value and value == self._qr_last:
+            self._qr_streak += 1
+        elif value:
+            self._qr_streak = 1
+        else:
+            self._qr_streak = 0
+        self._qr_last = value
+        self.qr_decoded = value
+
+    def _on_home(self, m):
+        self.home = m
+        self._resolve_delivery_zone()
+        self._resolve_geofence()
+
+    def _on_geofence(self, m):
+        vertices, why = parse_polygon(m.data, what="geofence")
+        self.geofence_global = vertices
+        self.geofence_local = None
+        self.geofence_reason = why
+        self._resolve_geofence()
+
+    def _resolve_geofence(self):
+        if self.geofence_global is None or self.home is None:
+            return
+        pts, why = polygon_to_local(
+            self.geofence_global,
+            float(self.home.geo.latitude), float(self.home.geo.longitude))
+        self.geofence_local = pts
+        self.geofence_reason = why or "geofence polygon resolved in local ENU"
+        if pts is not None:
+            xs = [p[0] for p in pts]
+            ys = [p[1] for p in pts]
+            self._log_once(
+                f"Arena geofence loaded: {len(pts)} vertices, "
+                f"x {min(xs):.1f}..{max(xs):.1f}, y {min(ys):.1f}..{max(ys):.1f}")
+
+    def _on_delivery_zone(self, m):
+        vertices, why = parse_boundary(m.data)
+        self.delivery_zone_global = vertices
+        self.delivery_zone_local = None
+        self.delivery_zone_reason = why
+        self._resolve_delivery_zone()
+
+    def _resolve_delivery_zone(self):
+        if self.delivery_zone_global is None or self.home is None:
+            return
+        zone, why = boundary_to_local_zone(
+            self.delivery_zone_global,
+            float(self.home.geo.latitude), float(self.home.geo.longitude))
+        self.delivery_zone_local = zone
+        self.delivery_zone_reason = why or "four-corner boundary resolved in local ENU"
+        if zone is not None:
+            self._log_once(
+                "Delivery-zone boundary loaded: "
+                f"x {zone[0]:.1f}..{zone[1]:.1f}, "
+                f"y {zone[2]:.1f}..{zone[3]:.1f}")
+
+    def _log_once(self, text):
+        """Log a line unless it repeats the last one: home arrives at 1 Hz
+        and the organiser's inputs are re-published, each re-resolving."""
+        if text not in self._logged:
+            self._logged.add(text)
+            self.node.get_logger().info(text)
+
+    def delivery_search_zone(self, clearance_m):
+        if self.delivery_zone_local is None:
+            return None
+        try:
+            return inset_zone(self.delivery_zone_local, clearance_m)
+        except ValueError as exc:
+            self.delivery_zone_reason = str(exc)
+            return None
+
+    def home_local_xy(self):
+        """Home in the LOCAL frame.
+
+        MAVROS publishes home as a global fix plus a local offset. The local
+        origin IS the EKF origin, so home is (0,0) in local coordinates
+        whenever the EKF origin was set at the home point — which is the normal
+        case and what the old constant silently relied on. Returning it through
+        this accessor means the assumption is stated in one place and can be
+        replaced with a real transform if it ever stops holding.
+        """
+        if self.home is None:
+            return (0.0, 0.0)
+        return (float(self.home.position.x), float(self.home.position.y))
+
+    def _on_target_override(self, m):
+        if m.data and m.data != self.target_override:
+            self.node.get_logger().warning(
+                f"Operator supplied target override: {m.data}")
+        self.target_override = m.data
+
+    def qr_confident(self, frames):
+        """True only after the SAME payload has been read `frames` times."""
+        return bool(self.qr_decoded) and self._qr_streak >= int(frames)
+
+    @property
+    def qr_streak(self):
+        return self._qr_streak
+    def _on_off(self, m):
+        self.qr_offset = m
+        self.qr_offset_seq += 1
+
+    def qr_visible(self):
+        """Any marker in frame, whether or not it is the delivery target.
+
+        qr_node encodes this in the offset's z: 1.0 matched target, 0.5 some
+        marker, 0.0 nothing. Before Phase 3 the offset was only populated for a
+        MATCHED target, so during the start scan — when no target is known yet —
+        the mission had no way to tell a marker was sitting off to one side.
+        """
+        return self.qr_offset.z > 0.0
+
+    def qr_centred(self, tol):
+        """Marker within `tol` of frame centre, in normalised [-1,1] units."""
+        if not self.qr_visible():
+            return False
+        return abs(self.qr_offset.x) <= tol and abs(self.qr_offset.y) <= tol
+    def _on_banner(self, m): self.banner = m
+
+    def _on_banner_detail(self, m):
+        try:
+            d = json.loads(m.data)
+        except (ValueError, TypeError):
+            return
+        # DETECTOR TELEMETRY ONLY. The board aspect was once read as "how
+        # square am I to the board", on the theory that a banner is widest
+        # seen face-on. The derived box includes the gate posts, so it
+        # plateaus at 1.88-1.91 whatever the aircraft does, and no threshold
+        # above that was reachable. Squareness is measured with the lidar now
+        # (surface_ahead); these two numbers are recorded because they are
+        # useful in a run artifact, and nothing steers on them.
+        if d.get('identified'):
+            self.banner_board_aspect = float(d.get('board_aspect') or 0.0)
+            self.banner_board_area = float(d.get('board_area_px') or 0.0)
+            # A box against the frame's edge is a board cut off by it: its
+            # area understates the board, so a range from it reads long.
+            box = d.get('board_px')
+            iw, ih = (d.get('image_wh') or [1280, 720])[:2]
+            self.banner_clipped = bool(box) and (
+                box[0] <= 1 or box[1] <= 1 or box[0] + box[2] >= iw - 1
+                or box[1] + box[3] >= ih - 1)
+
+        # Where the biggest green thing in view is, identified or not: the
+        # lead an edge-on banner leaves (see banner_orbit.green_fix).
+        if d.get('green_px'):
+            self.banner_green = {
+                "px": d['green_px'], "area": float(d.get('green_area_px') or 0.0),
+                "bearing": float(d.get('green_bearing') or 0.0),
+                "wh": d.get('image_wh') or [1280, 720],
+                "regions": [{"px": r[:4], "area": float(r[4])}
+                            for r in d.get('green_regions') or []],
+                "t": self.node.get_clock().now().nanoseconds * 1e-9}
+        else:
+            self.banner_green = None
+
+        reason = (d.get('reason') or '').strip()
+        if reason:
+            self.banner_reject_reason = reason
+            self.banner_reject_counts[reason] = \
+                self.banner_reject_counts.get(reason, 0) + 1
+
+    def banner_rejection_summary(self, top=3):
+        """The commonest reasons candidates were rejected, most frequent first.
+
+        Turns "no banner found" into "found green things and rejected them
+        for THIS reason", which is the difference between a diagnosable
+        failure and a shrug.
+        """
+        if not self.banner_reject_counts:
+            return "nothing green ever entered the frame"
+        ranked = sorted(self.banner_reject_counts.items(),
+                        key=lambda kv: -kv[1])[:top]
+        return "; ".join(f"{r} (x{n})" for r, n in ranked)
+
+    # ------------------------------------------------------------------ #
+    # lidar
+    # ------------------------------------------------------------------ #
+    def _on_scan(self, m):
+        # Every consumer -- the square-up, the gate check, the orbit's leg
+        # check -- reads the despeckled scan (scan_geometry.despeckle).
+        m.ranges = despeckle(m.ranges)
+        self._scan = m
+        self._scan_t = self.node.get_clock().now().nanoseconds / 1e9
+
+    def scan_age_s(self):
+        """Seconds since the last scan, or None if none has ever arrived."""
+        if self._scan_t is None:
+            return None
+        return (self.node.get_clock().now().nanoseconds / 1e9) - self._scan_t
+
+    def surface_ahead(self, bearing_rad, half_width_rad,
+                      expected_range_m=None, stale_s=1.0, **kw):
+        """The flat face in that sector of the scan, or an explicit refusal.
+
+        THE SEAM. The behaviour tree never touches a LaserScan: it asks for a
+        sector and gets back the same dict `fit_surface` returns, so the
+        squareness logic can be tested against a synthetic scan and the tree
+        against a fake commander, and neither test is grading a copy of the
+        other's arithmetic.
+
+        A missing or stale scan is a REFUSAL, not a zero. An aircraft that
+        cannot measure its angle to the banner must not advance through it,
+        and a zero here reads as "perfectly square".
+        """
+        age = self.scan_age_s()
+        if self._scan is None or age is None:
+            return _no_surface("no lidar scan has arrived on /scan; the "
+                               "aircraft cannot measure its angle to anything")
+        if age > float(stale_s):
+            return _no_surface(
+                f"the last lidar scan is {age:.1f} s old; refusing to square "
+                f"up on a stale measurement")
+        scan = self._scan
+        return fit_surface(scan.angle_min, scan.angle_increment, scan.ranges,
+                           bearing_rad, half_width_rad,
+                           range_min=float(scan.range_min),
+                           range_max=float(scan.range_max),
+                           expected_range_m=expected_range_m, **kw)
+
+    def opening_ahead(self, bearing_rad, half_width_rad, need_clear_m=10.0,
+                      stale_s=1.0, **kw):
+        """Is there a way THROUGH at this height, or is the board here?
+
+        The second lidar question, and the one that decides whether the
+        aircraft may fly forward. Squaring up happens at board height, because
+        that is the only height at which the board's angle can be measured;
+        flying through has to happen below it. Same seam, same refusal shape.
+        """
+        age = self.scan_age_s()
+        if self._scan is None or age is None or age > float(stale_s):
+            return {"open": False, "clusters": 0, "gap_m": 0.0,
+                    "gate_m": None, "clear_m": 0.0,
+                    "reason": ("no usable lidar scan; refusing to call a gate "
+                               "open on a measurement that was never taken")}
+        scan = self._scan
+        return gate_opening(scan.angle_min, scan.angle_increment, scan.ranges,
+                            bearing_rad, half_width_rad,
+                            need_clear_m=need_clear_m,
+                            range_min=float(scan.range_min),
+                            range_max=float(scan.range_max), **kw)
+
+    def publish_square_on(self, payload):
+        """Report the squareness measurement to the GCS while it converges.
+
+        The operator watching a flight could see that the aircraft was moving
+        and not what it believed about its angle to the banner, which is the
+        one number the stage's decision turns on.
+        """
+        self.pub_square_on.publish(String(data=json.dumps(payload)))
+
+    def banner_identified(self):
+        """The banner, not merely something green.
+
+        perception_banner encodes this in z: 1.0 identified banner, 0.5 a green
+        object rejected as not-the-banner, 0.0 nothing green in view. Before
+        Phase 4 any green rectangle produced 1.0 and the GCS said ALIGNED.
+        """
+        return self.banner.z >= 1.0
+
+    def banner_bearing(self):
+        """Normalised horizontal offset, [-1,1], negative = banner to the left."""
+        return self.banner.x if self.banner_identified() else 0.0
+
+    def _on_abort(self, m):
+        self.abort_requested = m.data
+
+    def _on_start(self, m):
+        if m.data and not self.mission_started:
+            self.mission_seq += 1
+        self.mission_started = m.data
+        if m.data:
+            self._result = None
+            # A previous run's Land leaf leaves _expect_disarm set. Carrying it
+            # into a new mission would make the watchdog swallow a genuine
+            # external disarm, so every start begins with a clean slate.
+            self._expect_disarm = False
+            self.abort_reason = ""
+            self.abort_latched = False
+            self.mission_failed = False
+            self.mission_complete = False
+            self._attitude_violations = 0
+            self.clear_airborne_floor()
+            # This mission's corridor, not the last one's.
+            self.corridor_exit_pose = None
+            self.gate_heading = None
+            self.outbound_banner_xy = None
+            self.board_face_t = None
+            self.delivery_confirmed = None     # set by WinchDrop's camera check
+            self.node.get_logger().info("Mission 2 start received from GCS")
+
+    def _on_pose(self, m):
+        self.pose = m
+        self.delivery_inputs['pose_stamp'] = m.header.stamp.sec + m.header.stamp.nanosec*1e-9
+        self.roll_deg, self.pitch_deg = self._rp_deg(m.pose.orientation)
+        worst = max(abs(self.roll_deg), abs(self.pitch_deg))
+        if worst > self.attitude_limit_deg:
+            self._attitude_violations += 1
+        else:
+            self._attitude_violations = 0
+
+    def _on_state(self, m):
+        prev = self.state if self.state.connected else self._fcu_state
+        self.state = m
+        # A disarm is only a disarm when the FCU says so. On heartbeat loss
+        # MAVROS publishes connected=False with every other field defaulted,
+        # armed=False included; reading that as a disarm ended arena 1001
+        # (batch E) as "external disarm" while the aircraft hovered armed in
+        # GUIDED. A lost link is the abort guard's business. So compare
+        # against the last state the FCU actually reported, which also
+        # catches a disarm that happened during the outage once it returns.
+        self._fcu_state = prev if not m.connected else m
+        if not m.connected:
+            return
+        # Only an active mission can be interrupted; a disarmed idle aircraft
+        # changing mode on the bench is not an event.
+        if not self.mission_started:
+            return
+
+        if prev.armed and not m.armed:
+            if self._expect_disarm:
+                self.node.get_logger().info("Disarm observed during commanded landing")
+            else:
+                self._request_reset("external disarm")
+
+        if m.mode != prev.mode and m.mode in _TERMINAL_MODES:
+            if not self._mode_was_ours(m.mode):
+                self._request_reset(f"external mode change to {m.mode}")
+
+    # ------------------------------------------------------------------ #
+    # attitude
+    # ------------------------------------------------------------------ #
+    @staticmethod
+    def _rp_deg(q):
+        """Roll and pitch in degrees from a geometry_msgs Quaternion."""
+        sinr_cosp = 2.0 * (q.w * q.x + q.y * q.z)
+        cosr_cosp = 1.0 - 2.0 * (q.x * q.x + q.y * q.y)
+        roll = math.atan2(sinr_cosp, cosr_cosp)
+        sinp = 2.0 * (q.w * q.y - q.z * q.x)
+        sinp = max(-1.0, min(1.0, sinp))
+        pitch = math.asin(sinp)
+        return math.degrees(roll), math.degrees(pitch)
+
+    def attitude_excessive(self):
+        """True once the aircraft has held an unflyable attitude for N samples."""
+        return self._attitude_violations >= self.attitude_limit_samples
+
+    # ------------------------------------------------------------------ #
+    # altitude floor while airborne
+    # ------------------------------------------------------------------ #
+    def set_airborne_floor(self, floor_m):
+        """Arm the low-altitude fault once the aircraft is genuinely flying.
+
+        A live run reached CORRIDOR_NAV with the aircraft at z = 0.117 m,
+        crawling along the ground while the tree reported corridor navigation.
+        No stage had an altitude success condition, so nothing noticed. After
+        takeoff the aircraft must stay above a floor until it is deliberately
+        landed.
+        """
+        self.airborne_floor = float(floor_m)
+        self._low_alt_samples = 0
+
+    def clear_airborne_floor(self):
+        self.airborne_floor = None
+        self._low_alt_samples = 0
+
+    def low_altitude_fault(self, samples_required=8):
+        """True when an airborne aircraft has sagged below its floor."""
+        if self.airborne_floor is None or not self.state.armed:
+            self._low_alt_samples = 0
+            return False
+        if self.alt() < self.airborne_floor:
+            self._low_alt_samples += 1
+        else:
+            self._low_alt_samples = 0
+        return self._low_alt_samples >= samples_required
+
+    # ------------------------------------------------------------------ #
+    # mission reset (external intervention)
+    # ------------------------------------------------------------------ #
+    def _request_reset(self, reason):
+        if self._reset_requested:
+            return
+        self._reset_requested = True
+        self._reset_reason = reason
+        self.node.get_logger().warning(f"Mission reset requested: {reason}")
+
+    def reset_pending(self):
+        return self._reset_requested
+
+    def consume_reset(self):
+        """Returns the pending reset reason (or None) and clears mission state."""
+        if not self._reset_requested:
+            return None
+        reason = self._reset_reason
+        self._reset_requested = False
+        self._reset_reason = ""
+        self.mission_started = False
+        self.abort_requested = False
+        self.abort_latched = False
+        self.mission_failed = False
+        self.mission_complete = False
+        self._expect_disarm = False
+        self._attitude_violations = 0
+        self.clear_airborne_floor()
+        self._sp = None
+        return reason
+
+    def expect_disarm(self, value=True):
+        self._expect_disarm = bool(value)
+
+    # ------------------------------------------------------------------ #
+    # outcome reporting
+    # ------------------------------------------------------------------ #
+    def publish_result(self, state, reason=""):
+        """Latch a terminal mission outcome. First writer per run wins."""
+        if self._result is not None:
+            return
+        self._result = (state, reason)
+        payload = json.dumps({
+            "state": state,
+            "reason": reason,
+            # As a NUMBER as well as inside the prose. Delivery accuracy is 15
+            # rulebook marks; leaving it only in a sentence means the panel
+            # can show it but cannot compare, threshold or chart it.
+            "delivery_offset_m": getattr(self, "delivery_offset_m", None),
+            "delivery_confirmed": getattr(self, "delivery_confirmed", None),
+            "delivery_confirmation_basis": getattr(self, "delivery_confirmation_basis", None),
+            "landing_precision": getattr(self, "landing_precision", None),
+            "t": self.node.get_clock().now().nanoseconds / 1e9,
+        })
+        self.pub_result.publish(String(data=payload))
+        self.node.get_logger().info(f"Mission result: {state} ({reason})")
+
+    @property
+    def result(self):
+        return self._result
+
+    # ------------------------------------------------------------------ #
+    # setpoint streaming (gated)
+    # ------------------------------------------------------------------ #
+    def _stream(self):
+        if self._sp is None:
+            return
+        # Fail-closed rail: a disarmed aircraft must never be streamed
+        # position setpoints. Previously the mission kept publishing after an
+        # external disarm, so the tree looked alive while nothing was flying.
+        if not self.state.armed:
+            self.setpoints_suppressed += 1
+            self.setpoint_block_reason = "disarmed"
+            return
+        self.setpoint_block_reason = ""
+        self._sp.header.stamp = self.node.get_clock().now().to_msg()
+        self._sp.header.frame_id = 'map'
+        self.pub_sp.publish(self._kept_out(self._sp))
+        self._track_altitude_error()
+
+    def _nearest_return(self, beams=3, agree_m=0.15):
+        """(range, local-frame bearing) of the nearest fresh lidar return
+        beyond the airframe itself, or None.
+
+        Only a return with `beams` neighbours in a row agreeing within
+        `agree_m` counts. Dust and insects come back as one or two beams --
+        two in a row get through the 3-beam median several times a second
+        at 1% false returns, and the keep-out shoved the aircraft about on
+        each -- while anything solid within a metre spans dozens."""
+        age = self.scan_age_s()
+        if self._scan is None or age is None or age > 0.5:
+            return None
+        scan, best = self._scan, None
+        r = scan.ranges
+        lo = max(float(scan.range_min), SELF_M)
+        hi = float(scan.range_max)
+        half = beams // 2
+        for i in range(half, len(r) - half):
+            if not lo < r[i] < hi or (best is not None and r[i] >= best[0]):
+                continue
+            if all(abs(r[i + k] - r[i]) <= agree_m for k in range(-half, half + 1)):
+                best = (r[i], float(scan.angle_min) + i * float(scan.angle_increment))
+        return None if best is None else (best[0], best[1] + self.yaw())
+
+    def _kept_out(self, sp):
+        """`sp`, or a copy that neither closes on nor stays inside
+        `keepout_m` of the nearest return: the part of the move toward it is
+        dropped and the aircraft is pushed back out to the keep-out range."""
+        near = self._nearest_return() if self.alt() > 0.5 else None
+        inside = near is not None and near[0] < self.keepout_m
+        if inside != self._keepout_on:
+            self._keepout_on = inside
+            if inside:
+                self.keepout_events += 1
+                self.log(f"KEEP-OUT: return at {near[0]:.2f} m, bearing "
+                         f"{math.degrees(near[1]):.0f} deg; holding the "
+                         f"setpoint {self.keepout_m:.1f} m clear", warn=True)
+        if not inside:
+            return sp
+        r, b = near
+        ux, uy = math.cos(b), math.sin(b)
+        px, py, _ = self.pos()
+        dx = sp.pose.position.x - px
+        dy = sp.pose.position.y - py
+        toward = max(0.0, dx * ux + dy * uy)
+        back = self.keepout_m - r
+        out = PoseStamped()
+        out.header = sp.header
+        out.pose.orientation = sp.pose.orientation
+        out.pose.position.x = px + dx - (toward + back) * ux
+        out.pose.position.y = py + dy - (toward + back) * uy
+        out.pose.position.z = sp.pose.position.z
+        return out
+
+    def _track_altitude_error(self):
+        """Watch commanded z against measured z while position-streaming.
+
+        WHY (Phase 11, unresolved sink)
+
+            Three randomised arenas fail with the aircraft below the corridor
+            altitude band, and the two facts that must be reconciled are:
+
+              * the corridor's own altitude hold demonstrably works -- 25
+                consecutive live samples at exactly 3.0 m;
+              * the approach commands POSITION setpoints at a constant
+                z = 3.0 m, and a position setpoint should not permit a 1.5 m
+                descent.
+
+            So either the sink happens in a phase neither covers, or one of
+            them is not in force when it happens. Rather than reasoning about
+            which stage "should" be in control, this records the tick where
+            commanded and measured altitude actually diverge, and which leaf
+            was running at the time.
+        """
+        z_cmd = float(self._sp.pose.position.z)
+        z_now = self.alt()
+        if z_now is None:
+            return
+        err = z_cmd - z_now                     # positive = aircraft is LOW
+        stage = self.active_stage or "?"
+
+        # A commanded CHANGE of altitude is not a divergence. ClimbToSweep
+        # commands 10 m from 3 m, and WinchDrop commands 5 m from 10 m; both
+        # were reported as 7.01 m and 5.00 m "divergences" by the first
+        # version of this, which is exactly the kind of false alarm that
+        # makes an instrument worse than none.
+        #
+        # What is being hunted is the aircraft ARRIVING at a held altitude and
+        # then falling away from it. So the target has to be reached once
+        # before a shortfall counts, and reaching a new target re-arms it.
+        # `is None` rather than a numeric sentinel: with nan, every
+        # comparison is False, so the target would never update and the
+        # arrival flag would never re-arm -- the guard would silently do
+        # nothing. Caught by test_a_COMMANDED_climb_is_not_a_divergence.
+        if self._alt_target is None or abs(z_cmd - self._alt_target) > 0.05:
+            self._alt_target = z_cmd
+            self._alt_arrived = False
+        if abs(err) <= 0.5:
+            self._alt_arrived = True
+        if not self._alt_arrived:
+            return
+
+        if err > self.alt_error_worst:
+            self.alt_error_worst = err
+            self.alt_error_worst_stage = stage
+        if err > self.alt_error_warn and stage != self._alt_warned_stage:
+            self._alt_warned_stage = stage
+            self.log(f"ALTITUDE DIVERGENCE in {stage}: commanded "
+                     f"{z_cmd:.2f} m, measured {z_now:.2f} m "
+                     f"(low by {err:.2f} m) at "
+                     f"({self.pos()[0]:.1f}, {self.pos()[1]:.1f})", warn=True)
+
+    # ------------------------------------------------------------------ #
+    # intents (non-blocking)
+    # ------------------------------------------------------------------ #
+    def connected(self):
+        return self.state.connected
+
+    def battery_critical(self):
+        """True once the pack has been below its critical voltage (or 15 %)
+        for `critical_battery_hold_s`."""
+        if self._battery_low_since is None:
+            return False
+        now = self.node.get_clock().now().nanoseconds / 1e9
+        return now - self._battery_low_since >= self.critical_battery_hold_s
+
+    def _note_mode_command(self, mode):
+        self._commanded_modes[mode] = self.node.get_clock().now().nanoseconds / 1e9
+
+    def _mode_was_ours(self, mode):
+        t = self._commanded_modes.get(mode)
+        if t is None:
+            return False
+        now = self.node.get_clock().now().nanoseconds / 1e9
+        return (now - t) <= _COMMAND_OWNERSHIP_S
+
+    def set_mode(self, mode='GUIDED'):
+        self._note_mode_command(mode)
+        if self.cli_mode.service_is_ready():
+            req = SetMode.Request(); req.custom_mode = mode
+            self.cli_mode.call_async(req)
+
+    def arm(self, value=True):
+        if self.cli_arm.service_is_ready():
+            req = CommandBool.Request(); req.value = value
+            self.cli_arm.call_async(req)
+
+    def takeoff(self, alt):
+        if self.cli_takeoff.service_is_ready():
+            req = CommandTOL.Request(); req.altitude = float(alt)
+            self.cli_takeoff.call_async(req)
+
+    def land(self):
+        self._note_mode_command("LAND")
+        if self.cli_land.service_is_ready():
+            req = CommandTOL.Request()
+            self.cli_land.call_async(req)
+        else:
+            self.set_mode("LAND")
+
+    def hold_position(self):
+        x,y,z=self.pos()
+        self.goto(x,y,z,self.yaw())
+
+    def goto(self, x, y, z, yaw=0.0):
+        """Stream position setpoint with heading orientation (yaw in radians)."""
+        sp = PoseStamped()
+        sp.pose.position.x = float(x)
+        sp.pose.position.y = float(y)
+        sp.pose.position.z = float(z)
+        half_yaw = float(yaw) / 2.0
+        sp.pose.orientation.z = math.sin(half_yaw)
+        sp.pose.orientation.w = math.cos(half_yaw)
+        self._sp = sp
+
+    def pos(self):
+        p = self.pose.pose.position
+        return (p.x, p.y, p.z)
+
+    def reached(self, x, y, z, tol=0.6):
+        px, py, pz = self.pos()
+        return math.dist((px, py, pz), (x, y, z)) < tol
+
+    def alt(self):
+        return self.pose.pose.position.z
+
+    def yaw(self):
+        """Heading in radians from the local-ENU pose quaternion."""
+        q = self.pose.pose.orientation
+        siny = 2.0 * (q.w * q.z + q.x * q.y)
+        cosy = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
+        return math.atan2(siny, cosy)
+
+    def enable_avoidance(self, on, hold_alt=None):
+        """Hand control to the follow-the-gap navigator.
+
+        `hold_alt` states the altitude the traversal must maintain. Without
+        it the navigator commands `velocity.z = 0` -- zero vertical RATE, not
+        a held altitude -- and any thrust bias integrates into a sink. Arena
+        regression seed 1002 sank from 2.8 m to 0.9 m while stalled in the
+        corridor before the altitude-band guard aborted the mission.
+        """
+        if on and hold_alt is not None:
+            # Publish BEFORE enabling, so the navigator's first setpoint
+            # already carries the correction rather than a zero.
+            self.pub_hold_alt.publish(Float32(data=float(hold_alt)))
+        self.pub_enable.publish(Bool(data=bool(on)))
+        if on and not self._avoiding:
+            # A new traversal: the last detail is the previous one's ending.
+            # Enabled and checked on the same tick, the return corridor read
+            # the outbound corridor's "exited" and ended at its own mouth
+            # (random conditions, rb_high_board).
+            self.avoid_detail = {}
+            self._avoid_fresh = 0
+        self._avoiding = bool(on)
+        if on:
+            self._sp = None    # stop position streaming; avoidance drives velocity
+
+    def set_target(self, s):
+        self.pub_target.publish(String(data=s))
+
+    def winch(self, cmd):
+        self.pub_winch.publish(String(data=cmd))   # "lower" | "release" | "stow"
+
+    # ------------------------------------------------------------------ #
+    # camera pointing (Phase 2)
+    # ------------------------------------------------------------------ #
+    def _on_avoid_detail(self, m):
+        self._avoid_fresh += 1
+        try:
+            self.avoid_detail = json.loads(m.data)
+        except json.JSONDecodeError:
+            self.avoid_detail = {}
+
+    def _avoid_current(self):
+        """Detail published since this traversal was handed over. The first
+        few can predate the navigator seeing the enable."""
+        return self._avoid_fresh >= 3
+
+    def corridor_exited(self):
+        # OBSERVING retains the last traversal's exit flag. It cannot end a
+        # new traversal before the navigator has even taken control.
+        return (self._avoid_current()
+                and self.avoid_detail.get("state") == "CRUISE"
+                and bool(self.avoid_detail.get("corridor_exited")))
+
+    def avoidance_stuck(self):
+        return self._avoid_current() and self.avoid_detail.get("state") == "STUCK"
+
+    def _on_winch_status(self, m):
+        try:
+            self.winch_status = json.loads(m.data)
+            self.winch_status_t = self.node.get_clock().now().nanoseconds*1e-9
+        except json.JSONDecodeError:
+            self.winch_status = {}
+            self.winch_status_t = None
+
+    def winch_status_fresh(self, max_age_s=1.0):
+        now = self.node.get_clock().now().nanoseconds*1e-9
+        return bool(self.winch_status and self.winch_status_t is not None and
+                    0 <= now-self.winch_status_t <= max_age_s)
+
+    def _on_camera_state(self, m):
+        try:
+            self.camera_state = json.loads(m.data)
+        except json.JSONDecodeError:
+            self.camera_state = {}
+
+    def set_camera_pose(self, pose):
+        self.pub_camera_pose.publish(String(data=str(pose)))
+
+    def camera_settled(self, pose=None):
+        """True only when the joint has been MEASURED at the requested pose.
+
+        Never infer this from having sent a command: the whole point of the
+        Phase 2 rail is that a perception stage cannot run while the camera is
+        somewhere other than where the mission believes it to be.
+        """
+        st = self.camera_state
+        if not st or not st.get("settled"):
+            return False
+        if st.get("stale"):
+            return False
+        if pose is not None and st.get("requested") != pose:
+            return False
+        return True
+
+    def camera_state_summary(self):
+        st = self.camera_state
+        if not st:
+            return "no /camera/pose_state yet"
+        err = st.get("error_deg")
+        err_s = "?" if err is None else f"{err:.1f}deg"
+        return (f"req={st.get('requested', '?')} err={err_s} "
+                f"settled={st.get('settled')} stale={st.get('stale')}")
+
+
+    # ---------------------------------------------------------------- #
+    # Observed geometry (geometry audit A7, A8, A9)
+    # ---------------------------------------------------------------- #
+
+    def record_corridor_exit(self):
+        """Latch where and at what heading the corridor opened out.
+
+        Called once by the Corridor leaf on success. The return leg and the
+        delivery-zone bound are both anchored here instead of on asserted
+        arena coordinates. First write wins: the outbound exit is the mouth,
+        and the return trip must not overwrite it.
+        """
+        if self.corridor_exit_pose is None:
+            x, y, z = self.pos()
+            self.corridor_exit_pose = (x, y, z, self.yaw())
+        return self.corridor_exit_pose
+
+    def record_gate_heading(self, yaw):
+        """Latch the heading squared on the outbound gate: the corridor axis.
+
+        Measured with the lidar to within the square-on tolerance, which the
+        yaw at the exit is not -- the navigator weaves down the lane. First
+        write wins, like the exit: the return gate must not overwrite it.
+        """
+        if self.gate_heading is None:
+            self.gate_heading = float(yaw)
+        return self.gate_heading
+
+    def record_outbound_banner(self, x, y):
+        """Latch where the OUTBOUND banner is (first write wins), so the
+        search for the return banner can tell the two boards apart."""
+        if getattr(self, "outbound_banner_xy", None) is None:
+            self.outbound_banner_xy = (float(x), float(y))
+        return self.outbound_banner_xy
+
+    def _on_fence_readback(self, m):
+        self.fence_readback = list(m.waypoints)
+
+    def home_global(self):
+        """(lat, lon) from the FC, or None. The fence needs a global anchor."""
+        if self.home is None:
+            return None
+        return (float(self.home.geo.latitude), float(self.home.geo.longitude))
+
+    def push_fence(self, items):
+        """Upload a fence. Returns the service future, or None if unavailable."""
+        if not self.cli_fence_push.service_is_ready():
+            return None
+        req = _WaypointPush.Request()
+        req.start_index = 0
+        req.waypoints = items
+        self.fence_readback = None
+        return self.cli_fence_push.call_async(req)
+
+    def set_param(self, name, value):
+        """Set one FC parameter through MAVROS. Returns the future or None.
+
+        A Python int goes as an integer parameter, anything else as a double
+        (FENCE_TYPE is int8 on the FC, FENCE_ALT_MAX a float). force_set
+        sends it even before MAVROS has finished pulling the parameter list,
+        which at a low real-time factor takes minutes.
+        """
+        if not self.cli_param_set.service_is_ready():
+            return None
+        req = ParamSetV2.Request()
+        req.force_set = True
+        req.param_id = str(name)
+        if isinstance(value, bool) or isinstance(value, int):
+            req.value = ParameterValue(type=ParameterType.PARAMETER_INTEGER,
+                                       integer_value=int(value))
+        else:
+            req.value = ParameterValue(type=ParameterType.PARAMETER_DOUBLE,
+                                       double_value=float(value))
+        return self.cli_param_set.call_async(req)
+
+    def set_speed(self, ground_mps):
+        """Cap horizontal speed for position setpoints (MAV_CMD_DO_CHANGE_SPEED).
+
+        GUIDED position targets fly at WPNAV_SPEED unless told otherwise. The
+        search needs a lower one: red ground has to be SEEN, confirmed over
+        several frames and routed round before the airframe arrives at it.
+        Returns the future, or None when the command service is not up.
+        """
+        if not self.cli_command.service_is_ready():
+            return None
+        req = CommandLong.Request()
+        req.command = 178                   # MAV_CMD_DO_CHANGE_SPEED
+        req.param1 = 1.0                    # ground speed
+        req.param2 = float(ground_mps)
+        req.param3 = -1.0                   # throttle unchanged
+        self.speed_cmd = float(ground_mps)
+        return self.cli_command.call_async(req)
+
+    def _on_payload(self, m):
+        try:
+            self.payload_det = json.loads(m.data)
+        except (ValueError, TypeError):
+            return
+        self.payload_det_t = self.node.get_clock().now().nanoseconds * 1e-9
+
+    def _delivery_motors(self, m):
+        span = self.motor_pwm_max - self.motor_pwm_min
+        if span <= 0 or not self.motor_channels or any(i < 0 or i >= len(m.channels) for i in self.motor_channels):
+            return
+        values = [(float(m.channels[i])-self.motor_pwm_min)/span for i in self.motor_channels]
+        if not all(0 < v < 1 for v in values):
+            return
+        self.delivery_inputs['effort'] = sum(v*v for v in values)/len(values)
+        self.delivery_inputs['motor_stamp'] = m.header.stamp.sec + m.header.stamp.nanosec*1e-9
+
+    def _delivery_imu(self, m):
+        a = m.linear_acceleration
+        self.delivery_inputs['accel_residual'] = math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z)-9.80665
+        self.delivery_inputs['imu_stamp'] = m.header.stamp.sec + m.header.stamp.nanosec*1e-9
+
+    def _delivery_velocity(self, m):
+        v = m.twist.linear
+        self.delivery_inputs.update(vz=v.z, speed=math.hypot(v.x, v.y),
+                                   velocity_stamp=m.header.stamp.sec+m.header.stamp.nanosec*1e-9)
+
+    def delivery_telemetry(self):
+        now = self.node.get_clock().now().nanoseconds*1e-9
+        d = self.delivery_inputs
+        if any(k not in d or not 0 <= now-d[k] <= 0.5
+               for k in ('motor_stamp', 'imu_stamp', 'velocity_stamp', 'pose_stamp')):
+            return None
+        return dict(stamp=d['motor_stamp'], effort=d['effort'], alt=self.alt(),
+                    vz=d['vz'], speed=d['speed'], accel_residual=d['accel_residual'],
+                    tilt_deg=max(abs(self.roll_deg), abs(self.pitch_deg)))
+
+    def delivery_observation(self, detail):
+        self.pub_delivery_observation.publish(String(data=json.dumps(detail)))
+
+    def payload_seen(self, max_age_s=1.5):
+        """The latest payload detection if it is fresh, else None."""
+        if self.payload_det_t is None:
+            return None
+        age = self.node.get_clock().now().nanoseconds * 1e-9 - self.payload_det_t
+        return self.payload_det if age <= max_age_s else None
+
+    def _on_redzone(self, m):
+        """Georeferenced red zones, replacing a positionless Bool (Phase 7)."""
+        try:
+            d = json.loads(m.data)
+        except (ValueError, TypeError):
+            return
+        self.redzone_status = d.get("status", "NOT_VISIBLE")
+        if hasattr(self,'detector_timing'):
+            if self.redzone_status not in ('CLEAR','RED'):
+                self.detector_timing['red'].samples.clear()
+            else:
+                self.detector_timing['red'].add(d,self.node.get_clock().now().nanoseconds*1e-9)
+        # One detail per frame processed: the search paces itself on it.
+        self.redzone_seq = getattr(self, "redzone_seq", 0) + 1
+        ex = d.get("exclusions") or []
+        self.exclusions = [tuple(float(v) for v in r) for r in ex if len(r) == 4]
+
+    def _on_qr_detail(self,m):
+        try:
+            detail=json.loads(m.data)
+        except (ValueError,TypeError):
+            return
+        self.detector_timing['qr'].add(detail,self.node.get_clock().now().nanoseconds*1e-9)
+
+    def log(self, msg, warn=False):
+        """Route a stage's findings to the ROS log.
+
+        py_trees `self.logger` goes to the py_trees logger, which nothing in
+        this stack configures — so the observed zone bounds, the derived sweep
+        and decode altitudes, the coverage figure and the fence verification
+        result were all computed, used, and never recorded anywhere. The
+        evidence pack for Phase 6 and Phase 7 depends on exactly those lines.
+        """
+        (self.node.get_logger().warning if warn
+         else self.node.get_logger().info)(msg)
+
+    def open_extent(self):
+        """(depth_ahead_m, width_m) of the open area, as the navigator sees it.
+
+        Published by the corridor navigator on /avoid/detail. Returns (0, 0)
+        when the navigator has not reported, which ObserveZone treats as
+        "nothing observed yet" rather than "a zone of size zero".
+        """
+        d = self.avoid_detail or {}
+        return (float(d.get("open_depth_m", 0.0) or 0.0),
+                float(d.get("open_width_m", 0.0) or 0.0))
+
+    def qr_hold_xy(self, default=(0.0, 0.0), gain=0.8, max_step=1.0):
+        """Where to hold station while descending onto a QR candidate.
+
+        Same image->local mapping CenterOnQR uses and tests assert (image +x
+        right, +y DOWN; forward correction = -offset.y, right = +offset.x,
+        rotated by the aircraft's own yaw). Duplicating that reasoning with a
+        different sign is exactly what flew the aircraft into a wall in Phase
+        2, so it is derived here the same way.
+
+        With no candidate in view the caller's position is held unchanged.
+        """
+        if not self.qr_visible():
+            return default
+        x, y, _ = self.pos()
+        off = self.qr_offset
+        fwd = max(-max_step, min(max_step, -float(off.y) * gain))
+        right = max(-max_step, min(max_step, float(off.x) * gain))
+        psi = self.yaw()
+        return (x + fwd * math.cos(psi) + right * math.sin(psi),
+                y + fwd * math.sin(psi) - right * math.cos(psi))

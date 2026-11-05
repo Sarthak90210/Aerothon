@@ -1,0 +1,28 @@
+Tue 13 Oct 21:13:00 UTC 2026
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0HTTP/1.1 200 Connection Established
+
+HTTP/2 200 
+server: Apache
+x-content-type-options: nosniff
+x-frame-options: sameorigin
+referrer-policy: no-referrer
+x-xss-protection: 1
+permissions-policy: interest-cohort=()
+x-clacks-overhead: GNU Terry Pratchett
+content-type: text/html;charset=UTF-8
+backend: 4qpvL1tJyeV1P6Tmf0Lj8g--F_conova_debian_backend_mirrors_debian_org
+via: 1.1 varnish, 1.1 varnish
+accept-ranges: bytes
+age: 0
+date: Tue, 13 Oct 2026 21:13:04 GMT
+x-served-by: cache-ams-eham8680060-AMS, cache-bom-vanm7210087-BOM
+x-cache: HIT, MISS
+x-cache-hits: 18, 0
+x-timer: S1791925984.878838,VS0,VE127
+vary: Accept-Encoding
+content-length: 6153
+
+4786afd9c4bbb06671e9cdc75e5634b8765beb177b19db795e2f8ebfe117f4f3  /home/pi5/aerothon-deploy/runtime_20261013.zip
+  0  6153    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0

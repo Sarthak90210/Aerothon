@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    ".scratch/simulation-reliability/launcher_smoke_process_20261006.py",
+    "--seconds",
+    "60",
+    "--exit-code",
+    "0"
+  ],
+  "cwd": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON",
+  "created_wall": 1791289067.2001905
+}

@@ -1,0 +1,31 @@
+{
+  "sitl": {
+    "id": "sitl",
+    "name": "Laptop SITL",
+    "transport": "tcp",
+    "host": "127.0.0.1",
+    "port": 5762,
+    "bind_port": 14555,
+    "system_id": 1,
+    "component_id": 1,
+    "gateway": "http://127.0.0.1:8090",
+    "device": "/dev/ttyAMA0",
+    "baud": 115200,
+    "camera_device": "/dev/video0",
+    "lidar_port": "/dev/ttyUSB0",
+    "lidar_yaw_deg": 0.0,
+    "lidar_mirrored": false,
+    "camera_hfov": 0.851919,
+    "marker_m": 3.0,
+    "rc_config": {},
+    "slam": true,
+    "hardware_reviewed": false,
+    "delivery_calibration": "",
+    "vehicle": "simulation",
+    "gcs_host": "",
+    "winch_backend": "mavlink",
+    "venue_file": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/slam_ui_20261018/local_sitl_venue.yaml",
+    "autoconnect": false,
+    "slam_odometry": "fcu"
+  }
+}

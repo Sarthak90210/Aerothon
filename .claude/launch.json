@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gcs-offline-map",
+      "runtimeExecutable": "wsl",
+      "runtimeArgs": [
+        "-d",
+        "Ubuntu",
+        "--",
+        "bash",
+        "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/india_map_20261018/serve_local.sh"
+      ],
+      "port": 8898
+    },
+    {
+      "name": "world-maker",
+      "runtimeExecutable": "wsl",
+      "runtimeArgs": [
+        "-d",
+        "Ubuntu",
+        "--",
+        "bash",
+        "-c",
+        "cd '/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON' && exec /usr/bin/python3 tools/world_editor/serve.py"
+      ],
+      "port": 8777
+    }
+  ]
+}

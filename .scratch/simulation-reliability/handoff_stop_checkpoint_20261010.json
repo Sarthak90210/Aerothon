@@ -1,0 +1,553 @@
+{
+  "timestamp": "2026-10-10T16:58:44.085439+05:30",
+  "user_instruction": "Stop work and write an executive handoff",
+  "status": "stopped_by_user",
+  "accepted_source": null,
+  "qualification_complete": false,
+  "original_200_case_qualified": false,
+  "source_files": 951,
+  "source_unchanged": true,
+  "source_archive_sha256": "000dd0834aff203801af9fa8980597634b846ab7806084ed907719478ff2671e",
+  "pipeline_exit_code": 1,
+  "pipeline_stop_reason": "Focused native independent contact-free assertion failed",
+  "process_verification": {
+    "returncode": 0,
+    "matching_processes": [],
+    "terms": [
+      "qualification_gates",
+      "probe_reduced_targeted",
+      "watch_v39",
+      "fly_headless",
+      "corridor_trial",
+      "run_recorded_acceptance",
+      "gz sim",
+      "arducopter",
+      "ros2 launch"
+    ],
+    "stderr": "w\u0000s\u0000l\u0000:\u0000 \u0000A\u0000n\u0000 \u0000i\u0000n\u0000t\u0000e\u0000r\u0000n\u0000a\u0000l\u0000 \u0000e\u0000r\u0000r\u0000o\u0000r\u0000 \u0000o\u0000c\u0000c\u0000u\u0000r\u0000r\u0000e\u0000d\u0000.\u0000 \u0000\n\u0000\n\u0000E\u0000r\u0000r\u0000o\u0000r\u0000 \u0000c\u0000o\u0000d\u0000e\u0000:\u0000 \u0000C\u0000r\u0000e\u0000a\u0000t\u0000e\u0000I\u0000n\u0000s\u0000t\u0000a\u0000n\u0000c\u0000e\u0000/\u0000C\u0000r\u0000e\u0000a\u0000t\u0000e\u0000V\u0000m\u0000/\u0000C\u0000o\u0000n\u0000f\u0000i\u0000g\u0000u\u0000r\u0000e\u0000N\u0000e\u0000t\u0000w\u0000o\u0000r\u0000k\u0000i\u0000n\u0000g\u0000/\u00000\u0000x\u00008\u00000\u00000\u00007\u00000\u00005\u00004\u0000f\u0000\n\u0000\n\u0000I\u0000f\u0000 \u0000t\u0000h\u0000i\u0000s\u0000 \u0000e\u0000r\u0000r\u0000o\u0000r\u0000 \u0000w\u0000a\u0000s\u0000 \u0000u\u0000n\u0000e\u0000x\u0000p\u0000e\u0000c\u0000t\u0000e\u0000d\u0000,\u0000 \u0000p\u0000l\u0000e\u0000a\u0000s\u0000e\u0000 \u0000c\u0000o\u0000n\u0000s\u0000i\u0000d\u0000e\u0000r\u0000 \u0000s\u0000e\u0000a\u0000r\u0000c\u0000h\u0000i\u0000n\u0000g\u0000 \u0000f\u0000o\u0000r\u0000 \u0000e\u0000x\u0000i\u0000s\u0000t\u0000i\u0000n\u0000g\u0000 \u0000i\u0000s\u0000s\u0000u\u0000e\u0000s\u0000 \u0000o\u0000r\u0000 \u0000f\u0000i\u0000l\u0000i\u0000n\u0000g\u0000 \u0000a\u0000 \u0000n\u0000e\u0000w\u0000 \u0000i\u0000s\u0000s\u0000u\u0000e\u0000 \u0000a\u0000t\u0000 \u0000h\u0000t\u0000t\u0000p\u0000s\u0000:\u0000/\u0000/\u0000g\u0000i\u0000t\u0000h\u0000u\u0000b\u0000.\u0000c\u0000o\u0000m\u0000/\u0000m\u0000i\u0000c\u0000r\u0000o\u0000s\u0000o\u0000f\u0000t\u0000/\u0000W\u0000S\u0000L\u0000/\u0000i\u0000s\u0000s\u0000u\u0000e\u0000s\u0000.\u0000\n\u0000\n\u0000w\u0000s\u0000l\u0000:\u0000 \u0000F\u0000a\u0000i\u0000l\u0000e\u0000d\u0000 \u0000t\u0000o\u0000 \u0000c\u0000o\u0000n\u0000f\u0000i\u0000g\u0000u\u0000r\u0000e\u0000 \u0000n\u0000e\u0000t\u0000w\u0000o\u0000r\u0000k\u0000 \u0000(\u0000n\u0000e\u0000t\u0000w\u0000o\u0000r\u0000k\u0000i\u0000n\u0000g\u0000M\u0000o\u0000d\u0000e\u0000 \u0000M\u0000i\u0000r\u0000r\u0000o\u0000r\u0000e\u0000d\u0000)\u0000,\u0000 \u0000f\u0000a\u0000l\u0000l\u0000i\u0000n\u0000g\u0000 \u0000b\u0000a\u0000c\u0000k\u0000 \u0000t\u0000o\u0000 \u0000n\u0000e\u0000t\u0000w\u0000o\u0000r\u0000k\u0000i\u0000n\u0000g\u0000M\u0000o\u0000d\u0000e\u0000 \u0000N\u0000o\u0000n\u0000e\u0000.\u0000\n\u0000\n\u0000"
+  },
+  "targeted_navigation": {
+    "executed": 5,
+    "passed": 5,
+    "cancelled": 0,
+    "cases": [
+      {
+        "weather": "random",
+        "seed": 3,
+        "path": "logs/reliability_reduced_v39_targeted_20261008/my_world_random_s3",
+        "flight_time_s": 824.6,
+        "corridor_clearance_m": 0.7336495993025122,
+        "red_clearance_m": 2.176071263555251,
+        "connected_disarm": {
+          "capture_stamp": 845.999999999,
+          "received_stamp": 845.999999999,
+          "recorded_stamp": 846.009999999,
+          "connected": true,
+          "armed": false
+        },
+        "configuration": {
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/reduced_scope_v39_candidate_20261008/sim/worlds/my_world.json",
+          "seed": 3,
+          "conditions": "random",
+          "rtf": 1.0,
+          "max_sim_s": 1200.0,
+          "ros_domain": 40,
+          "fidelity": "object-level navigation; no rendered images or motor telemetry",
+          "navigation_only": true,
+          "delivery_exercised": false,
+          "vel_command_delay_s": 0.0,
+          "vel_response_s": 0.6,
+          "injected_command_delay_s": 0.0,
+          "artificial_transport_delay_injected": false,
+          "camera_capture_hz": 20.0,
+          "lidar_scan_hz": 10.0
+        }
+      },
+      {
+        "weather": "field",
+        "seed": 1,
+        "path": "logs/reliability_reduced_v39_targeted_20261008/my_world_field_s1",
+        "flight_time_s": 636.7,
+        "corridor_clearance_m": 0.7350218802513945,
+        "red_clearance_m": 2.230071263555253,
+        "connected_disarm": {
+          "capture_stamp": 658.199999999,
+          "received_stamp": 658.199999999,
+          "recorded_stamp": 658.209999999,
+          "connected": true,
+          "armed": false
+        },
+        "configuration": {
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/reduced_scope_v39_candidate_20261008/sim/worlds/my_world.json",
+          "seed": 1,
+          "conditions": "field",
+          "rtf": 1.0,
+          "max_sim_s": 1200.0,
+          "ros_domain": 40,
+          "fidelity": "object-level navigation; no rendered images or motor telemetry",
+          "navigation_only": true,
+          "delivery_exercised": false,
+          "vel_command_delay_s": 0.0,
+          "vel_response_s": 0.6,
+          "injected_command_delay_s": 0.0,
+          "artificial_transport_delay_injected": false,
+          "camera_capture_hz": 20.0,
+          "lidar_scan_hz": 10.0
+        }
+      },
+      {
+        "weather": "field",
+        "seed": 2,
+        "path": "logs/reliability_reduced_v39_targeted_20261008/my_world_field_s2",
+        "flight_time_s": 647.8,
+        "corridor_clearance_m": 0.7212660633270548,
+        "red_clearance_m": 2.2750712635552546,
+        "connected_disarm": {
+          "capture_stamp": 669.199999999,
+          "received_stamp": 669.209999999,
+          "recorded_stamp": 669.209999999,
+          "connected": true,
+          "armed": false
+        },
+        "configuration": {
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/reduced_scope_v39_candidate_20261008/sim/worlds/my_world.json",
+          "seed": 2,
+          "conditions": "field",
+          "rtf": 1.0,
+          "max_sim_s": 1200.0,
+          "ros_domain": 41,
+          "fidelity": "object-level navigation; no rendered images or motor telemetry",
+          "navigation_only": true,
+          "delivery_exercised": false,
+          "vel_command_delay_s": 0.0,
+          "vel_response_s": 0.6,
+          "injected_command_delay_s": 0.0,
+          "artificial_transport_delay_injected": false,
+          "camera_capture_hz": 20.0,
+          "lidar_scan_hz": 10.0
+        }
+      },
+      {
+        "weather": "field",
+        "seed": 3,
+        "path": "logs/reliability_reduced_v39_targeted_20261008/my_world_field_s3",
+        "flight_time_s": 650.8,
+        "corridor_clearance_m": 0.7277047538044634,
+        "red_clearance_m": 2.3590712635552507,
+        "connected_disarm": {
+          "capture_stamp": 672.199999999,
+          "received_stamp": 672.199999999,
+          "recorded_stamp": 672.209999999,
+          "connected": true,
+          "armed": false
+        },
+        "configuration": {
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/reduced_scope_v39_candidate_20261008/sim/worlds/my_world.json",
+          "seed": 3,
+          "conditions": "field",
+          "rtf": 1.0,
+          "max_sim_s": 1200.0,
+          "ros_domain": 41,
+          "fidelity": "object-level navigation; no rendered images or motor telemetry",
+          "navigation_only": true,
+          "delivery_exercised": false,
+          "vel_command_delay_s": 0.0,
+          "vel_response_s": 0.6,
+          "injected_command_delay_s": 0.0,
+          "artificial_transport_delay_injected": false,
+          "camera_capture_hz": 20.0,
+          "lidar_scan_hz": 10.0
+        }
+      },
+      {
+        "weather": "random",
+        "seed": 4,
+        "path": "logs/reliability_reduced_v39_targeted_20261008/my_world_random_s4",
+        "flight_time_s": 770.6,
+        "corridor_clearance_m": 0.7182893724870887,
+        "red_clearance_m": 2.1220712635552488,
+        "connected_disarm": {
+          "capture_stamp": 791.999999999,
+          "received_stamp": 791.999999999,
+          "recorded_stamp": 792.009999999,
+          "connected": true,
+          "armed": false
+        },
+        "configuration": {
+          "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/reduced_scope_v39_candidate_20261008/sim/worlds/my_world.json",
+          "seed": 4,
+          "conditions": "random",
+          "rtf": 1.0,
+          "max_sim_s": 1200.0,
+          "ros_domain": 41,
+          "fidelity": "object-level navigation; no rendered images or motor telemetry",
+          "navigation_only": true,
+          "delivery_exercised": false,
+          "vel_command_delay_s": 0.0,
+          "vel_response_s": 0.6,
+          "injected_command_delay_s": 0.0,
+          "artificial_transport_delay_injected": false,
+          "camera_capture_hz": 20.0,
+          "lidar_scan_hz": 10.0
+        }
+      }
+    ],
+    "rendered_perception_qualified": false,
+    "motor_delivery_qualified": false
+  },
+  "focused_native": {
+    "geometric_checks_passed": 7,
+    "independent_clearance_m": 0.7582866549316181,
+    "recorded_result": {
+      "state": "TRIAL_COMPLETE",
+      "reason": "observed far corridor exit",
+      "t": 142.615,
+      "disarm_evidence": {
+        "capture_stamp": 150.345,
+        "received_stamp": 150.345,
+        "decision_stamp": 150.443,
+        "connected": true,
+        "armed": false,
+        "max_age_s": 1.5
+      },
+      "final_armed": false,
+      "handover_mode": "moving"
+    },
+    "focused_source_closed_review_exists": false,
+    "full_mission_qualified": false,
+    "contact_evidence": {
+      "valid": true,
+      "contact_free": false,
+      "failures": [],
+      "ground_canary": true,
+      "channels": 7,
+      "heartbeat_count": 207,
+      "allowed_ground_or_grip_pairs": 26582,
+      "intended_deployed_hook_target_surface_pairs": 0,
+      "first_armed_stamp": 67.4,
+      "last_armed_stamp": 150.23600000000002
+    },
+    "unexpected_contact_count": 6805,
+    "unexpected_contact_groups": {
+      "aerothon_iris::base_link::skid_1 -> aerothon_payload::body::collision": {
+        "count": 6566,
+        "first_stamp": 47.328,
+        "last_stamp": 63.994,
+        "during_recorded_armed_interval": 0
+      },
+      "aerothon_iris::base_link::skid_0 -> site_ground::ground::collision": {
+        "count": 126,
+        "first_stamp": 146.67,
+        "last_stamp": 151.241,
+        "during_recorded_armed_interval": 106
+      },
+      "aerothon_iris::base_link::skid_1 -> site_ground::ground::collision": {
+        "count": 113,
+        "first_stamp": 146.67,
+        "last_stamp": 151.241,
+        "during_recorded_armed_interval": 93
+      }
+    },
+    "detector_rates": {
+      "camera": {
+        "distinct_captures": 893,
+        "invalid_capture_events": 0,
+        "capture_hz": 6.277269528501056,
+        "delivered_hz": 6.277534589778598,
+        "delivered_wall_hz": 1.5021037351935391,
+        "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+        "maximum_capture_gap_s": 1.25,
+        "latency_sim_p95_s": 0.023000000000010346,
+        "processing_wall_p95_s": null
+      },
+      "search": {
+        "qr_timing": {
+          "distinct_captures": 0,
+          "invalid_capture_events": 0,
+          "capture_hz": null,
+          "delivered_hz": null,
+          "delivered_wall_hz": null,
+          "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+          "maximum_capture_gap_s": null,
+          "latency_sim_p95_s": null,
+          "processing_wall_p95_s": null
+        },
+        "red_timing": {
+          "distinct_captures": 0,
+          "invalid_capture_events": 0,
+          "capture_hz": null,
+          "delivered_hz": null,
+          "delivered_wall_hz": null,
+          "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+          "maximum_capture_gap_s": null,
+          "latency_sim_p95_s": null,
+          "processing_wall_p95_s": null
+        },
+        "usable_red_ground": {
+          "distinct_captures": 0,
+          "invalid_capture_events": 0,
+          "capture_hz": null,
+          "delivered_hz": null,
+          "delivered_wall_hz": null,
+          "time_basis": "capture_hz and delivered_hz use simulated time; delivered_wall_hz uses host monotonic time",
+          "maximum_capture_gap_s": null,
+          "latency_sim_p95_s": null,
+          "processing_wall_p95_s": null
+        }
+      }
+    },
+    "configuration": {
+      "seed": 20261003,
+      "conditions": "calm",
+      "airframe": "cad",
+      "payload_fixture": "unloaded",
+      "world": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/sim/worlds/split_corridors.json",
+      "ros_domain": 30,
+      "trial": "focused return corridor; full mission not exercised",
+      "entry_fixture_sha256": "57c7885fb6f5b5df3ee3d5391ee7ce5a766a4aa4f3bd3686ba0d92fef94f36bf",
+      "handover_mode": "moving",
+      "handover_max_age_s": 0.7,
+      "handover_driver_sha256": "94d37e800b6a2edd7c0805d012bbdeaf61188ac8b8ef91758ed9ae9ae2d702f8"
+    },
+    "artifact_hashes": {
+      "airframe.json": {
+        "bytes": 6100,
+        "sha256": "8f4e80d3dca00ab370c6c557215cca953d1c4c509c685a6e6ffe5c28c855c5e2"
+      },
+      "camera_capture_events.jsonl": {
+        "bytes": 101667,
+        "sha256": "2b6fb6a9178e2b3a05bb68ec21ecc34a5e550f5ad12f24020a2b32684a88cc01"
+      },
+      "camera_frames.jsonl": {
+        "bytes": 50975,
+        "sha256": "3702ad93c541744acdc0076722d424f54002dc16a71e3bcd61219715e142d323"
+      },
+      "configuration.json": {
+        "bytes": 529,
+        "sha256": "9c447ed57b26daaf0245e9524be42244ea8e749e7b48c250373e9571f45fd159"
+      },
+      "contact_recorder.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "decision_inputs.json": {
+        "bytes": 4372,
+        "sha256": "2728400e56965059e5bfe47a0683f4437eb1618acf63fd4bedb60f05d3e98c0c"
+      },
+      "decision_inputs_navigation.json": {
+        "bytes": 8694,
+        "sha256": "ba21657c21438eb3abe70ac3e502b5cc2a540282feb8133cc6bc2ee56eff93fb"
+      },
+      "decision_input_audit.log": {
+        "bytes": 4672,
+        "sha256": "5c990971e54fc158837484c07c3bc3bb37093ad1f9ab1d025200f1c7ad826806"
+      },
+      "detector_events.jsonl": {
+        "bytes": 1673829,
+        "sha256": "2654ec2785664d4e2292ae565dedbffb68bebfc1b4b4a26e056d9d3a72508ed5"
+      },
+      "entry_fixture.json": {
+        "bytes": 569,
+        "sha256": "57c7885fb6f5b5df3ee3d5391ee7ce5a766a4aa4f3bd3686ba0d92fef94f36bf"
+      },
+      "entry_handover.json": {
+        "bytes": 1233,
+        "sha256": "e4d0fa671061c26242b14683783e88f9670d1521b4434d48955a7d4a5a64c95f"
+      },
+      "evaluation.log": {
+        "bytes": 1495,
+        "sha256": "69e9c8d3a7bdcc263cbcd5c447241d11b0c21dc9b274b04b4f32f0f00deda381"
+      },
+      "evaluation_contacts.jsonl": {
+        "bytes": 10966858,
+        "sha256": "0d0fd3e5f8c912ccc217352b9212f1a8d4f12bd676fe118d5db174d969c65e17"
+      },
+      "evaluation_target.json": {
+        "bytes": 73,
+        "sha256": "773c46519aa4b0805b2b000c71a3232012f795095b9daf83a60d4c6ecf491563"
+      },
+      "evaluation_track.json": {
+        "bytes": 559235,
+        "sha256": "29698c0b028bab8faa0b6fb1484aa3a94409bf49992e71605f1597d4d1ad53a9"
+      },
+      "evaluation_truth.jsonl": {
+        "bytes": 140913,
+        "sha256": "5ff382376d5dc38be30eb6f43790172e9b35384e98cc95f6b3f33861e9646ab9"
+      },
+      "evaluation_vehicle_contacts.jsonl": {
+        "bytes": 19422020,
+        "sha256": "1023ceaf54870ee742c9fdf493e364a08546af49b948041fead45c324b8fdc66"
+      },
+      "evaluation_vehicle_truth.jsonl": {
+        "bytes": 650719,
+        "sha256": "35e4f64b16183871579174265240a5f7e47b8e8f7e453b076fbde61ba792aaae"
+      },
+      "flight_commands.jsonl": {
+        "bytes": 437602,
+        "sha256": "f1e1e7a3a9a590d9e4e685412c0bc0c3438f4424ba1a2c8ef2c96c71133c3a61"
+      },
+      "flight_conditions.json": {
+        "bytes": 527,
+        "sha256": "e8db73713e378678a921c215528d397f6959799f3ed93e26abcb6917d2be4f2a"
+      },
+      "flight_conditions.parm": {
+        "bytes": 165,
+        "sha256": "3dd3b56c369f261ce651771e613ea68e89e81e116f20c1c343518598be1083c7"
+      },
+      "flight_vehicle.sdf": {
+        "bytes": 33385,
+        "sha256": "7b152e45c0603fedd8f33896161ca90e90788181e9c2c23ce6679ef331c944f1"
+      },
+      "flight_world.sdf": {
+        "bytes": 417414,
+        "sha256": "d3c109689bfd2982e1b5dfde1841aa51557242fdf6b31db3ec91f7990cc27bec"
+      },
+      "focused_summary.json": {
+        "bytes": 1062,
+        "sha256": "e8ccfbd47204d0bc18119e2de4519be9a58b489c6c0f2e10eb00dd5617e99361"
+      },
+      "frozen_calibration.json": {
+        "bytes": 497,
+        "sha256": "ab8a664dce960bf046ec77354c9dc431777bfec5e909b005b78bcf07188f8b13"
+      },
+      "full_track.csv": {
+        "bytes": 192890,
+        "sha256": "d0a6472cf062b8d0466c06e3d206b5508cf17cef1f5610d07ee04b21c43e09c4"
+      },
+      "grade.json": {
+        "bytes": 1689818,
+        "sha256": "8469bcd845a4906b55f6fc8335ae8a688578c69378c387da9b6a5eff4336129f"
+      },
+      "grade.txt": {
+        "bytes": 1690695,
+        "sha256": "9a3edb4807b5ffbdf03b8be8391e0bbe6ac36e8d89d29372e154e15ad3e5d60c"
+      },
+      "grade_onboard_pose.json": {
+        "bytes": 1805,
+        "sha256": "44551deddd5c2129aabd7dc39cba654ec0ae925ad583b9708d732169d73d1b71"
+      },
+      "layout.json": {
+        "bytes": 1063,
+        "sha256": "dc2f2d219c7f11dcd30411e0a5da9857e344935a98339e869b5b97a2cb72042f"
+      },
+      "mission.log": {
+        "bytes": 1101,
+        "sha256": "661c70008174f08f95e2b1d3583f7add9b22386aa32ea195eb27f330a1a82c71"
+      },
+      "navigation_input_audit.log": {
+        "bytes": 8994,
+        "sha256": "89a3072276ef42244f34803fb3c34e6d54c5d4229214a0381a6628cf111f2fb7"
+      },
+      "onboard.avi": {
+        "bytes": 13559724,
+        "sha256": "654b74f94b4b0c1bc1bd6c92b41272927428401a76a77b0a9122db4d9daea74b"
+      },
+      "onboard.jsonl": {
+        "bytes": 7005526,
+        "sha256": "edd32aac9e31a40785bb9f1df6141d99c039fe9a1123549e19c7f477266ceeee"
+      },
+      "onboard.mp4": {
+        "bytes": 1811171,
+        "sha256": "efadeafe1ec24a3f74dcf962627c516602672049f9343e2e59e26b697afb185f"
+      },
+      "onboard_lidar.jsonl": {
+        "bytes": 11057939,
+        "sha256": "dc3be59e5f52eef1e6b1a260398885f21c365a515cbcf46e896887d5ee29f10f"
+      },
+      "onboard_sim_time.ffconcat": {
+        "bytes": 106042,
+        "sha256": "3ac6d86d4009fcbd8a6dc350a7eec8261ccc7508fed9fcca9daa4daa49a942b2"
+      },
+      "onboard_sim_time.mp4": {
+        "bytes": 2315700,
+        "sha256": "3bc7f369b37f47d3d21132fe89ecf0de8802d8d1c53a4f76bc597b7f1af93a32"
+      },
+      "qualification_tools_manifest.json": {
+        "bytes": 530,
+        "sha256": "fc3943c94ec59308eec4b647da8e5de96d31ff8b292e0b0c69b539fd61397791"
+      },
+      "readiness.log": {
+        "bytes": 355,
+        "sha256": "80756ab2d94dcbdfa4e0a1f06c17a112621434327b0879a2479494878cbb35e6"
+      },
+      "recorded_result.json": {
+        "bytes": 327,
+        "sha256": "40ece6d248b623a5c99dfdce59220c87b7682122b7728dddc358b1d26edcfa98"
+      },
+      "recorder.log": {
+        "bytes": 300,
+        "sha256": "7b73ea720403e36d81823e50ed1e32e9b2a0fea16462cc465b19f4b696ba73ff"
+      },
+      "runner_exit_code.txt": {
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      "runtime_capture.log": {
+        "bytes": 80,
+        "sha256": "d0af5ac4c8819c049db7247e2eaa333b297b594935dd61d48361355002966d49"
+      },
+      "runtime_configuration_manifest.json": {
+        "bytes": 26878,
+        "sha256": "611310ce2c15abcce8445fe76713fea73116ca1311fc21d211a89ac18c66788c"
+      },
+      "source_manifest.json": {
+        "bytes": 146872,
+        "sha256": "290bb5b26fcc9f617bae53abdde5be3b05e9ec7b838266f8f8539154f06ed745"
+      },
+      "stack.log": {
+        "bytes": 84254,
+        "sha256": "b06316865f0747fae5f12b963a0811ee2b6d8c498d08381d77b19f8a1527aac5"
+      },
+      "summary.json": {
+        "bytes": 3246,
+        "sha256": "eb7f11a5d42bf8c2349f8c53d6eab0d270371b6ced0aa18b732b235d14f181ba"
+      },
+      "trial_driver.jsonl": {
+        "bytes": 722541,
+        "sha256": "343acd4d3c20ae3a182f07bc70a2ad976dcb54d01a5c411b04e1c315ba16c980"
+      },
+      "trial_result.json": {
+        "bytes": 327,
+        "sha256": "40ece6d248b623a5c99dfdce59220c87b7682122b7728dddc358b1d26edcfa98"
+      },
+      "vehicle_contact_ready.json": {
+        "bytes": 1597,
+        "sha256": "1fa94ed0f475f63a0585f7932a1dcab95751a57a1fc6fd503716bbe7955abb19"
+      },
+      "vehicle_contact_recorder.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "video_decode.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "video_export.log": {
+        "bytes": 366,
+        "sha256": "8f2f4c49bc64c7d4ac39253b30969fdce3310fca7899c30cff3b26f5b6996743"
+      },
+      "video_timeline.json": {
+        "bytes": 366,
+        "sha256": "8f2f4c49bc64c7d4ac39253b30969fdce3310fca7899c30cff3b26f5b6996743"
+      },
+      "winch_commands.jsonl": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "world_spec.json": {
+        "bytes": 1821,
+        "sha256": "0935311a73396f03a0ade7bf8d915aa3cdfcb97d74f5479e5fab99f701b2dda7"
+      }
+    }
+  },
+  "not_started": [
+    "V39 full reduced offline suite",
+    "V39 five full rendered acceptances",
+    "V39 96-flight reduced campaign",
+    "final accepted evidence closure"
+  ],
+  "deferred_unresolved": [
+    "Strong-gust contacts",
+    "Artificially delayed-control contacts/return failures"
+  ]
+}

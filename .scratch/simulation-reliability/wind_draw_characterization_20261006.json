@@ -1,0 +1,393 @@
+{
+  "source": "/mnt/d/MY DOCUMENTS/VIT/Team Rotor Fpv/AEROTHON/.scratch/qualified_navigation_baseline_20261006/sim/test_corridor_stress.py",
+  "source_sha256": "22e76d4f4ff81c0ef212baabc2dc552a60c098ad9d132eca3ddc3d488207949d",
+  "kind": "Unflown evaluation-only disturbance draws",
+  "ticks_per_seed": 3000,
+  "dt_s": 0.05,
+  "seeds": [
+    {
+      "seed": 0,
+      "first_20_s": {
+        "wind_norm_mps": {
+          "stamp": 15.9,
+          "wind_norm_mps": 12.55855134550286,
+          "turbulence_norm_mps": 0.8196453774245567,
+          "residual_norm_mps": 0.2937242339189327,
+          "residual_rate_norm_mps2": 0.5098042337359504
+        },
+        "turbulence_norm_mps": {
+          "stamp": 12.05,
+          "wind_norm_mps": 3.32063104251233,
+          "turbulence_norm_mps": 4.297678954449658,
+          "residual_norm_mps": 0.3420006558775437,
+          "residual_rate_norm_mps2": 0.2844326892562575
+        },
+        "residual_norm_mps": {
+          "stamp": 9.4,
+          "wind_norm_mps": 12.273669789311764,
+          "turbulence_norm_mps": 0.45640756919794834,
+          "residual_norm_mps": 0.48519578415894754,
+          "residual_rate_norm_mps2": 0.24690884602783586
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 8.65,
+          "wind_norm_mps": 11.354297404142702,
+          "turbulence_norm_mps": 3.1577459058455832,
+          "residual_norm_mps": 0.30957284553961373,
+          "residual_rate_norm_mps2": 0.7957948981163525
+        }
+      },
+      "full_150_s": {
+        "wind_norm_mps": {
+          "stamp": 75.9,
+          "wind_norm_mps": 16.82887607443548,
+          "turbulence_norm_mps": 5.3934379693737,
+          "residual_norm_mps": 0.8111955162976888,
+          "residual_rate_norm_mps2": 0.8246858236719252
+        },
+        "turbulence_norm_mps": {
+          "stamp": 78.05000000000001,
+          "wind_norm_mps": 3.764179438986411,
+          "turbulence_norm_mps": 6.7885165016659075,
+          "residual_norm_mps": 0.6367873208046372,
+          "residual_rate_norm_mps2": 0.08858886111283581
+        },
+        "residual_norm_mps": {
+          "stamp": 76.0,
+          "wind_norm_mps": 16.24850320128259,
+          "turbulence_norm_mps": 4.816630548254478,
+          "residual_norm_mps": 0.8393723561941581,
+          "residual_rate_norm_mps2": 0.25653004548464164
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 76.80000000000001,
+          "wind_norm_mps": 9.329644189031841,
+          "turbulence_norm_mps": 1.1592587850152314,
+          "residual_norm_mps": 0.12987108038644993,
+          "residual_rate_norm_mps2": 1.4379086130966254
+        }
+      }
+    },
+    {
+      "seed": 1,
+      "first_20_s": {
+        "wind_norm_mps": {
+          "stamp": 10.75,
+          "wind_norm_mps": 12.660675911866681,
+          "turbulence_norm_mps": 1.1383017705439058,
+          "residual_norm_mps": 0.36313605357276585,
+          "residual_rate_norm_mps2": 0.5319226609457323
+        },
+        "turbulence_norm_mps": {
+          "stamp": 17.650000000000002,
+          "wind_norm_mps": 3.983466518039305,
+          "turbulence_norm_mps": 6.028510313432615,
+          "residual_norm_mps": 0.1884087368631241,
+          "residual_rate_norm_mps2": 0.6247845274603163
+        },
+        "residual_norm_mps": {
+          "stamp": 9.9,
+          "wind_norm_mps": 10.948319046898114,
+          "turbulence_norm_mps": 0.7131523223042932,
+          "residual_norm_mps": 0.41094240241140073,
+          "residual_rate_norm_mps2": 0.15132625758906718
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 9.200000000000001,
+          "wind_norm_mps": 9.81309055744441,
+          "turbulence_norm_mps": 0.7033400231351111,
+          "residual_norm_mps": 0.14969401038272523,
+          "residual_rate_norm_mps2": 0.8242356416480175
+        }
+      },
+      "full_150_s": {
+        "wind_norm_mps": {
+          "stamp": 141.95000000000002,
+          "wind_norm_mps": 15.69271355635565,
+          "turbulence_norm_mps": 4.2255445260438265,
+          "residual_norm_mps": 0.6834002785997007,
+          "residual_rate_norm_mps2": 0.44448653665288146
+        },
+        "turbulence_norm_mps": {
+          "stamp": 17.650000000000002,
+          "wind_norm_mps": 3.983466518039305,
+          "turbulence_norm_mps": 6.028510313432615,
+          "residual_norm_mps": 0.1884087368631241,
+          "residual_rate_norm_mps2": 0.6247845274603163
+        },
+        "residual_norm_mps": {
+          "stamp": 100.65,
+          "wind_norm_mps": 15.233201025016426,
+          "turbulence_norm_mps": 3.3399737642618668,
+          "residual_norm_mps": 0.7234339771166887,
+          "residual_rate_norm_mps2": 0.48712137539274447
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 101.10000000000001,
+          "wind_norm_mps": 10.688179587254071,
+          "turbulence_norm_mps": 1.069345425802638,
+          "residual_norm_mps": 0.45479110527073047,
+          "residual_rate_norm_mps2": 1.207617795146178
+        }
+      }
+    },
+    {
+      "seed": 2,
+      "first_20_s": {
+        "wind_norm_mps": {
+          "stamp": 5.75,
+          "wind_norm_mps": 14.386508997523578,
+          "turbulence_norm_mps": 2.4995788059937873,
+          "residual_norm_mps": 0.5654333007294841,
+          "residual_rate_norm_mps2": 0.621370181183251
+        },
+        "turbulence_norm_mps": {
+          "stamp": 7.15,
+          "wind_norm_mps": 8.014713253568118,
+          "turbulence_norm_mps": 3.913793505371388,
+          "residual_norm_mps": 0.11482655906994352,
+          "residual_rate_norm_mps2": 0.6020569728677583
+        },
+        "residual_norm_mps": {
+          "stamp": 5.800000000000001,
+          "wind_norm_mps": 14.073252614630988,
+          "turbulence_norm_mps": 2.1105573327137352,
+          "residual_norm_mps": 0.582660131086399,
+          "residual_rate_norm_mps2": 0.41816287352314746
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 0.05,
+          "wind_norm_mps": 12.712791164269275,
+          "turbulence_norm_mps": 1.545275916325021,
+          "residual_norm_mps": 0.12183301771419182,
+          "residual_rate_norm_mps2": 1.3205690130403944
+        }
+      },
+      "full_150_s": {
+        "wind_norm_mps": {
+          "stamp": 83.95,
+          "wind_norm_mps": 15.50551916118837,
+          "turbulence_norm_mps": 3.5126479864711486,
+          "residual_norm_mps": 0.6321550168758786,
+          "residual_rate_norm_mps2": 0.593653242836611
+        },
+        "turbulence_norm_mps": {
+          "stamp": 65.3,
+          "wind_norm_mps": 7.255530518338348,
+          "turbulence_norm_mps": 5.850946742846295,
+          "residual_norm_mps": 0.04716471535792847,
+          "residual_rate_norm_mps2": 0.2861402480737833
+        },
+        "residual_norm_mps": {
+          "stamp": 84.0,
+          "wind_norm_mps": 14.876938908242357,
+          "turbulence_norm_mps": 2.987402746289649,
+          "residual_norm_mps": 0.6378398052300783,
+          "residual_rate_norm_mps2": 0.11395448091500154
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 0.05,
+          "wind_norm_mps": 12.712791164269275,
+          "turbulence_norm_mps": 1.545275916325021,
+          "residual_norm_mps": 0.12183301771419182,
+          "residual_rate_norm_mps2": 1.3205690130403944
+        }
+      }
+    },
+    {
+      "seed": 3,
+      "first_20_s": {
+        "wind_norm_mps": {
+          "stamp": 7.3500000000000005,
+          "wind_norm_mps": 14.721173955939589,
+          "turbulence_norm_mps": 3.1139190923756987,
+          "residual_norm_mps": 0.6285311280258058,
+          "residual_rate_norm_mps2": 0.21145077073615445
+        },
+        "turbulence_norm_mps": {
+          "stamp": 10.4,
+          "wind_norm_mps": 6.260550767336339,
+          "turbulence_norm_mps": 4.191640736368098,
+          "residual_norm_mps": 0.269384055170968,
+          "residual_rate_norm_mps2": 0.32472822190861345
+        },
+        "residual_norm_mps": {
+          "stamp": 6.95,
+          "wind_norm_mps": 14.164715763218785,
+          "turbulence_norm_mps": 2.621757181554421,
+          "residual_norm_mps": 0.6446245773403952,
+          "residual_rate_norm_mps2": 0.33862418556487983
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 6.4,
+          "wind_norm_mps": 12.721744369459383,
+          "turbulence_norm_mps": 1.4941704981432926,
+          "residual_norm_mps": 0.2907034567363863,
+          "residual_rate_norm_mps2": 1.057256438858998
+        }
+      },
+      "full_150_s": {
+        "wind_norm_mps": {
+          "stamp": 138.35,
+          "wind_norm_mps": 15.738415217206764,
+          "turbulence_norm_mps": 4.593715889536573,
+          "residual_norm_mps": 0.7319941601856395,
+          "residual_rate_norm_mps2": 0.7621630481519605
+        },
+        "turbulence_norm_mps": {
+          "stamp": 117.95,
+          "wind_norm_mps": 3.5221304868597474,
+          "turbulence_norm_mps": 6.361458973286974,
+          "residual_norm_mps": 0.3502379383233974,
+          "residual_rate_norm_mps2": 0.06306072152757645
+        },
+        "residual_norm_mps": {
+          "stamp": 138.45000000000002,
+          "wind_norm_mps": 14.770321421982702,
+          "turbulence_norm_mps": 3.4976146441638947,
+          "residual_norm_mps": 0.7587877907561045,
+          "residual_rate_norm_mps2": 0.1606470495036954
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 133.85,
+          "wind_norm_mps": 9.035361714653297,
+          "turbulence_norm_mps": 2.108635059721132,
+          "residual_norm_mps": 0.2936343688388431,
+          "residual_rate_norm_mps2": 1.1432310307841043
+        }
+      }
+    },
+    {
+      "seed": 4,
+      "first_20_s": {
+        "wind_norm_mps": {
+          "stamp": 7.300000000000001,
+          "wind_norm_mps": 16.375042238535453,
+          "turbulence_norm_mps": 5.03863753833451,
+          "residual_norm_mps": 0.7711207278724557,
+          "residual_rate_norm_mps2": 0.7122353503346699
+        },
+        "turbulence_norm_mps": {
+          "stamp": 7.300000000000001,
+          "wind_norm_mps": 16.375042238535453,
+          "turbulence_norm_mps": 5.03863753833451,
+          "residual_norm_mps": 0.7711207278724557,
+          "residual_rate_norm_mps2": 0.7122353503346699
+        },
+        "residual_norm_mps": {
+          "stamp": 7.3500000000000005,
+          "wind_norm_mps": 16.11096722551229,
+          "turbulence_norm_mps": 4.6610458950611795,
+          "residual_norm_mps": 0.7915288674441696,
+          "residual_rate_norm_mps2": 0.4431980779765599
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 6.4,
+          "wind_norm_mps": 12.607179136167403,
+          "turbulence_norm_mps": 4.366060808660531,
+          "residual_norm_mps": 0.25332981574254554,
+          "residual_rate_norm_mps2": 1.1061934199998265
+        }
+      },
+      "full_150_s": {
+        "wind_norm_mps": {
+          "stamp": 7.300000000000001,
+          "wind_norm_mps": 16.375042238535453,
+          "turbulence_norm_mps": 5.03863753833451,
+          "residual_norm_mps": 0.7711207278724557,
+          "residual_rate_norm_mps2": 0.7122353503346699
+        },
+        "turbulence_norm_mps": {
+          "stamp": 99.55000000000001,
+          "wind_norm_mps": 13.29002074262677,
+          "turbulence_norm_mps": 6.188871074121818,
+          "residual_norm_mps": 0.18168563834068369,
+          "residual_rate_norm_mps2": 0.3573905139646254
+        },
+        "residual_norm_mps": {
+          "stamp": 7.3500000000000005,
+          "wind_norm_mps": 16.11096722551229,
+          "turbulence_norm_mps": 4.6610458950611795,
+          "residual_norm_mps": 0.7915288674441696,
+          "residual_rate_norm_mps2": 0.4431980779765599
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 114.5,
+          "wind_norm_mps": 12.703577931678648,
+          "turbulence_norm_mps": 4.331334434617122,
+          "residual_norm_mps": 0.20720016307367126,
+          "residual_rate_norm_mps2": 1.189167665296357
+        }
+      }
+    },
+    {
+      "seed": 5,
+      "first_20_s": {
+        "wind_norm_mps": {
+          "stamp": 2.0,
+          "wind_norm_mps": 12.358753146313639,
+          "turbulence_norm_mps": 3.530583517436854,
+          "residual_norm_mps": 0.39598426084223204,
+          "residual_rate_norm_mps2": 0.5110056729478939
+        },
+        "turbulence_norm_mps": {
+          "stamp": 14.5,
+          "wind_norm_mps": 8.066837300638845,
+          "turbulence_norm_mps": 3.900553086739238,
+          "residual_norm_mps": 0.11064920803712978,
+          "residual_rate_norm_mps2": 0.466361337615927
+        },
+        "residual_norm_mps": {
+          "stamp": 2.2,
+          "wind_norm_mps": 11.616675839126847,
+          "turbulence_norm_mps": 3.3435908508166396,
+          "residual_norm_mps": 0.41283137291560695,
+          "residual_rate_norm_mps2": 0.05607297274515817
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 1.4500000000000002,
+          "wind_norm_mps": 9.988075973067199,
+          "turbulence_norm_mps": 2.4676184159670345,
+          "residual_norm_mps": 0.0824780200613108,
+          "residual_rate_norm_mps2": 0.889139216591488
+        }
+      },
+      "full_150_s": {
+        "wind_norm_mps": {
+          "stamp": 86.05000000000001,
+          "wind_norm_mps": 14.98848624908774,
+          "turbulence_norm_mps": 3.815964842829974,
+          "residual_norm_mps": 0.6620063785445783,
+          "residual_rate_norm_mps2": 0.6398679437508592
+        },
+        "turbulence_norm_mps": {
+          "stamp": 51.800000000000004,
+          "wind_norm_mps": 14.381727754898296,
+          "turbulence_norm_mps": 4.8871291786073146,
+          "residual_norm_mps": 0.3312398758091013,
+          "residual_rate_norm_mps2": 0.3467019351429577
+        },
+        "residual_norm_mps": {
+          "stamp": 86.25,
+          "wind_norm_mps": 14.54838605462006,
+          "turbulence_norm_mps": 2.952559574507246,
+          "residual_norm_mps": 0.6928312723102966,
+          "residual_rate_norm_mps2": 0.10909473990432002
+        },
+        "residual_rate_norm_mps2": {
+          "stamp": 52.35,
+          "wind_norm_mps": 7.410455831289822,
+          "turbulence_norm_mps": 1.1584864811610813,
+          "residual_norm_mps": 0.045929919440632024,
+          "residual_rate_norm_mps2": 1.3518550480208078
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Gaussian OU draws are not bounded by these finite sampled maxima.",
+    "The first residual derivative includes the initial trim-to-gust transient.",
+    "No simulator disturbance draw or derivative is fed to drone decision logic.",
+    "This does not demonstrate that every sampled trajectory is unavoidable."
+  ]
+}

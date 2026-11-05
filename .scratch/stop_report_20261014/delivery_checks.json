@@ -1,0 +1,9 @@
+{
+  "report_sha256": "2c67c0fdaae8a70e0236485d500d9578bac7ed0bf516ef6469a4035bf9e1c7a8",
+  "report_typecheck": "passed",
+  "html_parse": "passed",
+  "evidence_links_verified": 27,
+  "extra_worktrees": 0,
+  "maintained_gcs_frontends": 1,
+  "qualified_final_missions": 0
+}

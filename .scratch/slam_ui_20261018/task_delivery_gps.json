@@ -1,0 +1,1 @@
+{"cmd": "start", "args": {"task": "delivery_gps", "params": {"height": 5.0, "target": "AEROTHON2026:M2:TARGET_C", "waypoints": [{"lat": -35.36325288315284, "lon": 149.16549168814078}]}}}
